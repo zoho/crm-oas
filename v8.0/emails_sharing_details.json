@@ -1,0 +1,235 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Get Email Shared Details",
+    "description": "To get the details of the users and the type with whom you can share the record's emails.",
+    "version": "8.0"
+  },
+  "servers": [
+    {
+      "url": "https://www.zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API version"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/{moduleApiName}/{id}/__emails_sharing_details": {
+      "get": {
+        "operationId": "getEmailSharingDetail",
+        "summary": "Get Email Shared Details",
+        "description": "To get the details of the users and the type with whom you can share the record's emails.",
+        "parameters": [
+          {
+            "name": "moduleApiName",
+            "in": "path",
+            "required": true,
+            "description": "Module  Api Name of the record",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Leads",
+                "Contacts",
+                "Accounts",
+                "Deals",
+                "CustomModule1"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the record whose email sharing details are to be fetched",
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "description": "Record ID"
+            }
+          }
+        ],
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.ALL",
+              "ZohoCRM.modules.emails.READ"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success response with list of available email filters and users with whom the email can be shared.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response Object for Get Email Shared Details",
+                  "additionalProperties": false,
+                  "properties": {
+                    "__emails_sharing_details": {
+                      "type": "array",
+                      "description": "List of email sharing details",
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Details of email sharing options",
+                        "additionalProperties": false,
+                        "properties": {
+                          "shared_from_users": {
+                            "type": "array",
+                            "description": "List of users with whom the email can be shared",
+                            "maxItems": 50,
+                            "items": {
+                              "type": "object",
+                              "description": "Details of the user with whom the email can be shared",
+                              "additionalProperties": false,
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "description": "Name of the user",
+                                  "maxLength": 250
+                                },
+                                "_type": {
+                                  "type": "string",
+                                  "description": "Type of email account",
+                                  "enum": [
+                                    "imap",
+                                    "pop",
+                                    "api"
+                                  ]
+                                },
+                                "id": {
+                                  "type": "string",
+                                  "description": "User ID of the user",
+                                  "maxLength": 100
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "_type",
+                                "id"
+                              ]
+                            }
+                          },
+                          "available_types": {
+                            "type": "array",
+                            "description": "List of available email filter options",
+                            "maxItems": 5,
+                            "minItems": 1,
+                            "items": {
+                              "type": "string",
+                              "description": "Type of email filter options available",
+                              "enum": [
+                                "emails_sent_from_crm",
+                                "all_contacts_emails",
+                                "all_imap_shared_users",
+                                "all_pop_shared_users",
+                                "all_emails"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "shared_from_users",
+                          "available_types"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid module or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Error response object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Error code indicating the type of error",
+                      "enum": [
+                        "INVALID_DATA",
+                        "INVALID_MODULE"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "The given data is invalid.",
+                        "The module API name is invalid."
+                      ],
+                      "description": "Error message corresponding to the error code"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional details about the error",
+                      "additionalProperties": false,
+                      "properties": {
+                        "resource_path_index": {
+                          "type": "integer",
+                          "description": "Index of the resource path where the error occurred",
+                          "format": "int32"
+                        }
+                      }
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Status of the response",
+                      "enum": [
+                        "error"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "details",
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.modules.ALL": "Full access to all modules in Zoho CRM",
+              "ZohoCRM.modules.emails.READ": "Read access to Emails module in Zoho CRM"
+            }
+          }
+        }
+      }
+    }
+  }
+}

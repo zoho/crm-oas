@@ -1,368 +1,451 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "files",
-        "description": "Uploads a File",
-        "version": "v8.0"
-    },
-    "servers": [
-        {
-            "url": "https://zohoapis.com"
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Files",
+    "description": "Zoho CRM Files API — endpoints to upload and retrieve files. POST /crm/v8/files accepts multipart/form-data with a required 'file' field (binary) and returns upload metadata (id, name, status). GET /crm/v8/files?id={id} returns the binary content for the specified file.",
+    "version": "8"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
         }
-    ],
-    "paths": {
-        "/crm/v8/files": {
-            "post": {
-                "operationId": "Upload Files",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/type"
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "$ref": "#/components/schemas/Body_Wrapper"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Action_Wrapper"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Invalid_Module_Exception"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Failure_In_Attachment"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Virus_Detected"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Invalid_Data"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Size_Exceeds"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": ""
-                    }
-                },
-                "security": [
-                    {
-                        "iam-oauth2-schema": [
-                            "ZohoCRM.files.CREATE"
-                        ]
-                    }
-                ]
+      }
+    }
+  ],
+  "security": [
+    {
+      "iam-oauth2-schema": [
+        "ZohoCRM.files.READ"
+      ]
+    }
+  ],
+  "paths": {
+    "/files": {
+      "post": {
+        "operationId": "uploadFiles",
+        "summary": "Uploads a file to ZFS",
+        "description": "Uploads a file to Zoho File System (ZFS) and returns the file metadata including the file ID which can be used to associate the file with records in Zoho CRM. The file is uploaded using multipart/form-data with a required 'file' field containing the binary data of the file to be uploaded. The response includes the file ID, name, status, and other details. Can upload 10 files in a single request by repeating the 'file' field. Maximum file size is 20 MB.",
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.files.CREATE"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "inline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "inline"
+              ]
             },
-            "get": {
-                "operationId": "Get File",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/id"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/x-download": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/File_Body_Wrapper"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
+            "description": "To upload inline images. Possible value: inline"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "description": "Multipart form data for uploading one or more files to Zoho File System",
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary",
+                      "description": "Binary content of the file to be uploaded"
                     },
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Invalid_Module_Exception"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Failure_In_Attachment"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Virus_Detected"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Invalid_Data"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Size_Exceeds"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
+                    "maxItems": 10,
+                    "description": "Upload one or more files using repeated 'file' keys."
+                  }
                 },
-                "security": [
-                    {
-                        "iam-oauth2-schema": [
-                            "ZohoCRM.files.READ"
-                        ]
-                    }
-                ]
+                "required": [
+                  "file"
+                ],
+                "additionalProperties": false
+              }
             }
-        }
-    },
-    "components": {
-        "schemas": {
-            "File_Body_Wrapper": {
-                "type": "object",
-                "properties": {
-                    "file": {
-                        "type": "object"
-                    }
-                },
-                "required": [
-                    "file"
-                ]
-            },
-            "Body_Wrapper": {
-                "type": "object",
-                "properties": {
-                    "file": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
-                    }
-                },
-                "required": [
-                    "file"
-                ]
-            },
-            "Success_Response": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "success"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "SUCCESS"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "details": {
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully uploaded one or more files to Zoho File System. Returns an array of upload results, one per file, containing the file ID for record association and upload status confirmation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response schema for successful file upload to Zoho File System",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "Array of upload results, one object per successfully uploaded file. Order corresponds to the order of files in the multipart request.",
+                      "minItems": 1,
+                      "maxItems": 10,
+                      "items": {
                         "type": "object",
+                        "description": "Upload result for a single file",
                         "properties": {
-                            "name": {
-                                "type": "string"
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success"
+                            ],
+                            "description": "Upload result status indicator"
+                          },
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "SUCCESS"
+                            ],
+                            "description": "Machine-readable success code"
+                          },
+                          "message": {
+                            "type": "string",
+                            "maxLength": 500,
+                            "description": "Human-readable success message confirming the upload"
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "File metadata for the uploaded file, including the unique identifier for CRM record association",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "maxLength": 500,
+                                "description": "Original filename as provided in the upload request",
+                                "minLength": 1
+                              },
+                              "id": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "description": "Unique file identifier in ZFS. Use this ID to attach the file to CRM records or retrieve it via GET /files",
+                                "minLength": 1
+                              }
                             },
-                            "id": {
-                                "type": "string"
-                            }
+                            "required": [
+                              "name",
+                              "id"
+                            ],
+                            "additionalProperties": false
+                          }
                         },
                         "required": [
-                            "name",
-                            "id"
-                        ]
+                          "status",
+                          "code",
+                          "message",
+                          "details"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The file upload request is malformed or invalid. Returns `failure_in_attachment_handling` when the 'file' field is missing or contains no file data. Returns `INVALID_REQUEST` when request constraints are violated, such as exceeding the 10-file limit per request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Returned when the 'file' field is missing from the multipart/form-data request or when a 'file' field is present but contains no actual file data.",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "failure_in_attachment_handling"
+                          ],
+                          "description": "Indicates missing or empty 'file' field in the upload request"
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message prompting proper file upload",
+                          "enum": [
+                            "Problem in uploading attachment. kindly upload the file properly"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error context. Typically empty for this error type.",
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "description": "Returned when the request violates API constraints, most commonly when more than 10 files are included in a single upload request.",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_REQUEST"
+                          ],
+                          "description": "Indicates the request violates API constraints (e.g., file count limit exceeded)"
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Generic validation error message requesting verification of request parameters",
+                          "enum": [
+                            "unable to process your request. please verify whether you have entered proper method name, parameter and parameter values."
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error context. Typically empty for this error type.",
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type / File Size Exceeded - Returned when one or more uploaded files exceed the maximum allowed size of 20 MB per file. The API rejects the entire request if any single file violates this constraint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Returned when any file in the upload request exceeds the 20 MB size limit. The entire upload is rejected, even if other files are within the allowed size.",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "FILE_SIZE_MORE_THAN_ALLOWED_SIZE"
+                          ],
+                          "description": "Indicates one or more files exceed the 20 MB maximum file size limit"
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message prompting file size verification",
+                          "enum": [
+                            "Please check if the size of the file is in the correct range"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error context. Typically empty for this error type.",
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getFile",
+        "summary": "Retrieves a file from ZFS",
+        "description": "Retrieves the binary content of a file stored in Zoho File System (ZFS) using its unique file ID. The file ID is provided as a required query parameter 'id'. If the file exists, the API returns the file's binary data along with appropriate headers indicating the MIME type and content disposition for download. If the file ID does not correspond to any file in ZFS, a 204 No Content response is returned. This endpoint is used to download files that have been previously uploaded to ZFS and associated with Zoho CRM records.",
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.files.READ"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "Unique identifier of the file to retrieve",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully uploaded file to Zoho File System. Returns the uploaded file as binary content with appropriate headers indicating the file type and disposition.",
+            "headers": {
+              "Content-Type": {
+                "description": "MIME type of the uploaded file (e.g., application/pdf, image/png, text/plain).",
+                "schema": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "description": "MIME type of the file including charset if applicable"
                 },
-                "required": [
+                "example": "image/png;charset=UTF-8"
+              },
+              "Content-Disposition": {
+                "description": "Indicates how the content should be displayed. Includes the original filename for download purposes.",
+                "schema": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "description": "Content disposition with original filename"
+                },
+                "example": "attachment;filename*=UTF-8''image %282%29.png"
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Binary content of the uploaded file."
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content - Returned when the provided file ID does not match any file in the Zoho File System. This occurs when the 'id' parameter contains an invalid file identifier, an empty string, or references a file that has been deleted or never existed."
+          },
+          "400": {
+            "description": "Bad Request - The file retrieval request is missing required parameters. Returns `REQUIRED_PARAM_MISSING` when the 'id' query parameter is not included in the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Returned when the required 'id' query parameter is not present in the request URL.",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Error status indicator"
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "REQUIRED_PARAM_MISSING"
+                      ],
+                      "description": "Indicates a required parameter is missing from the request"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message indicating a required parameter is missing",
+                      "enum": [
+                        "One of the expected parameter is missing"
+                      ]
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error context identifying the missing parameter",
+                      "properties": {
+                        "param_name": {
+                          "type": "string",
+                          "enum": [
+                            "id"
+                          ],
+                          "description": "Name of the missing required parameter"
+                        }
+                      },
+                      "required": [
+                        "param_name"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
                     "status",
                     "code",
                     "message",
                     "details"
-                ]
-            },
-            "Action_Wrapper": {
-                "type": "object",
-                "properties": {
-                    "data": {
-                        "items": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/Success_Response"
-                                }
-                            ]
-                        },
-                        "type": "array"
-                    }
+                  ],
+                  "additionalProperties": false
                 }
-            },
-            "Invalid_Module_Exception": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_MODULE"
-                        ]
-                    },
-                    "details": {
-                        "type": "object"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Failure_In_Attachment": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "failure_in_attachment_handling"
-                        ]
-                    },
-                    "details": {
-                        "type": "object"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Virus_Detected": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "VIRUS_DETECTED"
-                        ]
-                    },
-                    "details": {
-                        "type": "object"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Invalid_Data": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_DATA"
-                        ]
-                    },
-                    "details": {
-                        "type": "object"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Size_Exceeds": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "FILE_SIZE_MORE_THAN_ALLOWED_SIZE"
-                        ]
-                    },
-                    "details": {
-                        "type": "object"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
+              }
             }
-        },
-        "parameters": {
-            "id": {
-                "name": "id",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "type": {
-                "name": "type",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "string"
-                }
-            }
-        },
-        "headers": {},
-        "securitySchemes": {
-            "iam-oauth2-schema": {
-                "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
-            }
+          }
         }
+      }
     }
+  },
+  "components": {
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.files.CREATE": "Create and upload files in Zoho CRM",
+              "ZohoCRM.files.READ": "Read and download files from Zoho CRM"
+            }
+          }
+        }
+      }
+    }
+  }
 }

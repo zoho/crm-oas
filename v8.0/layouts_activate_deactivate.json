@@ -1,0 +1,1010 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Layout Activate and Deactivate API",
+    "description": "API for layout activation and deactivation in Zoho CRM. Supports activating inactive layouts with profile association management and deactivating active layouts with configuration transfer to another layout.",
+    "version": "8"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "description": "API Version",
+          "default": "v8"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/settings/layouts/{id}/actions/activate": {
+      "post": {
+        "summary": "Activate layout with profile associations",
+        "description": "Activates a single deactivated layout, making it available for use within the specified module. Optionally allows adding or removing profile associations during activation. Only one layout can be activated per request. This operation is idempotent - attempting to activate an already active layout returns an error (ALREADY_ACTIVATED).",
+        "operationId": "layoutActivate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          },
+          {
+            "$ref": "#/components/parameters/Module"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Request body for activating a single layout with optional profile association modifications. The layout can specify profile associations to add (default) or remove (using _delete flag). Profile modifications are optional - layout can be activated without any profile changes. At least one profile must remain associated with the layout after all operations are applied.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutActivateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Layout successfully activated. Returns confirmation with the activated layout ID and operation status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Success response for layout activation operation",
+                  "properties": {
+                    "layouts": {
+                      "type": "array",
+                      "description": "Array containing the activation result for the layout",
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Layout activation result details",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "SUCCESS"
+                            ],
+                            "description": "Operation result code indicating successful activation"
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "Additional details about the activated layout",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[0-9]+$",
+                                "minLength": 1,
+                                "maxLength": 20,
+                                "description": "The unique identifier of the activated layout"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "message": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "description": "Human-readable confirmation message"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success"
+                            ],
+                            "description": "Overall operation status"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "details",
+                          "message",
+                          "status"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "layouts"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request due to invalid parameters, layout constraints, or business rule violations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Error response for bad request scenarios including validation failures and business rule violations",
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Invalid layout ID or layout not found in the specified module",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_DATA"
+                          ],
+                          "description": "Error code for invalid data"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 500,
+                          "description": "Error message describing the invalid data"
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error context",
+                          "properties": {
+                            "resource_path_index": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "Index in the resource path where the error occurred"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "description": "Layout is already in active state",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "ALREADY_ACTIVATED"
+                          ],
+                          "description": "Error code for already activated layout"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 500,
+                          "description": "Error message indicating the layout is already active"
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error context",
+                          "properties": {
+                            "resource_path_index": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "Index in the resource path where the error occurred"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "description": "Array-level errors for layout operations (permission updates not allowed, profile association violations)",
+                      "properties": {
+                        "layouts": {
+                          "type": "array",
+                          "description": "Array of layout-specific error details",
+                          "minItems": 1,
+                          "maxItems": 10,
+                          "items": {
+                            "type": "object",
+                            "description": "Individual layout error information",
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "enum": [
+                                  "NOT_ALLOWED"
+                                ],
+                                "description": "Error code indicating operation is not permitted"
+                              },
+                              "details": {
+                                "type": "object",
+                                "description": "Additional context about the error",
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "description": "Permission update restrictions",
+                                    "properties": {
+                                      "action": {
+                                        "type": "string",
+                                        "enum": [
+                                          "set_layout_permissions"
+                                        ],
+                                        "description": "The action that is not allowed"
+                                      },
+                                      "id": {
+                                        "type": "string",
+                                        "pattern": "^[0-9]+$",
+                                        "minLength": 1,
+                                        "maxLength": 20,
+                                        "description": "The layout ID where the action is restricted"
+                                      }
+                                    },
+                                    "required": [
+                                      "action",
+                                      "id"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Profile association validation errors",
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "description": "The field name that caused the error"
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "maxLength": 200,
+                                        "description": "JSONPath location of the error in the request"
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "additionalProperties": true
+                              },
+                              "message": {
+                                "type": "string",
+                                "maxLength": 500,
+                                "description": "Human-readable error message explaining the violation"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "error"
+                                ],
+                                "description": "Error status indicator"
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "details",
+                              "message",
+                              "status"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "layouts"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "description": "Invalid data in request body (maximum array length exceeded, invalid field values)",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_DATA"
+                          ],
+                          "description": "Error code for invalid data"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 500,
+                          "description": "Error message describing the validation failure"
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Validation error details including field constraints",
+                          "properties": {
+                            "maximum_length": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "The maximum allowed length for the array field"
+                            },
+                            "api_name": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "description": "The field name that violated the constraint"
+                            },
+                            "json_path": {
+                              "type": "string",
+                              "maxLength": 200,
+                              "description": "JSONPath location of the invalid data"
+                            }
+                          },
+                          "required": [
+                            "maximum_length",
+                            "api_name",
+                            "json_path"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred while processing the activation request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Internal server error response",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "INTERNAL_ERROR"
+                      ],
+                      "description": "Error code for internal server errors"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message describing the internal error"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Error status indicator"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "details",
+                    "message",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.layouts.CREATE"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Deactivate layout with configuration transfer",
+        "description": "Deactivates an active layout and transfers its configuration (profile associations, permissions, field mappings) to another active layout within the same module. At least one active layout must remain in the module. This operation is idempotent - attempting to deactivate an already deactivated layout returns an error (ALREADY_DEACTIVATED).",
+        "operationId": "layoutDeactivate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          },
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "name": "transfer_to",
+            "in": "query",
+            "required": true,
+            "description": "The ID of an active layout within the same module to transfer the configuration to. Must be different from the layout being deactivated. The target layout must not have any conflicting configurations.",
+            "schema": {
+              "type": "string",
+              "format": "int64",
+              "description": "Target layout ID for configuration transfer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Layout successfully deactivated and configuration transferred to target layout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Success response for layout deactivation operation",
+                  "properties": {
+                    "layouts": {
+                      "type": "array",
+                      "description": "Array containing the deactivation result",
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Layout deactivation result details",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "SUCCESS"
+                            ],
+                            "description": "Operation result code indicating successful deactivation"
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "Additional details about the deactivated layout",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "int64",
+                                "description": "The unique identifier of the deactivated layout"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "message": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "description": "Human-readable confirmation message"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success"
+                            ],
+                            "description": "Overall operation status"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "details",
+                          "message",
+                          "status"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "layouts"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request due to invalid parameters, layout constraints, or business rule violations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Error response for bad request scenarios including validation failures and business rule violations",
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Invalid module name provided",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_MODULE"
+                          ],
+                          "description": "Error code for invalid module"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 500,
+                          "description": "Error message indicating the module is invalid"
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error context",
+                          "additionalProperties": true
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "description": "Invalid data provided (invalid layout ID or parameter value)",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_DATA"
+                          ],
+                          "description": "Error code for invalid data"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 500,
+                          "description": "Error message describing the invalid data"
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Error details with parameter or path information",
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "description": "Parameter-level error details",
+                              "properties": {
+                                "param_name": {
+                                  "type": "string",
+                                  "maxLength": 100,
+                                  "description": "Name of the invalid parameter"
+                                }
+                              },
+                              "required": [
+                                "param_name"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "description": "Resource path error details",
+                              "properties": {
+                                "resource_path_index": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "description": "Index in the resource path where the error occurred"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          ],
+                          "additionalProperties": true
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "description": "Required parameter missing from request",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "REQUIRED_PARAM_MISSING"
+                          ],
+                          "description": "Error code for missing required parameter"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 500,
+                          "description": "Error message indicating missing parameter"
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Details about the missing parameter",
+                          "properties": {
+                            "param_name": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "description": "Name of the missing parameter"
+                            }
+                          },
+                          "required": [
+                            "param_name"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "description": "Layout has existing associations that prevent deactivation",
+                      "properties": {
+                        "layouts": {
+                          "type": "array",
+                          "description": "Array of layout-specific error details",
+                          "minItems": 1,
+                          "maxItems": 10,
+                          "items": {
+                            "type": "object",
+                            "description": "Individual layout error information",
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "enum": [
+                                  "ASSOCIATIONS_EXIST"
+                                ],
+                                "description": "Error code indicating existing associations"
+                              },
+                              "details": {
+                                "type": "object",
+                                "description": "Layout ID with existing associations",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[0-9]+$",
+                                    "minLength": 1,
+                                    "maxLength": 20,
+                                    "description": "The layout ID that has existing associations"
+                                  }
+                                },
+                                "required": [
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "message": {
+                                "type": "string",
+                                "maxLength": 500,
+                                "description": "Human-readable error message"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "error"
+                                ],
+                                "description": "Error status indicator"
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "details",
+                              "message",
+                              "status"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "layouts"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "description": "Operation not allowed (e.g., transfer to same layout)",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "NOT_ALLOWED"
+                          ],
+                          "description": "Error code for not allowed operations"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 500,
+                          "description": "Error message explaining why the operation is not allowed"
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Parameter that caused the restriction",
+                          "properties": {
+                            "param_name": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "description": "Parameter that caused the restriction"
+                            }
+                          },
+                          "required": [
+                            "param_name"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "description": "Layout is already in deactivated state",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "error"
+                          ],
+                          "description": "Error status indicator"
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "ALREADY_DEACTIVATED"
+                          ],
+                          "description": "Error code for already deactivated layout"
+                        },
+                        "message": {
+                          "type": "string",
+                          "maxLength": 500,
+                          "description": "Error message indicating the layout is already deactivated"
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error context",
+                          "properties": {
+                            "resource_path_index": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "Index in the resource path where the error occurred"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred while processing the deactivation request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Internal server error response",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "INTERNAL_ERROR"
+                      ],
+                      "description": "Error code for internal server errors"
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message describing the internal error"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Error status indicator"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "details",
+                    "message",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.layouts.DELETE"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "Id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the layout to activate or deactivate. Must be a valid layout ID that exists within the specified module. Layout ID values are data center-specific.",
+        "schema": {
+          "type": "string",
+          "format": "int64",
+          "description": "Layout identifier as a 64-bit integer"
+        }
+      },
+      "Module": {
+        "name": "module",
+        "in": "query",
+        "required": true,
+        "description": "The CRM module API name that contains the layout. Supports both standard Zoho CRM modules (e.g., Leads, Contacts, Deals) and custom modules created in the organization. Module names follow PascalCase convention and may contain underscores for custom modules.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "^[A-Z][A-Za-z0-9_]*$",
+          "description": "Module API name"
+        }
+      }
+    },
+    "schemas": {
+      "LayoutActivateRequest": {
+        "type": "object",
+        "description": "Request payload for activating a single layout with optional profile associations. Only one layout can be activated per request.",
+        "properties": {
+          "layouts": {
+            "type": "array",
+            "description": "Array containing exactly one layout object to activate. The layout includes its unique identifier and optionally the profiles to associate or disassociate. Profile associations can be added (default) or removed (using _delete flag). The array must contain exactly one item.",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "type": "object",
+              "description": "Layout activation configuration with optional profile associations",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of the layout to activate. Must reference an existing deactivated layout within the specified module. The ID is represented as a string containing a 64-bit integer value. Layout IDs are data center-specific.",
+                  "pattern": "^[0-9]+$",
+                  "minLength": 1,
+                  "maxLength": 20
+                },
+                "profiles": {
+                  "type": "array",
+                  "description": "Optional array of profile associations for this layout. Profiles define which user roles can access this layout. Use the _delete flag to remove existing associations. Empty array or omitting this field entirely preserves existing profile associations. At least one profile must remain associated with the layout after all operations are applied. While duplicate profile IDs are technically allowed, they cause unnecessary processing and should be avoided.",
+                  "maxItems": 100,
+                  "items": {
+                    "type": "object",
+                    "description": "Profile association configuration for the layout",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "The unique identifier of the profile to associate or disassociate with this layout. Must be a profile that exists in the CRM organization and is associated with the specified module. The ID is represented as a string containing a 64-bit integer value.",
+                        "pattern": "^[0-9]+$",
+                        "minLength": 1,
+                        "maxLength": 20
+                      },
+                      "_delete": {
+                        "type": "boolean",
+                        "description": "Flag to remove this profile association from the layout. When true, the profile will be disassociated from the layout. When false or omitted, the profile will be associated with the layout. Cannot remove the last remaining profile from a layout.",
+                        "default": false
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "id"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "layouts"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authorization code flow for accessing Zoho CRM APIs. Requires appropriate scopes for layout management operations.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.settings.layouts.CREATE": "Permission to activate layouts",
+              "ZohoCRM.settings.layouts.DELETE": "Permission to deactivate layouts"
+            }
+          }
+        }
+      }
+    }
+  }
+}

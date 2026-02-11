@@ -1,670 +1,1191 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "find_and_merge",
-        "description": "Find And Merge",
-        "version": "v8.0"
-    },
-    "servers": [
-        {
-            "url": "https://zohoapis.com"
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Find And Merge",
+    "description": "API endpoints for finding and merging duplicate records in Zoho CRM modules. Supports querying merge job status and performing record merge operations with field mapping and validation.",
+    "version": "8.0"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
         }
-    ],
-    "paths": {
-        "/crm/v8/{module}/{masterrecordid}/actions/merge": {
-            "get": {
-                "operationId": "Get Record Merge",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/job_id"
-                    },
-                    {
-                        "$ref": "#/components/parameters/masterrecordid"
-                    },
-                    {
-                        "$ref": "#/components/parameters/module"
-                    }
-                ],
-                "responses": {
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Invalid_Data_Exception"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Invalid_Module_Exception"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "204": {
-                        "description": ""
-                    },
-                    "200": {
-                        "$ref": "#/components/responses/Merge_Response"
-                    }
-                }
-            },
-            "post": {
-                "operationId": "Merge Records",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/masterrecordid"
-                    },
-                    {
-                        "$ref": "#/components/parameters/module"
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/Body_Wrapper"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Action_Wrapper"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "merge": {
-                                                    "items": {
-                                                        "oneOf": [
-                                                            {
-                                                                "$ref": "#/components/schemas/Mandatory_Not_Found_Exception"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Not_Allowed_Exception"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Invalid_Data_Exception"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Duplicate_Data_Exception"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Dependent_Field_Missing_Exception"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Limit_Exceeded_Exception"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Filter_Criteria_Not_Satisfied"
-                                                            }
-                                                        ]
-                                                    },
-                                                    "type": "array"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Mandatory_Not_Found_Exception"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Not_Allowed_Exception"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Invalid_Data_Exception"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Duplicate_Data_Exception"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Dependent_Field_Missing_Exception"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Invalid_Module_Exception"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "security": [
-        {
-            "iam-oauth2-schema": [
-                "ZohoCRM.modules.{module_API_name}.ALL"
-            ]
-        }
-    ],
-    "components": {
-        "schemas": {
-            "merge": {
-                "type": "object",
-                "properties": {
-                    "job_id": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string"
-                    },
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/Merge_Data"
-                        },
-                        "type": "array"
-                    },
-                    "master_record_fields": {
-                        "items": {
-                            "$ref": "#/components/schemas/Master_Record_Fields"
-                        },
-                        "type": "array"
-                    }
-                },
-                "required": [
-                    "data",
-                    "master_record_fields"
-                ]
-            },
-            "Response_Wrapper": {
-                "type": "object",
-                "properties": {
+      }
+    }
+  ],
+  "security": [
+    {
+      "iam-oauth2-schema": [
+        "ZohoCRM.modules.read",
+        "ZohoCRM.settings.modules.all",
+        "ZohoCRM.settings.all",
+        "ZohoCRM.modules.CREATE"
+      ]
+    }
+  ],
+  "paths": {
+    "/{module}/{masterRecordId}/actions/merge": {
+      "get": {
+        "summary": "Get Merge Job Status",
+        "description": "Retrieves the status of merge jobs for finding and tracking record merge operations in Zoho CRM modules.",
+        "operationId": "getMergeJobStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/JobId"
+          },
+          {
+            "$ref": "#/components/parameters/MasterRecordId"
+          },
+          {
+            "$ref": "#/components/parameters/Module"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved merge job status information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response containing merge job status information",
+                  "additionalProperties": false,
+                  "properties": {
                     "merge": {
-                        "items": {
-                            "$ref": "#/components/schemas/merge"
-                        },
-                        "type": "array"
-                    }
-                }
-            },
-            "Body_Wrapper": {
-                "type": "object",
-                "properties": {
-                    "merge": {
-                        "items": {
-                            "$ref": "#/components/schemas/merge"
-                        },
-                        "type": "array"
-                    }
-                },
-                "required": [
-                    "merge"
-                ]
-            },
-            "Master_Record_Fields": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "_data": {
-                        "items": {
-                            "$ref": "#/components/schemas/Image_Data"
-                        },
-                        "type": "array"
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "_data"
-                ]
-            },
-            "Merge_Data": {
-                "type": "object",
-                "properties": {
-                    "_fields": {
-                        "items": {
-                            "$ref": "#/components/schemas/Data_Fields"
-                        },
-                        "type": "array"
-                    },
-                    "id": {
-                        "type": "string"
-                    }
-                }
-            },
-            "Data_Fields": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "_data": {
-                        "items": {
-                            "$ref": "#/components/schemas/Image_Data"
-                        },
-                        "type": "array"
-                    }
-                }
-            },
-            "Image_Data": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                },
-                "required": [
-                    "id"
-                ]
-            },
-            "Action_Wrapper": {
-                "type": "object",
-                "properties": {
-                    "merge": {
-                        "items": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/Success_Response"
-                                }
-                            ]
-                        },
-                        "type": "array"
-                    }
-                }
-            },
-            "Success_Response": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "SUCCESS",
-                            "SCHEDULED"
-                        ]
-                    },
-                    "details": {
+                      "type": "array",
+                      "description": "Array of merge job status records",
+                      "maxItems": 100,
+                      "items": {
                         "type": "object",
+                        "description": "Individual merge job status",
+                        "additionalProperties": false,
                         "properties": {
-                            "id": {
-                                "type": "string"
-                            },
-                            "job_id": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "success"
+                          "job_id": {
+                            "type": "string",
+                            "description": "Unique identifier of the merge job",
+                            "pattern": "^[0-9]+$",
+                            "maxLength": 50
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Current status of the merge job",
+                            "enum": [
+                              "SCHEDULED",
+                              "running",
+                              "completed",
+                              "failed"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "job_id",
+                          "status"
                         ]
+                      }
                     }
+                  },
+                  "required": [
+                    "merge"
+                  ]
                 }
-            },
-            "Mandatory_Not_Found_Exception": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "MANDATORY_NOT_FOUND"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "#/components/schemas/Mandatory_Details"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Filter_Criteria_Not_Satisfied": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "FILTER_CRITERIA_NOT_SATISFIED"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "#/components/schemas/Mandatory_Details"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Not_Allowed_Exception": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "NOT_ALLOWED"
-                        ]
-                    },
-                    "details": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/Resource_Path_Index"
-                            },
-                            {
-                                "$ref": "#/components/schemas/Mandatory_Details"
-                            },
-                            {
-                                "$ref": "#/components/schemas/Index_Api_Name"
-                            }
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Index_Api_Name": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "resource_path_index": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                }
-            },
-            "Invalid_Data_Exception": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_DATA"
-                        ]
-                    },
-                    "details": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/Resource_Path_Index"
-                            },
-                            {
-                                "$ref": "#/components/schemas/Maximum_Length_Details"
-                            },
-                            {
-                                "$ref": "#/components/schemas/Minimum_Length_Exception"
-                            },
-                            {
-                                "$ref": "#/components/schemas/Expected_Data_Type_Details"
-                            },
-                            {
-                                "$ref": "#/components/schemas/Mandatory_Details"
-                            }
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Duplicate_Data_Exception": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "DUPLICATE_DATA"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "#/components/schemas/Mandatory_Details"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Dependent_Field_Missing_Exception": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "DEPENDENT_FIELD_MISSING"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "#/components/schemas/Dependent_Details"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Invalid_Module_Exception": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_MODULE"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "#/components/schemas/Resource_Path_Index"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Limit_Exceeded_Exception": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "LIMIT_EXCEEDED"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "#/components/schemas/Maximum_Length_Details"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "Dependent_Details": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "dependee": {
-                        "$ref": "#/components/schemas/Mandatory_Details"
-                    }
-                }
-            },
-            "Expected_Data_Type_Details": {
-                "type": "object",
-                "properties": {
-                    "expected_data_type": {
-                        "type": "string"
-                    },
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "Maximum_Length_Details": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "maximum_length": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                }
-            },
-            "Minimum_Length_Exception": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "minimum_length": {
-                        "type": "string"
-                    }
-                }
-            },
-            "Mandatory_Details": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "Resource_Path_Index": {
-                "type": "object",
-                "properties": {
-                    "resource_path_index": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                }
+              }
             }
+          },
+          "204": {
+            "description": "No merge jobs found for the specified criteria"
+          },
+          "400": {
+            "description": "Bad request due to validation errors, invalid data, or business rule violations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Standard error response for invalid data or record issues",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating the type of failure",
+                          "enum": [
+                            "INVALID_DATA",
+                            "INVALID_MODULE",
+                            "NOT_ALLOWED"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details with context information",
+                          "additionalProperties": false,
+                          "properties": {
+                            "resource_path_index": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "Index of the resource path parameter that caused the error"
+                            },
+                            "api_name": {
+                              "type": "string",
+                              "description": "API name of the field or resource that caused the error",
+                              "maxLength": 100
+                            },
+                            "json_path": {
+                              "type": "string",
+                              "description": "JSON path to the field that caused the error",
+                              "maxLength": 200
+                            },
+                            "maximum_length": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "Maximum allowed length for the field"
+                            },
+                            "minimum_length": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "Minimum required length for the field"
+                            }
+                          }
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message describing the issue",
+                          "maxLength": 500
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Status of the request",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "status"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Error response with merge array structure",
+                      "additionalProperties": false,
+                      "properties": {
+                        "merge": {
+                          "type": "array",
+                          "description": "Array of error responses for merge operations",
+                          "maxItems": 10,
+                          "items": {
+                            "type": "object",
+                            "description": "Individual merge operation error",
+                            "additionalProperties": false,
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "description": "Error code for the specific merge operation",
+                                "enum": [
+                                  "MANDATORY_NOT_FOUND",
+                                  "NOT_ALLOWED",
+                                  "INVALID_DATA",
+                                  "DUPLICATE_DATA",
+                                  "DEPENDENT_FIELD_MISSING",
+                                  "LIMIT_EXCEEDED"
+                                ]
+                              },
+                              "details": {
+                                "type": "object",
+                                "description": "Detailed error information for merge operation",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "api_name": {
+                                    "type": "string",
+                                    "description": "API name of the field that caused the error",
+                                    "maxLength": 100
+                                  },
+                                  "json_path": {
+                                    "type": "string",
+                                    "description": "JSON path to the problematic field",
+                                    "maxLength": 200
+                                  },
+                                  "resource_path_index": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Index of the resource path parameter"
+                                  },
+                                  "maximum_length": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Maximum allowed length"
+                                  },
+                                  "minimum_length": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Minimum required length"
+                                  },
+                                  "MAXIMUM_SIZE": {
+                                    "type": "string",
+                                    "description": "Maximum size limit for files",
+                                    "maxLength": 50
+                                  },
+                                  "limit_due_to": {
+                                    "type": "array",
+                                    "description": "Fields that caused the limit to be exceeded",
+                                    "maxItems": 20,
+                                    "items": {
+                                      "type": "object",
+                                      "description": "Field information for limit exceeded error",
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "api_name": {
+                                          "type": "string",
+                                          "description": "API name of the field",
+                                          "maxLength": 100
+                                        },
+                                        "json_path": {
+                                          "type": "string",
+                                          "description": "JSON path to the field",
+                                          "maxLength": 200
+                                        }
+                                      },
+                                      "required": [
+                                        "api_name",
+                                        "json_path"
+                                      ]
+                                    }
+                                  },
+                                  "data": {
+                                    "type": "array",
+                                    "description": "Data records with association information",
+                                    "maxItems": 10,
+                                    "items": {
+                                      "type": "object",
+                                      "description": "Record with association details",
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "description": "Record identifier",
+                                          "pattern": "^[0-9]+$",
+                                          "maxLength": 50
+                                        },
+                                        "_associated_places": {
+                                          "type": "array",
+                                          "description": "Associated places information",
+                                          "maxItems": 50,
+                                          "items": {
+                                            "type": "object",
+                                            "description": "Association information",
+                                            "additionalProperties": false,
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "description": "Type of association",
+                                                "maxLength": 100
+                                              },
+                                              "resources": {
+                                                "type": "array",
+                                                "description": "Associated resources",
+                                                "maxItems": 50,
+                                                "items": {
+                                                  "type": "object",
+                                                  "description": "Resource information",
+                                                  "additionalProperties": false,
+                                                  "properties": {
+                                                    "id": {
+                                                      "type": "string",
+                                                      "description": "Resource identifier",
+                                                      "pattern": "^[0-9]+$",
+                                                      "maxLength": 50
+                                                    },
+                                                    "name": {
+                                                      "type": "string",
+                                                      "description": "Resource name",
+                                                      "maxLength": 200
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "id",
+                                                    "name"
+                                                  ]
+                                                }
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "resources"
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id"
+                                      ]
+                                    }
+                                  },
+                                  "dependee": {
+                                    "type": "object",
+                                    "description": "Dependent field information",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "API name of the dependent field",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the dependent field",
+                                        "maxLength": 200
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path"
+                                    ]
+                                  }
+                                }
+                              },
+                              "message": {
+                                "type": "string",
+                                "description": "Error message for the merge operation",
+                                "maxLength": 500
+                              },
+                              "status": {
+                                "type": "string",
+                                "description": "Status of the merge operation",
+                                "enum": [
+                                  "error"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "message",
+                              "status"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "merge"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "summary": "Merge Records",
+        "description": "Merges duplicate records in Zoho CRM modules with field mapping and validation. Supports synchronous and asynchronous merge operations.",
+        "operationId": "mergeRecords",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/MasterRecordId"
+          },
+          {
+            "$ref": "#/components/parameters/Module"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Request body for merging records with field mapping and validation",
+                "additionalProperties": false,
+                "properties": {
+                  "merge": {
+                    "type": "array",
+                    "description": "Array of merge operations to be performed",
+                    "maxItems": 1,
+                    "items": {
+                      "type": "object",
+                      "description": "Individual merge operation configuration",
+                      "additionalProperties": false,
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "description": "Array of child records to be merged (minimum 1, maximum 2)",
+                          "minItems": 1,
+                          "maxItems": 2,
+                          "items": {
+                            "type": "object",
+                            "description": "Child record configuration for merge",
+                            "additionalProperties": false,
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique identifier of the child record to be merged",
+                                "pattern": "^[0-9]+$",
+                                "maxLength": 50
+                              },
+                              "_fields": {
+                                "type": "array",
+                                "description": "Array of field configurations for the child record",
+                                "maxItems": 100,
+                                "items": {
+                                  "type": "object",
+                                  "description": "Field configuration for merge operation",
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "api_name": {
+                                      "type": "string",
+                                      "description": "API name of the field to be configured",
+                                      "maxLength": 100
+                                    },
+                                    "_data": {
+                                      "oneOf": [
+                                        {
+                                          "type": "array",
+                                          "description": "Array of file/image upload data",
+                                          "maxItems": 50,
+                                          "items": {
+                                            "type": "object",
+                                            "description": "File or image upload information",
+                                            "additionalProperties": false,
+                                            "properties": {
+                                              "id": {
+                                                "type": "string",
+                                                "description": "Unique identifier of the file or image",
+                                                "pattern": "^[0-9]+$",
+                                                "maxLength": 50
+                                              }
+                                            },
+                                            "required": [
+                                              "id"
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "type": "null",
+                                          "description": "No file data (will delete all files for this field)"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "api_name"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ]
+                          }
+                        },
+                        "master_record_fields": {
+                          "type": "array",
+                          "description": "Array of master record field configurations",
+                          "maxItems": 100,
+                          "items": {
+                            "type": "object",
+                            "description": "Master record field configuration",
+                            "additionalProperties": false,
+                            "properties": {
+                              "api_name": {
+                                "type": "string",
+                                "description": "API name of the master record field",
+                                "maxLength": 100
+                              },
+                              "_data": {
+                                "oneOf": [
+                                  {
+                                    "type": "array",
+                                    "description": "Array of file/image upload data for master record",
+                                    "maxItems": 50,
+                                    "items": {
+                                      "type": "object",
+                                      "description": "File or image upload information for master record",
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "description": "Unique identifier of the file or image",
+                                          "pattern": "^[0-9]+$",
+                                          "maxLength": 50
+                                        }
+                                      },
+                                      "required": [
+                                        "id"
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "type": "null",
+                                    "description": "No file data (will delete all files for this field)"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "api_name"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "merge"
+                ]
+              }
+            }
+          },
+          "required": true
         },
         "responses": {
-            "Merge_Response": {
-                "description": "",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/Response_Wrapper"
-                                }
+          "200": {
+            "description": "Records merged successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response for successful merge operation",
+                  "additionalProperties": false,
+                  "properties": {
+                    "merge": {
+                      "type": "array",
+                      "description": "Array of merge operation results",
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Individual merge operation result",
+                        "additionalProperties": false,
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "description": "Success code for the merge operation",
+                            "enum": [
+                              "SUCCESS"
                             ]
-                        }
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "Details of the successful merge operation",
+                            "additionalProperties": false,
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "ID of the merged record",
+                                "pattern": "^[0-9]+$",
+                                "maxLength": 50
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ]
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Success message for the merge operation",
+                            "maxLength": 500
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Status of the merge operation",
+                            "enum": [
+                              "success"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "details",
+                          "message",
+                          "status"
+                        ]
+                      }
                     }
+                  },
+                  "required": [
+                    "merge"
+                  ]
                 }
+              }
             }
+          },
+          "201": {
+            "description": "Merge operation initiated - may be completed synchronously or scheduled asynchronously",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Response when merge operation is completed or scheduled",
+                      "additionalProperties": false,
+                      "properties": {
+                        "merge": {
+                          "type": "array",
+                          "description": "Array of merge operation results",
+                          "maxItems": 1,
+                          "items": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "description": "Successful merge completion response",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "code": {
+                                    "type": "string",
+                                    "description": "Success code for completed merge",
+                                    "enum": [
+                                      "SUCCESS"
+                                    ]
+                                  },
+                                  "details": {
+                                    "type": "object",
+                                    "description": "Details of the completed merge operation",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "description": "ID of the merged record",
+                                        "pattern": "^[0-9]+$",
+                                        "maxLength": 50
+                                      }
+                                    },
+                                    "required": [
+                                      "id"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Success message for the merge operation",
+                                    "maxLength": 500
+                                  },
+                                  "status": {
+                                    "type": "string",
+                                    "description": "Status of the merge operation",
+                                    "enum": [
+                                      "success"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "code",
+                                  "details",
+                                  "message",
+                                  "status"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "description": "Scheduled merge operation response",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "code": {
+                                    "type": "string",
+                                    "description": "Code indicating merge was scheduled",
+                                    "enum": [
+                                      "SCHEDULED"
+                                    ]
+                                  },
+                                  "details": {
+                                    "type": "object",
+                                    "description": "Details of the scheduled merge operation",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "job_id": {
+                                        "type": "string",
+                                        "description": "Job ID for tracking the scheduled merge",
+                                        "pattern": "^[0-9]+$",
+                                        "maxLength": 50
+                                      }
+                                    },
+                                    "required": [
+                                      "job_id"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Message about the scheduled merge operation",
+                                    "maxLength": 500
+                                  },
+                                  "status": {
+                                    "type": "string",
+                                    "description": "Status of the scheduling operation",
+                                    "enum": [
+                                      "success"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "code",
+                                  "details",
+                                  "message",
+                                  "status"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "merge"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Records scheduled for merge",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response for scheduled merge operation",
+                  "additionalProperties": false,
+                  "properties": {
+                    "merge": {
+                      "type": "array",
+                      "description": "Array of scheduled merge operation results",
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Individual scheduled merge operation result",
+                        "additionalProperties": false,
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "description": "Code indicating merge was scheduled",
+                            "enum": [
+                              "SCHEDULED"
+                            ]
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "Details of the scheduled merge operation",
+                            "additionalProperties": false,
+                            "properties": {
+                              "job_id": {
+                                "type": "string",
+                                "description": "Job ID for tracking the scheduled merge",
+                                "pattern": "^[0-9]+$",
+                                "maxLength": 50
+                              }
+                            },
+                            "required": [
+                              "job_id"
+                            ]
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Message about the scheduled merge operation",
+                            "maxLength": 500
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Status of the scheduling operation",
+                            "enum": [
+                              "success"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "details",
+                          "message",
+                          "status"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "merge"
+                  ]
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No content - merge operation completed without additional data to return"
+          },
+          "400": {
+            "description": "Bad request due to validation errors, invalid data, or business rule violations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Standard error response for invalid data or record issues",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating the type of failure",
+                          "enum": [
+                            "INVALID_DATA",
+                            "INVALID_MODULE",
+                            "NOT_ALLOWED"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details with context information",
+                          "additionalProperties": false,
+                          "properties": {
+                            "resource_path_index": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "Index of the resource path parameter that caused the error"
+                            },
+                            "api_name": {
+                              "type": "string",
+                              "description": "API name of the field or resource that caused the error",
+                              "maxLength": 100
+                            },
+                            "json_path": {
+                              "type": "string",
+                              "description": "JSON path to the field that caused the error",
+                              "maxLength": 200
+                            },
+                            "maximum_length": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "Maximum allowed length for the field"
+                            },
+                            "minimum_length": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "Minimum required length for the field"
+                            }
+                          }
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message describing the issue",
+                          "maxLength": 500
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Status of the request",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "status"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Error response with merge array structure",
+                      "additionalProperties": false,
+                      "properties": {
+                        "merge": {
+                          "type": "array",
+                          "description": "Array of error responses for merge operations",
+                          "maxItems": 10,
+                          "items": {
+                            "type": "object",
+                            "description": "Individual merge operation error",
+                            "additionalProperties": false,
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "description": "Error code for the specific merge operation",
+                                "enum": [
+                                  "MANDATORY_NOT_FOUND",
+                                  "NOT_ALLOWED",
+                                  "INVALID_DATA",
+                                  "DUPLICATE_DATA",
+                                  "DEPENDENT_FIELD_MISSING",
+                                  "LIMIT_EXCEEDED"
+                                ]
+                              },
+                              "details": {
+                                "type": "object",
+                                "description": "Detailed error information for merge operation",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "api_name": {
+                                    "type": "string",
+                                    "description": "API name of the field that caused the error",
+                                    "maxLength": 100
+                                  },
+                                  "json_path": {
+                                    "type": "string",
+                                    "description": "JSON path to the problematic field",
+                                    "maxLength": 200
+                                  },
+                                  "resource_path_index": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Index of the resource path parameter"
+                                  },
+                                  "maximum_length": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Maximum allowed length"
+                                  },
+                                  "minimum_length": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Minimum required length"
+                                  },
+                                  "MAXIMUM_SIZE": {
+                                    "type": "string",
+                                    "description": "Maximum size limit for files",
+                                    "maxLength": 50
+                                  },
+                                  "limit_due_to": {
+                                    "type": "array",
+                                    "description": "Fields that caused the limit to be exceeded",
+                                    "maxItems": 20,
+                                    "items": {
+                                      "type": "object",
+                                      "description": "Field information for limit exceeded error",
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "api_name": {
+                                          "type": "string",
+                                          "description": "API name of the field",
+                                          "maxLength": 100
+                                        },
+                                        "json_path": {
+                                          "type": "string",
+                                          "description": "JSON path to the field",
+                                          "maxLength": 200
+                                        }
+                                      },
+                                      "required": [
+                                        "api_name",
+                                        "json_path"
+                                      ]
+                                    }
+                                  },
+                                  "data": {
+                                    "type": "array",
+                                    "description": "Data records with association information",
+                                    "maxItems": 10,
+                                    "items": {
+                                      "type": "object",
+                                      "description": "Record with association details",
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "description": "Record identifier",
+                                          "pattern": "^[0-9]+$",
+                                          "maxLength": 50
+                                        },
+                                        "_associated_places": {
+                                          "type": "array",
+                                          "description": "Associated places information",
+                                          "maxItems": 50,
+                                          "items": {
+                                            "type": "object",
+                                            "description": "Association information",
+                                            "additionalProperties": false,
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "description": "Type of association",
+                                                "maxLength": 100
+                                              },
+                                              "resources": {
+                                                "type": "array",
+                                                "description": "Associated resources",
+                                                "maxItems": 50,
+                                                "items": {
+                                                  "type": "object",
+                                                  "description": "Resource information",
+                                                  "additionalProperties": false,
+                                                  "properties": {
+                                                    "id": {
+                                                      "type": "string",
+                                                      "description": "Resource identifier",
+                                                      "pattern": "^[0-9]+$",
+                                                      "maxLength": 50
+                                                    },
+                                                    "name": {
+                                                      "type": "string",
+                                                      "description": "Resource name",
+                                                      "maxLength": 200
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "id",
+                                                    "name"
+                                                  ]
+                                                }
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "resources"
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id"
+                                      ]
+                                    }
+                                  },
+                                  "dependee": {
+                                    "type": "object",
+                                    "description": "Dependent field information",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "API name of the dependent field",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the dependent field",
+                                        "maxLength": 200
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path"
+                                    ]
+                                  }
+                                }
+                              },
+                              "message": {
+                                "type": "string",
+                                "description": "Error message for the merge operation",
+                                "maxLength": 500
+                              },
+                              "status": {
+                                "type": "string",
+                                "description": "Status of the merge operation",
+                                "enum": [
+                                  "error"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "message",
+                              "status"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "merge"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
         },
-        "parameters": {
-            "module": {
-                "name": "module",
-                "in": "path",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "job_id": {
-                "name": "job_id",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "masterrecordid": {
-                "name": "masterrecordid",
-                "in": "path",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            }
-        },
-        "securitySchemes": {
-            "iam-oauth2-schema": {
-                "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
-            }
-        }
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.CREATE"
+            ]
+          }
+        ]
+      }
     }
+  },
+  "components": {
+    "parameters": {
+      "Module": {
+        "name": "module",
+        "in": "path",
+        "required": true,
+        "description": "CRM module name for which records should be merged",
+        "schema": {
+          "type": "string",
+          "description": "Valid CRM module name",
+          "enum": [
+            "Accounts",
+            "Contacts",
+            "Leads",
+            "Deals",
+            "Cases",
+            "Campaigns"
+          ]
+        }
+      },
+      "JobId": {
+        "name": "job_id",
+        "in": "query",
+        "required": false,
+        "description": "Optional job ID to track specific merge operation status",
+        "schema": {
+          "type": "string",
+          "description": "Unique identifier for merge job",
+          "pattern": "^[0-9]+$",
+          "maxLength": 50
+        }
+      },
+      "MasterRecordId": {
+        "name": "masterRecordId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier of the master record that will be retained after merge",
+        "schema": {
+          "type": "string",
+          "description": "Master record identifier (int64 as string)",
+          "pattern": "^[0-9]+$",
+          "maxLength": 50
+        }
+      }
+    },
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.modules.read": "Read access to CRM module records for merge operations",
+              "ZohoCRM.modules.CREATE": "Write access to CRM module records for merge operations",
+              "ZohoCRM.modules.all": "Full access to CRM modules for merge operations",
+              "ZohoCRM.settings.modules.read": "Read access to module settings for merge configuration",
+              "ZohoCRM.settings.modules.all": "Full access to module settings for merge operations",
+              "ZohoCRM.settings.all": "Full access to all CRM settings"
+            }
+          }
+        }
+      }
+    }
+  }
 }

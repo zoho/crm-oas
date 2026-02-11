@@ -1,710 +1,1022 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "bulk_write",
-        "description": "Bulk Write",
-        "version": "v8.0"
-    },
-    "servers": [
-        {
-            "url": "https://zohoapis.com"
-        }
-    ],
-    "paths": {
-        "/crm/v8/upload": {
-            "post": {
-                "servers": [
-                    {
-                        "url": "https://content.zohoapis.com"
-                    }
-                ],
-                "operationId": "Upload File",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/feature"
-                    },
-                    {
-                        "$ref": "#/components/parameters/X-CRM-ORG"
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "$ref": "#/components/schemas/File_Body_Wrapper"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Success_Response"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/API_Exception"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Bulk Write",
+    "description": "Bulk Write API allows you to insert, update, or upsert a large set of data.",
+    "version": "8"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/bulk/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "description": "API Server URL TLD",
+          "default": "com",
+          "enum": [
+            "eu",
+            "com",
+            "au",
+            "in",
+            "jp",
+            "cn",
+            "ca"
+          ]
         },
-        "/crm/bulk/v8/write": {
-            "post": {
-                "operationId": "Create Bulk Write Job",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/Request_Wrapper"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Success_Response"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/CoExistence_Not_Allowed"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Invalid_Callback_Method"
-                                        },
-                                        {
-                                            "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/schemas/MandatoryError"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/API_Exception"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/crm/bulk/v8/write/{job_id}": {
-            "get": {
-                "operationId": "Get Bulk Write Job Details",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/job_id"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Bulk_Write_Response"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Resource_Not_Found"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/API_Exception"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/{download_url}": {
-            "get": {
-                "operationId": "Download Bulk Write Result",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/download_url"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/octet-stream": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/File_Body_Wrapper"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/API_Exception"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        "version": {
+          "description": "API Version",
+          "default": "v8"
         }
-    },
-    "security": [
-        {
-            "iam-oauth2-schema": [
-                "ZohoCRM.bulk.ALL"
-            ]
-        }
-    ],
-    "components": {
-        "schemas": {
-            "CallBack": {
+      }
+    }
+  ],
+  "paths": {
+    "/write": {
+      "post": {
+        "summary": "Create Bulk Write Job",
+        "description": "Creates a new bulk write job to insert or update records in bulk",
+        "operationId": "createBulkWriteJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
                 "type": "object",
+                "description": "Bulk write job creation request",
+                "additionalProperties": false,
                 "properties": {
-                    "url": {
-                        "type": "string"
-                    },
-                    "method": {
+                  "character_encoding": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Character encoding of the file",
+                    "maxLength": 50
+                  },
+                  "operation": {
+                    "type": "string",
+                    "description": "Type of bulk operation to perform",
+                    "enum": [
+                      "insert",
+                      "update",
+                      "upsert"
+                    ]
+                  },
+                  "callback": {
+                    "type": "object",
+                    "description": "Callback configuration for job completion notification",
+                    "additionalProperties": false,
+                    "properties": {
+                      "url": {
                         "type": "string",
+                        "description": "Callback URL to receive job completion notification",
+                        "format": "uri"
+                      },
+                      "method": {
+                        "type": "string",
+                        "description": "HTTP method for callback",
                         "enum": [
-                            "post"
+                          "post"
                         ]
-                    }
-                }
-            },
-            "default_value": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
+                      }
                     },
-                    "module": {
-                        "type": "string"
-                    },
-                    "value": {
-                        "type": "object"
-                    }
-                }
-            },
-            "Resource": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "COMPLETED",
-                            "ADDED",
-                            "FAILED",
-                            "IN PROGRESS",
-                            "SKIPPED"
-                        ]
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": [
+                    "required": [
+                      "url",
+                      "method"
+                    ]
+                  },
+                  "resource": {
+                    "type": "array",
+                    "description": "List of resources to process in bulk",
+                    "maxItems": 100,
+                    "items": {
+                      "type": "object",
+                      "description": "Resource configuration for bulk operation",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "description": "Type of resource",
+                          "enum": [
                             "data"
-                        ],
-                        "nullable": true
-                    },
-                    "module": {
-                        "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/modules.json#/components/schemas/Minified_Module"
-                    },
-                    "code": {
-                        "type": "string"
-                    },
-                    "file_id": {
-                        "type": "string"
-                    },
-                    "file_names": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "ignore_empty": {
-                        "type": "boolean",
-                        "nullable": true
-                    },
-                    "find_by": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "field_mappings": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "api_name": {
-                                    "type": "string"
-                                },
-                                "index": {
-                                    "type": "integer",
-                                    "format": "int32"
-                                },
-                                "format": {
-                                    "type": "string"
-                                },
-                                "find_by": {
-                                    "type": "string"
-                                },
-                                "default_value": {
-                                    "$ref": "#/components/schemas/default_value"
-                                },
-                                "module": {
-                                    "type": "string"
-                                },
-                                "parent_column_index": {
-                                    "type": "integer",
-                                    "format": "int32"
-                                }
-                            }
-                        }
-                    },
-                    "file": {
-                        "type": "object",
-                        "properties": {
-                            "status": {
-                                "type": "string",
-                                "enum": [
-                                    "COMPLETED",
-                                    "ADDED",
-                                    "FAILED",
-                                    "IN PROGRESS",
-                                    "SKIPPED"
-                                ]
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "added_count": {
-                                "type": "integer",
-                                "format": "int32"
-                            },
-                            "skipped_count": {
-                                "type": "integer",
-                                "format": "int32"
-                            },
-                            "updated_count": {
-                                "type": "integer",
-                                "format": "int32"
-                            },
-                            "total_count": {
-                                "type": "integer",
-                                "format": "int32"
-                            }
-                        }
-                    }
-                }
-            },
-            "Request_Wrapper": {
-                "type": "object",
-                "properties": {
-                    "character_encoding": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "operation": {
-                        "type": "string",
-                        "enum": [
-                            "upsert",
-                            "insert",
-                            "update"
-                        ]
-                    },
-                    "callback": {
-                        "$ref": "#/components/schemas/CallBack"
-                    },
-                    "resource": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Resource"
-                        }
-                    },
-                    "ignore_empty": {
-                        "type": "boolean"
-                    }
-                }
-            },
-            "Result": {
-                "type": "object",
-                "properties": {
-                    "download_url": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "download_url"
-                ]
-            },
-            "Bulk_Write_Response": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string"
-                    },
-                    "character_encoding": {
-                        "type": "string"
-                    },
-                    "resource": {
-                        "items": {
-                            "$ref": "#/components/schemas/Resource"
+                          ]
                         },
-                        "type": "array"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "result": {
-                        "$ref": "#/components/schemas/Result"
-                    },
-                    "created_by": {
-                        "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/users.json#/components/schemas/Minified_User"
-                    },
-                    "operation": {
-                        "type": "string"
-                    },
-                    "created_time": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "callback": {
-                        "$ref": "#/components/schemas/CallBack"
+                        "file_names": {
+                          "type": "array",
+                          "description": "List of file names to process",
+                          "maxItems": 10,
+                          "items": {
+                            "type": "string",
+                            "description": "File name",
+                            "maxLength": 255
+                          }
+                        },
+                        "module": {
+                          "type": "object",
+                          "description": "Target module for bulk operation",
+                          "additionalProperties": false,
+                          "properties": {
+                            "api_name": {
+                              "type": "string",
+                              "description": "API name of the module",
+                              "maxLength": 100
+                            }
+                          },
+                          "required": [
+                            "api_name"
+                          ]
+                        },
+                        "file_id": {
+                          "type": "string",
+                          "description": "ID of the uploaded file",
+                          "maxLength": 100
+                        },
+                        "ignore_empty": {
+                          "type": "boolean",
+                          "description": "Whether to ignore empty values"
+                        },
+                        "find_by": {
+                          "type": "string",
+                          "description": "Field to use for finding existing records",
+                          "enum": [
+                            "id"
+                          ]
+                        },
+                        "field_mappings": {
+                          "type": "array",
+                          "description": "Mapping between file columns and module fields",
+                          "maxItems": 500,
+                          "items": {
+                            "type": "object",
+                            "description": "Field mapping configuration",
+                            "additionalProperties": false,
+                            "properties": {
+                              "api_name": {
+                                "type": "string",
+                                "description": "API name of the field",
+                                "maxLength": 100
+                              },
+                              "index": {
+                                "type": "integer",
+                                "format": "int32",
+                                "description": "Column index in the file"
+                              }
+                            },
+                            "required": [
+                              "api_name",
+                              "index"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "file_names",
+                        "module",
+                        "file_id",
+                        "find_by"
+                      ]
                     }
-                }
-            },
-            "File_Body_Wrapper": {
-                "type": "object",
-                "properties": {
-                    "file": {
-                        "type": "object"
-                    }
+                  }
                 },
                 "required": [
-                    "file"
+                  "operation",
+                  "resource"
                 ]
-            },
-            "Success_Response": {
-                "type": "object",
-                "properties": {
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Bulk write job created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Successful bulk write job creation response",
+                  "additionalProperties": false,
+                  "properties": {
                     "status": {
-                        "type": "string",
-                        "enum": [
-                            "success"
-                        ]
+                      "type": "string",
+                      "description": "Status of the operation",
+                      "enum": [
+                        "success"
+                      ]
                     },
                     "code": {
-                        "type": "string",
-                        "enum": [
-                            "SUCCESS",
-                            "FILE_UPLOAD_SUCCESS"
-                        ]
+                      "type": "string",
+                      "description": "Response code indicating the result",
+                      "enum": [
+                        "SUCCESS",
+                        "FILE_UPLOAD_SUCCESS"
+                      ]
                     },
                     "message": {
-                        "type": "string",
-                        "enum": [
-                            "success",
-                            "file uploaded."
-                        ]
+                      "type": "string",
+                      "description": "Response message",
+                      "enum": [
+                        "success",
+                        "file uploaded."
+                      ]
                     },
                     "details": {
-                        "type": "object",
-                        "properties": {
-                            "file_id": {
-                                "type": "integer",
-                                "format": "int64"
-                            },
-                            "created_time": {
-                                "type": "string",
-                                "format": "date-time"
-                            },
-                            "id": {
-                                "type": "string"
-                            },
-                            "created_by": {
-                                "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/users.json#/components/schemas/Minified_User"
-                            }
+                      "type": "object",
+                      "description": "Details of the created bulk write job",
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique identifier of the bulk write job",
+                          "maxLength": 100
                         },
-                        "required": [
-                            "id",
-                            "created_by"
-                        ]
+                        "created_by": {
+                          "type": "object",
+                          "description": "User who created the bulk write job",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "User ID",
+                              "maxLength": 100
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "User name",
+                              "maxLength": 100
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created_by"
+                      ]
                     }
-                },
-                "required": [
+                  },
+                  "required": [
                     "status",
                     "code",
                     "message",
                     "details"
-                ]
-            },
-            "Invalid_Callback_Method": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_CALLBACK_METHOD"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "#/components/schemas/Supported_Details"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid input parameters or validation errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Invalid callback URL error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "INVALID_CALLBACK_URL"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
                             "error"
-                        ]
-                    }
-                },
-                "required": [
-                    "code",
-                    "details",
-                    "message",
-                    "status"
-                ]
-            },
-            "Supported_Details": {
-                "type": "object",
-                "properties": {
-                    "supported_callback_methods": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
+                          ]
                         }
-                    }
-                },
-                "required": [
-                    "supported_callback_methods"
-                ]
-            },
-            "Resource_Not_Found": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "RESOURCE_NOT_FOUND"
-                        ]
+                      }
                     },
-                    "details": {
-                        "type": "object"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
+                    {
+                      "type": "object",
+                      "description": "Invalid data error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "INVALID_DATA"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
                             "error"
-                        ]
-                    }
-                },
-                "required": [
-                    "code",
-                    "details",
-                    "message",
-                    "status"
-                ]
-            },
-            "CoExistence_Not_Allowed": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "description": "Mandatory field not found error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "MANDATORY_NOT_FOUND"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Error details",
+                          "additionalProperties": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "enum": [
+                            "Required key parent_column_index is not available",
+                            "Required key find_by is not available"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "description": "Coexistence not allowed error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
                             "COEXISTENCE_NOT_ALLOWED"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/schemas/BodyErrorDetails"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
                             "error"
-                        ]
-                    }
-                },
-                "required": [
-                    "code",
-                    "details",
-                    "message",
-                    "status"
-                ]
-            },
-            "API_Exception": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "MODULE_NOT_AVAILABLE",
-                            "DUPLICATE_DATA",
-                            "INVALID_URL_PATTERN",
-                            "RESOURCE_NOT_FOUND",
-                            "FILE_TOO_LARGE",
-                            "COLUMN_INDEX_NOT_FOUND",
-                            "INVALID_FIELD",
-                            "MANDATORY_NOT_FOUND",
-                            "HEADER_LIMIT_EXCEEDED",
-                            "MISSING_REQUIRED_KEY",
-                            "INVALID_FILE_FORMAT",
-                            "MANDATORY_FIELDS_NOT_MAPPED",
-                            "INVALID_FORMAT",
-                            "BLOCKED_RECORD",
-                            "INVALID_DATA",
-                            "INVALID_REQUEST_METHOD",
-                            "CANNOT_PROCESS",
-                            "INVALID_TOKEN",
-                            "LIMIT_EXCEEDED",
-                            "INVALID_FIELD_NAME",
-                            "FILE_NOT_SUPPORTED",
-                            "INVALID_FILE_ID",
-                            "NOT_APPROVED"
-                        ]
+                          ]
+                        }
+                      }
                     },
-                    "message": {
-                        "type": "string",
-                        "enum": [
-                            "invalid file format. only zip format is supported",
-                            "All mandatory fields are not mapped for the layout",
-                            "improper file id",
-                            "Requested module 'asdf' is not available.",
-                            "Please check if the URL trying to access is a correct one",
-                            "required key index for field Company is not found in request body.",
-                            "File not supported for bulk write",
-                            "required key operation is not found in request body.",
-                            "The http request method type is not a valid one",
-                            "File size too large to process",
-                            "The requested resource doesn't exist.",
-                            "invalid mapping. invalid api_name ast_Name.",
-                            "invalid oauth token"
-                        ]
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
+                    {
+                      "type": "object",
+                      "description": "File not supported error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "FILE_NOT_SUPPORTED"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
                             "error"
-                        ]
+                          ]
+                        }
+                      }
                     },
-                    "details": {
-                        "type": "object"
+                    {
+                      "type": "object",
+                      "description": "File not found error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "FILE_NOT_FOUND"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      }
                     },
-                    "ERROR_MESSAGE": {
-                        "type": "string",
-                        "enum": [
-                            "Bad Request"
-                        ]
+                    {
+                      "type": "object",
+                      "description": "File not found error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "INVALID_REQUEST"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      }
                     },
-                    "ERROR_CODE": {
-                        "type": "integer",
-                        "format": "int32"
+                    {
+                      "type": "object",
+                      "description": "Mandatory fields not mapped error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "MANDATORY_FIELDS_NOT_MAPPED"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      }
                     },
-                    "x-error": {
-                        "type": "string",
-                        "enum": [
-                            "check if headers [feature, X-CRM-ORG] are present and valid"
-                        ]
+                    {
+                      "type": "object",
+                      "description": "Invalid callback method error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "INVALID_CALLBACK_METHOD"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": false,
+                          "properties": {
+                            "supported_callback_methods": {
+                              "type": "array",
+                              "description": "List of supported callback methods",
+                              "maxItems": 10,
+                              "items": {
+                                "type": "string",
+                                "description": "Callback method",
+                                "maxLength": 50
+                              }
+                            }
+                          }
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      }
                     },
-                    "info": {
-                        "type": "string",
-                        "enum": [
-                            "Forbidden"
-                        ]
+                    {
+                      "type": "object",
+                      "description": "Missing required key error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "MISSING_REQUIRED_KEY"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": false,
+                          "properties": {
+                            "json_path": {
+                              "type": "string",
+                              "description": "JSON path to the missing key",
+                              "maxLength": 500
+                            }
+                          }
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      }
                     },
-                    "x-info": {
-                        "type": "string",
-                        "enum": [
-                            "Link not valid"
-                        ]
+                    {
+                      "type": "object",
+                      "description": "Module not available error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "MODULE_NOT_AVAILABLE"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      }
                     },
-                    "http_status": {
-                        "type": "string"
+                    {
+                      "type": "object",
+                      "description": "Request body not supported error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "REQUEST_BODY_NOT_SUPPORTED"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Response status",
+                          "enum": [
+                            "error"
+                          ]
+                        }
+                      }
                     }
+                  ]
                 }
+              }
             }
+          }
         },
-        "parameters": {
-            "job_id": {
-                "name": "job_id",
-                "in": "path",
-                "required": true,
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.bulk.CREATE"
+            ]
+          }
+        ]
+      }
+    },
+    "/write/{jobId}": {
+      "get": {
+        "summary": "Get Bulk Write Job Details",
+        "description": "To upload a CSV file in ZIP format for bulk write API. The response contains the file_id. Use this ID while making the bulk write request.",
+        "operationId": "getJobDetails",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/JobId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bulk write job details retrieved successfully",
+            "content": {
+              "application/json": {
                 "schema": {
-                    "type": "string"
+                  "type": "object",
+                  "description": "Bulk write job details response",
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Status of the bulk write job",
+                      "maxLength": 50
+                    },
+                    "character_encoding": {
+                      "type": "string",
+                      "description": "Character encoding used for the file",
+                      "maxLength": 50
+                    },
+                    "resource": {
+                      "type": "array",
+                      "description": "List of resources processed in the bulk write job",
+                      "maxItems": 100,
+                      "items": {
+                        "type": "object",
+                        "description": "Resource details",
+                        "additionalProperties": false,
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "description": "Status of the resource processing",
+                            "enum": [
+                              "COMPLETED",
+                              "ADDED",
+                              "INPROGRESS",
+                              "SKIPPED"
+                            ]
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Type of resource",
+                            "enum": [
+                              "data"
+                            ]
+                          },
+                          "module": {
+                            "type": "object",
+                            "description": "Module information",
+                            "additionalProperties": false,
+                            "properties": {
+                              "api_name": {
+                                "type": "string",
+                                "description": "API name of the module",
+                                "maxLength": 100
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "Module ID",
+                                "maxLength": 100
+                              }
+                            },
+                            "required": [
+                              "api_name"
+                            ]
+                          },
+                          "ignore_empty": {
+                            "type": "boolean",
+                            "description": "Whether empty values are ignored"
+                          },
+                          "field_mappings": {
+                            "type": "array",
+                            "description": "Field mapping configuration",
+                            "maxItems": 500,
+                            "items": {
+                              "type": "object",
+                              "description": "Individual field mapping",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "API name of the field",
+                                  "maxLength": 100
+                                },
+                                "index": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "description": "Column index in the file"
+                                },
+                                "format": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "description": "Format of the field value",
+                                  "maxLength": 100
+                                },
+                                "find_by": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "description": "Field to find records by",
+                                  "maxLength": 100
+                                },
+                                "default_value": {
+                                  "type": "object",
+                                  "description": "Default value configuration",
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Default value",
+                                      "maxLength": 500
+                                    }
+                                  },
+                                  "required": [
+                                    "value"
+                                  ]
+                                },
+                                "parent_column_index": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "format": "int32",
+                                  "description": "Parent column index for related fields"
+                                },
+                                "module": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "description": "Related module name",
+                                  "maxLength": 100
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "index"
+                              ]
+                            }
+                          },
+                          "file": {
+                            "type": "object",
+                            "description": "File processing details",
+                            "additionalProperties": false,
+                            "properties": {
+                              "status": {
+                                "type": "string",
+                                "description": "File processing status",
+                                "enum": [
+                                  "COMPLETED",
+                                  "ADDED",
+                                  "INPROGRESS",
+                                  "SKIPPED"
+                                ]
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "File name",
+                                "maxLength": 255
+                              },
+                              "added_count": {
+                                "type": "integer",
+                                "format": "int32",
+                                "description": "Number of records added"
+                              },
+                              "skipped_count": {
+                                "type": "integer",
+                                "format": "int32",
+                                "description": "Number of records skipped"
+                              },
+                              "updated_count": {
+                                "type": "integer",
+                                "format": "int32",
+                                "description": "Number of records updated"
+                              },
+                              "total_count": {
+                                "type": "integer",
+                                "format": "int32",
+                                "description": "Total number of records"
+                              }
+                            },
+                            "required": [
+                              "status",
+                              "name",
+                              "added_count",
+                              "skipped_count",
+                              "updated_count",
+                              "total_count"
+                            ]
+                          },
+                          "code": {
+                            "type": "string",
+                            "description": "Response code",
+                            "maxLength": 100
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "type",
+                          "module"
+                        ]
+                      }
+                    },
+                    "id": {
+                      "type": "string",
+                      "description": "Bulk write job ID",
+                      "maxLength": 100
+                    },
+                    "result": {
+                      "type": "object",
+                      "description": "Job result details",
+                      "additionalProperties": false,
+                      "properties": {
+                        "download_url": {
+                          "type": "string",
+                          "description": "URL to download the result",
+                          "maxLength": 500
+                        }
+                      },
+                      "required": [
+                        "download_url"
+                      ]
+                    },
+                    "created_by": {
+                      "type": "object",
+                      "description": "User who created the job",
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "User name",
+                          "maxLength": 100
+                        },
+                        "id": {
+                          "type": "string",
+                          "description": "User ID",
+                          "maxLength": 100
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "id"
+                      ]
+                    },
+                    "operation": {
+                      "type": "string",
+                      "description": "Type of operation performed",
+                      "maxLength": 50
+                    },
+                    "created_time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Job creation timestamp"
+                    },
+                    "callback": {
+                      "type": "object",
+                      "description": "Callback configuration",
+                      "additionalProperties": false,
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "description": "Callback URL",
+                          "enum": [
+                            "http://requestbin.fullcontact.com/1fcimk51"
+                          ]
+                        },
+                        "method": {
+                          "type": "string",
+                          "description": "Callback HTTP method",
+                          "enum": [
+                            "post"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "method"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "resource",
+                    "id",
+                    "created_by",
+                    "operation",
+                    "created_time",
+                    "callback"
+                  ]
                 }
-            },
-            "download_url": {
-                "name": "download_url",
-                "in": "path",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "feature": {
-                "name": "feature",
-                "in": "header",
-                "required": false,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "X-CRM-ORG": {
-                "name": "X-CRM-ORG",
-                "in": "header",
-                "required": false,
-                "schema": {
-                    "type": "string"
-                }
+              }
             }
+          }
         },
-        "headers": {},
-        "securitySchemes": {
-            "iam-oauth2-schema": {
-                "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
-            }
-        }
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.bulk.CREATE"
+            ]
+          }
+        ]
+      }
     }
+  },
+  "components": {
+    "parameters": {
+      "JobId": {
+        "name": "jobId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier of the bulk write job",
+        "schema": {
+          "type": "string",
+          "maxLength": 100
+        }
+      }
+    },
+    "headers": {},
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.bulk.CREATE": "Allows to perform CREATE operation in bulk over CRM data."
+            }
+          }
+        }
+      }
+    }
+  }
 }

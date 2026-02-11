@@ -1,494 +1,881 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "mass_delete_cvid",
-        "description": "Mass Change Owner",
-        "version": "v8.0"
-    },
-    "servers": [
-        {
-            "url": "https://zohoapis.com"
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mass Delete Api",
+    "description": "Mass delete records with record ids and custom view id",
+    "version": "8.0"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
         }
-    ],
-    "paths": {
-        "/crm/v8/{module}/actions/mass_delete": {
-            "post": {
-                "operationId": "Mass Delete By Record Id",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/module"
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {}
+      }
+    }
+  ],
+  "paths": {
+    "/{module}/actions/mass_delete": {
+      "post": {
+        "operationId": "massDelete",
+        "summary": "Mass delete with record ids and custom view id",
+        "description": "Mass delete records with record ids or custom view id",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          }
+        ],
+        "requestBody": {
+          "description": "Request body containing record IDs to delete or custom view ID (`cvid`) with or without territory. Maximum 500 IDs per request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Request body containing **either** record IDs to delete **or** custom view ID with optional territory filter. Maximum 500 IDs per request.",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[0-9]+$",
+                      "format": "string",
+                      "description": "Record ID"
                     },
-                    "required": true
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "description": "Array of record IDs to delete. Mutually exclusive with `cvid`."
+                  },
+                  "cvid": {
+                    "type": "string",
+                    "pattern": "^[0-9]+$",
+                    "format": "string",
+                    "description": "Custom view ID. Mutually exclusive with `ids`."
+                  },
+                  "territory": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "pattern": "^[0-9]+$",
+                        "format": "string",
+                        "description": "Territory ID"
+                      },
+                      "include_child": {
+                        "type": "boolean",
+                        "description": "Whether to include child territories."
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "id"
+                    ],
+                    "description": "Territory filter for the delete operation (optional, only valid with `cvid`)."
+                  }
                 },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "oneOf": [
-                                                            {
-                                                                "$ref": "#/components/schemas/Success_Response"
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            },
-                                            "required": [
-                                                "data"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "oneOf": [
-                                                            {
-                                                                "$ref": "#/components/schemas/Mandatory_API_Exception"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Invalid_Cvid_API_Exception"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Improper_Cvid_API_Exception"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Improper_Cvid_API_Exception1"
-                                                            },
-                                                            {
-                                                                "$ref": "#/components/schemas/Invalid_Module_API_Exception"
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/InternalError"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "get": {
-                "operationId": "Get Mass Delete Status",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/module"
-                    },
-                    {
-                        "$ref": "#/components/parameters/job_id"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Response_Wrapper"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/InternalError"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "security": [
-        {
-            "iam-oauth2-schema": [
-                "ZohoCRM.modules.ALL"
-            ]
-        }
-    ],
-    "components": {
-        "schemas": {
-            "Success_Response": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "success"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "SUCCESS"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
-                            "record is deleted",
-                            "mass delete scheduled successfully"
-                        ]
-                    },
-                    "details": {
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "string"
-                            },
-                            "job_id": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "id",
-                            "job_id"
-                        ]
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "Invalid_Cvid_API_Exception": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_DATA"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
-                            "the cvid given seems to be invalid"
-                        ]
-                    },
-                    "details": {
-                        "type": "object",
-                        "properties": {
-                            "api_name": {
-                                "type": "string",
-                                "enum": [
-                                    "cvid"
-                                ]
-                            },
-                            "expected_data_type": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "api_name",
-                            "expected_data_type"
-                        ]
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "Improper_Cvid_API_Exception": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_DATA"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
-                            "the cvid given seems to be invalid"
-                        ]
-                    },
-                    "details": {
-                        "type": "object",
-                        "properties": {
-                            "api_name": {
-                                "type": "string",
-                                "enum": [
-                                    "cvid"
-                                ]
-                            },
-                            "expected_data_type": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "Improper_Cvid_API_Exception1": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_DATA"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
-                            "the cvid given seems to be invalid"
-                        ]
-                    },
-                    "details": {
-                        "type": "object",
-                        "properties": {
-                            "api_name": {
-                                "type": "string",
-                                "enum": [
-                                    "cvid"
-                                ]
-                            },
-                            "json_path": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "api_name",
-                            "json_path"
-                        ]
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "Mandatory_API_Exception": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "MANDATORY_NOT_FOUND"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
-                            "required field not found"
-                        ]
-                    },
-                    "details": {
-                        "type": "object",
-                        "properties": {
-                            "api_name": {
-                                "type": "string",
-                                "enum": [
-                                    "cvid",
-                                    "Owner",
-                                    "id"
-                                ]
-                            },
-                            "expected_data_type": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "api_name",
-                            "expected_data_type"
-                        ]
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "Invalid_Module_API_Exception": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_MODULE"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
-                            "the module name given seems to be invalid"
-                        ]
-                    },
-                    "details": {
-                        "type": "object"
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "Status": {
-                "type": "object",
-                "properties": {
-                    "Status": {
-                        "type": "string",
-                        "enum": [
-                            "COMPLETED",
-                            "FAILED",
-                            "RUNNING"
-                        ]
-                    },
-                    "Failed_Count": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "Deleted_Count": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "Total_Count": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                }
-            },
-            "Response_Wrapper": {
-                "type": "object",
-                "properties": {
-                    "data": {
+                "oneOf": [
+                  {
+                    "description": "ids passed for mass delete",
+                    "type": "object",
+                    "properties": {
+                      "ids": {
+                        "description": "record ids",
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Status"
+                          "description": "record id",
+                          "type": "string",
+                          "pattern": "^[0-9]+$",
+                          "format": "string"
+                        },
+                        "minItems": 1,
+                        "maxItems": 500
+                      }
+                    },
+                    "required": [
+                      "ids"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "description": "cvid with territory passed for mass delete",
+                    "type": "object",
+                    "properties": {
+                      "cvid": {
+                        "description": "custom view id",
+                        "type": "string",
+                        "pattern": "^[0-9]+$",
+                        "format": "string"
+                      },
+                      "territory": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[0-9]+$",
+                            "format": "string",
+                            "description": "Territory ID"
+                          },
+                          "include_child": {
+                            "type": "boolean",
+                            "description": "Whether to include child territories."
+                          }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                          "id"
+                        ],
+                        "description": "Territory filter for the delete operation"
+                      }
+                    },
+                    "required": [
+                      "cvid"
+                    ],
+                    "additionalProperties": false
+                  }
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully deleted one or more records synchronously, or scheduled a batch delete operation asynchronously.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Mass delete success response",
+                  "properties": {
+                    "data": {
+                      "description": "Array of success responses (synchronous record deletions or batch job scheduling)",
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 500,
+                      "items": {
+                        "oneOf": [
+                          {
+                            "description": "Individual record deleted synchronously",
+                            "type": "object",
+                            "properties": {
+                              "status": {
+                                "description": "error status",
+                                "type": "string",
+                                "const": "success"
+                              },
+                              "code": {
+                                "description": "error code",
+                                "type": "string",
+                                "const": "SUCCESS"
+                              },
+                              "message": {
+                                "description": "error message",
+                                "type": "string",
+                                "const": "record is deleted"
+                              },
+                              "details": {
+                                "description": "error details",
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[0-9]+$",
+                                    "format": "string",
+                                    "description": "ID of the deleted record."
+                                  }
+                                },
+                                "required": [
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "status",
+                              "code",
+                              "message",
+                              "details"
+                            ]
+                          },
+                          {
+                            "description": "Batch delete job scheduled asynchronously (cvid-based deletion)",
+                            "type": "object",
+                            "properties": {
+                              "status": {
+                                "description": "error status",
+                                "type": "string",
+                                "const": "success"
+                              },
+                              "code": {
+                                "description": "error code",
+                                "type": "string",
+                                "const": "SUCCESS"
+                              },
+                              "message": {
+                                "description": "error message",
+                                "type": "string",
+                                "const": "mass delete scheduled successfully"
+                              },
+                              "details": {
+                                "description": "error details",
+                                "type": "object",
+                                "properties": {
+                                  "job_id": {
+                                    "type": "string",
+                                    "pattern": "^[0-9]+$",
+                                    "format": "string",
+                                    "description": "Job ID for tracking the batch delete operation (use with GET endpoint)."
+                                  }
+                                },
+                                "required": [
+                                  "job_id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "status",
+                              "code",
+                              "message",
+                              "details"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Multi-Status: Some records deleted successfully, others failed validation. Each item in `data` represents an individual record result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Multi-Status: Some records deleted successfully, others failed validation. Each item in `data` represents an individual record result.",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "description": "Multi-Status: Some records deleted successfully, others failed validation. Each item in `data` represents an individual record result.",
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 500,
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "description": "success response",
+                            "properties": {
+                              "status": {
+                                "type": "string",
+                                "const": "success",
+                                "description": "Indicates successful deletion."
+                              },
+                              "code": {
+                                "type": "string",
+                                "const": "SUCCESS",
+                                "description": "Success code."
+                              },
+                              "message": {
+                                "type": "string",
+                                "const": "record is deleted",
+                                "description": "Confirmation message."
+                              },
+                              "details": {
+                                "description": "record id",
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[0-9]+$",
+                                    "format": "string",
+                                    "description": "ID of the deleted record."
+                                  }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                  "id"
+                                ]
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "status",
+                              "code",
+                              "message",
+                              "details"
+                            ]
+                          },
+                          {
+                            "description": "Invalid id",
+                            "type": "object",
+                            "properties": {
+                              "status": {
+                                "type": "string",
+                                "const": "error",
+                                "description": "Indicates deletion failure."
+                              },
+                              "code": {
+                                "type": "string",
+                                "enum": [
+                                  "INVALID_DATA"
+                                ],
+                                "description": "Error code."
+                              },
+                              "message": {
+                                "type": "string",
+                                "format": "string",
+                                "description": "Human-readable error description."
+                              },
+                              "details": {
+                                "description": "record id",
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[0-9]+$",
+                                    "format": "string",
+                                    "description": "ID of the record that failed deletion."
+                                  }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                  "id"
+                                ]
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "status",
+                              "code",
+                              "message",
+                              "details"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request: Invalid input (e.g., missing required fields, invalid data types, unsupported module, or malformed request body).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "description": "Mandatory field record id or cvid is missing",
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "description": "error status",
+                          "type": "string",
+                          "const": "error"
+                        },
+                        "code": {
+                          "description": "error code",
+                          "type": "string",
+                          "const": "MANDATORY_NOT_FOUND"
+                        },
+                        "message": {
+                          "description": "error message",
+                          "type": "string",
+                          "const": "required field not found"
+                        },
+                        "details": {
+                          "description": "error details",
+                          "type": "object",
+                          "properties": {
+                            "api_name": {
+                              "type": "string",
+                              "format": "string",
+                              "description": "Name of the missing required field."
+                            },
+                            "expected_data_type": {
+                              "type": "string",
+                              "format": "string",
+                              "description": "Expected data type for the missing field."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "api_name",
+                            "expected_data_type"
+                          ]
                         }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "description": "Invalid cvid or record id",
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "description": "error status",
+                          "type": "string",
+                          "const": "error"
+                        },
+                        "code": {
+                          "description": "error code",
+                          "type": "string",
+                          "const": "INVALID_DATA"
+                        },
+                        "message": {
+                          "type": "string",
+                          "format": "string",
+                          "description": "Human-readable error description (e.g., 'invalid data', 'the cvid given seems to be invalid')."
+                        },
+                        "details": {
+                          "description": "error details",
+                          "type": "object",
+                          "properties": {
+                            "api_name": {
+                              "type": "string",
+                              "format": "string",
+                              "description": "Name of the invalid field."
+                            },
+                            "json_path": {
+                              "type": "string",
+                              "format": "string",
+                              "description": "JSON path to the invalid field (optional)."
+                            },
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[0-9]+$",
+                              "format": "string",
+                              "description": "Invalid record ID (optional)."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "api_name",
+                            "json_path",
+                            "id"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "description": "Invalid module in request path",
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "description": "error status",
+                          "type": "string",
+                          "const": "error"
+                        },
+                        "code": {
+                          "description": "error code",
+                          "type": "string",
+                          "const": "INVALID_MODULE"
+                        },
+                        "message": {
+                          "description": "error message",
+                          "type": "string",
+                          "const": "the module name given seems to be invalid"
+                        },
+                        "details": {
+                          "description": "error details",
+                          "type": "object",
+                          "properties": {
+                            "resource_path_index": {
+                              "type": "integer",
+                              "format": "int32",
+                              "const": 0,
+                              "description": "Index of the resource path segment containing the invalid module name."
+                            }
+                          },
+                          "required": [
+                            "resource_path_index"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "description": "Mass delete is not supported for this module",
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "description": "error status",
+                          "type": "string",
+                          "const": "error"
+                        },
+                        "code": {
+                          "description": "error code",
+                          "type": "string",
+                          "const": "NOT_SUPPORTED"
+                        },
+                        "message": {
+                          "description": "error message",
+                          "type": "string",
+                          "format": "string"
+                        },
+                        "details": {
+                          "description": "error details",
+                          "type": "object",
+                          "properties": {
+                            "resource_path_index": {
+                              "type": "integer",
+                              "format": "int32",
+                              "const": 0,
+                              "description": "Index of the unsupported resource path segment."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "resource_path_index"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "description": "No record present in custom view",
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "description": "error status",
+                          "type": "string",
+                          "const": "error"
+                        },
+                        "code": {
+                          "description": "error code",
+                          "type": "string",
+                          "const": "NO_RECORDS_FOUND"
+                        },
+                        "message": {
+                          "description": "error message",
+                          "type": "string",
+                          "const": "no record found to update"
+                        },
+                        "details": {
+                          "description": "error details",
+                          "type": "object",
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
                     }
+                  ]
                 }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.mass_delete.DELETE"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "operationId": "getMassDeleteJobStatus",
+        "summary": "Retrieve mass delete job status",
+        "description": "Get the status and results of a previously scheduled mass delete operation by job ID.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "name": "job_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "format": "string"
             },
-            "InternalError": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INTERNAL_SERVER_ERROR"
+            "description": "Job ID returned from the mass delete POST request."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status retrieved successfully. Returns counts of total, deleted, and failed records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Mass delete job status",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "description": "Mass delete job status",
+                      "type": "array",
+                      "items": {
+                        "description": "Mass delete job status",
+                        "type": "object",
+                        "properties": {
+                          "Status": {
+                            "type": "string",
+                            "enum": [
+                              "COMPLETED",
+                              "SCHEDULED",
+                              "QUEUED",
+                              "RUNNING",
+                              "SUSPENDED",
+                              "FAILED"
+                            ],
+                            "description": "Current status of the mass delete job."
+                          },
+                          "Total_Count": {
+                            "type": "integer",
+                            "format": "int32",
+                            "minimum": 0,
+                            "description": "Total number of records targeted for deletion."
+                          },
+                          "Deleted_Count": {
+                            "type": "integer",
+                            "format": "int32",
+                            "minimum": 0,
+                            "description": "Number of records successfully deleted."
+                          },
+                          "Failed_Count": {
+                            "type": "integer",
+                            "format": "int32",
+                            "minimum": 0,
+                            "description": "Number of records that failed to delete."
+                          }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                          "Status",
+                          "Total_Count",
+                          "Deleted_Count",
+                          "Failed_Count"
                         ]
-                    },
-                    "details": {
-                        "type": "object"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
+                      },
+                      "minItems": 1,
+                      "maxItems": 1
                     }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "data"
+                  ]
                 }
+              }
             }
-        },
-        "parameters": {
-            "module": {
-                "name": "module",
-                "in": "path",
-                "required": true,
+          },
+          "400": {
+            "description": "Bad Request: Either the job_id parameter is missing or its format is invalid.",
+            "content": {
+              "application/json": {
                 "schema": {
-                    "type": "string"
+                  "oneOf": [
+                    {
+                      "description": "Job id mandatory param is missing",
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "description": "error status",
+                          "type": "string",
+                          "const": "error"
+                        },
+                        "code": {
+                          "description": "error code",
+                          "type": "string",
+                          "const": "MANDATORY_NOT_FOUND"
+                        },
+                        "message": {
+                          "description": "error message",
+                          "type": "string",
+                          "const": "mandatory param missing"
+                        },
+                        "details": {
+                          "description": "error details",
+                          "type": "object",
+                          "properties": {
+                            "param_name": {
+                              "type": "string",
+                              "const": "job_id",
+                              "description": "Name of the missing query parameter."
+                            }
+                          },
+                          "required": [
+                            "param_name"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "description": "Job is seems to be invalid",
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "description": "error status",
+                          "type": "string",
+                          "const": "error"
+                        },
+                        "code": {
+                          "description": "error code",
+                          "type": "string",
+                          "const": "INVALID_DATA"
+                        },
+                        "message": {
+                          "description": "error message",
+                          "type": "string",
+                          "const": "The jobid given seems to be invalid"
+                        },
+                        "details": {
+                          "description": "error details",
+                          "type": "object",
+                          "properties": {
+                            "param_name": {
+                              "type": "string",
+                              "const": "job_id",
+                              "description": "Name of the invalid query parameter."
+                            }
+                          },
+                          "required": [
+                            "param_name"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    }
+                  ]
                 }
-            },
-            "job_id": {
-                "name": "job_id",
-                "in": "query",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
+              }
             }
+          }
         },
-        "securitySchemes": {
-            "iam-oauth2-schema": {
-                "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
-            }
-        }
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.mass_delete.READ"
+            ]
+          }
+        ]
+      }
     }
+  },
+  "components": {
+    "parameters": {
+      "Module": {
+        "name": "module",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Leads",
+            "Accounts",
+            "Contacts",
+            "Deals",
+            "Campaigns",
+            "Tasks",
+            "Calls",
+            "Meetings",
+            "Cases",
+            "Solutions",
+            "Products",
+            "Vendors",
+            "Price_Books",
+            "Quotes",
+            "Sales_Orders",
+            "Purchase_Orders",
+            "Invoices",
+            "Custom",
+            "Services",
+            "Appointments"
+          ],
+          "minLength": 1
+        },
+        "description": "Specifies the CRM module for the mass delete operation. Note: Module names are case-sensitive."
+      }
+    },
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.mass_delete.DELETE": "Permission to delete records in bulk across all modules",
+              "ZohoCRM.mass_delete.READ": "Permission to retrieve mass delete job status across all modules"
+            }
+          }
+        }
+      }
+    }
+  }
 }

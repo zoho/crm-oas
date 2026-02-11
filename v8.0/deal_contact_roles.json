@@ -1,0 +1,1523 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Deal Contact Roles",
+    "description": "API for managing contact roles in Deal records. Track and manage which contacts are associated with deals and their specific roles (e.g., Decision Maker, Influencer). Supports full CRUD operations to maintain accurate relationship data between contacts and deal opportunities.",
+    "version": "8.0"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/{module}/{dealId}/Contact_Roles": {
+      "get": {
+        "summary": "Get Associated Contact Roles",
+        "description": "Retrieve contact roles associated with a deal",
+        "operationId": "getAssociatedContactRoles",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "$ref": "#/components/parameters/DealId"
+          },
+          {
+            "$ref": "#/components/parameters/Fields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved contact roles associated with the deal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response containing contact roles data and pagination info",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "description": "Array of contact role records with fields specified in the query parameter",
+                      "items": {
+                        "type": "object",
+                        "description": "Contact role record with dynamic fields based on the 'fields' query parameter",
+                        "properties": {
+                          "Owner": {
+                            "type": "object",
+                            "description": "Owner information for the contact role",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "Owner's display name",
+                                "maxLength": 255
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "Owner's unique identifier",
+                                "format": "int64"
+                              },
+                              "email": {
+                                "type": "string",
+                                "description": "Owner's email address",
+                                "format": "email"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "Department": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Department of the contact"
+                          },
+                          "Contact_Role": {
+                            "type": "object",
+                            "description": "Contact role information",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "Role name (e.g., Developer/Evaluator)",
+                                "maxLength": 255
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "Role's unique identifier",
+                                "format": "int64"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "id"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    },
+                    "info": {
+                      "type": "object",
+                      "description": "Pagination and response metadata",
+                      "properties": {
+                        "per_page": {
+                          "type": "integer",
+                          "description": "Number of records per page",
+                          "format": "int32"
+                        },
+                        "next_page_token": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Token for retrieving the next page of results"
+                        },
+                        "count": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Number of records in the current response"
+                        },
+                        "page": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Current page number"
+                        },
+                        "previous_page_token": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Token for retrieving the previous page of results"
+                        },
+                        "page_token_expiry": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Expiry timestamp for page tokens"
+                        },
+                        "more_records": {
+                          "type": "boolean",
+                          "description": "Indicates if more records are available"
+                        }
+                      },
+                      "required": [
+                        "per_page",
+                        "count",
+                        "page",
+                        "more_records"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "info"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No content - No contact roles found for the specified deal"
+          },
+          "400": {
+            "description": "Bad Request - Invalid data, invalid module, field limit exceeded, or required parameter missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for a bad request, which can be one of several specific error types.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidDataError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidModuleError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiredParamMissingError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRelationNameError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - No permission to access deals or contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for when the user lacks permission to access deals or contacts.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/NoPermissionDealsError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NoPermissionContactsError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.CONTACTS.VIEW",
+              "ZohoCRM.modules.DEALS.VIEW"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "summary": "Add Or Update Contact Role Relations",
+        "description": "Add contact roles to a deal or update existing contact role relations in bulk",
+        "operationId": "upsertContactRoleRelations",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "$ref": "#/components/parameters/DealId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertRelationsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully added or updated the specified contact role relations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsertRelationsSuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid data, invalid module, field limit exceeded, or required parameter missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for a bad request, which can be one of several specific error types.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidDataError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidModuleError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiredParamMissingError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRelationNameError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - No permission to access deals or contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for when the user lacks permission to access deals or contacts.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/NoPermissionDealsError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NoPermissionContactsError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.CONTACTS.VIEW",
+              "ZohoCRM.modules.DEALS.VIEW"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete Contact Role Relations",
+        "description": "Remove one or more contact role associations from a deal using their relation IDs",
+        "operationId": "deleteContactRoleRelations",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "$ref": "#/components/parameters/DealId"
+          },
+          {
+            "$ref": "#/components/parameters/Ids"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully removed the specified contact role relations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteRelationsSuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid data, invalid module, field limit exceeded, or required parameter missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for a bad request, which can be one of several specific error types.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidDataError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidModuleError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiredParamMissingError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRelationNameError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - No permission to access deals or contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for when the user lacks permission to access deals or contacts.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/NoPermissionDealsError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NoPermissionContactsError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.CONTACTS.VIEW",
+              "ZohoCRM.modules.DEALS.VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    "/{module}/{dealId}/Contact_Roles/{contactId}": {
+      "get": {
+        "summary": "Get Contact Role For Contact",
+        "description": "Retrieve the contact role relation for a specific contact associated with a deal.",
+        "operationId": "getDealContactRoleForContact",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "$ref": "#/components/parameters/DealId"
+          },
+          {
+            "$ref": "#/components/parameters/Contact"
+          },
+          {
+            "$ref": "#/components/parameters/Fields"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the contact role relation for the given contact",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response containing the contact role relation for the specified contact",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "maxItems": 1,
+                      "description": "Array containing the contact role record for the specified contact",
+                      "items": {
+                        "type": "object",
+                        "description": "Contact role record with dynamic fields based on the 'fields' query parameter",
+                        "properties": {
+                          "Owner": {
+                            "type": "object",
+                            "description": "Owner information for the contact role",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "Owner's display name",
+                                "maxLength": 255
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "Owner's unique identifier",
+                                "format": "int64"
+                              },
+                              "email": {
+                                "type": "string",
+                                "description": "Owner's email address",
+                                "format": "email"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "Department": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Department of the contact"
+                          },
+                          "Contact_Role": {
+                            "type": "object",
+                            "description": "Contact role information",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "Role name (e.g., Developer/Evaluator)",
+                                "maxLength": 255
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "Role's unique identifier",
+                                "format": "int64"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "id"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "minItems": 1
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No contact role relation exists for the specified contact on this deal"
+          },
+          "400": {
+            "description": "Bad Request - Invalid data, invalid module, field limit exceeded, or required parameter missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for a bad request, which can be one of several specific error types.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidDataError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidModuleError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiredParamMissingError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRelationNameError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - No permission to access deals or contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for when the user lacks permission to access deals or contacts.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/NoPermissionDealsError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NoPermissionContactsError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.CONTACTS.VIEW",
+              "ZohoCRM.modules.DEALS.VIEW"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "summary": "Associate Contact Role To Deal",
+        "description": "Assign or update a contact role for a specific contact on a deal.",
+        "operationId": "associateContactRoleToDeal",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "$ref": "#/components/parameters/DealId"
+          },
+          {
+            "$ref": "#/components/parameters/Contact"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Payload containing the contact role assignment to apply",
+                "properties": {
+                  "data": {
+                    "type": "array",
+                    "description": "Single contact role relation definition",
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "items": {
+                      "type": "object",
+                      "description": "Contact role configuration for the specified contact",
+                      "properties": {
+                        "Contact_Role": {
+                          "type": "object",
+                          "description": "Contact role details to associate",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "Contact role display name",
+                              "maxLength": 255
+                            },
+                            "id": {
+                              "type": "string",
+                              "format": "int64",
+                              "description": "Unique identifier of the contact role"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "Contact_Role"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully associated the contact role with the deal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Result of updating the contact role relation",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "Status entries for the processed contact relation",
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Operation result for the contact relation",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "description": "Operation status code",
+                            "const": "SUCCESS"
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "Details about the processed relation",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "int64",
+                                "description": "Identifier of the contact-deal relation"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Result message",
+                            "const": "relation updated"
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Operation status",
+                            "const": "success"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "details",
+                          "message",
+                          "status"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid data, invalid module, field limit exceeded, or required parameter missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for a bad request, which can be one of several specific error types.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidDataError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidModuleError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiredParamMissingError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRelationNameError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - No permission to access deals or contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for when the user lacks permission to access deals or contacts.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/NoPermissionDealsError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NoPermissionContactsError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.CONTACTS.VIEW",
+              "ZohoCRM.modules.DEALS.VIEW"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete Contact Role Relation",
+        "description": "Remove a specific contact-deal relation using the contact identifier in the path.",
+        "operationId": "deleteContactRoleRelation",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "$ref": "#/components/parameters/DealId"
+          },
+          {
+            "$ref": "#/components/parameters/Contact"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully removed the specified contact relation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteRelationsSuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid data, invalid module, field limit exceeded, or required parameter missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for a bad request, which can be one of several specific error types.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidDataError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidModuleError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiredParamMissingError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRelationNameError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - No permission to access deals or contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for when the user lacks permission to access deals or contacts.",
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/NoPermissionDealsError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NoPermissionContactsError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.CONTACTS.VIEW",
+              "ZohoCRM.modules.DEALS.VIEW"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "InvalidDataError": {
+        "type": "object",
+        "description": "Invalid related ID error",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code indicating invalid deal ID",
+            "const": "INVALID_DATA"
+          },
+          "details": {
+            "type": "object",
+            "description": "Error details containing the path index",
+            "properties": {
+              "resource_path_index": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Index of the path parameter that is invalid (1 for deal ID)",
+                "const": 1
+              }
+            },
+            "required": [
+              "resource_path_index"
+            ],
+            "additionalProperties": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message indicating the deal ID is invalid",
+            "const": "the related id given seems to be invalid"
+          },
+          "status": {
+            "type": "string",
+            "description": "Response status",
+            "const": "error"
+          }
+        },
+        "required": [
+          "code",
+          "details",
+          "message",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "InvalidModuleError": {
+        "type": "object",
+        "description": "Invalid module name error",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code indicating invalid module name",
+            "const": "INVALID_MODULE"
+          },
+          "details": {
+            "type": "object",
+            "description": "Error details containing the path index",
+            "properties": {
+              "resource_path_index": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Index of the path parameter that is invalid (0 for module)",
+                "const": 0
+              }
+            },
+            "required": [
+              "resource_path_index"
+            ],
+            "additionalProperties": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message indicating the module name is invalid",
+            "const": "the module name given seems to be invalid"
+          },
+          "status": {
+            "type": "string",
+            "description": "Response status",
+            "const": "error"
+          }
+        },
+        "required": [
+          "code",
+          "details",
+          "message",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "InvalidRelationNameError": {
+        "type": "object",
+        "description": "Invalid relation name error",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code indicating invalid relation name",
+            "const": "INVALID_DATA"
+          },
+          "details": {
+            "type": "object",
+            "description": "Error details containing the path index",
+            "properties": {
+              "resource_path_index": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Index of the path parameter that is invalid (2 for relation name)",
+                "const": 2
+              }
+            },
+            "required": [
+              "resource_path_index"
+            ],
+            "additionalProperties": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message indicating the relation name is invalid",
+            "const": "the relation name given seems to be invalid"
+          },
+          "status": {
+            "type": "string",
+            "description": "Response status",
+            "const": "error"
+          }
+        },
+        "required": [
+          "code",
+          "details",
+          "message",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "RequiredParamMissingError": {
+        "type": "object",
+        "description": "Required parameter missing error",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code indicating a required parameter is missing",
+            "const": "REQUIRED_PARAM_MISSING"
+          },
+          "details": {
+            "type": "object",
+            "description": "Error details containing the missing parameter name",
+            "properties": {
+              "param_name": {
+                "type": "string",
+                "description": "Name of the missing required parameter",
+                "const": "fields"
+              }
+            },
+            "required": [
+              "param_name"
+            ],
+            "additionalProperties": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message indicating a parameter is missing",
+            "const": "One of the expected parameter is missing"
+          },
+          "status": {
+            "type": "string",
+            "description": "Response status",
+            "const": "error"
+          }
+        },
+        "required": [
+          "code",
+          "details",
+          "message",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "NoPermissionDealsError": {
+        "type": "object",
+        "description": "No permission to view deals",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code indicating lack of permission",
+            "const": "NO_PERMISSION"
+          },
+          "details": {
+            "type": "object",
+            "description": "Details about the missing permissions",
+            "properties": {
+              "permissions": {
+                "type": "array",
+                "description": "List of required permissions that are missing",
+                "items": {
+                  "type": "string",
+                  "description": "Permission identifier for viewing deals",
+                  "const": "Crm_Implied_View_Potentials"
+                },
+                "maxItems": 1
+              }
+            },
+            "required": [
+              "permissions"
+            ],
+            "additionalProperties": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message indicating permission denial",
+            "const": "permission denied"
+          },
+          "status": {
+            "type": "string",
+            "description": "Response status",
+            "const": "error"
+          }
+        },
+        "required": [
+          "code",
+          "details",
+          "message",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "NoPermissionContactsError": {
+        "type": "object",
+        "description": "No permission to view contacts",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code indicating lack of permission",
+            "const": "NO_PERMISSION"
+          },
+          "details": {
+            "type": "object",
+            "description": "Details about the missing permissions",
+            "properties": {
+              "permissions": {
+                "type": "array",
+                "description": "List of required permissions that are missing",
+                "items": {
+                  "type": "string",
+                  "description": "Permission identifier for viewing contacts",
+                  "const": "Crm_Implied_View_Contacts"
+                },
+                "maxItems": 1
+              }
+            },
+            "required": [
+              "permissions"
+            ],
+            "additionalProperties": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message indicating permission denial",
+            "const": "permission denied"
+          },
+          "status": {
+            "type": "string",
+            "description": "Response status",
+            "const": "error"
+          }
+        },
+        "required": [
+          "code",
+          "details",
+          "message",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteRelationsSuccessResponse": {
+        "type": "object",
+        "description": "Response returned after deleting contact role relations",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Status entries for each deleted relation",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "description": "Result for a single relation delete operation",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "Operation status code",
+                  "const": "SUCCESS"
+                },
+                "details": {
+                  "type": "object",
+                  "description": "Details about the deleted relation",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "int64",
+                      "description": "Identifier of the deleted relation"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "additionalProperties": false
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Result message",
+                  "const": "relation removed"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Operation status",
+                  "const": "success"
+                }
+              },
+              "required": [
+                "code",
+                "details",
+                "message",
+                "status"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "UpsertRelationsRequest": {
+        "type": "object",
+        "description": "Payload for adding or updating contact role relations on a deal",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "List of contact role relations to upsert",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "description": "Contact role relation definition",
+              "properties": {
+                "Contact_Role": {
+                  "type": "object",
+                  "description": "Contact role to associate with the relation",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Contact role display name",
+                      "maxLength": 255
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "int64",
+                      "description": "Contact role identifier"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "additionalProperties": false
+                },
+                "id": {
+                  "type": "string",
+                  "format": "int64",
+                  "description": "Identifier of the contact relation for the deal"
+                }
+              },
+              "required": [
+                "Contact_Role",
+                "id"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "UpsertRelationsSuccessResponse": {
+        "type": "object",
+        "description": "Response returned after adding or updating contact role relations",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Status entries for each processed relation",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "description": "Result for processing a single relation",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "Operation status code",
+                  "const": "SUCCESS"
+                },
+                "details": {
+                  "type": "object",
+                  "description": "Details about the processed relation",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "int64",
+                      "description": "Identifier of the processed relation"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "additionalProperties": false
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Result message describing the action performed",
+                  "enum": [
+                    "relation updated",
+                    "relation added"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Operation status",
+                  "const": "success"
+                }
+              },
+              "required": [
+                "code",
+                "details",
+                "message",
+                "status"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "responses": {
+      "InternalServerError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "description": "Internal server error response object containing code, message, details, and status.",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "Error code indicating the type of error.",
+                  "maxLength": 50
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Human-readable error message.",
+                  "maxLength": 255
+                },
+                "details": {
+                  "type": "object",
+                  "description": "Additional details about the error.",
+                  "additionalProperties": true
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Status of the error response.",
+                  "enum": [
+                    "error"
+                  ]
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "details",
+                "status"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "Module": {
+        "name": "module",
+        "in": "path",
+        "required": true,
+        "description": "The module name for the deal record",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Deals"
+          ]
+        }
+      },
+      "DealId": {
+        "name": "dealId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the deal record",
+        "schema": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "Contact": {
+        "name": "contactId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the contact record",
+        "schema": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "Ids": {
+        "name": "ids",
+        "in": "query",
+        "required": false,
+        "description": "Comma-separated list of contact role relation IDs to delete",
+        "schema": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "Fields": {
+        "name": "fields",
+        "in": "query",
+        "required": true,
+        "description": "Comma-separated list of field names to include in the response. Field names must follow API naming conventions.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:,[A-Za-z_][A-Za-z0-9_]*)*$",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "examples": {
+      "InvalidRelatedIdExample": {
+        "value": {
+          "code": "INVALID_DATA",
+          "details": {
+            "resource_path_index": 1
+          },
+          "message": "the related id given seems to be invalid",
+          "status": "error"
+        }
+      },
+      "InvalidRelationNameExample": {
+        "value": {
+          "code": "INVALID_DATA",
+          "details": {
+            "resource_path_index": 2
+          },
+          "message": "the relation name given seems to be invalid",
+          "status": "error"
+        }
+      },
+      "RequiredParamMissingExample": {
+        "value": {
+          "code": "REQUIRED_PARAM_MISSING",
+          "details": {
+            "param_name": "fields"
+          },
+          "message": "One of the expected parameter is missing",
+          "status": "error"
+        }
+      },
+      "NoPermissionDealsExample": {
+        "value": {
+          "code": "NO_PERMISSION",
+          "details": {
+            "permissions": [
+              "Crm_Implied_View_Potentials"
+            ]
+          },
+          "message": "permission denied",
+          "status": "error"
+        }
+      },
+      "NoPermissionContactsExample": {
+        "value": {
+          "code": "NO_PERMISSION",
+          "details": {
+            "permissions": [
+              "Crm_Implied_View_Contacts"
+            ]
+          },
+          "message": "permission denied",
+          "status": "error"
+        }
+      },
+      "DeleteRelationsSuccessExample": {
+        "value": {
+          "data": [
+            {
+              "code": "SUCCESS",
+              "details": {
+                "id": "4408068000000963455"
+              },
+              "message": "relation removed",
+              "status": "success"
+            },
+            {
+              "code": "SUCCESS",
+              "details": {
+                "id": "4408068000000975004"
+              },
+              "message": "relation removed",
+              "status": "success"
+            }
+          ]
+        }
+      },
+      "UpsertRelationsRequestExample": {
+        "value": {
+          "data": [
+            {
+              "Contact_Role": {
+                "name": "Economic Decision Maker",
+                "id": "4408068000000007180"
+              },
+              "id": "4408068000000963455"
+            },
+            {
+              "Contact_Role": {
+                "name": "Developer/Evaluator",
+                "id": "4408068000000007170"
+              },
+              "id": "4408068000000975004"
+            }
+          ]
+        }
+      },
+      "UpsertRelationsSuccessExample": {
+        "value": {
+          "data": [
+            {
+              "code": "SUCCESS",
+              "details": {
+                "id": "4408068000000963455"
+              },
+              "message": "relation updated",
+              "status": "success"
+            },
+            {
+              "code": "SUCCESS",
+              "details": {
+                "id": "4408068000000975004"
+              },
+              "message": "relation added",
+              "status": "success"
+            }
+          ]
+        }
+      }
+    },
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.modules.ALL": "Full access to all CRM modules",
+              "ZohoCRM.modules.CONTACTS.VIEW": "View access to all Contacts module",
+              "ZohoCRM.modules.DEALS.VIEW": "View access to all Deals module"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,1080 +1,1545 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.1.0",
   "info": {
-    "title": "recycle_bin",
-    "description": "recycle_bin",
-    "version": "v8.0"
+    "title": "Recycle Bin",
+    "description": "To get, restore and delete Recycle Bin records",
+    "version": "8"
   },
   "servers": [
     {
-      "url": "https://zohoapis.com"
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
+        }
+      }
     }
   ],
   "paths": {
-    "/crm/v8/settings/recycle_bin": {
+    "/settings/recycle_bin": {
       "get": {
-        "operationId": "Get RecycleBin Records",
-        "parameters": [
+        "operationId": "getRecycleBinRecords",
+        "summary": "List recycle bin records",
+        "description": "Returns paginated recycle-bin entries. Use filters or ids to scope results.",
+        "security": [
           {
-            "$ref": "#/components/parameters/ids"
-          },
-          {
-            "$ref": "#/components/parameters/sort_by"
-          },
-          {
-            "$ref": "#/components/parameters/sort_order"
-          },
-          {
-            "$ref": "#/components/parameters/page"
-          },
-          {
-            "$ref": "#/components/parameters/per_page"
-          },
-          {
-            "$ref": "#/components/parameters/filters"
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.recycle_bin.READ"
+            ]
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Successful response with the requested data.",
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/Response_Wrapper"
+                  "type": "object",
+                  "properties": {
+                    "recycle_bin": {
+                      "type": "array",
+                      "description": "List of recycle bin records.",
+                      "maxItems": 200,
+                      "items": {
+                        "description": "Individual recycle bin record.",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "display_name": {
+                            "type": "string",
+                            "maxLength": 500,
+                            "description": "Display name of the deleted record."
+                          },
+                          "deleted_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Timestamp when the record was deleted."
+                          },
+                          "owner": {
+                            "type": "object",
+                            "description": "Owner of the deleted record.",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "description": "Owner's name."
+                              },
+                              "id": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "description": "Owner's identifier."
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "id"
+                            ]
+                          },
+                          "module": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "description": "Module name of the deleted record."
+                          },
+                          "deleted_by": {
+                            "type": "object",
+                            "description": "User who deleted the record.",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "description": "Name of the user who deleted."
+                              },
+                              "id": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "description": "Identifier of the user who deleted."
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "id"
+                            ]
+                          },
+                          "id": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "description": "Unique identifier of the recycle bin record."
+                          }
+                        },
+                        "required": [
+                          "display_name",
+                          "deleted_time",
+                          "owner",
+                          "module",
+                          "deleted_by",
+                          "id"
+                        ]
+                      }
+                    },
+                    "info": {
+                      "type": "object",
+                      "description": "Pagination and count information.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "per_page": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Number of records per page."
+                        },
+                        "count": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Total number of records returned."
+                        },
+                        "page": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Current page number."
+                        },
+                        "more_records": {
+                          "type": "boolean",
+                          "description": "Indicates if more records are available."
+                        }
+                      },
+                      "required": [
+                        "per_page",
+                        "count",
+                        "page",
+                        "more_records"
+                      ]
                     }
-                  ]
+                  },
+                  "required": [
+                    "recycle_bin",
+                    "info"
+                  ],
+                  "description": "Property value",
+                  "additionalProperties": false
                 }
               }
             }
           },
           "204": {
-            "description": ""
-          },
-          "400": {
-            "$ref": "#/components/responses/RError_Response_Wrapper"
+            "description": "No content: the request succeeded but there is no data to return."
           }
         }
       },
       "delete": {
-        "operationId": "Delete RecycleBin Records",
+        "operationId": "deleteRecycleBinRecords",
+        "summary": "Delete multiple recycle bin records",
+        "description": "Permanently deletes matching recycle-bin records. This is a destructive operation and may partially succeed for some items; check 207 responses for per-item results.",
         "parameters": [
           {
-            "$ref": "#/components/parameters/filters"
-          },
-          {
-            "$ref": "#/components/parameters/ids"
+            "$ref": "#/components/parameters/Filters"
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/Success_Response_Wrapper"
-          },
-          "400": {
-            "$ref": "#/components/responses/Error_Response_Wrapper"
+            "description": "Successful response with per-item result(s).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultList"
+                }
+              }
+            }
           },
           "207": {
-            "$ref": "#/components/responses/Multi_Status_Response_Wrapper"
+            "description": "Multi-status: some items succeeded while others failed. Check per-item results in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recycle_bin": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "description": "Record ID"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success",
+                              "error"
+                            ],
+                            "description": "Operation status for this item"
+                          },
+                          "code": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "description": "Result code (e.g., SUCCESS, CANNOT_DELETE, INVALID_DATA)"
+                          },
+                          "message": {
+                            "type": "string",
+                            "maxLength": 500,
+                            "description": "Human-readable message"
+                          },
+                          "details": {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "description": "Additional details about the operation result"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "status",
+                          "code",
+                          "message"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Result for individual delete operation"
+                      },
+                      "maxItems": 200,
+                      "description": "Array of per-item results"
+                    }
+                  },
+                  "required": [
+                    "recycle_bin"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Multi-status response containing results for each deletion attempt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — invalid parameters or payload. See response body for error details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.recycle_bin.DELETE"
+            ]
+          }
+        ]
+      }
+    },
+    "/settings/recycle_bin/actions/restore": {
+      "post": {
+        "operationId": "restoreRecycleBinRecords",
+        "summary": "Restore multiple recycle bin records",
+        "description": "Restores multiple recycle-bin records based on provided criteria. You can specify records to restore using one of: `ids`, `filters`, or `restore_all_records`. Only one of these fields should be provided; supplying multiple will result in an error. When the number of records to restore (including child records) exceeds 1000, the operation is scheduled as a background job (202 status). For 1000 or fewer records, restoration happens immediately (200/207 status).",
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.recycle_bin.UPDATE"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Request payload for restoring recycle bin records.",
+                "additionalProperties": false,
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "description": "Array of recycle bin record IDs to restore. Mutually exclusive with `filters` and `restore_all_records`.",
+                    "maxItems": 200,
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "description": "Recycle bin record identifier."
+                    }
+                  },
+                  "filters": {
+                    "type": "object",
+                    "description": "Filter criteria to select records for restoration. Mutually exclusive with `ids` and `restore_all_records`. Only 'AND' group operator is supported.",
+                    "additionalProperties": false,
+                    "properties": {
+                      "group_operator": {
+                        "type": "string",
+                        "enum": [
+                          "AND"
+                        ],
+                        "description": "Logical operator for combining filter conditions. Only 'AND' is supported."
+                      },
+                      "group": {
+                        "type": "array",
+                        "description": "Array of filter conditions.",
+                        "maxItems": 20,
+                        "items": {
+                          "type": "object",
+                          "description": "Individual filter condition.",
+                          "additionalProperties": false,
+                          "properties": {
+                            "field": {
+                              "type": "object",
+                              "description": "Field to filter on.",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "maxLength": 100,
+                                  "description": "API name of the field (e.g., 'display_name', 'module')."
+                                }
+                              },
+                              "required": [
+                                "api_name"
+                              ]
+                            },
+                            "comparator": {
+                              "type": "string",
+                              "description": "Comparison operator (e.g., 'equal', 'contains').",
+                              "maxLength": 50
+                            },
+                            "value": {
+                              "description": "Value to compare against.",
+                              "oneOf": [
+                                {
+                                  "type": "string",
+                                  "description": "String value",
+                                  "maxLength": 500
+                                },
+                                {
+                                  "type": "number",
+                                  "description": "Number value"
+                                },
+                                {
+                                  "type": "boolean",
+                                  "description": "Boolean value"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "comparator",
+                            "value"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "group_operator",
+                      "group"
+                    ]
+                  },
+                  "restore_all_records": {
+                    "type": "boolean",
+                    "description": "If set to true, restores all records in the recycle bin. Mutually exclusive with `ids` and `filters`. If set to false, either `ids` or `filters` must be provided."
+                  }
+                },
+                "oneOf": [
+                  {
+                    "required": [
+                      "ids"
+                    ],
+                    "description": "Restore specific records by IDs."
+                  },
+                  {
+                    "required": [
+                      "filters"
+                    ],
+                    "description": "Restore records matching filter criteria."
+                  },
+                  {
+                    "required": [
+                      "restore_all_records"
+                    ],
+                    "description": "Restore all records in the recycle bin."
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response with per-item result(s). Returned when restoration completes immediately (1000 or fewer records including children).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultList"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted — restoration has been scheduled as a background job. Returned when the number of records (including child records) exceeds 1000.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultList"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Multi-status: some items succeeded while others failed. Check per-item results in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recycle_bin": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "description": "Record ID"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success",
+                              "error"
+                            ],
+                            "description": "Operation status for this item"
+                          },
+                          "code": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "description": "Result code (e.g., SUCCESS, INVALID_DATA, SCHEDULED)"
+                          },
+                          "message": {
+                            "type": "string",
+                            "maxLength": 500,
+                            "description": "Human-readable message"
+                          },
+                          "details": {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "description": "Additional details about the operation result"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "code",
+                          "message"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Result for individual restore operation"
+                      },
+                      "maxItems": 200,
+                      "description": "Array of per-item results"
+                    }
+                  },
+                  "required": [
+                    "recycle_bin"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Multi-status response containing results for each restoration attempt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — invalid request payload or ambiguous input. See response body for error details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }
     },
-    "/crm/v8/settings/recycle_bin/{record_id}": {
+    "/settings/recycle_bin/actions/count": {
       "get": {
-        "operationId": "Get RecycleBin Record",
-        "parameters": [
+        "operationId": "getRecycleBinCounts",
+        "summary": "Get recycle bin counts",
+        "description": "Returns the count of items in the recycle bin. Useful for monitoring or quick summaries.",
+        "security": [
           {
-            "name": "record_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.recycle_bin.READ"
+            ]
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Successful response containing the total count of recycle bin items.",
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/Response_Wrapper"
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Property value"
                     }
-                  ]
+                  },
+                  "required": [
+                    "count"
+                  ],
+                  "description": "Property value",
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/recycle_bin/actions/empty": {
+      "post": {
+        "operationId": "emptyRecycleBin",
+        "summary": "Empty the recycle bin",
+        "description": "Permanently deletes all records from the Recycle Bin. This action is irreversible, as deleted records cannot be restored after this operation. When the number of records in the Recycle Bin exceeds 1000 (including child records), the deletion will be scheduled as a background job (202 status). If the count is 1000 or fewer, the records are deleted immediately (200 status). Only users with the Admin profile can empty the Recycle Bin.",
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.recycle_bin.UPDATE"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response — recycle bin emptied immediately (1000 or fewer records).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "SUCCESS"
+                      ],
+                      "description": "Result code",
+                      "maxLength": 100
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional details",
+                      "additionalProperties": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Success message"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "success"
+                      ],
+                      "description": "Operation status"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "details",
+                    "message",
+                    "status"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Success response for empty recycle bin operation"
                 }
               }
             }
           },
-          "204": {
-            "description": ""
+          "202": {
+            "description": "Accepted — emptying recycle bin has been scheduled as a background job (more than 1000 records including children).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULED"
+                      ],
+                      "description": "Result code",
+                      "maxLength": 100
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional details",
+                      "additionalProperties": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Message indicating scheduled operation"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "success"
+                      ],
+                      "description": "Operation status"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "details",
+                    "message",
+                    "status"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Scheduled response for empty recycle bin operation"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/RError_Response_Wrapper"
+            "description": "Bad request — invalid request method or non-admin user attempting the operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — OAUTH scope mismatch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found — invalid URL pattern.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error — unexpected error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
-      },
-      "delete": {
-        "operationId": "Delete RecycleBin Record",
+      }
+    },
+    "/settings/recycle_bin/{recordId}/actions/restore": {
+      "post": {
+        "operationId": "restoreRecycleBinRecord",
+        "summary": "Restore a recycle bin record",
+        "description": "Restores a single recycle-bin record identified by the path parameter `record_id`.",
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.recycle_bin.UPDATE"
+            ]
+          }
+        ],
         "parameters": [
           {
-            "name": "record_id",
+            "name": "recordId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "maxLength": 500,
+              "description": "Identifier"
+            },
+            "description": "Identifier of the recycle-bin record. Format depends on CRM configuration (e.g., numeric or UUID)."
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/Success_Response_Wrapper"
+            "description": "Successful response with per-item result(s).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultList"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/Error_Response_Wrapper"
+            "description": "Bad request — request payload invalid or missing required fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/recycle_bin/{recordId}": {
+      "get": {
+        "operationId": "getRecycleBinRecord",
+        "summary": "Get a recycle bin record",
+        "description": "Returns a single recycle-bin record identified by the path parameter `record_id`. The record_id in the URL takes precedence over any filters or ids given in query parameters.",
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.recycle_bin.READ"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Identifier"
+            },
+            "description": "Identifier of the recycle-bin record to retrieve."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recycle_bin": {
+                      "type": "array",
+                      "description": "List of recycle bin records.",
+                      "maxItems": 1,
+                      "items": {
+                        "description": "Individual recycle bin record.",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "display_name": {
+                            "type": "string",
+                            "maxLength": 500,
+                            "description": "Display name of the deleted record."
+                          },
+                          "deleted_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Timestamp when the record was deleted."
+                          },
+                          "owner": {
+                            "type": "object",
+                            "description": "Owner of the deleted record.",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "description": "Owner's name."
+                              },
+                              "id": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "description": "Owner's identifier."
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "id"
+                            ]
+                          },
+                          "module": {
+                            "type": "object",
+                            "description": "Module information of the deleted record.",
+                            "additionalProperties": false,
+                            "properties": {
+                              "api_name": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "description": "API name of the module."
+                              },
+                              "id": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "description": "Module identifier."
+                              }
+                            },
+                            "required": [
+                              "api_name",
+                              "id"
+                            ]
+                          },
+                          "deleted_by": {
+                            "type": "object",
+                            "description": "User who deleted the record.",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "description": "Name of the user who deleted."
+                              },
+                              "id": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "description": "Identifier of the user who deleted."
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "id"
+                            ]
+                          },
+                          "id": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "description": "Unique identifier of the recycle bin record."
+                          }
+                        },
+                        "required": [
+                          "display_name",
+                          "deleted_time",
+                          "owner",
+                          "module",
+                          "deleted_by",
+                          "id"
+                        ]
+                      }
+                    },
+                    "info": {
+                      "type": "object",
+                      "description": "Pagination and count information.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "per_page": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Number of records per page."
+                        },
+                        "count": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Total number of records returned."
+                        },
+                        "page": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Current page number."
+                        },
+                        "more_records": {
+                          "type": "boolean",
+                          "description": "Indicates if more records are available."
+                        }
+                      },
+                      "required": [
+                        "per_page",
+                        "count",
+                        "page",
+                        "more_records"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "recycle_bin",
+                    "info"
+                  ],
+                  "description": "Property value",
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — invalid parameters. See response body for error details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — OAUTH scope mismatch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found — invalid URL pattern.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error — unexpected error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteRecycleBinRecord",
+        "summary": "Delete a recycle bin record",
+        "description": "Permanently deletes the recycle-bin record identified by `record_id`. This is irreversible.",
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.recycle_bin.DELETE"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Identifier"
+            },
+            "description": "Identifier of the recycle-bin record to delete."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested count.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recycle_bin": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success",
+                              "error"
+                            ],
+                            "description": "Identifier"
+                          },
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "SUCCESS",
+                              "CANNOT_DELETE"
+                            ],
+                            "description": "Identifier"
+                          },
+                          "message": {
+                            "type": "string",
+                            "maxLength": 500,
+                            "description": "Identifier"
+                          },
+                          "details": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "maxLength": 500,
+                                "description": "Identifier"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "description": "Identifier",
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "code",
+                          "message",
+                          "details"
+                        ],
+                        "description": "Identifier",
+                        "additionalProperties": false
+                      },
+                      "description": "Identifier",
+                      "maxItems": 200
+                    }
+                  },
+                  "required": [
+                    "recycle_bin"
+                  ],
+                  "description": "Identifier",
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — invalid parameters or payload. See response body for error details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Status"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code",
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Error details",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "description": "Error response",
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }
     }
   },
-  "security": [
-    {
-      "iam-oauth2-schema": [
-        "ZohoCRM.settings.recycle_bin.DELETE",
-        "ZohoCRM.settings.recycle_bin.READ"
-      ]
-    }
-  ],
   "components": {
-    "schemas": {
-      "Response_Wrapper": {
-        "type": "object",
-        "properties": {
-          "recycle_bin": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "display_name": {
-                  "type": "string"
-                },
-                "deleted_time": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "owner": {
-                  "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/users.json#/components/schemas/Minified_User"
-                },
-                "module": {
-                  "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/modules.json#/components/schemas/Minified_Module"
-                },
-                "deleted_by": {
-                  "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/users.json#/components/schemas/Minified_User"
-                },
-                "id": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "display_name",
-                "deleted_time",
-                "owner",
-                "module",
-                "deleted_by",
-                "id"
-              ]
-            }
-          },
-          "info": {
-            "$ref": "#/components/schemas/Info"
-          }
-        },
-        "required": [
-          "recycle_bin",
-          "info"
-        ]
-      },
-      "Info": {
-        "type": "object",
-        "properties": {
-          "per_page": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "count": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "more_records": {
-            "type": "boolean",
-            "nullable": true
-          }
-        },
-        "required": [
-          "per_page",
-          "count",
-          "page",
-          "more_records"
-        ]
-      },
-      "Count": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "required": [
-          "count"
-        ]
-      },
-      "Field": {
-        "type": "object",
-        "properties": {
-          "api_name": {
-            "type": "string",
-            "nullable": true
-          },
-          "id": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "api_name",
-          "id"
-        ]
-      },
-      "Success_Response": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "success"
-            ]
-          },
-          "code": {
-            "type": "string",
-            "enum": [
-              "SUCCESS",
-              "CANNOT_DELETE",
-              "SCHEDULED"
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "details": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "id"
-            ]
-          }
-        },
-        "required": [
-          "status",
-          "code",
-          "message",
-          "details"
-        ]
-      },
-      "Expected_Field_Missing": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "EXPECTED_FIELD_MISSING"
-            ]
-          },
-          "details": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/ExpectedParam"
-              },
-              {
-                "$ref": "#/components/schemas/Expected_Field"
-              }
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          }
-        },
-        "required": [
-          "code",
-          "details",
-          "message",
-          "status"
-        ]
-      },
-      "ExpectedParam": {
-        "type": "object",
-        "properties": {
-          "param_name": {
-            "type": "string"
-          },
-          "expected_fields": {
-            "items": {
-              "$ref": "#/components/schemas/Property_Details"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "expected_fields"
-        ]
-      },
-      "ExpectedDependentFieldMissing": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "EXPECTED_DEPENDENT_FIELD_MISSING"
-            ]
-          },
-          "details": {
-            "$ref": "#/components/schemas/DependeeDetails"
-          },
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          }
-        }
-      },
-      "DependeeDetails": {
-        "type": "object",
-        "properties": {
-          "dependee": {
-            "$ref": "#/components/schemas/Property_Details"
-          },
-          "expected_fields": {
-            "items": {
-              "$ref": "#/components/schemas/Property_Details"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "dependee",
-          "expected_fields"
-        ]
-      },
-      "Expected_Field": {
-        "type": "object",
-        "properties": {
-          "expected_fields": {
-            "items": {
-              "$ref": "#/components/schemas/Property_Details"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "expected_fields"
-        ]
-      },
-      "Invalid_Data_Exception": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "INVALID_DATA"
-            ]
-          },
-          "details": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/Id"
-              },
-              {
-                "$ref": "#/components/schemas/Resource_Path_index"
-              },
-              {
-                "$ref": "#/components/schemas/Param_Data"
-              },
-              {
-                "$ref": "#/components/schemas/Expected_Data_Type"
-              },
-              {
-                "$ref": "#/components/schemas/Property_Details"
-              },
-              {
-                "$ref": "#/components/schemas/Expected_Type"
-              },
-              {
-                "$ref": "#/components/schemas/ExpectedParamType"
-              }
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          }
-        },
-        "required": [
-          "code",
-          "details",
-          "message",
-          "status"
-        ]
-      },
-      "Expected_Data_Type": {
-        "type": "object",
-        "properties": {
-          "expected_data_type": {
-            "type": "string"
-          },
-          "param_name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "expected_data_type",
-          "param_name"
-        ]
-      },
-      "Expected_Type": {
-        "type": "object",
-        "properties": {
-          "expected_data_type": {
-            "type": "string"
-          },
-          "api_name": {
-            "type": "string"
-          },
-          "json_path": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "expected_data_type",
-          "api_name",
-          "json_path"
-        ]
-      },
-      "ExpectedParamType": {
-        "type": "object",
-        "properties": {
-          "expected_data_type": {
-            "type": "string"
-          },
-          "api_name": {
-            "type": "string"
-          },
-          "json_path": {
-            "type": "string"
-          },
-          "param_name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "expected_data_type",
-          "api_name",
-          "json_path",
-          "param_name"
-        ]
-      },
-      "Param_Data": {
-        "type": "object",
-        "properties": {
-          "api_name": {
-            "type": "string"
-          },
-          "json_path": {
-            "type": "string"
-          },
-          "param_name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "api_name",
-          "json_path",
-          "param_name"
-        ]
-      },
-      "Property_Details": {
-        "type": "object",
-        "properties": {
-          "api_name": {
-            "type": "string"
-          },
-          "json_path": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "api_name",
-          "json_path"
-        ]
-      },
-      "Id": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "Resource_Path_index": {
-        "type": "object",
-        "properties": {
-          "resource_path_index": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "required": [
-          "resource_path_index"
-        ]
-      },
-      "INVALID_URL_PATTERN": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ],
-            "nullable": true
-          },
-          "code": {
-            "type": "string",
-            "enum": [
-              "INVALID_URL_PATTERN"
-            ],
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "nullable": true
-          },
-          "details": {
-            "type": "object",
-            "nullable": true
-          }
-        },
-        "required": [
-          "status",
-          "code",
-          "message",
-          "details"
-        ]
-      },
-      "REQUIRED_PARAM_MISSING": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          },
-          "code": {
-            "type": "string",
-            "enum": [
-              "REQUIRED_PARAM_MISSING"
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "details": {
-            "type": "object",
-            "properties": {
-              "param": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "param"
-            ]
-          }
-        },
-        "required": [
-          "status",
-          "code",
-          "message",
-          "details"
-        ]
-      },
-      "Dependent_Field_Missing_Exception": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "DEPENDENT_FIELD_MISSING"
-            ]
-          },
-          "details": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/Dependee_Details"
-              },
-              {
-                "$ref": "#/components/schemas/DependentParam"
-              }
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          }
-        },
-        "required": [
-          "code",
-          "message",
-          "status"
-        ]
-      },
-      "DependentParam": {
-        "type": "object",
-        "properties": {
-          "param_name": {
-            "type": "string"
-          },
-          "dependee": {
-            "$ref": "#/components/schemas/Property_Details"
-          },
-          "api_name": {
-            "type": "string"
-          },
-          "json_path": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "dependee",
-          "api_name",
-          "json_path"
-        ]
-      },
-      "Dependee_Details": {
-        "type": "object",
-        "properties": {
-          "dependee": {
-            "$ref": "#/components/schemas/Property_Details"
-          },
-          "api_name": {
-            "type": "string"
-          },
-          "json_path": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "dependee",
-          "api_name",
-          "json_path"
-        ]
-      },
-      "Criteria_Limit_Exception": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "CRITERIA_LIMIT_EXCEEDED"
-            ]
-          },
-          "details": {
-            "type": "object",
-            "properties": {
-              "limit": {
-                "type": "integer",
-                "format": "int32"
-              }
-            },
-            "required": [
-              "limit"
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          }
-        },
-        "required": [
-          "code",
-          "details",
-          "message",
-          "status"
-        ]
-      },
-      "Expected_Param_Missing_Expection": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "EXPECTED_PARAM_MISSING"
-            ]
-          },
-          "details": {
-            "type": "object",
-            "properties": {
-              "param_names": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            },
-            "required": [
-              "param_names"
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          }
-        },
-        "required": [
-          "code",
-          "details",
-          "message",
-          "status"
-        ]
-      },
-      "Ambiguity_Exception": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "AMBIGUITY_DURING_PROCESSING"
-            ]
-          },
-          "details": {
-            "$ref": "#/components/schemas/Ambiguity_Due_To"
-          },
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          }
-        },
-        "required": [
-          "code",
-          "details",
-          "message",
-          "status"
-        ]
-      },
-      "Ambiguity_Due_To": {
-        "type": "object",
-        "properties": {
-          "ambiguity_due_to": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "param_name": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "required": [
-          "ambiguity_due_to"
-        ]
-      },
-      "cannot_Restore": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "CANNOT_RESTORE_WITHOUT_PARENT"
-            ]
-          },
-          "details": {
-            "$ref": "#/components/schemas/Id"
-          },
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          }
-        },
-        "required": [
-          "code",
-          "details",
-          "message",
-          "status"
-        ]
-      }
-    },
-    "responses": {
-      "Multi_Status_Response_Wrapper": {
-        "description": "",
-        "content": {
-          "application/json": {
-            "schema": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "recycle_bin": {
-                      "items": {
-                        "oneOf": [
-                          {
-                            "$ref": "#/components/schemas/Success_Response"
-                          },
-                          {
-                            "$ref": "#/components/schemas/Invalid_Data_Exception"
-                          }
-                        ]
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "recycle_bin"
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      },
-      "Success_Response_Wrapper": {
-        "description": "",
-        "content": {
-          "application/json": {
-            "schema": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "recycle_bin": {
-                      "items": {
-                        "oneOf": [
-                          {
-                            "$ref": "#/components/schemas/Success_Response"
-                          }
-                        ]
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "recycle_bin"
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      },
-      "Error_Response_Wrapper": {
-        "description": "",
-        "content": {
-          "application/json": {
-            "schema": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "recycle_bin": {
-                      "items": {
-                        "oneOf": [
-                          {
-                            "$ref": "#/components/schemas/REQUIRED_PARAM_MISSING"
-                          },
-                          {
-                            "$ref": "#/components/schemas/Invalid_Data_Exception"
-                          },
-                          {
-                            "$ref": "#/components/schemas/cannot_Restore"
-                          }
-                        ]
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "recycle_bin"
-                  ]
-                },
-                {
-                  "$ref": "#/components/schemas/REQUIRED_PARAM_MISSING"
-                },
-                {
-                  "$ref": "#/components/schemas/Invalid_Data_Exception"
-                },
-                {
-                  "$ref": "#/components/schemas/Criteria_Limit_Exception"
-                },
-                {
-                  "$ref": "#/components/schemas/Expected_Field_Missing"
-                },
-                {
-                  "$ref": "#/components/schemas/Dependent_Field_Missing_Exception"
-                },
-                {
-                  "$ref": "#/components/schemas/Ambiguity_Exception"
-                },
-                {
-                  "$ref": "#/components/schemas/Expected_Param_Missing_Expection"
-                },
-                {
-                  "$ref": "#/components/schemas/ExpectedDependentFieldMissing"
-                },
-                {
-                  "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/schemas/AmbiguityError"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "RError_Response_Wrapper": {
-        "description": "",
-        "content": {
-          "application/json": {
-            "schema": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/REQUIRED_PARAM_MISSING"
-                },
-                {
-                  "$ref": "#/components/schemas/Invalid_Data_Exception"
-                },
-                {
-                  "$ref": "#/components/schemas/Criteria_Limit_Exception"
-                },
-                {
-                  "$ref": "#/components/schemas/Expected_Param_Missing_Expection"
-                },
-                {
-                  "$ref": "#/components/schemas/ExpectedDependentFieldMissing"
-                }
-              ]
-            }
-          }
-        }
-      }
-    },
     "parameters": {
-      "filters": {
+      "Filters": {
         "name": "filters",
         "in": "query",
         "required": true,
         "schema": {
-          "type": "string"
-        }
+          "description": "Filter expression string.",
+          "type": "string",
+          "maxLength": 2000
+        },
+        "description": "Filter expression to scope records. For complex filters use the POST /actions/restore requestBody `filters` object instead; this query param typically accepts a simple criteria string or encoded expression."
+      }
+    },
+    "schemas": {
+      "ResultItem": {
+        "description": "Individual result item with status and details.",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Per-item status",
+            "enum": [
+              "success",
+              "error"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Machine-readable result code",
+            "maxLength": 100
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message",
+            "maxLength": 500
+          },
+          "details": {
+            "type": "object",
+            "description": "Optional additional details about the item",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "status",
+          "code",
+          "message",
+          "details"
+        ]
       },
-      "ids": {
-        "name": "ids",
-        "in": "query",
-        "required": true,
-        "schema": {
-          "type": "string"
-        }
-      },
-      "page": {
-        "name": "page",
-        "in": "query",
-        "required": false,
-        "schema": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "per_page": {
-        "name": "per_page",
-        "in": "query",
-        "required": false,
-        "schema": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "sort_by": {
-        "name": "sort_by",
-        "in": "query",
-        "required": false,
-        "schema": {
-          "type": "string"
-        }
-      },
-      "sort_order": {
-        "name": "sort_order",
-        "in": "query",
-        "required": false,
-        "schema": {
-          "type": "string"
-        }
+      "ResultList": {
+        "description": "List of results from the operation.",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "recycle_bin": {
+            "description": "Array of result items.",
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "$ref": "#/components/schemas/ResultItem"
+            }
+          }
+        },
+        "required": [
+          "recycle_bin"
+        ]
       }
     },
     "securitySchemes": {
       "iam-oauth2-schema": {
-        "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.settings.recycle_bin.READ": "Read recycle bin records",
+              "ZohoCRM.settings.recycle_bin.UPDATE": "Restore recycle bin records",
+              "ZohoCRM.settings.recycle_bin.DELETE": "Delete recycle bin records"
+            }
+          }
+        },
+        "description": "Property value"
       }
     }
   }

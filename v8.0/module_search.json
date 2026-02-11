@@ -1,586 +1,1192 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "module_search",
-        "description": "Module Search",
-        "version": "v8.0"
-    },
-    "servers": [
-        {
-            "url": "https://zohoapis.com"
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Search Records",
+    "description": "To retrieve records that match your search criteria within a single module.",
+    "version": "8",
+    "summary": "Zoho CRM Search API allows you to search for records in a specified module using various criteria and parameters."
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
         }
-    ],
-    "paths": {
-        "/crm/v8/{module}/search": {
-            "get": {
-                "operationId": "Search module",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/module"
-                    },
-                    {
-                        "$ref": "#/components/parameters/approval_state"
-                    },
-                    {
-                        "$ref": "#/components/parameters/criteria"
-                    },
-                    {
-                        "$ref": "#/components/parameters/per_page"
-                    },
-                    {
-                        "$ref": "#/components/parameters/converted"
-                    },
-                    {
-                        "$ref": "#/components/parameters/email"
-                    },
-                    {
-                        "$ref": "#/components/parameters/word"
-                    },
-                    {
-                        "$ref": "#/components/parameters/phone"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Response_Wrapper"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/ErrorResponse"
-                    }
-                },
-                "security": [
-                    {
-                        "iam-oauth2-schema": [
-                            "ZohoCRM.users.all",
-                            "ZohoCRM.users.read"
-                        ]
-                    }
-                ]
-            }
-        }
-    },
-    "components": {
-        "schemas": {
-            "Record": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                },
-                "required": [
-                    "id"
-                ]
-            },
-            "Response_Wrapper": {
-                "type": "object",
-                "properties": {
+      }
+    }
+  ],
+  "paths": {
+    "/{module}/search": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Search Records by Criteria, Word, Email, or Phone",
+        "operationId": "searchRecords",
+        "description": "Searches records matching your criteria within a CRM module. Supports criteria queries, email/phone/word searches. At least one search parameter required. Max 2,000 records, 15 criteria conditions. Newly created records may have indexing delays.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "$ref": "#/components/parameters/ApprovalState"
+          },
+          {
+            "$ref": "#/components/parameters/Criteria"
+          },
+          {
+            "$ref": "#/components/parameters/Converted"
+          },
+          {
+            "$ref": "#/components/parameters/SearchWord"
+          },
+          {
+            "$ref": "#/components/parameters/SearchEmail"
+          },
+          {
+            "$ref": "#/components/parameters/SearchPhone"
+          },
+          {
+            "$ref": "#/components/parameters/Fields"
+          },
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/SortBy"
+          },
+          {
+            "$ref": "#/components/parameters/SortOrder"
+          },
+          {
+            "$ref": "#/components/parameters/Type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response containing the list of records matching the search criteria.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Successful search response containing matched records and pagination information",
+                  "additionalProperties": false,
+                  "properties": {
                     "data": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Record"
+                      "type": "array",
+                      "description": "Array of records matching the search criteria",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique identifier of the record",
+                            "maxLength": 50
+                          },
+                          "Owner": {
+                            "type": "object",
+                            "description": "Owner information of the record",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "Name of the record owner",
+                                "maxLength": 255
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "Unique identifier of the owner",
+                                "maxLength": 50
+                              },
+                              "email": {
+                                "type": "string",
+                                "description": "Email address of the owner",
+                                "format": "email"
+                              }
+                            }
+                          },
+                          "Created_Time": {
+                            "type": "string",
+                            "description": "Timestamp when the record was created",
+                            "format": "date-time"
+                          },
+                          "Modified_Time": {
+                            "type": "string",
+                            "description": "Timestamp when the record was last modified",
+                            "format": "date-time"
+                          },
+                          "Created_By": {
+                            "type": "object",
+                            "description": "User who created the record",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "Name of the user who created the record",
+                                "maxLength": 255
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "Unique identifier of the user who created the record",
+                                "maxLength": 50
+                              },
+                              "email": {
+                                "type": "string",
+                                "description": "Email address of the user who created the record",
+                                "format": "email"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ]
+                          },
+                          "Modified_By": {
+                            "type": "object",
+                            "description": "User who last modified the record",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "Name of the user who last modified the record",
+                                "maxLength": 255
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "Unique identifier of the user who last modified the record",
+                                "maxLength": 50
+                              },
+                              "email": {
+                                "type": "string",
+                                "description": "Email address of the user who last modified the record",
+                                "format": "email"
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "additionalProperties": true,
+                        "description": "Record object containing module-specific fields and system fields"
+                      }
+                    },
+                    "info": {
+                      "type": "object",
+                      "description": "Pagination and response metadata",
+                      "additionalProperties": false,
+                      "properties": {
+                        "per_page": {
+                          "type": "integer",
+                          "description": "Number of records per page",
+                          "format": "int32"
+                        },
+                        "count": {
+                          "type": "integer",
+                          "description": "Number of records in current response",
+                          "format": "int32"
+                        },
+                        "page": {
+                          "type": "integer",
+                          "description": "Current page number",
+                          "format": "int32"
+                        },
+                        "more_records": {
+                          "type": "boolean",
+                          "description": "Indicates if more records are available"
+                        },
+                        "sort_by": {
+                          "type": "string",
+                          "description": "Field used for sorting the records",
+                          "maxLength": 100
+                        },
+                        "sort_order": {
+                          "type": "string",
+                          "description": "Order of sorting the records",
+                          "enum": [
+                            "asc",
+                            "desc"
+                          ]
                         }
+                      }
                     }
-                },
-                "required": [
+                  },
+                  "required": [
                     "data"
-                ]
-            },
-            "Invalid_Request": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
+                  ]
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content - The request was successful, but no records matched the search criteria. This may occur due to indexing delays when searching for recently created/modified records."
+          },
+          "400": {
+            "description": "Bad Request - The request could not be processed due to invalid input, missing mandatory parameters, or malformed search criteria.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Invalid request error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status indicator",
+                          "enum": [
                             "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating invalid request",
+                          "enum": [
                             "INVALID_REQUEST"
-                        ]
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message",
+                          "maxLength": 1000
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message"
+                      ]
                     },
-                    "message": {
-                        "type": "string"
-                    },
-                    "details": {
-                        "type": "object"
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "Max_criteria": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
+                    {
+                      "type": "object",
+                      "description": "Operation not supported error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status indicator",
+                          "enum": [
                             "error"
-                        ]
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating unsupported operation",
+                          "enum": [
+                            "NOT_SUPPORTED"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message",
+                          "maxLength": 1000
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details including module information",
+                          "additionalProperties": false,
+                          "properties": {
+                            "module": {
+                              "type": "string",
+                              "description": "The module that does not support this operation",
+                              "maxLength": 100
+                            }
+                          },
+                          "required": [
+                            "module"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
                     },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "CRITERIA_LIMIT_EXCEEDED"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
-                            "no of criterium that can be given exceed the limit 15"
-                        ]
-                    },
-                    "details": {
-                        "type": "object"
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "InvalidQuery": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
+                    {
+                      "type": "object",
+                      "description": "Missing required parameter error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status indicator",
+                          "enum": [
                             "error"
-                        ]
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating missing parameters",
+                          "enum": [
+                            "EXPECTED_PARAM_MISSING"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message",
+                          "maxLength": 1000
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details including missing parameter names",
+                          "additionalProperties": false,
+                          "properties": {
+                            "param_names": {
+                              "type": "array",
+                              "description": "List of missing parameter names",
+                              "maxItems": 4,
+                              "items": {
+                                "type": "string",
+                                "description": "Parameter name",
+                                "enum": [
+                                  "criteria",
+                                  "email",
+                                  "phone",
+                                  "word"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "param_names"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
                     },
-                    "code": {
-                        "type": "string",
-                        "enum": [
+                    {
+                      "type": "object",
+                      "description": "Invalid module error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status indicator",
+                          "enum": [
+                            "error"
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating invalid module",
+                          "enum": [
+                            "INVALID_MODULE"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message",
+                          "maxLength": 1000
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details including resource path information",
+                          "additionalProperties": false,
+                          "properties": {
+                            "resource_path_index": {
+                              "type": "integer",
+                              "description": "Index of the invalid resource path segment",
+                              "format": "int32"
+                            }
+                          },
+                          "required": [
+                            "resource_path_index"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Invalid query error response with various detail formats",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status indicator",
+                          "enum": [
+                            "error"
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating invalid query",
+                          "enum": [
                             "INVALID_QUERY"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message describing the query issue",
+                          "enum": [
                             "the field in restricted in GDPR",
                             "the field in restricted in Hipaa",
                             "Invalid query formed"
-                        ]
-                    },
-                    "details": {
-                        "oneOf": [
+                          ]
+                        },
+                        "details": {
+                          "oneOf": [
                             {
-                                "$ref": "#/components/schemas/querytype"
+                              "type": "object",
+                              "description": "Data type mismatch error details",
+                              "additionalProperties": false,
+                              "properties": {
+                                "expected_data_type": {
+                                  "type": "string",
+                                  "description": "The expected data type for the field",
+                                  "maxLength": 100
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "description": "Detailed reason for the error",
+                                  "maxLength": 500
+                                }
+                              },
+                              "required": [
+                                "expected_data_type",
+                                "reason",
+                                "api_name"
+                              ]
                             },
                             {
-                                "$ref": "#/components/schemas/queryoperator"
+                              "type": "object",
+                              "description": "Invalid operator error details",
+                              "additionalProperties": false,
+                              "properties": {
+                                "operator": {
+                                  "type": "string",
+                                  "description": "The invalid operator used in the query",
+                                  "maxLength": 50
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "description": "Detailed reason for the error",
+                                  "maxLength": 500
+                                }
+                              },
+                              "required": [
+                                "operator",
+                                "reason",
+                                "api_name"
+                              ]
                             },
                             {
-                                "$ref": "#/components/schemas/queryname"
-                            },
-                            {
-                                "$ref": "#/components/schemas/queryvalue"
+                              "type": "object",
+                              "description": "General query error details",
+                              "additionalProperties": false,
+                              "properties": {
+                                "reason": {
+                                  "type": "string",
+                                  "description": "Detailed reason for the error",
+                                  "maxLength": 500
+                                }
+                              },
+                              "required": [
+                                "reason",
+                                "api_name"
+                              ]
                             }
-                        ]
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "InvalidQuery_NoReason": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Invalid query error response for IN operator violations",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status indicator",
+                          "enum": [
                             "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating invalid query",
+                          "enum": [
                             "INVALID_QUERY"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message describing the query issue",
+                          "enum": [
                             "Only 100 values are allowed in \"IN\" criteria",
                             "Invalid query formed"
-                        ]
-                    },
-                    "details": {
-                        "type": "object",
-                        "properties": {
-                            "api_name": {
-                                "type": "string"
-                            },
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details including field information",
+                          "additionalProperties": false,
+                          "properties": {
                             "param_name": {
-                                "type": "string"
+                              "type": "string",
+                              "description": "Name of the parameter causing the error",
+                              "maxLength": 100
                             }
-                        },
-                        "required": [
+                          },
+                          "required": [
                             "api_name"
-                        ]
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "querytype": {
-                "type": "object",
-                "properties": {
-                    "expected_data_type": {
-                        "type": "string"
-                    },
-                    "reason": {
-                        "type": "string"
-                    },
-                    "api_name": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "expected_data_type",
-                    "reason",
-                    "api_name"
-                ]
-            },
-            "queryoperator": {
-                "type": "object",
-                "properties": {
-                    "operator": {
-                        "type": "string"
-                    },
-                    "reason": {
-                        "type": "string"
-                    },
-                    "api_name": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "operator",
-                    "reason",
-                    "api_name"
-                ]
-            },
-            "queryname": {
-                "type": "object",
-                "properties": {
-                    "reason": {
-                        "type": "string"
-                    },
-                    "api_name": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "reason",
-                    "api_name"
-                ]
-            },
-            "queryvalue": {
-                "type": "object",
-                "properties": {
-                    "reason": {
-                        "type": "string"
-                    },
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "value": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "reason",
-                    "api_name",
-                    "value"
-                ]
-            },
-            "Mandatory_Param_Missing": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "EXPECTED_PARAM_MISSING"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "details": {
-                        "type": "object",
-                        "properties": {
-                            "param_names": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "required": [
-                            "param_names"
-                        ]
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "Max_records": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "LIMIT_REACHED"
-                        ]
-                    },
-                    "message": {
-                        "type": "string",
-                        "enum": [
-                            "maximum response iteration limit reached"
-                        ]
-                    },
-                    "details": {
-                        "type": "object",
-                        "properties": {
-                            "limit": {
-                                "type": "string",
-                                "enum": [
-                                    "2000"
-                                ]
-                            }
-                        },
-                        "required": [
-                            "limit"
-                        ]
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            },
-            "Invlaid_Value_URL": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_MODULE"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "details": {
-                        "type": "object",
-                        "properties": {
-                            "resource_path_index": {
-                                "type": "integer",
-                                "format": "int32"
-                            }
-                        },
-                        "required": [
-                            "resource_path_index"
-                        ]
-                    }
-                },
-                "required": [
-                    "status",
-                    "code",
-                    "message",
-                    "details"
-                ]
-            }
-        },
-        "responses": {
-            "ErrorResponse": {
-                "description": "",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/Invalid_Request"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/Mandatory_Param_Missing"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/Invlaid_Value_URL"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/InvalidQuery"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/InvalidQuery_NoReason"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/Max_records"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/Max_criteria"
-                                }
-                            ]
+                          ]
                         }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Limit reached error response when maximum record iteration exceeded",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status indicator",
+                          "enum": [
+                            "error"
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating limit reached",
+                          "enum": [
+                            "LIMIT_REACHED"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message",
+                          "enum": [
+                            "maximum response iteration limit reached"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details including the limit value",
+                          "additionalProperties": false,
+                          "properties": {
+                            "limit": {
+                              "type": "string",
+                              "description": "Maximum number of records allowed",
+                              "enum": [
+                                "2000"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "limit"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Criteria limit exceeded error response",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status indicator",
+                          "enum": [
+                            "error"
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating criteria limit exceeded",
+                          "enum": [
+                            "CRITERIA_LIMIT_EXCEEDED"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message",
+                          "enum": [
+                            "no of criterium that can be given exceed the limit 15"
+                          ]
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error details",
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Generic error response for other bad request scenarios",
+                      "additionalProperties": false
                     }
+                  ]
                 }
+              }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication failed or insufficient OAuth scope permissions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User lacks permission to access the requested module or perform the search operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested URL pattern is invalid or the specified resource does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded. Wait before making additional requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred on the server. Contact support if the issue persists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway - Temporary service dependency failure. The request should be retried.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable - The service is temporarily unavailable due to maintenance or capacity issues.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         },
-        "parameters": {
-            "module": {
-                "name": "module",
-                "in": "path",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "approval_state": {
-                "name": "approval_state",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "string",
-                    "enum": [
-                        "approval_process_pending",
-                        "webform_invalid",
-                        "review_process_pending",
-                        "webform_invalid_approval",
-                        "zia_vision_validation",
-                        "review_process_rejected",
-                        "webform_unapproved",
-                        "email_parser_waiting",
-                        "approved",
-                        "merge_pending",
-                        "email_parser_rejected",
-                        "zia_vision_rejected",
-                        "zia_vision_pending",
-                        "approval_process_rejected",
-                        "webform_double_optin"
-                    ]
-                }
-            },
-            "criteria": {
-                "name": "criteria",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "page": {
-                "name": "page",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "integer",
-                    "format": "int32"
-                }
-            },
-            "per_page": {
-                "name": "per_page",
-                "in": "query",
-                "required": true,
-                "schema": {
-                    "type": "integer",
-                    "format": "int32"
-                }
-            },
-            "converted": {
-                "name": "converted",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "string",
-                    "enum": [
-                        "true",
-                        "false",
-                        "both"
-                    ]
-                }
-            },
-            "word": {
-                "name": "word",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "phone": {
-                "name": "phone",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "email": {
-                "name": "email",
-                "in": "query",
-                "required": false,
-                "schema": {
-                    "type": "string"
-                }
-            }
-        },
-        "headers": {},
-        "securitySchemes": {
-            "iam-oauth2-schema": {
-                "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
-            }
-        }
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Leads.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Contacts.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Accounts.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Deals.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Tasks.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Events.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Calls.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Products.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Vendors.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Campaigns.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Cases.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Solutions.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Pricebooks.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Quotes.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Salesorders.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Purchaseorders.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Invoices.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Forecasts.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Activities.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Notes.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.Attachments.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.custom.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.users.READ",
+              "ZohoSearch.securesearch.READ"
+            ]
+          },
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.ALL",
+              "ZohoCRM.users.ALL",
+              "ZohoSearch.securesearch.READ"
+            ]
+          }
+        ]
+      }
     }
+  },
+  "components": {
+    "parameters": {
+      "Type": {
+        "name": "type",
+        "in": "query",
+        "required": false,
+        "description": "Filter users by their status, role, or confirmation state",
+        "schema": {
+          "type": "string",
+          "maxLength": 50,
+          "enum": [
+            "ActiveAndDeactive",
+            "CurrentUser",
+            "DeletedUsers",
+            "ParentRoleUsers",
+            "ChildRoleUsers",
+            "DeactiveUsers",
+            "NotConfirmedUsers",
+            "ConfirmedUsers",
+            "ActiveUsers",
+            "AdminUsers",
+            "ActiveConfirmedAdmins",
+            "ActiveConfirmedUsers",
+            "DeveloperUsers",
+            "SubordinateRoleUsers",
+            "AllUsers",
+            "AllActiveUsers"
+          ]
+        }
+      },
+      "Module": {
+        "name": "module",
+        "in": "path",
+        "required": true,
+        "description": "The API name of the CRM module to search within.",
+        "schema": {
+          "type": "string",
+          "maxLength": 100
+        }
+      },
+      "ApprovalState": {
+        "name": "approval_state",
+        "in": "query",
+        "required": false,
+        "description": "Filter records by their approval status. This parameter is particularly useful for modules with approval workflows or data validation processes.",
+        "schema": {
+          "type": "string",
+          "maxLength": 50,
+          "enum": [
+            "approval_process_pending",
+            "webform_invalid",
+            "review_process_pending",
+            "webform_invalid_approval",
+            "zia_vision_validation",
+            "review_process_rejected",
+            "webform_unapproved",
+            "email_parser_waiting",
+            "approved",
+            "merge_pending",
+            "email_parser_rejected",
+            "zia_vision_rejected",
+            "zia_vision_pending",
+            "approval_process_rejected",
+            "webform_double_optin"
+          ]
+        }
+      },
+      "Criteria": {
+        "name": "criteria",
+        "in": "query",
+        "required": false,
+        "description": "Complex query string to search for records using field-specific conditions and operators. Supports up to 15 conditions combined with AND/OR operators. **Format:** `(field_name:operator:value)` with logical operators.\n*Mandatory if email, phone, and word are not present.*",
+        "schema": {
+          "type": "string",
+          "maxLength": 3000
+        }
+      },
+      "SearchEmail": {
+        "name": "email",
+        "in": "query",
+        "required": false,
+        "description": "Search records by email address across all email fields in the module. Supports partial matches and searches multiple email fields simultaneously.\n*Mandatory if criteria, phone, and word are not present.*",
+        "schema": {
+          "type": "string",
+          "maxLength": 255,
+          "format": "string"
+        }
+      },
+      "SearchPhone": {
+        "name": "phone",
+        "in": "query",
+        "required": false,
+        "description": "Search records by phone number across all phone fields in the module. Supports various phone number formats including international, national, and partial numbers.\n*Mandatory if criteria, email, and word are not present.*",
+        "schema": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 50,
+          "pattern": "^[+]?[0-9\\s\\-\\(\\)\\.]+$"
+        }
+      },
+      "SearchWord": {
+        "name": "word",
+        "in": "query",
+        "required": false,
+        "description": "A simple word or phrase to search across all supported text fields in the module. Performs a global search with minimum 2 characters required. This is the broadest search method but may be slower than specific field searches.\n*Mandatory if criteria, email, and phone are not present.*",
+        "schema": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        }
+      },
+      "Fields": {
+        "name": "fields",
+        "in": "query",
+        "required": false,
+        "description": "Comma-separated list of field API names to retrieve in the response. If not specified, all accessible fields are returned. Use this to optimize response size and improve performance.",
+        "schema": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      },
+      "Page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "description": "The page number to retrieve for paginated results. Use in combination with per_page to navigate through large result sets.",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1,
+          "default": 1
+        }
+      },
+      "PerPage": {
+        "name": "per_page",
+        "in": "query",
+        "required": false,
+        "description": "The number of records to return per page. Higher values reduce the number of API calls needed but increase response size and processing time.",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 200
+        }
+      },
+      "SortBy": {
+        "name": "sort_by",
+        "in": "query",
+        "required": false,
+        "description": "The field API name to sort the search results by. Choose a field that exists in the target module for consistent sorting behavior.",
+        "schema": {
+          "type": "string",
+          "maxLength": 100,
+          "default": "id"
+        }
+      },
+      "SortOrder": {
+        "name": "sort_order",
+        "in": "query",
+        "required": false,
+        "description": "The sorting direction for the results. Use 'asc' for ascending (A-Z, 1-9, oldest first) or 'desc' for descending (Z-A, 9-1, newest first).",
+        "schema": {
+          "type": "string",
+          "maxLength": 10,
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "desc"
+        }
+      },
+      "Converted": {
+        "name": "converted",
+        "in": "query",
+        "required": false,
+        "description": "Filter records by their conversion status. Primarily used with Leads module to distinguish between converted and non-converted leads. Also applicable to other modules with conversion workflows.",
+        "schema": {
+          "type": "string",
+          "maxLength": 10,
+          "enum": [
+            "true",
+            "false",
+            "both"
+          ],
+          "default": "false"
+        }
+      }
+    },
+    "headers": {},
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.modules.ALL": "Full access to all modules",
+              "ZohoCRM.modules.Leads.READ": "Read access to Leads module",
+              "ZohoCRM.modules.Contacts.READ": "Read access to Contacts module",
+              "ZohoCRM.modules.Accounts.READ": "Read access to Accounts module",
+              "ZohoCRM.modules.Deals.READ": "Read access to Deals module",
+              "ZohoCRM.modules.Tasks.READ": "Read access to Tasks module",
+              "ZohoCRM.modules.Events.READ": "Read access to Events module",
+              "ZohoCRM.modules.Calls.READ": "Read access to Calls module",
+              "ZohoCRM.modules.Products.READ": "Read access to Products module",
+              "ZohoCRM.modules.Vendors.READ": "Read access to Vendors module",
+              "ZohoCRM.modules.Campaigns.READ": "Read access to Campaigns module",
+              "ZohoCRM.modules.Cases.READ": "Read access to Cases module",
+              "ZohoCRM.modules.Solutions.READ": "Read access to Solutions module",
+              "ZohoCRM.modules.Pricebooks.READ": "Read access to Price Books module",
+              "ZohoCRM.modules.Quotes.READ": "Read access to Quotes module",
+              "ZohoCRM.modules.Salesorders.READ": "Read access to Sales Orders module",
+              "ZohoCRM.modules.Purchaseorders.READ": "Read access to Purchase Orders module",
+              "ZohoCRM.modules.Invoices.READ": "Read access to Invoices module",
+              "ZohoCRM.modules.Forecasts.READ": "Read access to Forecasts module",
+              "ZohoCRM.modules.Activities.READ": "Read access to Activities module",
+              "ZohoCRM.modules.Notes.READ": "Read access to Notes module",
+              "ZohoCRM.modules.Attachments.READ": "Read access to Attachments module",
+              "ZohoCRM.modules.custom.READ": "Read access to Custom modules",
+              "ZohoCRM.users.READ": "Read access to users modules",
+              "ZohoCRM.users.ALL": "Full access to users module",
+              "ZohoSearch.securesearch.READ": "Read access for secure search operations"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorDetails": {
+        "type": "object",
+        "description": "Specific details about the error, often including which parameter or value caused the issue.",
+        "additionalProperties": false
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard error response structure containing error code, message, and optional details",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The specific error code.",
+            "enum": [
+              "INVALID_DATA",
+              "INVALID_QUERY",
+              "EXPECTED_PARAM_MISSING",
+              "LIMIT_REACHED",
+              "NOT_SUPPORTED",
+              "INVALID_REQUEST_METHOD",
+              "AUTHORIZATION_FAILED",
+              "OAUTH_SCOPE_MISMATCH",
+              "NO_PERMISSION",
+              "INVALID_URL_PATTERN",
+              "INTERNAL_ERROR",
+              "RATE_LIMIT_EXCEEDED",
+              "SERVICE_UNAVAILABLE",
+              "INVALID_MODULE"
+            ]
+          },
+          "details": {
+            "$ref": "#/components/schemas/ErrorDetails"
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable error message.",
+            "maxLength": 1000
+          },
+          "status": {
+            "type": "string",
+            "description": "Status indicator for the response, always 'error' for error responses",
+            "enum": [
+              "error"
+            ],
+            "default": "error"
+          }
+        },
+        "required": [
+          "code",
+          "details",
+          "message",
+          "status"
+        ]
+      }
+    }
+  }
 }

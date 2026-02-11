@@ -1,464 +1,262 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "composite_requests",
-        "description": "",
-        "version": "v8.0"
-    },
-    "servers": [
-        {
-            "url": "https://zohoapis.com"
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Composite Requests",
+    "description": "Composite API",
+    "version": "8"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
         }
-    ],
-    "paths": {
-        "/crm/v8/__composite_requests": {
-            "post": {
-                "operationId": "composite",
-                "requestBody": {
-                    "$ref": "#/components/requestBodies/body"
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/SuccessResponse"
-                    },
-                    "207": {
-                        "$ref": "#/components/responses/MixedResponse"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/ErrorResponse"
-                    }
-                }
-            }
-        }
-    },
-    "security": [
-        {
+      }
+    }
+  ],
+  "paths": {
+    "/__composite_requests": {
+      "post": {
+        "summary": "To process multiple requests in a single API call",
+        "description": "This API allows clients to bundle multiple API requests into a single HTTP request",
+        "operationId": "composite",
+        "security": [
+          {
             "iam-oauth2-schema": [
-                ""
+              "ZohoCRM.composite_requests.CUSTOM"
             ]
-        }
-    ],
-    "components": {
-        "schemas": {
-            "owner": {
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
                 "type": "object",
+                "description": "Request body for composite API operations",
+                "additionalProperties": false,
                 "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "name",
-                    "id"
-                ]
-            },
-            "composite_requests": {
-                "type": "object",
-                "properties": {
-                    "method": {
-                        "type": "string"
-                    },
-                    "uri": {
-                        "type": "string"
-                    },
-                    "headers": {
-                        "type": "object"
-                    },
-                    "params": {
-                        "type": "object"
-                    },
-                    "body": {
-                        "type": "object"
-                    },
-                    "sub_request_id": {
-                        "type": "string",
-                        "pattern": "[a-zA-Z0-9][a-zA-Z0-9_]*",
-                        "nullable": true
-                    }
-                },
-                "required": [
-                    "method",
-                    "uri",
-                    "headers",
-                    "params",
-                    "body",
-                    "sub_request_id"
-                ]
-            },
-            "wrapper": {
-                "type": "object",
-                "properties": {
-                    "rollback_on_fail": {
-                        "type": "boolean",
-                        "enum": [
-                            false
-                        ],
-                        "nullable": true
-                    },
-                    "concurrent_execution": {
-                        "type": "boolean",
-                        "enum": [
-                            false
-                        ],
-                        "nullable": true
-                    },
-                    "__composite_requests": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/composite_requests"
+                  "rollback_on_fail": {
+                    "type": "boolean",
+                    "description": "Whether to rollback all operations if any sub-request fails. Default is false. Cannot be true when parallel_execution is true",
+                    "default": false
+                  },
+                  "parallel_execution": {
+                    "type": "boolean",
+                    "description": "Whether to execute sub-requests concurrently. Default is true. Cannot be true when rollback_on_fail is true",
+                    "default": true
+                  },
+                  "__composite_requests": {
+                    "type": "array",
+                    "description": "Array of individual API requests to be executed",
+                    "maxItems": 5,
+                    "items": {
+                      "type": "object",
+                      "description": "Individual API request configuration",
+                      "additionalProperties": false,
+                      "properties": {
+                        "method": {
+                          "type": "string",
+                          "description": "HTTP method for the request",
+                          "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE",
+                            "PATCH"
+                          ]
+                        },
+                        "uri": {
+                          "type": "string",
+                          "description": "URI path for the API request",
+                          "pattern": "/crm(/.*)?/v[0-9]+([.][0-9]+)?/.*",
+                          "maxLength": 2048
+                        },
+                        "sub_request_id": {
+                          "type": "string",
+                          "description": "Unique identifier for the sub-request",
+                          "pattern": "[a-zA-Z0-9][a-zA-Z0-9_]*",
+                          "maxLength": 100
+                        },
+                        "headers": {
+                          "type": "object",
+                          "description": "HTTP headers for the request",
+                          "additionalProperties": true
+                        },
+                        "params": {
+                          "type": "object",
+                          "description": "Query parameters for the request",
+                          "additionalProperties": true
+                        },
+                        "body": {
+                          "type": "object",
+                          "description": "Request body data",
+                          "additionalProperties": true
                         }
+                      },
+                      "required": [
+                        "method",
+                        "uri"
+                      ]
                     }
+                  }
                 },
                 "required": [
-                    "rollback_on_fail",
-                    "concurrent_execution",
-                    "__composite_requests"
+                  "__composite_requests"
                 ]
-            },
-            "details": {
-                "type": "object",
-                "properties": {
-                    "response": {
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success response when all sub requests are executed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response object containing successful composite request results",
+                  "additionalProperties": false,
+                  "properties": {
+                    "__composite_requests": {
+                      "type": "array",
+                      "description": "Array of individual request responses",
+                      "maxItems": 5,
+                      "items": {
                         "type": "object",
+                        "description": "Individual request response object",
+                        "additionalProperties": false,
                         "properties": {
-                            "headers": {
-                                "type": "object"
-                            },
-                            "body": {
+                          "code": {
+                            "type": "string",
+                            "description": "Response code indicating success",
+                            "enum": [
+                              "SUCCESS"
+                            ]
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Response message",
+                            "maxLength": 1000
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Response status",
+                            "enum": [
+                              "success"
+                            ]
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "Detailed response information",
+                            "additionalProperties": false,
+                            "properties": {
+                              "response": {
                                 "type": "object",
-                                "nullable": true
+                                "description": "HTTP response details",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "headers": {
+                                    "type": "object",
+                                    "description": "Response headers",
+                                    "additionalProperties": true
+                                  },
+                                  "body": {
+                                    "type": "object",
+                                    "description": "Response body",
+                                    "additionalProperties": true
+                                  },
+                                  "status_code": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "HTTP status code"
+                                  }
+                                },
+                                "required": [
+                                  "headers",
+                                  "body",
+                                  "status_code"
+                                ]
+                              }
                             },
-                            "status_code": {
-                                "type": "integer",
-                                "format": "int32"
-                            }
+                            "required": [
+                              "response"
+                            ]
+                          }
                         },
                         "required": [
-                            "headers",
-                            "body",
-                            "status_code"
+                          "code",
+                          "message",
+                          "status",
+                          "details"
                         ]
+                      }
                     }
-                },
-                "required": [
-                    "response"
-                ]
-            },
-            "success": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "SUCCESS"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "success"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "#/components/schemas/details"
+                  },
+                  "required": [
+                    "__composite_requests"
+                  ]
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "few sub requests are executed and few of them are not executed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response object for partial success when some sub-requests succeed and others fail",
+                  "additionalProperties": false,
+                  "properties": {
+                    "__composite_requests": {
+                      "type": "array",
+                      "description": "Array of mixed success and error responses for individual sub-requests",
+                      "maxItems": 5,
+                      "items": {
+                        "type": "object",
+                        "description": "Individual sub-request response containing either success or error details",
+                        "additionalProperties": true
+                      }
                     }
-                },
-                "required": [
-                    "code",
-                    "message",
-                    "status",
-                    "details"
-                ]
-            },
-            "empty": {
-                "type": "object"
-            },
-            "ErrorDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "json_path"
-                ]
-            },
-            "InvalidTypeDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "expected_data_type": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "json_path",
-                    "expected_data_type"
-                ]
-            },
-            "LengthDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "maximum_length": {
-                        "type": "integer",
-                        "format": "int32",
-                        "enum": [
-                            5
-                        ]
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "json_path",
-                    "maximum_length"
-                ]
-            },
-            "AmbiguityDetails": {
-                "type": "object",
-                "properties": {
-                    "ambiguity_due_to": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ErrorDetails"
-                        }
-                    }
-                },
-                "required": [
-                    "ambiguity_due_to"
-                ]
-            },
-            "AllowedServiceDetails": {
-                "type": "object",
-                "properties": {
-                    "allowed_services": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "required": [
-                    "allowed_services"
-                ]
-            },
-            "RollbackDetails": {
-                "type": "object",
-                "properties": {
-                    "rollbacked_by_sub_request_index": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                },
-                "required": [
-                    "rollbacked_by_sub_request_index"
-                ]
-            },
-            "RegexDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "regex": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "json_path",
-                    "regex"
-                ]
-            },
-            "DataTypeDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "regex": {
-                        "type": "string"
-                    },
-                    "expected_data_type": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "json_path",
-                    "regex",
-                    "expected_data_type"
-                ]
-            },
-            "DuplicateDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "sub_request_indexes": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer",
-                            "format": "int32"
-                        }
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "json_path",
-                    "sub_request_indexes"
-                ]
-            },
-            "InvalidRefrenceDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "reference": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "json_path",
-                    "reference"
-                ]
-            },
-            "RestrictedHeadersDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "restricted_headers": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "json_path",
-                    "restricted_headers"
-                ]
-            },
-            "RestrictedParamsDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    },
-                    "restricted_params": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "required": [
-                    "api_name",
-                    "json_path",
-                    "restricted_params"
-                ]
-            },
-            "VersionDetails": {
-                "type": "object",
-                "properties": {
-                    "sub_request_version": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "composite_request_version": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                },
-                "required": [
-                    "sub_request_version",
-                    "composite_request_version"
-                ]
-            },
-            "DependentData": {
-                "type": "object",
-                "properties": {
-                    "sub_request_id": {
-                        "type": "string"
-                    },
-                    "referred_sub_request_ids": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "required": [
-                    "sub_request_id",
-                    "referred_sub_request_ids"
-                ]
-            },
-            "DependentDetails": {
-                "type": "object",
-                "properties": {
-                    "dependent_data": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/DependentData"
-                        }
-                    }
-                },
-                "required": [
-                    "dependent_data"
-                ]
-            },
-            "error": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
+                  },
+                  "required": [
+                    "__composite_requests"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "error responses due to invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response schema for composite request failures",
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Error response object with detailed error information",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code indicating the type of error",
+                          "enum": [
                             "DUPLICATE_DATA",
                             "NOT_SUPPORTED",
                             "REQUEST_TIMEOUT",
@@ -469,137 +267,911 @@
                             "ROLLBACK_PERFORMED",
                             "MANDATORY_NOT_FOUND",
                             "AMBIGUITY_DURING_PROCESSING"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message",
+                          "maxLength": 1000
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Status indicating error condition",
+                          "enum": [
                             "error"
-                        ]
-                    },
-                    "details": {
-                        "oneOf": [
+                          ]
+                        },
+                        "details": {
+                          "oneOf": [
                             {
-                                "$ref": "#/components/schemas/InvalidTypeDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/ErrorDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/AmbiguityDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/LengthDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/AllowedServiceDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/RegexDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/RestrictedParamsDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/RestrictedHeadersDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/InvalidRefrenceDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/DuplicateDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/DataTypeDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/RollbackDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/VersionDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/DependentDetails"
-                            },
-                            {
-                                "$ref": "#/components/schemas/empty"
-                            }
-                        ]
-                    }
-                },
-                "required": [
-                    "code",
-                    "message",
-                    "status",
-                    "details"
-                ]
-            },
-            "ErrorWrapper": {
-                "type": "object",
-                "properties": {
-                    "__composite_requests": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/error"
-                        }
-                    }
-                },
-                "required": [
-                    "__composite_requests"
-                ]
-            }
-        },
-        "responses": {
-            "SuccessResponse": {
-                "description": "",
-                "content": {
-                    "application/json": {}
-                }
-            },
-            "ErrorResponse": {
-                "description": "",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/error"
+                              "type": "object",
+                              "description": "Error details for invalid data type",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "Name of the API that caused the error",
+                                  "maxLength": 100
                                 },
-                                {
-                                    "$ref": "#/components/schemas/ErrorWrapper"
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the problematic field",
+                                  "maxLength": 500
+                                },
+                                "expected_data_type": {
+                                  "type": "string",
+                                  "description": "Expected data type for the field",
+                                  "maxLength": 50
                                 }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path",
+                                "expected_data_type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for missing mandatory fields",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "Name of the API that caused the error",
+                                  "maxLength": 100
+                                },
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the problematic field",
+                                  "maxLength": 500
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for ambiguous references",
+                              "additionalProperties": false,
+                              "properties": {
+                                "ambiguity_due_to": {
+                                  "type": "array",
+                                  "description": "List of ambiguous references causing the error",
+                                  "maxItems": 10,
+                                  "items": {
+                                    "type": "object",
+                                    "description": "Individual ambiguous reference",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API with ambiguous reference",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the ambiguous reference",
+                                        "maxLength": 500
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path"
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "ambiguity_due_to"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for exceeding maximum length",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "Name of the API that caused the error",
+                                  "maxLength": 100
+                                },
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the problematic field",
+                                  "maxLength": 500
+                                },
+                                "maximum_length": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "description": "Maximum allowed length",
+                                  "enum": [
+                                    5
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path",
+                                "maximum_length"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for unsupported services",
+                              "additionalProperties": false,
+                              "properties": {
+                                "allowed_services": {
+                                  "type": "array",
+                                  "description": "List of allowed services",
+                                  "maxItems": 50,
+                                  "items": {
+                                    "type": "string",
+                                    "description": "Service name",
+                                    "maxLength": 100
+                                  }
+                                }
+                              },
+                              "required": [
+                                "allowed_services"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for regex validation failure",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "Name of the API that caused the error",
+                                  "maxLength": 100
+                                },
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the problematic field",
+                                  "maxLength": 500
+                                },
+                                "regex": {
+                                  "type": "string",
+                                  "description": "Regular expression pattern that failed",
+                                  "maxLength": 200
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path",
+                                "regex"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for restricted parameters",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "Name of the API that caused the error",
+                                  "maxLength": 100
+                                },
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the problematic field",
+                                  "maxLength": 500
+                                },
+                                "restricted_params": {
+                                  "type": "array",
+                                  "description": "List of restricted parameters",
+                                  "maxItems": 50,
+                                  "items": {
+                                    "type": "string",
+                                    "description": "Restricted parameter name",
+                                    "maxLength": 100
+                                  }
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path",
+                                "restricted_params"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for restricted headers",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "Name of the API that caused the error",
+                                  "maxLength": 100
+                                },
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the problematic field",
+                                  "maxLength": 500
+                                },
+                                "restricted_headers": {
+                                  "type": "array",
+                                  "description": "List of restricted headers",
+                                  "maxItems": 50,
+                                  "items": {
+                                    "type": "string",
+                                    "description": "Restricted header name",
+                                    "maxLength": 100
+                                  }
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path",
+                                "restricted_headers"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for invalid references",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "Name of the API that caused the error",
+                                  "maxLength": 100
+                                },
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the problematic field",
+                                  "maxLength": 500
+                                },
+                                "reference": {
+                                  "type": "string",
+                                  "description": "Invalid reference value",
+                                  "maxLength": 200
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path",
+                                "reference"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for looping dependencies",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "Name of the API that caused the error",
+                                  "maxLength": 100
+                                },
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the problematic field",
+                                  "maxLength": 500
+                                },
+                                "sub_request_indexes": {
+                                  "type": "array",
+                                  "description": "Indexes of sub-requests involved in the loop",
+                                  "maxItems": 10,
+                                  "items": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Sub-request index"
+                                  }
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path",
+                                "sub_request_indexes"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for regex and data type validation",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "Name of the API that caused the error",
+                                  "maxLength": 100
+                                },
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the problematic field",
+                                  "maxLength": 500
+                                },
+                                "regex": {
+                                  "type": "string",
+                                  "description": "Regular expression pattern that failed",
+                                  "maxLength": 200
+                                },
+                                "expected_data_type": {
+                                  "type": "string",
+                                  "description": "Expected data type for the field",
+                                  "maxLength": 50
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path",
+                                "regex",
+                                "expected_data_type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for rollback operations",
+                              "additionalProperties": false,
+                              "properties": {
+                                "rollbacked_by_sub_request_index": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "description": "Index of the sub-request that triggered the rollback"
+                                }
+                              },
+                              "required": [
+                                "rollbacked_by_sub_request_index"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for version mismatches",
+                              "additionalProperties": false,
+                              "properties": {
+                                "sub_request_version": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "description": "Version of the sub-request"
+                                },
+                                "composite_request_version": {
+                                  "type": "integer",
+                                  "format": "int32",
+                                  "description": "Version of the composite request"
+                                }
+                              },
+                              "required": [
+                                "sub_request_version",
+                                "composite_request_version"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Error details for dependency issues",
+                              "additionalProperties": false,
+                              "properties": {
+                                "dependent_data": {
+                                  "type": "array",
+                                  "description": "Information about dependent sub-requests",
+                                  "maxItems": 10,
+                                  "items": {
+                                    "type": "object",
+                                    "description": "Dependency information for a sub-request",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "sub_request_id": {
+                                        "type": "string",
+                                        "description": "ID of the dependent sub-request",
+                                        "maxLength": 100
+                                      },
+                                      "referred_sub_request_ids": {
+                                        "type": "array",
+                                        "description": "IDs of sub-requests this depends on",
+                                        "maxItems": 5,
+                                        "items": {
+                                          "type": "string",
+                                          "description": "Referenced sub-request ID",
+                                          "maxLength": 100
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "sub_request_id",
+                                      "referred_sub_request_ids"
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "dependent_data"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Generic error details object",
+                              "additionalProperties": true,
+                              "properties": {}
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "status",
+                        "details"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Response object for composite request with multiple sub-request errors",
+                      "additionalProperties": false,
+                      "properties": {
+                        "__composite_requests": {
+                          "type": "array",
+                          "description": "Array of error responses for individual sub-requests",
+                          "maxItems": 5,
+                          "items": {
+                            "type": "object",
+                            "description": "Individual sub-request error response",
+                            "additionalProperties": false,
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "description": "Error code indicating the type of error",
+                                "enum": [
+                                  "DUPLICATE_DATA",
+                                  "NOT_SUPPORTED",
+                                  "REQUEST_TIMEOUT",
+                                  "LOOPING_FOUND",
+                                  "INVALID_DATA",
+                                  "PROCESSING_STOPPED",
+                                  "INVALID_REFERENCE",
+                                  "ROLLBACK_PERFORMED",
+                                  "MANDATORY_NOT_FOUND",
+                                  "AMBIGUITY_DURING_PROCESSING"
+                                ]
+                              },
+                              "message": {
+                                "type": "string",
+                                "description": "Human-readable error message",
+                                "maxLength": 1000
+                              },
+                              "status": {
+                                "type": "string",
+                                "description": "Status indicating error condition",
+                                "enum": [
+                                  "error"
+                                ]
+                              },
+                              "details": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for invalid data type",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API that caused the error",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the problematic field",
+                                        "maxLength": 500
+                                      },
+                                      "expected_data_type": {
+                                        "type": "string",
+                                        "description": "Expected data type for the field",
+                                        "maxLength": 50
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path",
+                                      "expected_data_type"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for missing mandatory fields",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API that caused the error",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the problematic field",
+                                        "maxLength": 500
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for ambiguous references",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "ambiguity_due_to": {
+                                        "type": "array",
+                                        "description": "List of ambiguous references causing the error",
+                                        "maxItems": 10,
+                                        "items": {
+                                          "type": "object",
+                                          "description": "Individual ambiguous reference",
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "api_name": {
+                                              "type": "string",
+                                              "description": "Name of the API with ambiguous reference",
+                                              "maxLength": 100
+                                            },
+                                            "json_path": {
+                                              "type": "string",
+                                              "description": "JSON path to the ambiguous reference",
+                                              "maxLength": 500
+                                            }
+                                          },
+                                          "required": [
+                                            "api_name",
+                                            "json_path"
+                                          ]
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "ambiguity_due_to"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for exceeding maximum length",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API that caused the error",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the problematic field",
+                                        "maxLength": 500
+                                      },
+                                      "maximum_length": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "description": "Maximum allowed length",
+                                        "enum": [
+                                          5
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path",
+                                      "maximum_length"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for unsupported services",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "allowed_services": {
+                                        "type": "array",
+                                        "description": "List of allowed services",
+                                        "maxItems": 50,
+                                        "items": {
+                                          "type": "string",
+                                          "description": "Service name",
+                                          "maxLength": 100
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "allowed_services"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for regex validation failure",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API that caused the error",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the problematic field",
+                                        "maxLength": 500
+                                      },
+                                      "regex": {
+                                        "type": "string",
+                                        "description": "Regular expression pattern that failed",
+                                        "maxLength": 200
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path",
+                                      "regex"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for restricted parameters",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API that caused the error",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the problematic field",
+                                        "maxLength": 500
+                                      },
+                                      "restricted_params": {
+                                        "type": "array",
+                                        "description": "List of restricted parameters",
+                                        "maxItems": 50,
+                                        "items": {
+                                          "type": "string",
+                                          "description": "Restricted parameter name",
+                                          "maxLength": 100
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path",
+                                      "restricted_params"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for restricted headers",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API that caused the error",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the problematic field",
+                                        "maxLength": 500
+                                      },
+                                      "restricted_headers": {
+                                        "type": "array",
+                                        "description": "List of restricted headers",
+                                        "maxItems": 50,
+                                        "items": {
+                                          "type": "string",
+                                          "description": "Restricted header name",
+                                          "maxLength": 100
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path",
+                                      "restricted_headers"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for invalid references",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API that caused the error",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the problematic field",
+                                        "maxLength": 500
+                                      },
+                                      "reference": {
+                                        "type": "string",
+                                        "description": "Invalid reference value",
+                                        "maxLength": 200
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path",
+                                      "reference"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for looping dependencies",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API that caused the error",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the problematic field",
+                                        "maxLength": 500
+                                      },
+                                      "sub_request_indexes": {
+                                        "type": "array",
+                                        "description": "Indexes of sub-requests involved in the loop",
+                                        "maxItems": 10,
+                                        "items": {
+                                          "type": "integer",
+                                          "format": "int32",
+                                          "description": "Sub-request index"
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path",
+                                      "sub_request_indexes"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for regex and data type validation",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "api_name": {
+                                        "type": "string",
+                                        "description": "Name of the API that caused the error",
+                                        "maxLength": 100
+                                      },
+                                      "json_path": {
+                                        "type": "string",
+                                        "description": "JSON path to the problematic field",
+                                        "maxLength": 500
+                                      },
+                                      "regex": {
+                                        "type": "string",
+                                        "description": "Regular expression pattern that failed",
+                                        "maxLength": 200
+                                      },
+                                      "expected_data_type": {
+                                        "type": "string",
+                                        "description": "Expected data type for the field",
+                                        "maxLength": 50
+                                      }
+                                    },
+                                    "required": [
+                                      "api_name",
+                                      "json_path",
+                                      "regex",
+                                      "expected_data_type"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for rollback operations",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "rollbacked_by_sub_request_index": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "description": "Index of the sub-request that triggered the rollback"
+                                      }
+                                    },
+                                    "required": [
+                                      "rollbacked_by_sub_request_index"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for version mismatches",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "sub_request_version": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "description": "Version of the sub-request"
+                                      },
+                                      "composite_request_version": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "description": "Version of the composite request"
+                                      }
+                                    },
+                                    "required": [
+                                      "sub_request_version",
+                                      "composite_request_version"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Error details for dependency issues",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "dependent_data": {
+                                        "type": "array",
+                                        "description": "Information about dependent sub-requests",
+                                        "maxItems": 10,
+                                        "items": {
+                                          "type": "object",
+                                          "description": "Dependency information for a sub-request",
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "sub_request_id": {
+                                              "type": "string",
+                                              "description": "ID of the dependent sub-request",
+                                              "maxLength": 100
+                                            },
+                                            "referred_sub_request_ids": {
+                                              "type": "array",
+                                              "description": "IDs of sub-requests this depends on",
+                                              "maxItems": 5,
+                                              "items": {
+                                                "type": "string",
+                                                "description": "Referenced sub-request ID",
+                                                "maxLength": 100
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "sub_request_id",
+                                            "referred_sub_request_ids"
+                                          ]
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "dependent_data"
+                                    ]
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "message",
+                              "status",
+                              "details"
                             ]
+                          }
                         }
+                      },
+                      "required": [
+                        "__composite_requests"
+                      ]
                     }
+                  ]
                 }
-            },
-            "MixedResponse": {
-                "description": "",
-                "content": {
-                    "application/json": {}
-                }
+              }
             }
-        },
-        "requestBodies": {
-            "body": {
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "$ref": "#/components/schemas/wrapper"
-                        }
-                    }
-                },
-                "required": true
-            }
-        },
-        "headers": {},
-        "securitySchemes": {
-            "iam-oauth2-schema": {
-                "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
-            }
+          }
         }
+      }
     }
+  },
+  "components": {
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.composite_requests.CUSTOM": "Custom access to composite requests",
+              "ZohoCRM.{sub_request_scope}": "Access to specific sub-request scopes in composite requests"
+            }
+          }
+        }
+      }
+    }
+  }
 }

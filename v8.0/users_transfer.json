@@ -1,0 +1,2015 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Users Transfer",
+    "description": "API for transferring user data and deleting users in Zoho CRM",
+    "version": "8"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/users/{userId}/actions/transfer_and_delete": {
+      "post": {
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.users.CREATE"
+            ]
+          }
+        ],
+        "summary": "Transfer User",
+        "description": "Transfer user records, assignments, and criteria to another user",
+        "operationId": "userTransfer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Request body for transferring and deleting user data",
+                "additionalProperties": false,
+                "properties": {
+                  "transfer_and_delete": {
+                    "type": "array",
+                    "description": "Array of transfer and delete operations",
+                    "maxItems": 1,
+                    "items": {
+                      "type": "object",
+                      "description": "Transfer and delete operation details",
+                      "additionalProperties": false,
+                      "properties": {
+                        "move_subordinate": {
+                          "type": "object",
+                          "description": "Details of the user to whom subordinates will be moved",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "User ID to move subordinates to",
+                              "maxLength": 19
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ]
+                        },
+                        "transfer": {
+                          "type": "object",
+                          "description": "Transfer settings for records, assignments, and criteria",
+                          "additionalProperties": false,
+                          "properties": {
+                            "records": {
+                              "type": "boolean",
+                              "description": "Whether to transfer records"
+                            },
+                            "assignment": {
+                              "type": "boolean",
+                              "description": "Whether to transfer assignments"
+                            },
+                            "criteria": {
+                              "type": "boolean",
+                              "description": "Whether to transfer criteria"
+                            },
+                            "id": {
+                              "type": "string",
+                              "description": "User ID to transfer data to",
+                              "maxLength": 19
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "move_subordinate",
+                        "transfer"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "transfer_and_delete"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User transfer scheduled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response body for successful user transfer and delete operation",
+                  "additionalProperties": false,
+                  "properties": {
+                    "transfer_and_delete": {
+                      "type": "array",
+                      "description": "Array containing transfer and delete operation results",
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Transfer and delete operation result",
+                        "additionalProperties": false,
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "description": "Status of the operation",
+                            "maxLength": 100
+                          },
+                          "code": {
+                            "type": "string",
+                            "description": "Response code indicating operation scheduled",
+                            "enum": [
+                              "SUCCESS"
+                            ]
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Human-readable message describing the result",
+                            "maxLength": 500
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "Additional details about the scheduled operation",
+                            "additionalProperties": false,
+                            "properties": {
+                              "job_id": {
+                                "type": "string",
+                                "description": "Unique identifier for the scheduled job",
+                                "maxLength": 50
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "User identifier",
+                                "maxLength": 19
+                              }
+                            },
+                            "required": [
+                              "job_id",
+                              "id"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "code",
+                          "message",
+                          "details"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "transfer_and_delete"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid data or missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Error response with transfer array",
+                      "additionalProperties": false,
+                      "properties": {
+                        "transfer_and_delete": {
+                          "type": "array",
+                          "description": "Array of transfer errors",
+                          "maxItems": 1,
+                          "items": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "description": "Validation errors",
+                                "properties": {
+                                  "status": {
+                                    "type": "string",
+                                    "description": "Error status",
+                                    "enum": [
+                                      "error"
+                                    ]
+                                  },
+                                  "code": {
+                                    "type": "string",
+                                    "description": "Error code",
+                                    "enum": [
+                                      "INVALID_DATA",
+                                      "NOT_ALLOWED"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Error message",
+                                    "maxLength": 500
+                                  },
+                                  "details": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid ID details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "description": "Invalid ID value",
+                                            "maxLength": 19
+                                          }
+                                        },
+                                        "required": [
+                                          "id"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid field details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "api_name": {
+                                            "type": "string",
+                                            "description": "API field name",
+                                            "maxLength": 100
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          }
+                                        },
+                                        "required": [
+                                          "api_name",
+                                          "json_path"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid data type details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "api_name": {
+                                            "type": "string",
+                                            "description": "API field name",
+                                            "maxLength": 100
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          },
+                                          "expected_data_type": {
+                                            "type": "string",
+                                            "description": "Expected data type",
+                                            "maxLength": 50
+                                          }
+                                        },
+                                        "required": [
+                                          "api_name",
+                                          "json_path",
+                                          "expected_data_type"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid owner status details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "api_name": {
+                                            "type": "string",
+                                            "description": "API field name",
+                                            "maxLength": 100
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          },
+                                          "owner_status": {
+                                            "type": "string",
+                                            "description": "Owner status",
+                                            "enum": [
+                                              "no_crm_user",
+                                              "deleted",
+                                              "inactive"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "api_name",
+                                          "json_path",
+                                          "owner_status"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid array element details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "index": {
+                                            "type": "integer",
+                                            "description": "Array index",
+                                            "format": "int32"
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          },
+                                          "expected_data_type": {
+                                            "type": "string",
+                                            "description": "Expected data type",
+                                            "maxLength": 50
+                                          }
+                                        },
+                                        "required": [
+                                          "index",
+                                          "json_path",
+                                          "expected_data_type"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "status",
+                                  "code",
+                                  "message",
+                                  "details"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "description": "Error response for expected field missing",
+                                "properties": {
+                                  "status": {
+                                    "type": "string",
+                                    "description": "Error status",
+                                    "enum": [
+                                      "error"
+                                    ]
+                                  },
+                                  "code": {
+                                    "type": "string",
+                                    "description": "Error code",
+                                    "enum": [
+                                      "EXPECTED_FIELD_MISSING"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Error message",
+                                    "maxLength": 500
+                                  },
+                                  "details": {
+                                    "type": "object",
+                                    "description": "Expected field details",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "expected_data": {
+                                        "type": "array",
+                                        "description": "List of expected fields",
+                                        "maxItems": 100,
+                                        "items": {
+                                          "type": "object",
+                                          "description": "Expected field information",
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "api_name": {
+                                              "type": "string",
+                                              "description": "API field name",
+                                              "maxLength": 100
+                                            },
+                                            "json_path": {
+                                              "type": "string",
+                                              "description": "JSON path to the field",
+                                              "maxLength": 200
+                                            }
+                                          },
+                                          "required": [
+                                            "api_name",
+                                            "json_path"
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "status",
+                                  "code",
+                                  "message",
+                                  "details"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "transfer_and_delete"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Error response for invalid user or data",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status",
+                          "enum": [
+                            "error"
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "INVALID_DATA",
+                            "NOT_ALLOWED"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 500
+                        },
+                        "details": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "description": "Invalid user in path details",
+                              "additionalProperties": false,
+                              "properties": {
+                                "resource_path_index": {
+                                  "type": "integer",
+                                  "description": "Resource path index",
+                                  "format": "int32"
+                                },
+                                "owner_status": {
+                                  "type": "string",
+                                  "description": "Owner status",
+                                  "enum": [
+                                    "no_crm_user",
+                                    "deleted"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "resource_path_index",
+                                "owner_status"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "description": "Maximum length exceeded details",
+                              "additionalProperties": false,
+                              "properties": {
+                                "api_name": {
+                                  "type": "string",
+                                  "description": "API field name",
+                                  "maxLength": 100
+                                },
+                                "json_path": {
+                                  "type": "string",
+                                  "description": "JSON path to the field",
+                                  "maxLength": 200
+                                },
+                                "maximum_length": {
+                                  "type": "integer",
+                                  "description": "Maximum allowed length",
+                                  "format": "int32"
+                                }
+                              },
+                              "required": [
+                                "api_name",
+                                "json_path",
+                                "maximum_length"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to perform this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Error response for permission denied",
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Error status",
+                      "enum": [
+                        "error"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code indicating no permission",
+                      "enum": [
+                        "NO_PERMISSION"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message describing the permission issue",
+                      "maxLength": 500
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional details about missing permissions",
+                      "additionalProperties": false,
+                      "properties": {
+                        "permissions": {
+                          "type": "array",
+                          "description": "List of required permissions that are missing",
+                          "maxItems": 1,
+                          "items": {
+                            "type": "string",
+                            "description": "Permission name",
+                            "maxLength": 200
+                          }
+                        }
+                      },
+                      "required": [
+                        "permissions"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/actions/transfer_and_delete": {
+      "post": {
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.users.CREATE"
+            ]
+          }
+        ],
+        "summary": "Transfer User",
+        "description": "Transfer user records, assignments, and criteria to another user",
+        "operationId": "userTransferWithoutId",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Request body for transferring and deleting user data",
+                "additionalProperties": false,
+                "properties": {
+                  "transfer_and_delete": {
+                    "type": "array",
+                    "description": "Array of transfer and delete operations",
+                    "maxItems": 1,
+                    "items": {
+                      "type": "object",
+                      "description": "Transfer and delete operation details",
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "User ID to be deleted and transferred",
+                          "maxLength": 19
+                        },
+                        "move_subordinate": {
+                          "type": "object",
+                          "description": "Details of the user to whom subordinates will be moved",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "User ID to move subordinates to",
+                              "maxLength": 19
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ]
+                        },
+                        "transfer": {
+                          "type": "object",
+                          "description": "Transfer settings for records, assignments, and criteria",
+                          "additionalProperties": false,
+                          "properties": {
+                            "records": {
+                              "type": "boolean",
+                              "description": "Whether to transfer records"
+                            },
+                            "assignment": {
+                              "type": "boolean",
+                              "description": "Whether to transfer assignments"
+                            },
+                            "criteria": {
+                              "type": "boolean",
+                              "description": "Whether to transfer criteria"
+                            },
+                            "id": {
+                              "type": "string",
+                              "description": "User ID to transfer data to",
+                              "maxLength": 19
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "move_subordinate",
+                        "transfer"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "transfer_and_delete"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User transfer scheduled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response body for successful user transfer and delete operation",
+                  "additionalProperties": false,
+                  "properties": {
+                    "transfer_and_delete": {
+                      "type": "array",
+                      "description": "Array containing transfer and delete operation results",
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Transfer and delete operation result",
+                        "additionalProperties": false,
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "description": "Status of the operation",
+                            "maxLength": 100
+                          },
+                          "code": {
+                            "type": "string",
+                            "description": "Response code indicating operation scheduled",
+                            "enum": [
+                              "SUCCESS"
+                            ]
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Human-readable message describing the result",
+                            "maxLength": 500
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "Additional details about the scheduled operation",
+                            "additionalProperties": false,
+                            "properties": {
+                              "job_id": {
+                                "type": "string",
+                                "description": "Unique identifier for the scheduled job",
+                                "maxLength": 50
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "User identifier",
+                                "maxLength": 19
+                              }
+                            },
+                            "required": [
+                              "job_id",
+                              "id"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "code",
+                          "message",
+                          "details"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "transfer_and_delete"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid data or missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Error response with transfer array",
+                      "additionalProperties": false,
+                      "properties": {
+                        "transfer_and_delete": {
+                          "type": "array",
+                          "description": "Array of transfer errors",
+                          "maxItems": 1,
+                          "items": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "description": "Validation errors",
+                                "properties": {
+                                  "status": {
+                                    "type": "string",
+                                    "description": "Error status",
+                                    "enum": [
+                                      "error"
+                                    ]
+                                  },
+                                  "code": {
+                                    "type": "string",
+                                    "description": "Error code",
+                                    "enum": [
+                                      "INVALID_DATA",
+                                      "NOT_ALLOWED"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Error message",
+                                    "maxLength": 500
+                                  },
+                                  "details": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid ID details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "description": "Invalid ID value",
+                                            "maxLength": 19
+                                          }
+                                        },
+                                        "required": [
+                                          "id"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid field details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "api_name": {
+                                            "type": "string",
+                                            "description": "API field name",
+                                            "maxLength": 100
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          }
+                                        },
+                                        "required": [
+                                          "api_name",
+                                          "json_path"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid data type details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "api_name": {
+                                            "type": "string",
+                                            "description": "API field name",
+                                            "maxLength": 100
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          },
+                                          "expected_data_type": {
+                                            "type": "string",
+                                            "description": "Expected data type",
+                                            "maxLength": 50
+                                          }
+                                        },
+                                        "required": [
+                                          "api_name",
+                                          "json_path",
+                                          "expected_data_type"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid owner status details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "api_name": {
+                                            "type": "string",
+                                            "description": "API field name",
+                                            "maxLength": 100
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          },
+                                          "owner_status": {
+                                            "type": "string",
+                                            "description": "Owner status",
+                                            "enum": [
+                                              "no_crm_user",
+                                              "deleted",
+                                              "inactive"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "api_name",
+                                          "json_path",
+                                          "owner_status"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid array element details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "index": {
+                                            "type": "integer",
+                                            "description": "Array index",
+                                            "format": "int32"
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          },
+                                          "expected_data_type": {
+                                            "type": "string",
+                                            "description": "Expected data type",
+                                            "maxLength": 50
+                                          }
+                                        },
+                                        "required": [
+                                          "index",
+                                          "json_path",
+                                          "expected_data_type"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "status",
+                                  "code",
+                                  "message",
+                                  "details"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "description": "Error response for expected field missing",
+                                "properties": {
+                                  "status": {
+                                    "type": "string",
+                                    "description": "Error status",
+                                    "enum": [
+                                      "error"
+                                    ]
+                                  },
+                                  "code": {
+                                    "type": "string",
+                                    "description": "Error code",
+                                    "enum": [
+                                      "EXPECTED_FIELD_MISSING"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Error message",
+                                    "maxLength": 500
+                                  },
+                                  "details": {
+                                    "type": "object",
+                                    "description": "Expected field details",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "expected_data": {
+                                        "type": "array",
+                                        "description": "List of expected fields",
+                                        "maxItems": 100,
+                                        "items": {
+                                          "type": "object",
+                                          "description": "Expected field information",
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "api_name": {
+                                              "type": "string",
+                                              "description": "API field name",
+                                              "maxLength": 100
+                                            },
+                                            "json_path": {
+                                              "type": "string",
+                                              "description": "JSON path to the field",
+                                              "maxLength": 200
+                                            }
+                                          },
+                                          "required": [
+                                            "api_name",
+                                            "json_path"
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "status",
+                                  "code",
+                                  "message",
+                                  "details"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "transfer_and_delete"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Error response for invalid user or data",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status",
+                          "enum": [
+                            "error"
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "INVALID_DATA",
+                            "NOT_ALLOWED"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message",
+                          "maxLength": 500
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Maximum length exceeded details",
+                          "additionalProperties": false,
+                          "properties": {
+                            "api_name": {
+                              "type": "string",
+                              "description": "API field name",
+                              "maxLength": 100
+                            },
+                            "json_path": {
+                              "type": "string",
+                              "description": "JSON path to the field",
+                              "maxLength": 200
+                            },
+                            "maximum_length": {
+                              "type": "integer",
+                              "description": "Maximum allowed length",
+                              "format": "int32"
+                            }
+                          },
+                          "required": [
+                            "api_name",
+                            "json_path",
+                            "maximum_length"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to perform this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Error response for permission denied",
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Error status",
+                      "enum": [
+                        "error"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code indicating no permission",
+                      "enum": [
+                        "NO_PERMISSION"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message describing the permission issue",
+                      "maxLength": 500
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional details about missing permissions",
+                      "additionalProperties": false,
+                      "properties": {
+                        "permissions": {
+                          "type": "array",
+                          "description": "List of required permissions that are missing",
+                          "maxItems": 1,
+                          "items": {
+                            "type": "string",
+                            "description": "Permission name",
+                            "maxLength": 200
+                          }
+                        }
+                      },
+                      "required": [
+                        "permissions"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.users.DELETE",
+              "ZohoCRM.users.READ"
+            ]
+          }
+        ],
+        "summary": "Get Transfer Status",
+        "description": "Retrieve the status of a user transfer operation using the job ID",
+        "operationId": "getTransferStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/JobId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transfer status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response body for transfer status",
+                  "additionalProperties": false,
+                  "properties": {
+                    "transfer_and_delete": {
+                      "type": "array",
+                      "description": "Array containing transfer status information",
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Transfer status details",
+                        "additionalProperties": false,
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "description": "Current status of the transfer operation",
+                            "enum": [
+                              "in_progress",
+                              "completed",
+                              "failed"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "transfer_and_delete"
+                  ]
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content - No transfer job found with the provided job ID"
+          },
+          "400": {
+            "description": "Bad Request - Invalid job ID or request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Error response for missing required parameter",
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Error status",
+                      "enum": [
+                        "error"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code indicating missing parameter",
+                      "enum": [
+                        "REQUIRED_PARAM_MISSING"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message describing the missing parameter",
+                      "enum": [
+                        "mandatory param missing"
+                      ]
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional details about the missing parameter",
+                      "additionalProperties": false,
+                      "properties": {
+                        "param_name": {
+                          "type": "string",
+                          "description": "Name of the missing parameter",
+                          "enum": [
+                            "job_id"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "param_name"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/actions/transfer": {
+      "post": {
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.change_owner.CREATE"
+            ]
+          }
+        ],
+        "summary": "Transfer User",
+        "description": "Transfer user records, assignments, and criteria to another user",
+        "operationId": "userTransferAPI",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Request body for transferring user data",
+                "additionalProperties": false,
+                "properties": {
+                  "transfer": {
+                    "type": "array",
+                    "description": "Array of transfer operations",
+                    "maxItems": 1,
+                    "items": {
+                      "type": "object",
+                      "description": "Transfer operation details",
+                      "additionalProperties": false,
+                      "properties": {
+                        "move_subordinate": {
+                          "type": "object",
+                          "description": "Details of the user to whom subordinates will be moved",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "User ID to move subordinates to",
+                              "maxLength": 19
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ]
+                        },
+                        "transfer": {
+                          "type": "object",
+                          "description": "Transfer settings for records, assignments, and criteria",
+                          "additionalProperties": false,
+                          "properties": {
+                            "records": {
+                              "type": "boolean",
+                              "description": "Whether to transfer records"
+                            },
+                            "assignment": {
+                              "type": "boolean",
+                              "description": "Whether to transfer assignments"
+                            },
+                            "criteria": {
+                              "type": "boolean",
+                              "description": "Whether to transfer criteria"
+                            },
+                            "id": {
+                              "type": "string",
+                              "description": "User ID to transfer data to",
+                              "maxLength": 19
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "move_subordinate",
+                        "transfer"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "transfer"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User transfer scheduled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response body for successful user transfer operation",
+                  "additionalProperties": false,
+                  "properties": {
+                    "transfer": {
+                      "type": "array",
+                      "description": "Array containing transfer operation results",
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Transfer operation result",
+                        "additionalProperties": false,
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "description": "Status of the operation",
+                            "maxLength": 100
+                          },
+                          "code": {
+                            "type": "string",
+                            "description": "Response code indicating operation scheduled",
+                            "enum": [
+                              "SCHEDULED"
+                            ]
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Human-readable message describing the result",
+                            "maxLength": 500
+                          },
+                          "details": {
+                            "type": "object",
+                            "description": "Additional details about the scheduled operation",
+                            "additionalProperties": false,
+                            "properties": {
+                              "job_id": {
+                                "type": "string",
+                                "description": "Unique identifier for the scheduled job",
+                                "maxLength": 19
+                              }
+                            },
+                            "required": [
+                              "job_id"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "code",
+                          "message",
+                          "details"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "transfer"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid data or missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Error response with transfer array",
+                      "additionalProperties": false,
+                      "properties": {
+                        "transfer": {
+                          "type": "array",
+                          "description": "Array of transfer errors",
+                          "maxItems": 1,
+                          "items": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "description": "Validation errors",
+                                "properties": {
+                                  "status": {
+                                    "type": "string",
+                                    "description": "Error status",
+                                    "enum": [
+                                      "error"
+                                    ]
+                                  },
+                                  "code": {
+                                    "type": "string",
+                                    "description": "Error code",
+                                    "enum": [
+                                      "INVALID_DATA",
+                                      "NOT_ALLOWED"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Error message",
+                                    "maxLength": 500
+                                  },
+                                  "details": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid field details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "api_name": {
+                                            "type": "string",
+                                            "description": "API field name",
+                                            "maxLength": 100
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          }
+                                        },
+                                        "required": [
+                                          "api_name",
+                                          "json_path"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Invalid owner status details",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "api_name": {
+                                            "type": "string",
+                                            "description": "API field name",
+                                            "maxLength": 100
+                                          },
+                                          "json_path": {
+                                            "type": "string",
+                                            "description": "JSON path to the field",
+                                            "maxLength": 200
+                                          },
+                                          "owner_status": {
+                                            "type": "string",
+                                            "description": "Owner status",
+                                            "enum": [
+                                              "not_crm_user",
+                                              "deleted",
+                                              "inactive"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "api_name",
+                                          "json_path",
+                                          "owner_status"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "status",
+                                  "code",
+                                  "message",
+                                  "details"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "description": "Error response for expected field missing",
+                                "properties": {
+                                  "status": {
+                                    "type": "string",
+                                    "description": "Error status",
+                                    "enum": [
+                                      "error"
+                                    ]
+                                  },
+                                  "code": {
+                                    "type": "string",
+                                    "description": "Error code",
+                                    "enum": [
+                                      "EXPECTED_FIELD_MISSING"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Error message",
+                                    "maxLength": 500
+                                  },
+                                  "details": {
+                                    "type": "object",
+                                    "description": "Expected field details",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "options": {
+                                        "type": "array",
+                                        "description": "List of expected fields",
+                                        "maxItems": 100,
+                                        "items": {
+                                          "type": "object",
+                                          "description": "Expected field information",
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "api_name": {
+                                              "type": "string",
+                                              "description": "API field name",
+                                              "maxLength": 100
+                                            },
+                                            "json_path": {
+                                              "type": "string",
+                                              "description": "JSON path to the field",
+                                              "maxLength": 200
+                                            }
+                                          },
+                                          "required": [
+                                            "api_name",
+                                            "json_path"
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "status",
+                                  "code",
+                                  "message",
+                                  "details"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "transfer"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "description": "Error response for invalid user or data",
+                      "additionalProperties": false,
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "description": "Error status",
+                          "enum": [
+                            "error"
+                          ]
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Error code",
+                          "enum": [
+                            "INVALID_DATA"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message",
+                          "maxLength": 500
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Invalid user in path details",
+                          "additionalProperties": false,
+                          "properties": {
+                            "resource_path_index": {
+                              "type": "integer",
+                              "description": "Resource path index",
+                              "format": "int32"
+                            },
+                            "owner_status": {
+                              "type": "string",
+                              "description": "Owner status",
+                              "enum": [
+                                "not_crm_user",
+                                "deleted"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "resource_path_index",
+                            "owner_status"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "code",
+                        "message",
+                        "details"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to perform this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Error response for permission denied",
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Error status",
+                      "enum": [
+                        "error"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code indicating no permission",
+                      "enum": [
+                        "NO_PERMISSION"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message describing the permission issue",
+                      "maxLength": 500
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional details about missing permissions",
+                      "additionalProperties": false,
+                      "properties": {
+                        "permissions": {
+                          "type": "array",
+                          "description": "List of required permissions that are missing",
+                          "maxItems": 1,
+                          "items": {
+                            "type": "string",
+                            "description": "Permission name",
+                            "maxLength": 200
+                          }
+                        }
+                      },
+                      "required": [
+                        "permissions"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/actions/transfer": {
+      "get": {
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.change_owner.READ"
+            ]
+          }
+        ],
+        "summary": "Get Transfer Status",
+        "description": "Retrieve the status of a user transfer operation using the job ID",
+        "operationId": "getTransferAPIStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/JobId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transfer status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response body for transfer status",
+                  "additionalProperties": false,
+                  "properties": {
+                    "transfer": {
+                      "type": "array",
+                      "description": "Array containing transfer status information",
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Transfer status details",
+                        "additionalProperties": false,
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "description": "Current status of the transfer operation",
+                            "enum": [
+                              "in_progress",
+                              "completed",
+                              "failed"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "transfer"
+                  ]
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content - No transfer job found with the provided job ID"
+          },
+          "400": {
+            "description": "Bad Request - Invalid job ID or request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Error response for missing required parameter",
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Error status",
+                      "enum": [
+                        "error"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Error code indicating missing parameter",
+                      "enum": [
+                        "REQUIRED_PARAM_MISSING"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message describing the missing parameter",
+                      "enum": [
+                        "mandatory param missing"
+                      ]
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional details about the missing parameter",
+                      "additionalProperties": false,
+                      "properties": {
+                        "param_name": {
+                          "type": "string",
+                          "description": "Name of the missing parameter",
+                          "enum": [
+                            "job_id"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "param_name"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/actions/validate_before_transfer": {
+      "get": {
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.change_owner.READ"
+            ]
+          }
+        ],
+        "summary": "Get Transfer Status",
+        "description": "Retrieve the status of a user transfer operation using the job ID",
+        "operationId": "getValidateBeforeTransferStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transfer status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response body for transfer status",
+                  "additionalProperties": false,
+                  "properties": {
+                    "validate_before_transfer": {
+                      "type": "array",
+                      "description": "Array containing transfer status information",
+                      "maxItems": 1,
+                      "items": {
+                        "type": "object",
+                        "description": "Transfer status details",
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "User ID of the user being validated",
+                            "maxLength": 19
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Name of the user being validated",
+                            "maxLength": 250
+                          },
+                          "assignment": {
+                            "type": "boolean",
+                            "description": "Whether assignments exist for the user"
+                          },
+                          "criteria": {
+                            "type": "boolean",
+                            "description": "Whether criteria exist for the user"
+                          },
+                          "subordinates": {
+                            "type": "boolean",
+                            "description": "Whether subordinates exist for the user"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "validate_before_transfer"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid input or request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response for validate before transfer",
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "description": "Error code",
+                      "type": "string",
+                      "enum": [
+                        "INVALID_DATA"
+                      ]
+                    },
+                    "details": {
+                      "description": "Additional error details",
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "resource_path_index": {
+                          "description": "Index of the resource path with error",
+                          "type": "integer",
+                          "format": "int32"
+                        }
+                      },
+                      "required": [
+                        "resource_path_index"
+                      ]
+                    },
+                    "message": {
+                      "description": "Human readable error message",
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "status": {
+                      "description": "Error status",
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "details",
+                    "message",
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "JobId": {
+        "name": "job_id",
+        "in": "query",
+        "required": true,
+        "description": "Unique identifier for the transfer job to check status",
+        "schema": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "UserId": {
+        "name": "userId",
+        "in": "path",
+        "required": true,
+        "description": "User ID to be transferred and deleted",
+        "schema": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.users.DELETE": "Delete users in Zoho CRM",
+              "ZohoCRM.users.READ": "Read users in Zoho CRM",
+              "ZohoCRM.users.CREATE": "Create users in Zoho CRM",
+              "ZohoCRM.users.UPDATE": "Update users in Zoho CRM",
+              "ZohoCRM.change_owner.READ": "Get Transfer API job status in Zoho CRM",
+              "ZohoCRM.change_owner.CREATE": "Perform Transfer action in Zoho CRM"
+            }
+          }
+        }
+      }
+    }
+  }
+}

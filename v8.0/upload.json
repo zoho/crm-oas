@@ -1,0 +1,229 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Upload",
+    "description": "Upload file",
+    "version": "8"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "description": "API Version",
+          "default": "v8"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/upload": {
+      "post": {
+        "summary": "Upload a file to CRM",
+        "description": "Allows uploading a file to the CRM system using multipart/form-data.",
+        "operationId": "uploadFile",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CRMOrgHeader"
+          },
+          {
+            "$ref": "#/components/parameters/Feature"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "description": "Schema for the multipart/form-data request body containing the file to upload.",
+                "properties": {
+                  "file": {
+                    "type": "object",
+                    "description": "The file to be uploaded.",
+                    "additionalProperties": true
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "File uploaded successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response schema for a successful file upload.",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "success"
+                      ],
+                      "description": "Indicates the status of the upload operation."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "FILE_UPLOAD_SUCCESS"
+                      ],
+                      "description": "A code representing the result of the upload operation."
+                    },
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "file uploaded."
+                      ],
+                      "description": "A message describing the result of the upload operation."
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Details about the uploaded file.",
+                      "properties": {
+                        "file_id": {
+                          "type": "string",
+                          "description": "The unique identifier for the uploaded file.",
+                          "maxLength": 255
+                        },
+                        "created_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "The time when the file was created."
+                        }
+                      },
+                      "required": [
+                        "file_id",
+                        "created_time"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message",
+                    "details"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. The request was invalid or cannot be otherwise served.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Response schema for a failed file upload due to invalid data.",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error"
+                      ],
+                      "description": "Indicates the status of the upload operation."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "INVALID_DATA",
+                        "NOT_SUPPORTED_FEATURE",
+                        "MANDATORY_NOT_FOUND",
+                        "INVALID_FILE_FORMAT"
+                      ],
+                      "description": "A code representing the error encountered during the upload operation."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "A message describing the error.",
+                      "maxLength": 255
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Optional additional data that explains the failure in more detail.",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoFiles.files.ALL"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "CRMOrgHeader": {
+        "name": "X-CRM-ORG",
+        "in": "header",
+        "description": "The organization ID for the CRM instance.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "maxLength": 255
+        }
+      },
+      "Feature": {
+        "name": "feature",
+        "in": "header",
+        "description": "The feature for which the file upload is being performed. Must be set to 'bulk-write'.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "bulk-write"
+          ]
+        }
+      }
+    },
+    "headers": {},
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoFiles.files.ALL": "Allows access to all file operations in ZohoFiles"
+            }
+          }
+        }
+      }
+    }
+  }
+}

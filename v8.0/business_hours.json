@@ -1,636 +1,723 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.1.0",
   "info": {
-    "title": "business_hours",
-    "description": "Business Hours",
-    "version": "v8.0"
+    "title": "Business Hours",
+    "description": "Manage organization-wide business hours configuration for Zoho CRM",
+    "version": "8"
   },
   "servers": [
     {
-      "url": "https://zohoapis.com"
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API version"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "iam-oauth2-schema": [
+        "ZohoCRM.files.CREATE",
+        "ZohoCRM.settings.business_hours.ALL"
+      ]
     }
   ],
   "paths": {
-    "/crm/v8/settings/business_hours": {
+    "/settings/business_hours": {
       "post": {
-        "operationId": "Create Business Hours",
-        "parameters": [
+        "summary": "Create business hours configuration",
+        "description": "Creates a new business hours configuration specifying working days, hours, and timezone for the organization.",
+        "security": [
           {
-            "$ref": "#/components/parameters/X-CRM-ORG"
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.business_hours.CREATE"
+            ]
           }
         ],
+        "operationId": "createBusinessHours",
         "requestBody": {
           "content": {
-            "application/json": {}
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Business hours creation request body",
+                "additionalProperties": false,
+                "properties": {
+                  "business_hours": {
+                    "type": "object",
+                    "description": "Business hours configuration details",
+                    "additionalProperties": false,
+                    "properties": {
+                      "week_starts_on": {
+                        "type": "string",
+                        "description": "First day of the work week for the organization",
+                        "enum": [
+                          "Monday",
+                          "Tuesday",
+                          "Wednesday",
+                          "Thursday",
+                          "Friday",
+                          "Saturday",
+                          "Sunday"
+                        ]
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "Business hours configuration type: 24/7 operation, 24/5 weekdays, or custom hours",
+                        "enum": [
+                          "24_by_7",
+                          "24_by_5",
+                          "custom"
+                        ]
+                      },
+                      "business_days": {
+                        "type": "array",
+                        "description": "Days of the week when the organization operates",
+                        "items": {
+                          "description": "Day of the week",
+                          "type": "string",
+                          "enum": [
+                            "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday",
+                            "Saturday",
+                            "Sunday"
+                          ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "same_as_everyday": {
+                        "type": "boolean",
+                        "description": "Indicates if business hours are the same every day (true) or vary by day (false)"
+                      },
+                      "daily_timing": {
+                        "type": "array",
+                        "description": "Default working hours applied to all business days (start and end time)",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                          "description": "Time in HH:MM format (24-hour)",
+                          "maxLength": 5
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      "custom_timing": {
+                        "type": "array",
+                        "description": "Different business hours for different days when same_as_everyday is false",
+                        "maxItems": 7,
+                        "items": {
+                          "description": "Different business hours for different days when same_as_everyday is false",
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "days": {
+                              "type": "string",
+                              "description": "Specific day of the week for custom business hours",
+                              "enum": [
+                                "Monday",
+                                "Tuesday",
+                                "Wednesday",
+                                "Thursday",
+                                "Friday",
+                                "Saturday",
+                                "Sunday"
+                              ]
+                            },
+                            "business_timing": {
+                              "type": "array",
+                              "description": "Start and end time for business hours on this specific day",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                                "description": "Time in HH:MM format (24-hour)",
+                                "maxLength": 5
+                              },
+                              "minItems": 2,
+                              "maxItems": 2
+                            }
+                          },
+                          "required": [
+                            "days",
+                            "business_timing"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "week_starts_on",
+                      "type"
+                    ]
+                  }
+                }
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "201": {
-            "description": "",
+            "$ref": "#/components/responses/BusinessHoursSuccessResponse"
+          },
+          "400": {
+            "description": "Bad request due to invalid data, missing mandatory fields, business rule violations, or attempting to create multiple business hours configurations",
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "business_hours": {
-                          "oneOf": [
-                            {
-                              "$ref": "#/components/schemas/Business_Hours_Created"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
+                  "$ref": "#/components/schemas/BusinessHoursErrorResponses"
                 }
               }
             }
           },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "business_hours": {
-                          "oneOf": [
-                            {
-                              "$ref": "#/components/schemas/Mandatory_API_Exception"
-                            },
-                            {
-                              "$ref": "#/components/schemas/Expected_Data_API_Exception"
-                            },
-                            {
-                              "$ref": "#/components/schemas/Resource_Path_API_Exception"
-                            },
-                            {
-                              "$ref": "#/components/schemas/Expected_Max_Data_API_Exception"
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    {
-                      "$ref": "#/components/schemas/Mandatory_API_Exception"
-                    },
-                    {
-                      "$ref": "#/components/schemas/Expected_Data_API_Exception"
-                    }
-                  ]
-                }
-              }
-            }
+          "403": {
+            "$ref": "#/components/responses/ForbiddenResponse"
           }
         }
       },
       "put": {
-        "operationId": "Update Business Hours",
-        "parameters": [
+        "summary": "Update business hours configuration",
+        "description": "Updates the existing business hours configuration with new working days, hours, or timezone settings.",
+        "security": [
           {
-            "$ref": "#/components/parameters/X-CRM-ORG"
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.business_hours.UPDATE"
+            ]
           }
         ],
+        "operationId": "updateBusinessHours",
         "requestBody": {
           "content": {
-            "application/json": {}
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Business hours update request body",
+                "additionalProperties": false,
+                "properties": {
+                  "business_hours": {
+                    "type": "object",
+                    "description": "Business hours configuration details",
+                    "additionalProperties": false,
+                    "properties": {
+                      "week_starts_on": {
+                        "type": "string",
+                        "description": "First day of the work week for the organization",
+                        "enum": [
+                          "Monday",
+                          "Tuesday",
+                          "Wednesday",
+                          "Thursday",
+                          "Friday",
+                          "Saturday",
+                          "Sunday"
+                        ]
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "Business hours configuration type: 24/7 operation, 24/5 weekdays, or custom schedule",
+                        "enum": [
+                          "24_by_7",
+                          "24_by_5",
+                          "custom"
+                        ]
+                      },
+                      "business_days": {
+                        "type": "array",
+                        "description": "Days of the week when the organization operates",
+                        "items": {
+                          "description": "Days of the week when the organization operates",
+                          "type": "string",
+                          "enum": [
+                            "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday",
+                            "Saturday",
+                            "Sunday"
+                          ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                      },
+                      "same_as_everyday": {
+                        "type": "boolean",
+                        "description": "Indicates if business hours are the same every day (true) or vary by day (false)"
+                      },
+                      "daily_timing": {
+                        "type": "array",
+                        "description": "Default working hours applied to all business days (start and end time)",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                          "description": "Time in HH:MM format (24-hour)",
+                          "maxLength": 5
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      "custom_timing": {
+                        "type": "array",
+                        "description": "Different business hours for different days when same_as_everyday is false",
+                        "maxItems": 7,
+                        "items": {
+                          "description": "Different business hours for different days when same_as_everyday is false",
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "days": {
+                              "type": "string",
+                              "description": "Specific day of the week for custom business hours",
+                              "enum": [
+                                "Monday",
+                                "Tuesday",
+                                "Wednesday",
+                                "Thursday",
+                                "Friday",
+                                "Saturday",
+                                "Sunday"
+                              ]
+                            },
+                            "business_timing": {
+                              "type": "array",
+                              "description": "Start and end time for business hours on this specific day",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                                "description": "Time in HH:MM format (24-hour)",
+                                "maxLength": 5
+                              },
+                              "minItems": 2,
+                              "maxItems": 2
+                            }
+                          },
+                          "required": [
+                            "days",
+                            "business_timing"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "required": true
         },
         "responses": {
           "200": {
-            "description": "",
+            "$ref": "#/components/responses/BusinessHoursSuccessResponse"
+          },
+          "400": {
+            "description": "Bad request due to invalid data, missing mandatory fields, or business rule violations",
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "business_hours": {
-                          "oneOf": [
-                            {
-                              "$ref": "#/components/schemas/Business_Hours_Created"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
+                  "$ref": "#/components/schemas/BusinessHoursErrorResponses"
                 }
               }
             }
           },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "business_hours": {
-                          "oneOf": [
-                            {
-                              "$ref": "#/components/schemas/Mandatory_API_Exception"
-                            },
-                            {
-                              "$ref": "#/components/schemas/Expected_Data_API_Exception"
-                            },
-                            {
-                              "$ref": "#/components/schemas/Resource_Path_API_Exception"
-                            },
-                            {
-                              "$ref": "#/components/schemas/Expected_Max_Data_API_Exception"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "business_hours"
-                      ]
-                    },
-                    {
-                      "$ref": "#/components/schemas/Mandatory_API_Exception"
-                    },
-                    {
-                      "$ref": "#/components/schemas/Expected_Data_API_Exception"
-                    }
-                  ]
-                }
-              }
-            }
+          "403": {
+            "$ref": "#/components/responses/ForbiddenResponse"
           }
         }
       },
       "get": {
-        "operationId": "Get Business Hours",
-        "parameters": [
+        "summary": "Retrieve business hours configuration",
+        "description": "Retrieves the current business hours configuration including working days, hours, and timezone.",
+        "security": [
           {
-            "$ref": "#/components/parameters/X-CRM-ORG"
+            "iam-oauth2-schema": [
+              "ZohoCRM.settings.business_hours.READ"
+            ]
           }
         ],
+        "operationId": "getBusinessHours",
         "responses": {
           "200": {
-            "description": "",
+            "description": "Successfully retrieved business hours configuration",
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/Response_Wrapper"
+                  "type": "object",
+                  "description": "Business hours retrieval response",
+                  "additionalProperties": false,
+                  "properties": {
+                    "business_hours": {
+                      "type": "object",
+                      "description": "Business hours configuration details",
+                      "additionalProperties": false,
+                      "properties": {
+                        "week_starts_on": {
+                          "type": "string",
+                          "description": "First day of the work week for the organization",
+                          "enum": [
+                            "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday",
+                            "Saturday",
+                            "Sunday"
+                          ]
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "Business hours configuration type: 24/7 operation, 24/5 weekdays, or custom schedule",
+                          "enum": [
+                            "24_by_7",
+                            "24_by_5",
+                            "custom"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "description": "Unique identifier for this business hours configuration",
+                          "pattern": "^[0-9]+$",
+                          "maxLength": 255
+                        },
+                        "timezone": {
+                          "type": "string",
+                          "description": "Timezone for business hours (IANA timezone identifier)",
+                          "maxLength": 100
+                        },
+                        "business_days": {
+                          "type": "array",
+                          "description": "Days of the week when the organization operates",
+                          "items": {
+                            "description": "Days of the week when the organization operates",
+                            "type": "string",
+                            "enum": [
+                              "Monday",
+                              "Tuesday",
+                              "Wednesday",
+                              "Thursday",
+                              "Friday",
+                              "Saturday",
+                              "Sunday"
+                            ]
+                          },
+                          "minItems": 1,
+                          "maxItems": 7,
+                          "uniqueItems": true
+                        },
+                        "same_as_everyday": {
+                          "type": "boolean",
+                          "description": "Indicates if business hours are the same every day (true) or vary by day (false)"
+                        },
+                        "daily_timing": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "description": "Default working hours applied to all business days (start and end time)",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                            "description": "Time in HH:MM format (24-hour)",
+                            "maxLength": 5
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        },
+                        "custom_timing": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "description": "Different business hours for different days when same_as_everyday is false",
+                          "maxItems": 7,
+                          "items": {
+                            "description": "Different business hours for different days when same_as_everyday is false",
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "days": {
+                                "type": "string",
+                                "description": "Specific day of the week for custom business hours",
+                                "enum": [
+                                  "Monday",
+                                  "Tuesday",
+                                  "Wednesday",
+                                  "Thursday",
+                                  "Friday",
+                                  "Saturday",
+                                  "Sunday"
+                                ]
+                              },
+                              "business_timing": {
+                                "type": "array",
+                                "description": "Start and end time for business hours on this specific day",
+                                "items": {
+                                  "type": "string",
+                                  "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+                                  "description": "Time in HH:MM format (24-hour)",
+                                  "maxLength": 5
+                                },
+                                "minItems": 2,
+                                "maxItems": 2
+                              }
+                            },
+                            "required": [
+                              "days",
+                              "business_timing"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "week_starts_on",
+                        "type",
+                        "id",
+                        "timezone",
+                        "business_days",
+                        "same_as_everyday",
+                        "daily_timing",
+                        "custom_timing"
+                      ]
                     }
+                  },
+                  "required": [
+                    "business_hours"
                   ]
                 }
               }
             }
           },
           "204": {
-            "description": ""
-          },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/API_Exception"
-                    }
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/NoContentResponse"
           }
         }
       }
     }
   },
-  "security": [
-    {
-      "iam-oauth2-schema": [
-        "ZohoCRM.files.CREATE"
-      ]
-    }
-  ],
   "components": {
     "schemas": {
-      "Business_Hours": {
-        "type": "object",
-        "properties": {
-          "week_starts_on": {
-            "type": "string",
-            "enum": [
-              "Monday",
-              "Thursday",
-              "Friday",
-              "Sunday",
-              "Wednesday",
-              "Tuesday",
-              "Saturday"
-            ]
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "24_by_7",
-              "24_by_5",
-              "custom"
-            ]
-          },
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "business_days": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "Monday",
-                "Thursday",
-                "Friday",
-                "Sunday",
-                "Wednesday",
-                "Tuesday",
-                "Saturday"
-              ]
-            }
-          },
-          "same_as_everyday": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "daily_timing": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "custom_timing": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Break_hours_Custom_Timing"
-            }
-          }
-        },
-        "required": [
-          "week_starts_on",
-          "type",
-          "id",
-          "business_days",
-          "same_as_everyday",
-          "daily_timing",
-          "custom_timing"
-        ]
-      },
-      "Break_hours_Custom_Timing": {
-        "type": "object",
-        "properties": {
-          "days": {
-            "type": "string",
-            "enum": [
-              "Monday",
-              "Thursday",
-              "Friday",
-              "Sunday",
-              "Wednesday",
-              "Tuesday",
-              "Saturday"
-            ]
-          },
-          "business_timing": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "Business_Hours_Created": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "success"
-            ]
-          },
-          "code": {
-            "type": "string",
-            "enum": [
-              "SUCCESS"
-            ]
-          },
-          "message": {
-            "type": "string",
-            "enum": [
-              "Business Hours saved successfully"
-            ]
-          },
-          "details": {
+      "BusinessHoursErrorResponses": {
+        "oneOf": [
+          {
             "type": "object",
+            "additionalProperties": false,
+            "description": "Error response for multiple business hours creation attempt",
             "properties": {
-              "id": {
-                "type": "string"
+              "business_hours": {
+                "$ref": "#/components/schemas/ErrorResponse"
               }
             },
             "required": [
-              "id"
+              "business_hours"
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Business hours error details",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code",
+            "enum": [
+              "NOT_ALLOWED",
+              "MINIMUM_DATA_NOT_FOUND",
+              "MISSING_MANDATORY_FIELDID",
+              "ALREADY_USED",
+              "MANDATORY_NOT_FOUND",
+              "DEPENDENT_FIELD_MISSING",
+              "INVALID_DATA",
+              "CANNOT_BE_UPDATED",
+              "CANNOT_UPDATE",
+              "DEPENDENT_MISMATCH"
+            ]
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Error details"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "maxLength": 255
+          },
+          "status": {
+            "type": "string",
+            "description": "Error status",
+            "enum": [
+              "error"
             ]
           }
         },
         "required": [
-          "status",
           "code",
+          "details",
           "message",
-          "details"
+          "status"
         ]
-      },
-      "Resource_Path_API_Exception": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          },
-          "code": {
-            "type": "string",
-            "enum": [
-              "INVALID_DATA",
-              "INVALID_MODULE"
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "details": {
-            "type": "object",
-            "properties": {
-              "resource_path_index": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "features": {
-                "type": "array",
-                "items": {
+      }
+    },
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.files.CREATE": "Create and upload files in Zoho CRM",
+              "ZohoCRM.settings.business_hours.ALL": "Full access to manage business hours settings including creation, modification, and deletion",
+              "ZohoCRM.settings.business_hours.CREATE": "Create access to manage business hours settings including creation, modification, and deletion",
+              "ZohoCRM.settings.business_hours.READ": "Get access to manage business hours settings including creation, modification, and deletion",
+              "ZohoCRM.settings.business_hours.UPDATE": "Update access to manage business hours settings including creation, modification, and deletion",
+              "ZohoCRM.settings.business_hours.DELETE": "Delete access to manage business hours settings including creation, modification, and deletion"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BusinessHoursSuccessResponse": {
+        "description": "Business hours operation completed successfully",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Standard success response for business hours operations",
+              "properties": {
+                "business_hours": {
                   "type": "object",
+                  "description": "Business hours response object",
+                  "additionalProperties": false,
                   "properties": {
-                    "name": {
-                      "type": "string"
+                    "status": {
+                      "type": "string",
+                      "description": "Status of the operation",
+                      "enum": [
+                        "success"
+                      ]
                     },
-                    "resources": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "id": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "name",
-                          "id"
-                        ]
-                      }
+                    "code": {
+                      "type": "string",
+                      "description": "Code representing the operation status",
+                      "enum": [
+                        "SUCCESS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Message representing the operation status",
+                      "enum": [
+                        "Business Hours saved successfully"
+                      ]
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "description": "Details of the created business hours",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique identifier of the created business hours",
+                          "maxLength": 255
+                        }
+                      },
+                      "required": [
+                        "id"
+                      ]
                     }
                   },
                   "required": [
-                    "name",
-                    "resources"
+                    "status",
+                    "code",
+                    "message",
+                    "details"
                   ]
                 }
               }
-            },
-            "required": [
-              "resource_path_index",
-              "features"
-            ]
+            }
           }
-        },
-        "required": [
-          "status",
-          "code",
-          "message",
-          "details"
-        ]
-      },
-      "Mandatory_API_Exception": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          },
-          "code": {
-            "type": "string",
-            "enum": [
-              "MANDATORY_NOT_FOUND"
-            ]
-          },
-          "message": {
-            "type": "string",
-            "enum": [
-              "required field not found"
-            ]
-          },
-          "details": {
-            "type": "object",
-            "properties": {
-              "api_name": {
-                "type": "string"
-              },
-              "json_path": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "api_name",
-              "json_path"
-            ]
-          }
-        },
-        "required": [
-          "status",
-          "code",
-          "message",
-          "details"
-        ]
-      },
-      "Expected_Data_API_Exception": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          },
-          "code": {
-            "type": "string",
-            "enum": [
-              "INVALID_DATA"
-            ]
-          },
-          "message": {
-            "type": "string",
-            "enum": [
-              "required field not found"
-            ]
-          },
-          "details": {
-            "type": "object",
-            "properties": {
-              "api_name": {
-                "type": "string"
-              },
-              "json_path": {
-                "type": "string"
-              },
-              "expected_data_type": {
-                "type": "string"
-              },
-              "regex": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "api_name",
-              "json_path",
-              "expected_data_type",
-              "regex"
-            ]
-          }
-        },
-        "required": [
-          "status",
-          "code",
-          "message",
-          "details"
-        ]
-      },
-      "Expected_Max_Data_API_Exception": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ],
-            "nullable": true
-          },
-          "code": {
-            "type": "string",
-            "enum": [
-              "INVALID_DATA"
-            ],
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "enum": [
-              "required field not found"
-            ],
-            "nullable": true
-          },
-          "details": {
-            "type": "object",
-            "properties": {
-              "api_name": {
-                "type": "string",
-                "nullable": true
-              },
-              "json_path": {
-                "type": "string",
-                "nullable": true
-              },
-              "expected_data_type": {
-                "type": "string",
-                "nullable": true
-              },
-              "maximum_length": {
-                "type": "integer",
-                "format": "int32",
-                "nullable": true
-              }
-            },
-            "required": [
-              "api_name",
-              "json_path",
-              "expected_data_type",
-              "maximum_length"
-            ]
-          }
-        },
-        "required": [
-          "status",
-          "code",
-          "message",
-          "details"
-        ]
-      },
-      "Response_Wrapper": {
-        "type": "object",
-        "properties": {
-          "business_hours": {
-            "$ref": "#/components/schemas/Business_Hours"
-          }
-        },
-        "required": [
-          "business_hours"
-        ]
-      },
-      "API_Exception": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "details": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "status",
-          "code",
-          "message",
-          "details"
-        ]
-      }
-    },
-    "parameters": {
-      "X-CRM-ORG": {
-        "name": "X-CRM-ORG",
-        "in": "header",
-        "required": false,
-        "schema": {
-          "type": "string"
         }
-      }
-    },
-    "headers": {},
-    "securitySchemes": {
-      "iam-oauth2-schema": {
-        "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
+      },
+      "ForbiddenResponse": {
+        "description": "Forbidden due to insufficient permissions to manage business hours",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Forbidden response schema",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "Error code",
+                  "enum": [
+                    "NO_PERMISSION"
+                  ]
+                },
+                "details": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "description": "Error details",
+                  "properties": {
+                    "permissions": {
+                      "type": "array",
+                      "description": "List of missing permissions",
+                      "maxItems": 5,
+                      "items": {
+                        "description": "Permission name",
+                        "type": "string",
+                        "enum": [
+                          "Crm_Implied_Manage_Users"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Error message",
+                  "maxLength": 255
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Error status",
+                  "enum": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "NoContentResponse": {
+        "description": "No business hours configuration found"
       }
     }
   }

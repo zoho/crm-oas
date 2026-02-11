@@ -1,0 +1,527 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Related Records Count",
+    "description": "Get related records count",
+    "version": "8"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "API Server URL",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "iam-oauth2-schema": [
+        "ZohoCRM.modules.READ"
+      ]
+    }
+  ],
+  "paths": {
+    "/{moduleApiName}/{recordId}/actions/get_related_records_count": {
+      "post": {
+        "summary": "Get Related Records Count",
+        "description": "Retrieves the count of related records for a specific parent record. Supports filtering by various criteria including approval status, conversion status, and custom field filters. This operation is useful for analytics and UI display purposes where you need to show counts without fetching the actual related records.",
+        "operationId": "getRelatedRecordsCount",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ModuleApiName"
+          },
+          {
+            "$ref": "#/components/parameters/RecordId"
+          }
+        ],
+        "requestBody": {
+          "description": "Request payload containing an array of related list specifications. Each item specifies a related list to count and optional filtering parameters to apply before counting. Supports filtering by field values, approval status, conversion status, and record categories.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetRelatedRecordsCountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the count of related records. Returns an array containing count information for each requested related list, along with the related list identifiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRelatedRecordsCountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. The request contains invalid data, such as missing required fields, invalid field values, unsupported operations, or malformed request structure. Error details will specify the exact validation failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.READ"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RelatedListReference": {
+        "type": "object",
+        "description": "Identifies a specific related list by its API name and unique identifier.",
+        "additionalProperties": false,
+        "properties": {
+          "api_name": {
+            "type": "string",
+            "description": "The API name of the related list (e.g., 'Contacts', 'Deals', 'Tasks').",
+            "pattern": "^[A-Za-z0-9_]+$",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the related list definition.",
+            "pattern": "^[0-9]+$",
+            "minLength": 1,
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "api_name",
+          "id"
+        ]
+      },
+      "FilterField": {
+        "type": "object",
+        "description": "Specifies the field to filter on when counting related records.",
+        "additionalProperties": false,
+        "properties": {
+          "api_name": {
+            "type": "string",
+            "description": "The API name of the field to filter on.",
+            "pattern": "^[A-Za-z0-9_]+$",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "api_name"
+        ]
+      },
+      "FilterCriteria": {
+        "type": "object",
+        "description": "Field-based filter criteria to apply before counting records.",
+        "additionalProperties": false,
+        "properties": {
+          "comparator": {
+            "type": "string",
+            "description": "The comparison operator to use for filtering.",
+            "enum": [
+              "equal"
+            ]
+          },
+          "field": {
+            "$ref": "#/components/schemas/FilterField"
+          },
+          "value": {
+            "type": "string",
+            "description": "The value to compare the field against.",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "comparator",
+          "field",
+          "value"
+        ]
+      },
+      "CountParameters": {
+        "type": "object",
+        "description": "Optional filtering and selection parameters to apply before counting records.",
+        "additionalProperties": false,
+        "properties": {
+          "approved": {
+            "type": "boolean",
+            "description": "Filter to include only approved records when counting."
+          },
+          "filters": {
+            "$ref": "#/components/schemas/FilterCriteria"
+          },
+          "converted": {
+            "type": "boolean",
+            "description": "Filter to include only converted records when counting (applicable to Leads)."
+          },
+          "category": {
+            "type": "string",
+            "description": "Filter by record category type.",
+            "enum": [
+              "link",
+              "files"
+            ]
+          },
+          "approval_state": {
+            "type": "string",
+            "description": "Filter by approval workflow state.",
+            "enum": [
+              "approved"
+            ]
+          }
+        },
+        "required": [
+          "filters"
+        ]
+      },
+      "RelatedRecordCountItem": {
+        "type": "object",
+        "description": "Specifies a related list to count and optional filtering criteria.",
+        "additionalProperties": false,
+        "properties": {
+          "related_list": {
+            "$ref": "#/components/schemas/RelatedListReference"
+          },
+          "params": {
+            "$ref": "#/components/schemas/CountParameters"
+          }
+        },
+        "required": [
+          "related_list"
+        ]
+      },
+      "GetRelatedRecordsCountRequest": {
+        "type": "object",
+        "description": "Request payload containing an array of related list count specifications.",
+        "additionalProperties": false,
+        "properties": {
+          "get_related_records_count": {
+            "type": "array",
+            "description": "Array of related list count requests. Each item specifies a related list and optional filtering criteria.",
+            "items": {
+              "$ref": "#/components/schemas/RelatedRecordCountItem"
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "get_related_records_count"
+        ]
+      },
+      "RelatedRecordCountResult": {
+        "type": "object",
+        "description": "The count result for a specific related list.",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The total number of related records matching the specified criteria.",
+            "minimum": 0
+          },
+          "related_list": {
+            "$ref": "#/components/schemas/RelatedListReference"
+          }
+        },
+        "required": [
+          "count",
+          "related_list"
+        ]
+      },
+      "GetRelatedRecordsCountResponse": {
+        "type": "object",
+        "description": "Successful response containing count results for the requested related lists.",
+        "additionalProperties": false,
+        "properties": {
+          "get_related_records_count": {
+            "type": "array",
+            "description": "Array of count result arrays, one entry per requested related list.",
+            "items": {
+              "type": "array",
+              "description": "Wrapper array containing count result objects.",
+              "items": {
+                "$ref": "#/components/schemas/RelatedRecordCountResult"
+              },
+              "maxItems": 2147483647,
+              "x-actual-limit": "unlimited"
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "get_related_records_count"
+        ]
+      },
+      "ErrorDetails": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Error details with field information",
+            "additionalProperties": false,
+            "properties": {
+              "api_name": {
+                "type": "string",
+                "description": "The API name of the field that caused the error",
+                "maxLength": 100
+              },
+              "json_path": {
+                "type": "string",
+                "description": "JSON path to the field that caused the error",
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "api_name",
+              "json_path"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Error details with expected data type information",
+            "additionalProperties": false,
+            "properties": {
+              "expected_data_type": {
+                "type": "string",
+                "description": "The expected data type for the field",
+                "maxLength": 100
+              },
+              "api_name": {
+                "type": "string",
+                "description": "The API name of the field that caused the error",
+                "maxLength": 100
+              },
+              "json_path": {
+                "type": "string",
+                "description": "JSON path to the field that caused the error",
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "expected_data_type",
+              "api_name",
+              "json_path"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Error details with expected fields information",
+            "additionalProperties": false,
+            "properties": {
+              "expected_fields": {
+                "type": "array",
+                "description": "List of expected fields",
+                "items": {
+                  "type": "object",
+                  "description": "Expected field information",
+                  "additionalProperties": false,
+                  "properties": {
+                    "api_name": {
+                      "type": "string",
+                      "description": "The API name of the expected field",
+                      "maxLength": 100
+                    },
+                    "json_path": {
+                      "type": "string",
+                      "description": "JSON path to the expected field",
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "api_name",
+                    "json_path"
+                  ]
+                },
+                "maxItems": 20
+              }
+            },
+            "required": [
+              "expected_fields"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Error details with parameter name",
+            "additionalProperties": false,
+            "properties": {
+              "param_name": {
+                "type": "string",
+                "description": "The name of the parameter that caused the error",
+                "maxLength": 255
+              }
+            },
+            "required": [
+              "param_name"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Error details with supported values",
+            "additionalProperties": false,
+            "properties": {
+              "supported_value": {
+                "type": "array",
+                "description": "List of supported values for the field",
+                "items": {
+                  "type": "string",
+                  "description": "A supported value",
+                  "maxLength": 255
+                },
+                "maxItems": 20
+              },
+              "api_name": {
+                "type": "string",
+                "description": "The API name of the field that caused the error",
+                "maxLength": 100
+              },
+              "json_path": {
+                "type": "string",
+                "description": "JSON path to the field that caused the error",
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "supported_value",
+              "api_name",
+              "json_path"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Error details with maximum length information",
+            "additionalProperties": false,
+            "properties": {
+              "api_name": {
+                "type": "string",
+                "description": "The API name of the field that caused the error",
+                "maxLength": 100
+              },
+              "json_path": {
+                "type": "string",
+                "description": "JSON path to the field that caused the error",
+                "maxLength": 500
+              },
+              "maximum_length": {
+                "type": "integer",
+                "format": "int32",
+                "description": "The maximum allowed length for the field"
+              }
+            },
+            "required": [
+              "api_name",
+              "json_path",
+              "maximum_length"
+            ]
+          }
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Error response structure",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The status of the response",
+            "enum": [
+              "error"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "The error code",
+            "enum": [
+              "INVALID_DATA",
+              "PATTERN_NOT_MATCHED",
+              "MANDATORY_NOT_FOUND",
+              "EXPECTED_FIELD_MISSING",
+              "NOT_SUPPORTED",
+              "DEPENDENT_FIELD_MISMATCH"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "The error message",
+            "maxLength": 1000
+          },
+          "details": {
+            "$ref": "#/components/schemas/ErrorDetails"
+          }
+        },
+        "required": [
+          "status",
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "parameters": {
+      "ModuleApiName": {
+        "name": "moduleApiName",
+        "in": "path",
+        "required": true,
+        "description": "The API name of the CRM module containing the parent record. Common values include 'Contacts', 'Leads', 'Deals', 'Accounts', 'Services__s', etc.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "RecordId": {
+        "name": "recordId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the parent record for which to count related records. This is typically a numeric ID or UUID depending on the CRM configuration.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F-]+$",
+          "minLength": 1,
+          "maxLength": 50
+        }
+      }
+    },
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "refreshUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.modules.READ": "Grants read-only access to CRM module records and related data without permission to modify or delete"
+            }
+          }
+        }
+      }
+    }
+  }
+}

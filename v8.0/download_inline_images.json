@@ -1,176 +1,207 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "download_inline_images",
-        "description": "Download Inline Images",
-        "version": "v8.0"
-    },
-    "servers": [
-        {
-            "url": "https://zohoapis.com"
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Download Inline Images",
+    "description": "Download Inline Images of an Email",
+    "version": "8.0"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "API Server URL TLD"
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
         }
-    ],
-    "paths": {
-        "/crm/v8/{module}/{record_id}/Emails/actions/download_inline_images": {
-            "get": {
-                "operationId": "Get Download Inline Images",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/module"
-                    },
-                    {
-                        "$ref": "#/components/parameters/record_id"
-                    },
-                    {
-                        "$ref": "#/components/parameters/user_id"
-                    },
-                    {
-                        "$ref": "#/components/parameters/message_id"
-                    },
-                    {
-                        "$ref": "#/components/parameters/id"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "multipart/form-data": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "file": {
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "required": [
-                                                "file"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/API_Exception"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "iam-oauth2-schema": [
-                            "ZohoCRM.modules.emails.READ",
-                            "ZohoCRM.modules.leads.all",
-                            "ZohoCRM.modules.contacts.all",
-                            "ZohoCRM.modules.deals.all"
-                        ]
-                    }
-                ]
+      }
+    }
+  ],
+  "paths": {
+    "/{module}/{recordId}/Emails/actions/download_inline_images": {
+      "get": {
+        "summary": "Download inline images embedded in an email related to a record",
+        "operationId": "getDownloadInlineImages",
+        "description": "Download inline images embedded in an email related to a record.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Module"
+          },
+          {
+            "$ref": "#/components/parameters/RecordId"
+          },
+          {
+            "$ref": "#/components/parameters/UserId"
+          },
+          {
+            "$ref": "#/components/parameters/MessageId"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The inline image file.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "The binary content of the image file"
+                }
+              }
             }
-        }
-    },
-    "components": {
-        "schemas": {
-            "API_Exception": {
-                "type": "object",
-                "properties": {
+          },
+          "400": {
+            "description": "Bad Request - Error in parameters or module.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error response object for failed image download",
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
                     "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
+                      "type": "string",
+                      "description": "Status of the request",
+                      "enum": [
+                        "error"
+                      ]
                     },
                     "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_URL_PATTERN",
-                            "INVALID_DATA",
-                            "INVALID_REQUEST_METHOD",
-                            "INVALID_TOKEN"
-                        ]
+                      "type": "string",
+                      "description": "Error code identifying the issue",
+                      "enum": [
+                        "INVALID_URL_PATTERN",
+                        "INVALID_DATA",
+                        "INVALID_REQUEST_METHOD",
+                        "INVALID_TOKEN",
+                        "INVALID_MODULE"
+                      ]
                     },
                     "message": {
-                        "type": "string",
-                        "enum": [
-                            "The module name given seems to be invalid",
-                            "invalid oauth token",
-                            "invalid file type",
-                            "Please check if the URL trying to access is a correct one",
-                            "the request does not contain any file",
-                            "The http request method type is not a valid one"
-                        ]
+                      "type": "string",
+                      "description": "Human-readable error message",
+                      "maxLength": 255
                     },
                     "details": {
-                        "type": "object"
+                      "type": "object",
+                      "description": "Additional error details",
+                      "additionalProperties": true,
+                      "properties": {
+                        "resource_path_index": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "Index of the resource path causing the error"
+                        }
+                      }
                     }
-                },
-                "required": [
+                  },
+                  "required": [
                     "status",
                     "code",
                     "message",
                     "details"
-                ]
+                  ]
+                }
+              }
             }
+          }
         },
-        "parameters": {
-            "record_id": {
-                "name": "record_id",
-                "in": "path",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "module": {
-                "name": "module",
-                "in": "path",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "message_id": {
-                "name": "message_id",
-                "in": "query",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "user_id": {
-                "name": "user_id",
-                "in": "query",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            },
-            "id": {
-                "name": "id",
-                "in": "query",
-                "required": true,
-                "schema": {
-                    "type": "string"
-                }
-            }
-        },
-        "securitySchemes": {
-            "iam-oauth2-schema": {
-                "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
-            }
-        }
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.modules.emails.READ",
+              "ZohoCRM.modules.leads.all",
+              "ZohoCRM.modules.contacts.all",
+              "ZohoCRM.modules.deals.all"
+            ]
+          }
+        ]
+      }
     }
+  },
+  "components": {
+    "parameters": {
+      "RecordId": {
+        "name": "recordId",
+        "in": "path",
+        "required": true,
+        "description": "The unique ID of the record.",
+        "schema": {
+          "type": "string",
+          "maxLength": 100
+        }
+      },
+      "Module": {
+        "name": "module",
+        "in": "path",
+        "required": true,
+        "description": "The API name of the module.",
+        "schema": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "MessageId": {
+        "name": "message_id",
+        "in": "query",
+        "required": true,
+        "description": "The message ID from the email response.",
+        "schema": {
+          "type": "string",
+          "maxLength": 100
+        }
+      },
+      "UserId": {
+        "name": "user_id",
+        "in": "query",
+        "required": true,
+        "description": "The unique ID of the record owner.",
+        "schema": {
+          "type": "string",
+          "maxLength": 100
+        }
+      },
+      "Id": {
+        "name": "id",
+        "in": "query",
+        "required": true,
+        "description": "The unique ID of the inline image attachment.",
+        "schema": {
+          "type": "string",
+          "maxLength": 100
+        }
+      }
+    },
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "description": "Zoho IAM OAuth2 Authentication",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.modules.emails.READ": "Read emails",
+              "ZohoCRM.modules.leads.all": "All lead access",
+              "ZohoCRM.modules.contacts.all": "All contact access",
+              "ZohoCRM.modules.deals.all": "All deal access"
+            }
+          }
+        }
+      }
+    }
+  }
 }

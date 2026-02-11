@@ -1,508 +1,616 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "mass_convert",
-        "description": "",
-        "version": "v8.0"
-    },
-    "servers": [
-        {
-            "url": "https://zohoapis.com"
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mass Convert",
+    "description": "Mass convert leads into other CRM modules (Deals/Contacts/Accounts) with options for attachments, tags and related modules.",
+    "version": "8"
+  },
+  "servers": [
+    {
+      "url": "https://zohoapis.{dc}/crm/{version}",
+      "description": "Primary Zoho CRM API server (data center selection via variable).",
+      "variables": {
+        "dc": {
+          "enum": [
+            "com",
+            "eu",
+            "in",
+            "cn",
+            "au"
+          ],
+          "default": "com",
+          "description": "Top-level domain representing the Zoho data center."
+        },
+        "version": {
+          "default": "v8",
+          "description": "API Version"
         }
-    ],
-    "paths": {
-        "/crm/v8/Leads/actions/mass_convert": {
-            "post": {
-                "operationId": "Mass Convert",
-                "requestBody": {
-                    "$ref": "#/components/requestBodies/body"
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/SuccessResponse"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/ErrorResponse"
-                    }
-                },
-                "security": [
-                    {
-                        "iam-oauth2-schema": [
-                            "ZohoCRM.mass_convert.{module_API_name}.CREATE"
-                        ]
-                    }
-                ]
-            },
-            "get": {
-                "operationId": "Get Job Status",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/job_id"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/Status"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/RErrorResponse"
-                    }
-                },
-                "security": [
-                    {
-                        "iam-oauth2-schema": [
-                            "ZohoCRM.mass_convert.{module_API_name}.READ"
-                        ]
-                    }
-                ]
-            }
-        }
-    },
-    "components": {
-        "schemas": {
-            "move_attachments_to": {
+      }
+    }
+  ],
+  "security": [
+    {
+      "iam-oauth2-schema": [
+        "ZohoCRM.mass_convert.leads.CREATE",
+        "ZohoCRM.mass_convert.leads.READ"
+      ]
+    }
+  ],
+  "paths": {
+    "/Leads/actions/mass_convert": {
+      "post": {
+        "operationId": "massConvert",
+        "summary": "Mass convert leads",
+        "description": "Start a scheduled mass-convert job that converts multiple leads into other modules (Deals/Contacts/Accounts) according to provided options. Max 50 lead IDs per request.",
+        "requestBody": {
+          "description": "Payload describing conversion options and lead ids to be converted.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
                 "type": "object",
+                "description": "Request payload for mass convert operation.",
+                "additionalProperties": false,
                 "properties": {
-                    "id": {
-                        "type": "string"
+                  "ids": {
+                    "type": "array",
+                    "description": "Array of Lead record IDs to be converted. Maximum 50 IDs.",
+                    "items": {
+                      "type": "string",
+                      "description": "A lead record id.",
+                      "maxLength": 255
                     },
-                    "api_name": {
-                        "type": "string"
-                    }
-                }
-            },
-            "assign_to": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    }
-                }
-            },
-            "related_module": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "api_name": {
-                        "type": "string"
-                    }
-                }
-            },
-            "portal_user_type": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "api_name": {
-                        "type": "string"
-                    }
-                }
-            },
-            "Body_Wrapper": {
-                "type": "object",
-                "properties": {
-                    "Deals": {
-                        "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/record.json#/components/schemas/Record"
-                    },
-                    "move_attachments_to": {
-                        "$ref": "#/components/schemas/move_attachments_to"
-                    },
-                    "assign_to": {
-                        "$ref": "#/components/schemas/assign_to"
-                    },
-                    "carry_over_tags": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/move_attachments_to"
-                        }
-                    },
-                    "related_modules": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/related_module"
-                        }
-                    },
-                    "portal_user_type": {
-                        "$ref": "#/components/schemas/portal_user_type"
-                    },
-                    "ids": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "apply_assignment_threshold": {
-                        "type": "boolean"
-                    }
-                }
-            },
-            "details": {
-                "type": "object",
-                "properties": {
-                    "job_id": {
-                        "type": "string"
-                    }
-                }
-            },
-            "success": {
-                "type": "object",
-                "properties": {
-                    "code": {
+                    "maxItems": 50
+                  },
+                  "Deals": {
+                    "type": "object",
+                    "description": "Optional Deal record template to use when converting leads to Deals. If provided, it must include all mandatory Deal fields, and may include any other Deal fields as needed.",
+                    "additionalProperties": false,
+                    "properties": {
+                      "Deal_Name": {
                         "type": "string",
-                        "enum": [
-                            "SCHEDULED"
-                        ]
+                        "description": "Name of the deal to be created for converted leads.",
+                        "maxLength": 255
+                      }
                     },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
+                    "required": [
+                      "Deal_Name"
+                    ]
+                  },
+                  "assign_to": {
+                    "type": "object",
+                    "description": "User assignment information for the converted records. Use Get Users API to retrieve user id.",
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
                         "type": "string",
-                        "enum": [
-                            "success"
-                        ]
+                        "description": "User id to assign the converted records to.",
+                        "maxLength": 255
+                      }
                     },
-                    "details": {
-                        "$ref": "#/components/schemas/details"
-                    }
-                }
-            },
-            "ErrorDetails": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "ErrorDetails1": {
-                "type": "object",
-                "properties": {
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "InvalidError": {
-                "type": "object",
-                "properties": {
-                    "code": {
+                    "required": [
+                      "id"
+                    ]
+                  },
+                  "portal_user_type": {
+                    "type": "object",
+                    "description": "Portal user type reference for the converted contact, if applicable.",
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
                         "type": "string",
-                        "enum": [
-                            "INVALID_DATA"
-                        ]
+                        "description": "Portal user type id.",
+                        "maxLength": 255
+                      }
                     },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "details": {
-                        "$ref": "#/components/schemas/ErrorDetails1"
-                    }
-                }
-            },
-            "MandatoryDetails": {
-                "type": "object",
-                "properties": {
-                    "expected_fields": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ErrorDetails"
-                        }
-                    }
-                }
-            },
-            "MandatoryError": {
-                "type": "object",
-                "properties": {
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "MANDATORY_NOT_FOUND",
-                            "EXPECTED_FIELD_MISSING"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    },
-                    "details": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/ErrorDetails1"
-                            },
-                            {
-                                "$ref": "#/components/schemas/MandatoryDetails"
-                            }
-                        ]
-                    }
-                }
-            },
-            "InvalidTypeDetails": {
-                "type": "object",
-                "properties": {
-                    "expected_data_type": {
-                        "type": "string"
-                    },
-                    "api_name": {
-                        "type": "string"
-                    },
-                    "json_path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "InvalidTypeError": {
-                "type": "object",
-                "properties": {
-                    "details": {
-                        "$ref": "#/components/schemas/InvalidTypeDetails"
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_DATA"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "InvalidParamDetails": {
-                "type": "object",
-                "properties": {
-                    "param_name": {
-                        "type": "string"
-                    }
-                }
-            },
-            "InvalidParamError": {
-                "type": "object",
-                "properties": {
-                    "details": {
-                        "$ref": "#/components/schemas/InvalidParamDetails"
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_DATA"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "MandatoryParamDetails": {
-                "type": "object",
-                "properties": {
-                    "param": {
-                        "type": "string"
-                    }
-                }
-            },
-            "MandatoryParamError": {
-                "type": "object",
-                "properties": {
-                    "details": {
-                        "$ref": "#/components/schemas/MandatoryParamDetails"
-                    },
-                    "code": {
-                        "type": "string",
-                        "enum": [
-                            "INVALID_DATA"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "error"
-                        ]
-                    }
-                }
-            },
-            "status": {
-                "type": "object",
-                "properties": {
-                    "Status": {
-                        "type": "string"
-                    },
-                    "Failed_Count": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "Not_Converted_Count": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "Total_Count": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "Converted_Count": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                }
-            },
-            "wrapper": {
-                "type": "object",
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/status"
+                    "required": [
+                      "id"
+                    ]
+                  },
+                  "related_modules": {
+                    "type": "array",
+                    "description": "List of related modules (Tasks/Events/Calls) to move with converted records. If present, ownership of those related records will be assigned to the user in assign_to.",
+                    "items": {
+                      "type": "object",
+                      "description": "A related-module configuration object containing module API name and id.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "api_name": {
+                          "type": "string",
+                          "description": "Related module API name (e.g., Tasks, Events, Calls).",
+                          "maxLength": 100
                         },
-                        "type": "array"
-                    }
-                }
+                        "id": {
+                          "type": "string",
+                          "description": "Related module id",
+                          "maxLength": 255
+                        }
+                      },
+                      "required": [
+                        "api_name",
+                        "id"
+                      ]
+                    },
+                    "maxItems": 3
+                  },
+                  "carry_over_tags": {
+                    "type": "array",
+                    "description": "List of tag objects to carry over to converted records (Contacts, Deals, Accounts supported).",
+                    "items": {
+                      "type": "object",
+                      "description": "A tag mapping object describing target module api name and id.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "api_name": {
+                          "type": "string",
+                          "description": "Module API name where the tag applies.",
+                          "maxLength": 100
+                        },
+                        "id": {
+                          "type": "string",
+                          "description": "Module Id where the tag applies.",
+                          "maxLength": 255
+                        }
+                      },
+                      "required": [
+                        "api_name",
+                        "id"
+                      ]
+                    },
+                    "maxItems": 3
+                  },
+                  "move_attachments_to": {
+                    "type": "object",
+                    "description": "Target module and record to which attachments should be moved after converting the lead (Contacts, Deals, Accounts supported).",
+                    "additionalProperties": false,
+                    "properties": {
+                      "api_name": {
+                        "type": "string",
+                        "description": "Module API name where attachments will be moved.",
+                        "maxLength": 100
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "Module Id where attachments will be moved.",
+                        "maxLength": 255
+                      }
+                    },
+                    "required": [
+                      "api_name",
+                      "id"
+                    ]
+                  },
+                  "apply_assignment_threshold": {
+                    "type": "boolean",
+                    "description": "Flag to indicate whether assignment threshold rules should be applied when assigning records.Default value will be true"
+                  }
+                },
+                "required": [
+                  "ids"
+                ]
+              }
             }
+          }
         },
         "responses": {
-            "SuccessResponse": {
-                "description": "",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/success"
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "ErrorResponse": {
-                "description": "",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/InvalidError"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/MandatoryError"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/InvalidTypeError"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/InvalidParamError"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/MandatoryParamError"
-                                },
-                                {
-                                    "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/schemas/UnsupportedVersionError"
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "RErrorResponse": {
-                "description": "",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/InvalidError"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/MandatoryError"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/InvalidTypeError"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/InvalidParamError"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/MandatoryParamError"
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "Status": {
-                "description": "",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/wrapper"
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "parameters": {
-            "job_id": {
-                "name": "job_id",
-                "in": "query",
-                "required": true,
+          "202": {
+            "description": "Accepted — mass convert scheduled and job id returned in details.",
+            "content": {
+              "application/json": {
                 "schema": {
-                    "type": "string"
-                }
-            }
-        },
-        "requestBodies": {
-            "body": {
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "$ref": "#/components/schemas/Body_Wrapper"
+                  "type": "object",
+                  "description": "Response returned when the mass convert job is scheduled.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Response code indicating the job status.",
+                      "enum": [
+                        "SCHEDULED"
+                      ],
+                      "maxLength": 50
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable message describing the result.",
+                      "maxLength": 512
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Status category of the response.",
+                      "enum": [
+                        "success"
+                      ],
+                      "maxLength": 50
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional details about the scheduled job including job id.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "job_id": {
+                          "type": "string",
+                          "description": "Identifier for the scheduled mass convert job.",
+                          "maxLength": 255
                         }
+                      },
+                      "required": [
+                        "job_id"
+                      ]
                     }
-                },
-                "required": true
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "status",
+                    "details"
+                  ]
+                }
+              }
             }
+          },
+          "400": {
+            "description": "Bad Request — input validation or request-level errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Validation error response.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Error code.",
+                          "enum": [
+                            "INVALID_REQUEST_METHOD",
+                            "INVALID_DATA",
+                            "REQUIRED_PARAM_MISSING",
+                            "NOT_ALLOWED",
+                            "MANDATORY_NOT_FOUND",
+                            "LIMIT_EXCEEDED",
+                            "EXPECTED_FIELD_MISSING",
+                            "AMBIGUITY_DURING_PROCESSING"
+                          ],
+                          "maxLength": 100
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message.",
+                          "maxLength": 512
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Error status category.",
+                          "enum": [
+                            "error"
+                          ],
+                          "maxLength": 50
+                        },
+                        "details": {
+                          "type": "object",
+                          "description": "Additional error detail (field-level info, json path, expected types, limits, etc.).",
+                          "additionalProperties": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "status",
+                        "details"
+                      ]
+                    }
+                  ],
+                  "description": "Possible 400 response shapes for validation and related errors."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — no permission to perform the action.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Permission error response.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Error code.",
+                      "enum": [
+                        "NO_PERMISSION"
+                      ],
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable message.",
+                      "maxLength": 512
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Status category.",
+                      "enum": [
+                        "error"
+                      ],
+                      "maxLength": 50
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Optional details object.",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "status",
+                    "details"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error — unexpected server-side error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Server error response.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Error code.",
+                      "enum": [
+                        "INTERNAL_ERROR"
+                      ],
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable message.",
+                      "maxLength": 512
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Status category.",
+                      "enum": [
+                        "error"
+                      ],
+                      "maxLength": 50
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Optional details object.",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "status",
+                    "details"
+                  ]
+                }
+              }
+            }
+          }
         },
-        "securitySchemes": {
-            "iam-oauth2-schema": {
-                "$ref": "https://raw.githubusercontent.com/Zohocorp-Pvt-Ltd/crm-oas/refs/heads/main/v8.0/common.json#/components/securitySchemes/iam-oauth2-schema"
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.mass_convert.leads.CREATE"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "operationId": "getJobStatus",
+        "summary": "Get mass convert job status",
+        "description": "Retrieve the status and counts of a previously scheduled mass convert job using job_id query parameter.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/JobId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status response with conversion counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Successful job status response wrapper containing an array of job status objects.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "Array containing job status objects.",
+                      "items": {
+                        "type": "object",
+                        "description": "Status details for a job or batch entry.",
+                        "additionalProperties": false,
+                        "properties": {
+                          "Status": {
+                            "type": "string",
+                            "description": "Indicates the status of the mass convert job (completed, scheduled, in progress, failed).",
+                            "maxLength": 50
+                          },
+                          "Total_Count": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Specifies the total number of leads that were scheduled to be converted."
+                          },
+                          "Converted_Count": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Specifies the number of leads that were converted."
+                          },
+                          "Not_Converted_Count": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Specifies the number of leads that are yet to be converted."
+                          },
+                          "Failed_Count": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Specifies the number of leads that were not converted."
+                          }
+                        },
+                        "required": [
+                          "Status",
+                          "Total_Count",
+                          "Converted_Count",
+                          "Not_Converted_Count",
+                          "Failed_Count"
+                        ]
+                      },
+                      "maxItems": 5
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
             }
-        }
+          },
+          "400": {
+            "description": "Bad request — validation errors for job status retrieval.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Validation error response for job status retrieval.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Error code.",
+                      "enum": [
+                        "REQUIRED_PARAM_MISSING",
+                        "INVALID_DATA"
+                      ],
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message.",
+                      "maxLength": 512
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Status category.",
+                      "enum": [
+                        "error"
+                      ],
+                      "maxLength": 50
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Details about the error (e.g., missing job_id).",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "status",
+                    "details"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — insufficient permission to retrieve job status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Permission error response.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Error code.",
+                      "enum": [
+                        "NO_PERMISSION"
+                      ],
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable message.",
+                      "maxLength": 512
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Status category.",
+                      "enum": [
+                        "error"
+                      ],
+                      "maxLength": 50
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Optional details object.",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "status",
+                    "details"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "iam-oauth2-schema": [
+              "ZohoCRM.mass_convert.leads.READ"
+            ]
+          }
+        ]
+      }
     }
+  },
+  "components": {
+    "parameters": {
+      "JobId": {
+        "name": "job_id",
+        "in": "query",
+        "required": true,
+        "description": "Identifier of the mass convert job to fetch status for.",
+        "schema": {
+          "type": "string",
+          "maxLength": 255
+        }
+      }
+    },
+    "securitySchemes": {
+      "iam-oauth2-schema": {
+        "type": "oauth2",
+        "description": "OAuth2 authorization used for CRM operations.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.zoho.com/oauth/v2/auth",
+            "tokenUrl": "https://accounts.zoho.com/oauth/v2/token",
+            "scopes": {
+              "ZohoCRM.mass_convert.leads.CREATE": "Permission to start a mass convert job for leads.",
+              "ZohoCRM.mass_convert.leads.READ": "Permission to read mass convert job status."
+            }
+          }
+        }
+      }
+    }
+  }
 }
