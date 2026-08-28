@@ -1,0 +1,27 @@
+# Pipeline
+
+- [OpenAPI specification](pipeline.yaml)
+- [Pipelines](mds/getPipelines.md)
+  - Retrieve all pipelines available for the specified Deals layout. Use the required layout_id query parameter to identify the layout.
+  - [Examples](mds/examples/getPipelines.md)
+- [Pipeline](mds/createPipeline.md)
+  - Create a new pipeline for the specified Deals layout by providing a pipeline display label and one or more mapped stages.
+  - [Examples](mds/examples/createPipeline.md)
+- [Pipeline](mds/updatePipelines.md)
+  - Update or delete a pipeline for the specified layout using a request body that identifies the pipeline and its stage mappings.
+  - [Examples](mds/examples/updatePipelines.md)
+- [Pipeline](mds/replacePipelines.md)
+  - Update, or delete a pipeline for the specified layout using the supplied pipeline configuration in the request body.
+  - [Examples](mds/examples/replacePipelines.md)
+- [Specific Pipeline](mds/getPipeline.md)
+  - Retrieve a specific pipeline by pipeline ID for the specified Deals layout.
+  - [Examples](mds/examples/getPipeline.md)
+- [Pipeline](mds/updatePipelineById.md)
+  - Update or delete a specific pipeline identified by the path ID within the specified layout.
+  - [Examples](mds/examples/updatePipelineById.md)
+- [Pipeline](mds/replacePipelineById.md)
+  - Update or replace a specific pipeline identified by the path ID for the specified layout.
+  - [Examples](mds/examples/replacePipelineById.md)
+- [Transfer Pipeline](mds/transferAndDeletePipelines.md)
+  - Transfer records and stage mappings from one pipeline to another in the specified layout, and delete the source pipeline after the transfer is scheduled.
+  - [Examples](mds/examples/transferAndDeletePipelines.md)

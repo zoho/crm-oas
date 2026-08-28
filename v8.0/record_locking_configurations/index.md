@@ -1,0 +1,24 @@
+# Record Locking Configuration
+
+- [OpenAPI specification](record_locking_configurations.yaml)
+- [Create record locking configuration](mds/createRecordLockingConfiguration.md)
+  - Creates a new record locking configuration for the specified module. You can define locking rules, restricted actions, excluded fields, and other settings.
+  - [Examples](mds/examples/createRecordLockingConfiguration.md)
+- [Update record locking configuration](mds/updateRecordLockingConfiguration.md)
+  - Updates an existing record locking configuration for the specified module. You can modify any of the configuration settings.
+  - [Examples](mds/examples/updateRecordLockingConfiguration.md)
+- [Get record locking configuration](mds/getRecordLockingConfiguration.md)
+  - Retrieves the existing record locking configuration for the specified module.
+  - [Examples](mds/examples/getRecordLockingConfiguration.md)
+- [Delete record locking configuration](mds/deleteRecordLockingConfiguration.md)
+  - Deletes the record locking configuration(s) for the specified module using the provided configuration IDs.
+  - [Examples](mds/examples/deleteRecordLockingConfiguration.md)
+- [Update specific record locking configuration](mds/updateRecordLockingConfigurationPassingIdInURL.md)
+  - Updates an existing record locking configuration for the specified module using the configuration ID provided in the URL path.
+  - [Examples](mds/examples/updateRecordLockingConfigurationPassingIdInURL.md)
+- [Get specific record locking configuration](mds/getRecordLockingConfigurationPassingIdInURL.md)
+  - Retrieves a specific record locking configuration using the configuration ID provided in the URL path.
+  - [Examples](mds/examples/getRecordLockingConfigurationPassingIdInURL.md)
+- [Delete specific record locking configuration](mds/deleteRecordLockingConfigurationPassingIdInURL.md)
+  - Deletes a specific record locking configuration using the configuration ID provided in the URL path.
+  - [Examples](mds/examples/deleteRecordLockingConfigurationPassingIdInURL.md)

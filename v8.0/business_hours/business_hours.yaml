@@ -1,0 +1,781 @@
+openapi: 3.1.0
+info:
+  title: Business Hours
+  description: >-
+    API for managing organization-wide business hours configuration, including
+    working days, operating hours, and timezone settings for Zoho CRM.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API version
+paths:
+  /settings/business_hours:
+    post:
+      summary: Business Hours Configuration
+      description: >-
+        Creates a new business hours configuration for the organization,
+        defining working days, operating hours, and timezone settings.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.business_hours.CREATE
+      operationId: createBusinessHours
+      requestBody:
+        content:
+          application/json:
+            examples:
+              CustomHours:
+                summary: Custom Business Hours
+                value:
+                  business_hours:
+                    week_starts_on: Monday
+                    type: custom
+                    business_days:
+                      - Monday
+                      - Tuesday
+                      - Wednesday
+                      - Thursday
+                      - Friday
+                    same_as_everyday: false
+                    daily_timing:
+                      - '09:00'
+                      - '18:00'
+                    custom_timing:
+                      - days: Monday
+                        business_timing:
+                          - '09:00'
+                          - '18:00'
+            x-zs-llm-examples:
+              - CustomHours
+            schema:
+              type: object
+              description: The request body for creating business hours
+              additionalProperties: false
+              required:
+                - business_hours
+              properties:
+                business_hours:
+                  type: object
+                  description: >-
+                    The business hours configuration object containing all
+                    settings for the organization's working schedule.
+                  additionalProperties: false
+                  properties:
+                    week_starts_on:
+                      type: string
+                      description: The day on which the organization's work week begins.
+                      enum:
+                        - Monday
+                        - Tuesday
+                        - Wednesday
+                        - Thursday
+                        - Friday
+                        - Saturday
+                        - Sunday
+                    type:
+                      type: string
+                      description: >-
+                        The type of business hours configuration: '24_by_7' for
+                        24/7 operation, '24_by_5' for 24-hour weekday operation,
+                        or 'custom' for a customized schedule.
+                      enum:
+                        - 24_by_7
+                        - 24_by_5
+                        - custom
+                    business_days:
+                      type: array
+                      description: >-
+                        The specific days of the week on which the organization
+                        is open for business.
+                      items:
+                        description: Day of the week
+                        type: string
+                        enum:
+                          - Monday
+                          - Tuesday
+                          - Wednesday
+                          - Thursday
+                          - Friday
+                          - Saturday
+                          - Sunday
+                      minItems: 1
+                      maxItems: 7
+                      uniqueItems: true
+                    same_as_everyday:
+                      type: boolean
+                      description: >-
+                        If true, the same operating hours apply to all business
+                        days. If false, hours vary by day and are defined in
+                        custom_timing.
+                    daily_timing:
+                      type: array
+                      description: >-
+                        Default working hours applied to all business days
+                        (start and end time)
+                      items:
+                        type: string
+                        pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+                        description: Time in HH:MM format (24-hour)
+                        maxLength: 5
+                      minItems: 2
+                      maxItems: 2
+                    custom_timing:
+                      type: array
+                      description: >-
+                        Different business hours for different days when
+                        same_as_everyday is false
+                      maxItems: 7
+                      items:
+                        description: >-
+                          Different business hours for different days when
+                          same_as_everyday is false
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          days:
+                            type: string
+                            description: Specific day of the week for custom business hours
+                            enum:
+                              - Monday
+                              - Tuesday
+                              - Wednesday
+                              - Thursday
+                              - Friday
+                              - Saturday
+                              - Sunday
+                          business_timing:
+                            type: array
+                            description: >-
+                              Start and end times for this specific day in
+                              24-hour HH:MM format
+                            items:
+                              type: string
+                              pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+                              description: Time in HH:MM format (24-hour)
+                              maxLength: 5
+                            minItems: 2
+                            maxItems: 2
+                        required:
+                          - days
+                          - business_timing
+                  required:
+                    - week_starts_on
+                    - type
+        required: true
+      responses:
+        '201':
+          $ref: '#/components/responses/BusinessHoursSuccessResponse'
+        '400':
+          description: >-
+            The request could not be processed due to invalid data, missing
+            required fields, business rule violations, or an attempt to create
+            multiple business hours configurations .
+          content:
+            application/json:
+              examples:
+                MultipleBusinessHours:
+                  summary: Multiple Business Hours Error
+                  value:
+                    code: NOT_ALLOWED
+                    details: {}
+                    message: Organization can have only one Business Hour
+                    status: error
+              schema:
+                $ref: '#/components/schemas/BusinessHoursErrorResponses'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+    put:
+      summary: Business Hours Configuration
+      description: >-
+        Updates the existing business hours configuration with revised working
+        days, operating hours, or timezone settings.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.business_hours.UPDATE
+      operationId: updateBusinessHours
+      requestBody:
+        content:
+          application/json:
+            examples:
+              UpdateCustomHours:
+                summary: Update to Custom Business Hours
+                value:
+                  business_hours:
+                    week_starts_on: Monday
+                    type: custom
+                    business_days:
+                      - Monday
+                      - Tuesday
+                      - Wednesday
+                      - Thursday
+                      - Friday
+                    same_as_everyday: false
+                    daily_timing:
+                      - '09:00'
+                      - '18:00'
+                    custom_timing:
+                      - days: Monday
+                        business_timing:
+                          - '09:00'
+                          - '18:00'
+              DeleteCustomTiming:
+                summary: Delete Custom Timing for a Specific Day
+                value:
+                  business_hours:
+                    week_starts_on: Monday
+                    type: custom
+                    business_days:
+                      - Monday
+                      - Tuesday
+                      - Wednesday
+                      - Thursday
+                    same_as_everyday: false
+                    custom_timing:
+                      - days: Monday
+                        business_timing:
+                          - '10:00'
+                          - '17:00'
+                      - days: Tuesday
+                        business_timing:
+                          - '10:30'
+                          - '17:00'
+                      - days: Wednesday
+                        business_timing:
+                          - '11:00'
+                          - '17:00'
+                      - days: Thursday
+                        business_timing:
+                          - '09:00'
+                          - '18:30'
+                      - days: Friday
+                        business_timing:
+                          - '11:30'
+                          - '18:30'
+                        _delete: true
+            x-zs-llm-examples:
+              - UpdateCustomHours
+              - DeleteCustomTiming
+            schema:
+              type: object
+              description: Business hours update request body
+              additionalProperties: false
+              required:
+                - business_hours
+              properties:
+                business_hours:
+                  type: object
+                  description: >-
+                    The business hours configuration object containing all
+                    settings for the organization's working schedule.
+                  additionalProperties: false
+                  properties:
+                    week_starts_on:
+                      type: string
+                      description: The day on which the organization's work week begins.
+                      enum:
+                        - Monday
+                        - Tuesday
+                        - Wednesday
+                        - Thursday
+                        - Friday
+                        - Saturday
+                        - Sunday
+                    type:
+                      type: string
+                      description: >-
+                        The type of business hours configuration: '24_by_7' for
+                        24/7 operation, '24_by_5' for 24-hour weekday operation,
+                        or 'custom' for a customized schedule.
+                      enum:
+                        - 24_by_7
+                        - 24_by_5
+                        - custom
+                    business_days:
+                      type: array
+                      description: >-
+                        The specific days of the week on which the organization
+                        is open for business.
+                      items:
+                        description: >-
+                          The specific days of the week on which the
+                          organization is open for business.
+                        type: string
+                        enum:
+                          - Monday
+                          - Tuesday
+                          - Wednesday
+                          - Thursday
+                          - Friday
+                          - Saturday
+                          - Sunday
+                      minItems: 1
+                      maxItems: 7
+                      uniqueItems: true
+                    same_as_everyday:
+                      type: boolean
+                      description: >-
+                        If true, the same operating hours apply to all business
+                        days. If false, hours vary by day and are defined in
+                        custom_timing.
+                    daily_timing:
+                      type: array
+                      description: >-
+                        Default working hours applied to all business days
+                        (start and end time)
+                      items:
+                        type: string
+                        pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+                        description: Time in HH:MM format (24-hour)
+                        maxLength: 5
+                      minItems: 2
+                      maxItems: 2
+                    custom_timing:
+                      type: array
+                      description: >-
+                        Different business hours for different days when
+                        same_as_everyday is false
+                      maxItems: 7
+                      items:
+                        description: >-
+                          Different business hours for different days when
+                          same_as_everyday is false
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          days:
+                            type: string
+                            description: Specific day of the week for custom business hours
+                            enum:
+                              - Monday
+                              - Tuesday
+                              - Wednesday
+                              - Thursday
+                              - Friday
+                              - Saturday
+                              - Sunday
+                          business_timing:
+                            type: array
+                            description: >-
+                              Start and end time for business hours on this
+                              specific day
+                            items:
+                              type: string
+                              pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+                              description: Time in HH:MM format (24-hour)
+                              maxLength: 5
+                            minItems: 2
+                            maxItems: 2
+                          _delete:
+                            type: boolean
+                            description: >-
+                              Set to true to delete the custom timing for this
+                              specific business day
+                        required:
+                          - days
+                          - business_timing
+        required: true
+      responses:
+        '200':
+          $ref: '#/components/responses/BusinessHoursSuccessResponse'
+        '400':
+          description: >-
+            The request could not be processed due to invalid data, missing
+            required fields, or business rule violations.
+          content:
+            application/json:
+              examples:
+                UpdateRestrictions:
+                  summary: Update Restrictions Error
+                  value:
+                    business_hours:
+                      code: NOT_ALLOWED
+                      details: {}
+                      message: Cannot update business hours
+                      status: error
+              schema:
+                $ref: '#/components/schemas/BusinessHoursErrorResponses'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+    get:
+      summary: Business Hours Configuration
+      description: >-
+        Retrieves the current business hours configuration, including working
+        days, operating hours, and timezone details.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.business_hours.READ
+      operationId: getBusinessHours
+      responses:
+        '200':
+          description: Successfully retrieved business hours configuration
+          content:
+            application/json:
+              examples:
+                BusinessHoursDetails:
+                  summary: Business Hours Details
+                  value:
+                    business_hours:
+                      week_starts_on: Monday
+                      type: 24_by_5
+                      id: '1234567890'
+                      timezone: Asia/Kolkata
+                      business_days:
+                        - Monday
+                        - Tuesday
+                        - Wednesday
+                        - Thursday
+                        - Friday
+                      same_as_everyday: true
+                      daily_timing:
+                        - '09:00'
+                        - '18:00'
+                      custom_timing: []
+              schema:
+                type: object
+                x-zs-$id: BusinessHoursGetResponse
+                description: Business hours retrieval response
+                additionalProperties: false
+                properties:
+                  business_hours:
+                    type: object
+                    description: >-
+                      The business hours configuration object containing all
+                      settings for the organization's working schedule.
+                    additionalProperties: false
+                    properties:
+                      week_starts_on:
+                        type: string
+                        description: The day on which the organization's work week begins.
+                        enum:
+                          - Monday
+                          - Tuesday
+                          - Wednesday
+                          - Thursday
+                          - Friday
+                          - Saturday
+                          - Sunday
+                      type:
+                        type: string
+                        description: >-
+                          The type of business hours configuration: '24_by_7'
+                          for 24/7 operation, '24_by_5' for 24-hour weekday
+                          operation, or 'custom' for a customized schedule.
+                        enum:
+                          - 24_by_7
+                          - 24_by_5
+                          - custom
+                      id:
+                        type: string
+                        description: >-
+                          The unique identifier assigned to this business hours
+                          configuration.
+                        pattern: ^[0-9]+$
+                        maxLength: 255
+                        x-zs-$id: BusinessHoursId
+                      timezone:
+                        type: string
+                        description: Timezone for business hours (IANA timezone identifier)
+                        maxLength: 100
+                      business_days:
+                        type: array
+                        description: >-
+                          The specific days of the week on which the
+                          organization is open for business.
+                        items:
+                          description: >-
+                            The specific days of the week on which the
+                            organization is open for business.
+                          type: string
+                          enum:
+                            - Monday
+                            - Tuesday
+                            - Wednesday
+                            - Thursday
+                            - Friday
+                            - Saturday
+                            - Sunday
+                        minItems: 1
+                        maxItems: 7
+                        uniqueItems: true
+                      same_as_everyday:
+                        type: boolean
+                        description: >-
+                          If true, the same operating hours apply to all
+                          business days. If false, hours vary by day and are
+                          defined in custom_timing.
+                      daily_timing:
+                        type:
+                          - array
+                          - 'null'
+                        description: >-
+                          Default working hours applied to all business days
+                          (start and end time)
+                        items:
+                          type: string
+                          pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+                          description: Time in HH:MM format (24-hour)
+                          maxLength: 5
+                        minItems: 2
+                        maxItems: 2
+                      custom_timing:
+                        type:
+                          - array
+                          - 'null'
+                        description: >-
+                          Different business hours for different days when
+                          same_as_everyday is false
+                        maxItems: 7
+                        items:
+                          description: >-
+                            Different business hours for different days when
+                            same_as_everyday is false
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            days:
+                              type: string
+                              description: >-
+                                Specific day of the week for custom business
+                                hours
+                              enum:
+                                - Monday
+                                - Tuesday
+                                - Wednesday
+                                - Thursday
+                                - Friday
+                                - Saturday
+                                - Sunday
+                            business_timing:
+                              type: array
+                              description: >-
+                                Start and end time for business hours on this
+                                specific day
+                              items:
+                                type: string
+                                pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+                                description: Time in HH:MM format (24-hour)
+                                maxLength: 5
+                              minItems: 2
+                              maxItems: 2
+                          required:
+                            - days
+                            - business_timing
+                    required:
+                      - week_starts_on
+                      - type
+                      - id
+                      - timezone
+                      - business_days
+                      - same_as_everyday
+                      - daily_timing
+                      - custom_timing
+                required:
+                  - business_hours
+        '204':
+          $ref: '#/components/responses/NoContentResponse'
+security:
+  - OAuth2:
+      - ZohoCRM.files.CREATE
+      - ZohoCRM.settings.business_hours.ALL
+components:
+  schemas:
+    BusinessHoursErrorResponses:
+      x-zs-$id: BusinessHoursErrorResponses
+      oneOf:
+        - type: object
+          x-zs-$id: BusinessHoursErrorResponse
+          additionalProperties: false
+          description: >-
+            Error response schema for business hours operations, including
+            validation failures and business rule violations.
+          properties:
+            business_hours:
+              $ref: '#/components/schemas/ErrorResponse'
+          required:
+            - business_hours
+        - $ref: '#/components/schemas/ErrorResponse'
+    ErrorResponse:
+      type: object
+      description: Standard error response structure for business hours API operations.
+      x-zs-$id: ErrorResponse
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+            - MINIMUM_DATA_NOT_FOUND
+            - MISSING_MANDATORY_FIELDID
+            - ALREADY_USED
+            - MANDATORY_NOT_FOUND
+            - DEPENDENT_FIELD_MISSING
+            - INVALID_DATA
+            - CANNOT_BE_UPDATED
+            - CANNOT_UPDATE
+            - DEPENDENT_MISMATCH
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional contextual information about the error
+        message:
+          type: string
+          description: Error message
+          maxLength: 255
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.files.CREATE: Create and upload files in Zoho CRM
+            ZohoCRM.settings.business_hours.ALL: >-
+              Full access to manage business hours settings including creation,
+              modification, and deletion
+            ZohoCRM.settings.business_hours.CREATE: >-
+              Create access to manage business hours settings including
+              creation, modification, and deletion
+            ZohoCRM.settings.business_hours.READ: >-
+              Get access to manage business hours settings including creation,
+              modification, and deletion
+            ZohoCRM.settings.business_hours.UPDATE: >-
+              Update access to manage business hours settings including
+              creation, modification, and deletion
+            ZohoCRM.settings.business_hours.DELETE: >-
+              Delete access to manage business hours settings including
+              creation, modification, and deletion
+  responses:
+    BusinessHoursSuccessResponse:
+      description: Business hours operation completed successfully.
+      content:
+        application/json:
+          examples:
+            Success:
+              summary: Success Response
+              value:
+                business_hours:
+                  status: success
+                  code: SUCCESS
+                  message: Business Hours saved successfully
+                  details:
+                    id: '1234567890'
+          schema:
+            type: object
+            x-zs-$id: BusinessHoursSuccessResponse
+            additionalProperties: false
+            description: Standard success response for business hours operations
+            properties:
+              business_hours:
+                type: object
+                description: Business hours response object
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Status of the operation
+                    enum:
+                      - success
+                  code:
+                    type: string
+                    description: Code representing the operation status
+                    enum:
+                      - SUCCESS
+                  message:
+                    type: string
+                    description: Message representing the operation status
+                    enum:
+                      - Business Hours saved successfully
+                  details:
+                    type: object
+                    additionalProperties: false
+                    description: Details of the created business hours
+                    properties:
+                      id:
+                        type: string
+                        description: Unique identifier of the created business hours
+                        maxLength: 255
+                        x-zs-$id: BusinessHoursDetailsId
+                    required:
+                      - id
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+    ForbiddenResponse:
+      description: >-
+        Access denied. The authenticated user does not have the required
+        permissions to manage business hours settings.
+      content:
+        application/json:
+          examples:
+            Forbidden:
+              summary: Forbidden Error
+              value:
+                code: NO_PERMISSION
+                details:
+                  permissions:
+                    - Crm_Implied_Manage_Users
+                message: Forbidden due to insufficient permissions
+                status: error
+          schema:
+            type: object
+            x-zs-$id: BusinessHoursForbiddenResponse
+            additionalProperties: false
+            description: Forbidden response schema
+            properties:
+              code:
+                type: string
+                description: Error code
+                enum:
+                  - NO_PERMISSION
+              details:
+                type: object
+                additionalProperties: false
+                description: Additional contextual information about the error,
+                properties:
+                  permissions:
+                    type: array
+                    description: List of missing permissions
+                    maxItems: 5
+                    items:
+                      description: Permission name
+                      type: string
+                      enum:
+                        - Crm_Implied_Manage_Users
+              message:
+                type: string
+                description: Error message
+                maxLength: 255
+              status:
+                type: string
+                description: Error status
+                enum:
+                  - error
+    NoContentResponse:
+      description: No business hours configuration exists for this organization.

@@ -1,0 +1,508 @@
+openapi: 3.1.0
+info:
+  title: Call Preferences
+  description: >-
+    Call Preferences are organization-level settings in Zoho CRM that control
+    whether the **From Number** and **To Number** fields appear on records in
+    the Calls module. This API enables developers to retrieve the current Call
+    Preferences configuration and update which of these fields are enabled for
+    the organization.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Zoho CRM API server. The **dc** variable selects the regional domain on
+      which the organization is hosted, and the **version** variable selects the
+      API version against which requests are made.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          Specifies the regional top-level domain on which the Zoho CRM
+          organization is hosted. Set this value to the domain extension that
+          corresponds to the Zoho data center where the organization resides.
+      version:
+        default: v8
+        description: >-
+          Specifies the major version of the Zoho CRM API to call. The default
+          value targets the latest generally available API version.
+paths:
+  /settings/call_preferences:
+    get:
+      operationId: getCallPreferences
+      summary: Call Preferences
+      description: >-
+        To retrieve the current Call Preferences configuration for your Zoho CRM
+        organization. The response reports whether the **From Number** and **To
+        Number** fields are currently enabled on records in the Calls module.
+      responses:
+        '200':
+          description: >-
+            Returns the current Call Preferences configuration for the Zoho CRM
+            organization, reporting whether the **From Number** and **To
+            Number** fields are enabled on records in the Calls module.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Returned when the Call Preferences configuration is
+                  successfully retrieved. Contains the **call_preferences**
+                  object with the current visibility setting for each
+                  preference.
+                x-zs-$id: Successresponse
+                type: object
+                additionalProperties: false
+                properties:
+                  call_preferences:
+                    description: >-
+                      Contains the current Call Preferences configuration for
+                      your Zoho CRM organization in the **Calls** module.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      show_from_number:
+                        type: boolean
+                        description: >-
+                          Indicates whether the **From Number** field is
+                          currently enabled on records in the Calls module. 
+
+                          **Possible values:**
+
+                          **true** - The **From Number** field is enabled and
+                          appears on Call records.
+
+                          **false** - The **From Number** field is disabled and
+                          is hidden from Call records.
+                      show_to_number:
+                        type: boolean
+                        description: >-
+                          Indicates whether the **To Number** field is currently
+                          enabled on records in the Calls module. 
+
+                          **Possible values:**
+
+                          **true** - The **To Number** field is enabled and
+                          appears on Call records.
+
+                          **false** - The **To Number** field is disabled and is
+                          hidden from Call records.
+                    required:
+                      - show_from_number
+                      - show_to_number
+              examples:
+                SuccessResponse:
+                  value:
+                    call_preferences:
+                      show_from_number: true
+                      show_to_number: true
+                  description: >-
+                    Shows the get Call Preferences response that reports both
+                    the **From Number** and **To Number** fields as currently
+                    enabled on records in the Calls module.
+                  summary: Retrieved Call Preferences with both fields enabled
+        '403':
+          description: The user does not have permission to access call preferences.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: NoPermissionErrorResponse
+                additionalProperties: false
+                description: >-
+                  Represents the error response returned when the user does not
+                  have permission to perform this operation.
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code for the authorization failure.
+                      The value is **NO_PERMISSION**.
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the authorization
+                      failure.
+                    maxLength: 255
+                  status:
+                    type: string
+                    description: Represents the error status. The value is **error**.
+                    enum:
+                      - error
+                  details:
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the error details with authorization
+                      information.
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of permissions required for this
+                          operation.
+                        maxItems: 10
+                        items:
+                          type: string
+                          description: Represents a required permission for the user.
+                          maxLength: 255
+                required:
+                  - code
+                  - message
+                  - status
+                  - details
+              examples:
+                NoPermission:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Customize_Zoho_CRM
+                    message: permission denied
+                    status: error
+                  description: None
+                  summary: None
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.modules.read
+    put:
+      operationId: updateCallPreferences
+      summary: Call Preferences
+      description: >-
+        To update the Call Preferences configuration for your Zoho CRM
+        organization by enabling or disabling the **From Number** and **To
+        Number** fields on records in the Calls module. A preference cannot be
+        disabled when the corresponding field is marked as mandatory, when it is
+        referenced by a Validation Rule, Layout Rule, Blueprint, or Workflow, or
+        when the organization has an active telephony integration or active
+        calendar booking for calls that depends on it.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Specify the new visibility setting for the **From Number**
+                field, the **To Number** field, or both.
+              additionalProperties: false
+              properties:
+                call_preferences:
+                  type: object
+                  description: >-
+                    Specify the new visibility setting for one or both Call
+                    Preferences. Omit a preference from the object to leave its
+                    current setting unchanged.
+                  additionalProperties: false
+                  properties:
+                    show_from_number:
+                      type: boolean
+                      description: >-
+                        Specify whether the **From Number** field must appear on
+                        records in the Calls module. 
+
+                        **Possible values:**
+
+                        **true** - Enable the **From Number** field on Call
+                        records.
+
+                        **false** - Disable the **From Number** field and hide
+                        it from Call records.
+                    show_to_number:
+                      type: boolean
+                      description: >-
+                        Specify whether the **To Number** field must appear on
+                        records in the Calls module. 
+
+                        **Possible values:**
+
+                        **true** - Enable the **To Number** field on Call
+                        records.
+
+                        **false** - Disable the **To Number** field and hide it
+                        from Call records.
+            examples:
+              RequestBody:
+                value:
+                  call_preferences:
+                    show_from_number: true
+                    show_to_number: true
+                description: >-
+                  Shows an update Call Preferences request that enables both the
+                  **From Number** and **To Number** fields on records in the
+                  Calls module.
+                summary: Enable both From Number and To Number on Call records
+            x-zs-llm-examples:
+              - RequestBody
+        required: true
+        description: >-
+          The request body must contain a **call_preferences** object that
+          specifies the new visibility setting for the **From Number** field,
+          the **To Number** field, or both.
+      responses:
+        '200':
+          description: >-
+            Returns the result of the update action, confirming the Call
+            Preferences update for the Zoho CRM organization.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: PutSuccessresponse
+                additionalProperties: false
+                description: >-
+                  Returned when the Call Preferences are successfully updated.
+                  Contains a **call_preferences** object that confirms the
+                  update outcome.
+                properties:
+                  call_preferences:
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Contains the update result for the Call Preferences
+                      configuration, including the result code, status, and
+                      message.
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the result code of the update action. 
+
+                          **Possible values:**
+
+                          **SUCCESS** - Reports successful update of the Call
+                          Preferences configuration.
+                        enum:
+                          - SUCCESS
+                      message:
+                        type: string
+                        description: >-
+                          Describes the update result in plain text so that it
+                          can be displayed to the developer.
+                        maxLength: 255
+                      status:
+                        type: string
+                        description: |-
+                          Indicates the outcome of the request. 
+                          **Possible values:**
+                          **success** - The request completed successfully.
+                        enum:
+                          - success
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Contains additional information about the update
+                          action. This object remains empty for a successful
+                          Call Preferences update.
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+              examples:
+                SuccessResponse:
+                  value:
+                    call_preferences:
+                      code: SUCCESS
+                      details: {}
+                      message: calls preferences updated successfully
+                      status: success
+                  description: >-
+                    Shows the successful update response that returns the
+                    SUCCESS code, confirming the Call Preferences update for the
+                    Zoho CRM organization.
+                  summary: Call Preferences updated successfully
+        '400':
+          description: >-
+            The update Call Preferences request is invalid. Resolution: The
+            request payload, the data types of the supplied values, and the
+            eligibility of the targeted fields for disablement must all satisfy
+            the operation's validation rules.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PutErrorResponse400
+                oneOf:
+                  - type: object
+                    x-zs-$id: Possibleerrors
+                    additionalProperties: false
+                    description: >-
+                      Returned when the request payload itself is rejected,
+                      either because a supplied value is not the expected data
+                      type or because the targeted field cannot be disabled
+                      under the current Zoho CRM configuration.
+                    properties:
+                      call_preferences:
+                        type: object
+                        x-zs-$id: ValueOtherThanBooleanError
+                        additionalProperties: false
+                        description: >-
+                          Contains the per-preference error variant returned
+                          when the update Call Preferences request payload fails
+                          validation.
+                        properties:
+                          code:
+                            type: string
+                            description: Error code
+                            enum:
+                              - INVALID_DATA
+                          message:
+                            type: string
+                            description: Error message
+                            maxLength: 255
+                          status:
+                            type: string
+                            description: Error Status
+                            enum:
+                              - error
+                          details:
+                            type: object
+                            additionalProperties: false
+                            description: Error details with validation information
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: 'Detail field: expected_data_type'
+                                enum:
+                                  - boolean
+                              api_name:
+                                type: string
+                                description: 'Detail field: api_name'
+                                maxLength: 255
+                              json_path:
+                                type: string
+                                description: 'Detail field: json_path'
+                                maxLength: 255
+                            required:
+                              - expected_data_type
+                              - api_name
+                              - json_path
+                        required:
+                          - code
+                          - message
+                          - status
+                          - details
+                    required:
+                      - call_preferences
+                  - type: object
+                    x-zs-$id: Integrationenablederror
+                    additionalProperties: false
+                    description: >-
+                      Returned when the request uses an HTTP method that is not
+                      supported on this endpoint.
+                    properties:
+                      call_preferences:
+                        type: object
+                        additionalProperties: false
+                        description: Error details wrapped under call_preferences key
+                        properties:
+                          code:
+                            type: string
+                            description: Error code
+                            enum:
+                              - NOT_ALLOWED
+                          message:
+                            type: string
+                            description: Error message
+                            maxLength: 255
+                          status:
+                            type: string
+                            description: Error Status
+                            enum:
+                              - error
+                          details:
+                            type: object
+                            additionalProperties: false
+                            description: Error details with validation information
+                            properties:
+                              api_name:
+                                type: string
+                                description: 'Detail field: api_name'
+                                enum:
+                                  - show_from_number
+                                  - show_to_number
+                              json_path:
+                                type: string
+                                description: 'Detail field: json_path'
+                                maxLength: 255
+                            required:
+                              - api_name
+                              - json_path
+                        required:
+                          - code
+                          - message
+                          - status
+                          - details
+                    required:
+                      - call_preferences
+                  - type: object
+                    x-zs-$id: InvalidHTTPmethodtoaccesstheAPIURL
+                    description: Invalid HTTP method to access the API URL.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: Error code
+                        enum:
+                          - INVALID_REQUEST_METHOD
+                      message:
+                        type: string
+                        description: Error message
+                        maxLength: 255
+                      status:
+                        type: string
+                        description: Error Status
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Details of the error response
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                description: >-
+                  Returned when the update Call Preferences request fails
+                  validation. The response carries one of the per-request error
+                  variants, depending on the failure type.
+              examples:
+                InvalidData:
+                  value:
+                    call_preferences:
+                      code: INVALID_DATA
+                      status: error
+                      message: Invalid data
+                      details:
+                        expected_data_type: boolean
+                        api_name: show_from_number
+                        json_path: $.preferences.show_from_number
+                  description: >-
+                    Shows the INVALID_DATA response returned when the value
+                    supplied for **show_from_number** is not a Boolean. The
+                    response identifies the offending preference and the
+                    expected data type.
+                  summary: Preference value is not a Boolean
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.modules.update
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.modules.read: read call_preferences
+            ZohoCRM.settings.modules.update: update call_preferences

@@ -1,0 +1,33 @@
+# Assignment Rules
+
+- [OpenAPI specification](assignment_rules.yaml)
+- [Assignment Rules](mds/getAssignmentRules.md)
+  - To retrieve all Assignment Rules configured in your Zoho CRM organization.
+  - [Examples](mds/examples/getAssignmentRules.md)
+- [Create an Assignment Rule](mds/postAssignmentRules.md)
+  - To create a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](mds/examples/postAssignmentRules.md)
+- [Specific Assignment Rule details](mds/getAssignmentRuleById.md)
+  - To retrieve the details of a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](mds/examples/getAssignmentRuleById.md)
+- [Update a Specific Assignment Rule](mds/updateAssignmentRuleById.md)
+  - To update a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](mds/examples/updateAssignmentRuleById.md)
+- [Delete an Assignment Rule](mds/deleteAssignmentRuleById.md)
+  - To delete a single Assignment Rule from your Zoho CRM organization.
+  - [Examples](mds/examples/deleteAssignmentRuleById.md)
+- [Clone Assignment Rule](mds/cloneAssignmentRule.md)
+  - To clone a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](mds/examples/cloneAssignmentRule.md)
+- [Clone Assignment Rule Entries](mds/putCloneEntries.md)
+  - To clone rule entries for a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](mds/examples/putCloneEntries.md)
+- [Reorder Assignment Rule entries](mds/putReorderEntries.md)
+  - To reorder rule entries for a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](mds/examples/putReorderEntries.md)
+- [Assignment Rules Count](mds/getAssignmentRulesCount.md)
+  - To retrieve the count of Assignment Rules configured for a module in your Zoho CRM organization.
+  - [Examples](mds/examples/getAssignmentRulesCount.md)
+- [Assignment Rule Associations](mds/getAssignmentRuleAssociations.md)
+  - To retrieve the CRM features associated with a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](mds/examples/getAssignmentRuleAssociations.md)

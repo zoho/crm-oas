@@ -1,0 +1,54 @@
+# Territories
+
+- [OpenAPI specification](territories.yaml)
+- [Get all territories](mds/getTerritories.md)
+  - To retrieve the list of territories enabled for your Zoho CRM organization.
+  - [Examples](mds/examples/getTerritories.md)
+- [Create Territories](mds/createTerritories.md)
+  - To create one or more territories in your Zoho CRM organization.
+  - [Examples](mds/examples/createTerritories.md)
+- [Update territories ](mds/updateTerritories.md)
+  - To update the details of one or more territories in your Zoho CRM organization.
+  - [Examples](mds/examples/updateTerritories.md)
+- [Delete territories](mds/deleteTerritories.md)
+  - To delete one or more territories from your Zoho CRM organization. The territories to delete are specified using the **ids** query parameter. Deleting a territory is irreversible; child territories must be transferred before a parent territory can be deleted.
+  - [Examples](mds/examples/deleteTerritories.md)
+- [Get territory by ID](mds/getTerritoryById.md)
+  - To retrieve the details of a specific territory in your Zoho CRM organization using its unique ID.
+  - [Examples](mds/examples/getTerritoryById.md)
+- [Update a specific territory by its ID](mds/updateTerritoryById.md)
+  - To update the details of a specific territory by its unique ID in your Zoho CRM organization.
+  - [Examples](mds/examples/updateTerritoryById.md)
+- [Delete a territory by ID](mds/deleteTerritoryById.md)
+  - To delete a specific territory from your Zoho CRM organization using its unique ID.
+  - [Examples](mds/examples/deleteTerritoryById.md)
+- [Transfer and delete territories](mds/transferAndDeleteTerritories.md)
+  - To transfer records from one or more territories to a target territory and then delete those territories in your Zoho CRM organization.
+  - [Examples](mds/examples/transferAndDeleteTerritories.md)
+- [Transfer and delete a specific territory by ID](mds/transferAndDeleteTerritoryById.md)
+  - To transfer child territories to a target parent territory and then delete a specific territory from your Zoho CRM organization. This operation is required for territories that have child territories, as they cannot be directly deleted using the Delete Territories API.
+  - [Examples](mds/examples/transferAndDeleteTerritoryById.md)
+- [Get child territories by parent territory ID ](mds/getChildTerritoriesByParentId.md)
+  - To retrieve the list of child territories for a specific parent territory in your Zoho CRM organization. Use the **ID** path parameter to specify the parent territory, and optional query parameters such as **filters**, **include**, **include_inner_details**, **page**, and **per_page** to narrow results and control pagination.
+  - [Examples](mds/examples/getChildTerritoriesByParentId.md)
+- [Get territory-associated user counts ](mds/getTerritoryAssociatedUsersCount.md)
+  - To retrieve the number of users associated with each territory in your Zoho CRM organization.
+  - [Examples](mds/examples/getTerritoryAssociatedUsersCount.md)
+- [Assign territories to a record](mds/assignTerritoriesToRecord.md)
+  - To assign one or more territories to a single record in your Zoho CRM organization.
+  - [Examples](mds/examples/assignTerritoriesToRecord.md)
+- [Assign territories to multiple records](mds/assignTerritoriesToRecords.md)
+  - To assign one or more territories to multiple records in your Zoho CRM organization.
+  - [Examples](mds/examples/assignTerritoriesToRecords.md)
+- [Remove territories from a record](mds/removeTerritoriesFromRecord.md)
+  - To remove one or more territories from a single record in your Zoho CRM organization. This operation is supported for records in the Leads, Accounts, Contacts, and Deals modules.
+  - [Examples](mds/examples/removeTerritoriesFromRecord.md)
+- [Remove territories from multiple records](mds/removeTerritoriesFromRecords.md)
+  - To remove one or more territories from multiple records in your Zoho CRM organization. Supported modules are Leads, Accounts, Contacts, and Deals. The removal can be processed synchronously or scheduled as a background job, depending on the number of records.
+  - [Examples](mds/examples/removeTerritoriesFromRecords.md)
+- [Run territory assignment rules](mds/runTerritoryRules.md)
+  - To schedule territory assignment rules to run against records in a specified module in your Zoho CRM organization. The rules can be applied based on filter criteria, a Custom View, or specific territories, and the execution is queued as a background job.
+  - [Examples](mds/examples/runTerritoryRules.md)
+- [Get scheduled territory run rule job status](mds/getTerritoryScheduledRunRuleJobs.md)
+  - To retrieve the status of a scheduled territory rule execution job in your Zoho CRM organization by specifying the **job_id** parameter.
+  - [Examples](mds/examples/getTerritoryScheduledRunRuleJobs.md)

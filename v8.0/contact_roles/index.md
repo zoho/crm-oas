@@ -1,0 +1,24 @@
+# Contact Roles
+
+- [OpenAPI specification](contact_roles.yaml)
+- [List Contact Roles](mds/getContactRoles.md)
+  - Retrieves the list of contact roles available in your Zoho CRM organization.
+  - [Examples](mds/examples/getContactRoles.md)
+- [Create Contact Roles](mds/createContactRoles.md)
+  - Creates one or more contact roles in your Zoho CRM organization.
+  - [Examples](mds/examples/createContactRoles.md)
+- [Update Contact Roles](mds/updateContactRoles.md)
+  - Updates the properties of one or more existing contact roles in your Zoho CRM organization.
+  - [Examples](mds/examples/updateContactRoles.md)
+- [Delete Contact Roles](mds/deleteContactRoles.md)
+  - Deletes one or more contact roles by their unique identifiers in your Zoho CRM organization.
+  - [Examples](mds/examples/deleteContactRoles.md)
+- [Get a Contact Role](mds/getContactRole.md)
+  - Retrieves the details of a specific contact role by its unique identifier in your Zoho CRM organization.
+  - [Examples](mds/examples/getContactRole.md)
+- [Update a Contact Role](mds/updateContactRole.md)
+  - Updates a specific contact role by its unique identifier in your Zoho CRM organization.
+  - [Examples](mds/examples/updateContactRole.md)
+- [Delete a Contact Role](mds/deleteContactRole.md)
+  - Deletes a specific contact role by its unique identifier in your Zoho CRM organization.
+  - [Examples](mds/examples/deleteContactRole.md)

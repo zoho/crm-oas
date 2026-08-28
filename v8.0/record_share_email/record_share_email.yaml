@@ -1,0 +1,2718 @@
+openapi: 3.1.0
+info:
+  title: Record Email Sharing
+  description: >-
+    In Zoho CRM, there are different levels of data sharing. Record-level data
+    sharing is where the users can share individual records with other users in
+    the organization. The records can be shared with or without the related
+    lists.
+  version: '8.0'
+servers:
+  - url: https://www.zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM. Includes the datacenter domain and API
+      version.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain of the Zoho CRM datacenter where the organization
+          is hosted.
+
+          Possible values: **com** - United States. **eu** - European Union.
+          **in** - India. **cn** - China. **au** - Australia.
+      version:
+        enum:
+          - v8
+        default: v8
+        description: The version of the Zoho CRM API to use. Defaults to **v8**.
+paths:
+  /{moduleApiName}/{id}/actions/share_emails:
+    post:
+      description: >-
+        To share email threads linked to a specific CRM record with colleagues
+        in the same organization. Requires custom email sharing to be enabled in
+        the organization and a valid email configuration for the user.
+      summary: Share Record Emails
+      operationId: shareEmails
+      parameters:
+        - name: moduleApiName
+          in: path
+          required: true
+          description: >-
+            Specify the API name of the module that contains the record whose
+            emails you want to share. Refer to [Get Modules
+            API](modules.yaml#$.paths./settings/modules.get) to retrieve
+            available module API names.
+          schema:
+            type: string
+            enum:
+              - Leads
+              - Contacts
+              - Accounts
+              - Deals
+              - CustomModule1
+          example: Leads
+        - $ref: '#/components/parameters/Id'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Deals.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Tasks.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Events.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Calls.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Products.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Campaigns.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Cases.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Solutions.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Invoices.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Forecasts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Activities.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Notes.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Attachments.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.custom.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.CREATE
+      responses:
+        '200':
+          description: >-
+            Returns the per-record email sharing result after the operation
+            completes successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the 200 response schema for the shareEmails
+                  operation, containing an array of per-record email sharing
+                  results.
+                additionalProperties: false
+                x-zs-$id: ShareEmailsResponse
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Represents the list of per-record email sharing results.
+                      Always present in the response.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the result for a single record in the email
+                        sharing response.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the result code for the email sharing
+                            operation.
+
+                            Possible values: **SUCCESS** - the email sharing
+                            completed successfully. Always present in the
+                            response.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: >-
+                            Represents the details of the record that was
+                            shared. Always present in the response.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the shared
+                                record. Always present in the response.
+                              format: string
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the result message for the email sharing
+                            operation. Always present in the response.
+                          enum:
+                            - Successfully shared
+                        status:
+                          type: string
+                          description: >-
+                            Represents the overall operation status.
+
+                            Possible values: **success** - the email sharing
+                            completed successfully. Always present in the
+                            response.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+              examples:
+                Success:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '1234567890'
+                        message: Successfully shared
+                        status: success
+                  description: >-
+                    Shows the response when the email sharing operation for the
+                    specified record completes successfully.
+                  summary: Successful email sharing
+        '400':
+          description: >-
+            The request failed. Possible causes include an invalid record ID, an
+            invalid or unsupported module, emails already being shared, a
+            missing email configuration, or custom email sharing not being
+            enabled. Resolution: Review the error code and details to correct
+            the request before retrying.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ShareEmailsError400Response
+                oneOf:
+                  - type: object
+                    description: >-
+                      Represents the INVALID_DATA error response when the
+                      provided record ID is invalid.
+                    additionalProperties: false
+                    x-zs-$id: InvalidDataError
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **INVALID_DATA** - a field value
+                          failed validation. Always present in the response.
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the validation
+                          error. Always present in the response.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the index of the resource path element
+                              where the error occurred. Always present in the
+                              response.
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the validation
+                          failure. Always present in the response.
+                        enum:
+                          - the related id given seems to be invalid
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the INVALID_MODULE error response when the
+                      specified module name is invalid.
+                    additionalProperties: false
+                    x-zs-$id: InvalidModuleError
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **INVALID_MODULE** - the specified
+                          module name is not valid. Always present in the
+                          response.
+                        enum:
+                          - INVALID_MODULE
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the invalid module
+                          error. Always present in the response.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the index of the resource path element
+                              where the error occurred. Always present in the
+                              response.
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          module. Always present in the response.
+                        enum:
+                          - the module name given seems to be invalid
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the NOT_SUPPORTED error response when the
+                      specified module does not support email sharing.
+                    additionalProperties: false
+                    x-zs-$id: NotSupportedModuleError
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **NOT_SUPPORTED** - the specified
+                          module does not support email sharing. Always present
+                          in the response.
+                        enum:
+                          - NOT_SUPPORTED
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the unsupported
+                          module error. Always present in the response.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the index of the resource path element
+                              where the error occurred. Always present in the
+                              response.
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported module. Always present in the response.
+                        enum:
+                          - the given module is not supported in api
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the NOT_ALLOWED error response when custom
+                      email sharing is not enabled for the organization.
+                    additionalProperties: false
+                    x-zs-$id: CustomSharingNotEnabledError
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **NOT_ALLOWED** - the organization
+                          has not enabled custom email sharing. Always present
+                          in the response.
+                        enum:
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional error context. Always present in
+                          the response.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message when custom email sharing
+                          is not enabled. Always present in the response.
+                        enum:
+                          - User did not enable custom sharing
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the NOT_ALLOWED error response when no email
+                      configuration exists for the user.
+                    additionalProperties: false
+                    x-zs-$id: EmailConfigMissingError
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **NOT_ALLOWED** - no email
+                          configuration exists for this user. Always present in
+                          the response.
+                        enum:
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional error context. Always present in
+                          the response.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message when no email
+                          configuration exists. Always present in the response.
+                        enum:
+                          - Email Configuration does not exist
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the ALREADY_SHARED error response when the
+                      emails are already shared for the specified record.
+                    additionalProperties: false
+                    x-zs-$id: AlreadySharedError
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Represents the list of per-record already-shared
+                          results. Always present in the response.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents a per-record result where the emails are
+                            already shared.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code.
+
+                                Possible values: **ALREADY_SHARED** - the emails
+                                for this record are already shared with
+                                colleagues.
+                              enum:
+                                - ALREADY_SHARED
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the
+                                already-shared record. Always present in the
+                                response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    already-shared record. Always present in the
+                                    response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the message describing the
+                                already-shared status. Always present in the
+                                response.
+                              enum:
+                                - >-
+                                  Emails are already shared to the colleagues
+                                  already
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **error** - the emails are
+                                already shared. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                  - type: object
+                    description: >-
+                      Represents the INVALID_DATA error response when a field
+                      value has an incorrect data type.
+                    additionalProperties: false
+                    x-zs-$id: InvalidDataTypeError
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **INVALID_DATA** - a field value has
+                          an incorrect data type. Always present in the
+                          response.
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the data type
+                          error. Always present in the response.
+                        additionalProperties: false
+                        properties:
+                          expected_data_type:
+                            type: string
+                            description: >-
+                              Represents the expected data type for the field.
+                              Always present in the response.
+                            format: string
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field that has an
+                              incorrect data type. Always present in the
+                              response.
+                            format: string
+                        required:
+                          - expected_data_type
+                          - api_name
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the data type
+                          mismatch. Always present in the response.
+                        format: string
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the NOT_ALLOWED error response when the
+                      operation is not permitted for the specified record.
+                    additionalProperties: false
+                    x-zs-$id: NotAllowedError
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **NOT_ALLOWED** - the operation is
+                          not permitted. Always present in the response.
+                        enum:
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional error context. Always present in
+                          the response.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the index of the resource path element
+                              where the error occurred. Always present in the
+                              response.
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing why the
+                          operation is not allowed. Always present in the
+                          response.
+                        format: string
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: >-
+                  Represents the 400 error response schema for the shareEmails
+                  operation, returned when input validation fails.
+              examples:
+                InvalidData:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: the related id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the error response when the specified record ID fails
+                    validation.
+                  summary: INVALID_DATA - invalid record ID
+        '403':
+          description: >-
+            The authenticated user lacks the required module CREATE permission.
+            Resolution: Ensure the access token includes the correct
+            `ZohoCRM.modules.{moduleName}.CREATE` scope.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the NO_PERMISSION error response when the
+                  authenticated user lacks the required module CREATE
+                  permission.
+                additionalProperties: false
+                x-zs-$id: PermissionDeniedError
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **NO_PERMISSION** - the authenticated
+                      user lacks the required module CREATE permission. Always
+                      present in the response.
+                    enum:
+                      - NO_PERMISSION
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional context about the missing
+                      permission. Always present in the response.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of required permission identifiers
+                          that the user lacks.
+                        maxItems: 10
+                        items:
+                          type: string
+                          description: Represents a required permission identifier.
+                          format: string
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the missing
+                      permission. Always present in the response.
+                    enum:
+                      - permission denied
+                  status:
+                    type: string
+                    description: >-
+                      Represents the overall response status.
+
+                      Possible values: **error** - the request failed. Always
+                      present in the response.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                PermissionDenied:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - ZohoCRM.modules.Leads.PUT
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required permission to share emails for the record.
+                  summary: NO_PERMISSION - permission denied
+  /{moduleApiName}/{id}/actions/unshare_emails:
+    post:
+      description: >-
+        To revoke email sharing for a specific CRM record, making the linked
+        email threads no longer visible to colleagues. Requires custom email
+        sharing to be enabled in the organization and a valid email
+        configuration for the user.
+      summary: Unshare Record Emails
+      operationId: unshareEmails
+      parameters:
+        - name: moduleApiName
+          in: path
+          required: true
+          description: >-
+            Specify the API name of the module that contains the record whose
+            email sharing you want to revoke. Refer to [Get Modules
+            API](modules.yaml#$.paths./settings/modules.get) to retrieve
+            available module API names.
+          schema:
+            type: string
+            enum:
+              - Leads
+              - Contacts
+              - Accounts
+              - Deals
+              - CustomModule1
+          example: Leads
+        - $ref: '#/components/parameters/Id'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Deals.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Tasks.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Events.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Calls.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Products.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Campaigns.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Cases.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Solutions.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Invoices.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Forecasts.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Activities.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Notes.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Attachments.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.custom.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.DELETE
+      responses:
+        '200':
+          description: >-
+            Returns the per-record email unsharing result after the operation
+            completes successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the 200 response schema for the unshareEmails
+                  operation, containing an array of per-record email unsharing
+                  results.
+                additionalProperties: false
+                x-zs-$id: UnshareEmailsResponse
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Represents the list of per-record email unsharing results.
+                      Always present in the response.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the result for a single record in the email
+                        unsharing response.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the result code for the email unsharing
+                            operation.
+
+                            Possible values: **SUCCESS** - the email sharing was
+                            successfully revoked. Always present in the
+                            response.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: >-
+                            Represents the details of the record whose email
+                            sharing was revoked. Always present in the response.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the unshared
+                                record. Always present in the response.
+                              format: string
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the result message for the email
+                            unsharing operation. Always present in the response.
+                          enum:
+                            - Sharing revoked successfully
+                        status:
+                          type: string
+                          description: >-
+                            Represents the overall operation status.
+
+                            Possible values: **success** - the email sharing was
+                            successfully revoked. Always present in the
+                            response.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+              examples:
+                Success:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '1234567890'
+                        message: Sharing revoked successfully
+                        status: success
+                  description: >-
+                    Shows the response when the email sharing revocation for the
+                    specified record completes successfully.
+                  summary: Successful email sharing revocation
+        '400':
+          description: >-
+            The request failed. Possible causes include an invalid record ID, an
+            invalid or unsupported module, a missing email configuration, or
+            custom email sharing not being enabled. Resolution: Review the error
+            code and details to correct the request before retrying.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UnshareEmailsError400Response
+                oneOf:
+                  - type: object
+                    description: >-
+                      Represents the INVALID_DATA error response when the
+                      provided record ID is invalid.
+                    additionalProperties: false
+                    x-zs-$id: InvalidData
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **INVALID_DATA** - a field value
+                          failed validation. Always present in the response.
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the validation
+                          error. Always present in the response.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the index of the resource path element
+                              where the error occurred. Always present in the
+                              response.
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the validation
+                          failure. Always present in the response.
+                        enum:
+                          - the related id given seems to be invalid
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the INVALID_MODULE error response when the
+                      specified module name is invalid.
+                    additionalProperties: false
+                    x-zs-$id: InvalidModule
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **INVALID_MODULE** - the specified
+                          module name is not valid. Always present in the
+                          response.
+                        enum:
+                          - INVALID_MODULE
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the invalid module
+                          error. Always present in the response.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the index of the resource path element
+                              where the error occurred. Always present in the
+                              response.
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          module. Always present in the response.
+                        enum:
+                          - the module name given seems to be invalid
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the NOT_SUPPORTED error response when the
+                      specified module does not support this operation.
+                    additionalProperties: false
+                    x-zs-$id: NotSupportedModule
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **NOT_SUPPORTED** - the specified
+                          module does not support email sharing. Always present
+                          in the response.
+                        enum:
+                          - NOT_SUPPORTED
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the unsupported
+                          module error. Always present in the response.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the index of the resource path element
+                              where the error occurred. Always present in the
+                              response.
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported module. Always present in the response.
+                        enum:
+                          - the given module is not supported in api
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the NOT_ALLOWED error response when custom
+                      email sharing is not enabled for the organization.
+                    additionalProperties: false
+                    x-zs-$id: CustomSharingNotEnabled
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **NOT_ALLOWED** - the organization
+                          has not enabled custom email sharing. Always present
+                          in the response.
+                        enum:
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional error context. Always present in
+                          the response.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message when custom email sharing
+                          is not enabled. Always present in the response.
+                        enum:
+                          - User did not enable custom sharing
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    description: >-
+                      Represents the NOT_ALLOWED error response when no email
+                      configuration exists for the user.
+                    additionalProperties: false
+                    x-zs-$id: EmailConfigMissing
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **NOT_ALLOWED** - no email
+                          configuration exists for this user. Always present in
+                          the response.
+                        enum:
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional error context. Always present in
+                          the response.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message when no email
+                          configuration exists. Always present in the response.
+                        enum:
+                          - Email Configuration does not exist
+                      status:
+                        type: string
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request failed.
+                          Always present in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: >-
+                  Represents the 400 error response schema for the unshareEmails
+                  operation, returned when input validation fails.
+              examples:
+                InvalidData:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: the related id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the error response when the specified record ID fails
+                    validation during email unsharing.
+                  summary: INVALID_DATA - invalid record ID
+        '403':
+          description: >-
+            The authenticated user lacks the required module DELETE permission.
+            Resolution: Ensure the access token includes the correct
+            `ZohoCRM.modules.{moduleName}.DELETE` scope.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the NO_PERMISSION error response when the
+                  authenticated user lacks the required module DELETE
+                  permission.
+                additionalProperties: false
+                x-zs-$id: PermissionDenied
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **NO_PERMISSION** - the authenticated
+                      user lacks the required module DELETE permission. Always
+                      present in the response.
+                    enum:
+                      - NO_PERMISSION
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional context about the missing
+                      permission. Always present in the response.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of required permission identifiers
+                          that the user lacks.
+                        maxItems: 10
+                        items:
+                          type: string
+                          description: Represents a required permission identifier.
+                          format: string
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the missing
+                      permission. Always present in the response.
+                    enum:
+                      - permission denied
+                  status:
+                    type: string
+                    description: >-
+                      Represents the overall response status.
+
+                      Possible values: **error** - the request failed. Always
+                      present in the response.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                PermissionDenied:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - ZohoCRM.modules.Leads.PUT
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required permission to unshare emails for the record.
+                  summary: NO_PERMISSION - permission denied
+  /{moduleApiName}/actions/share_emails:
+    post:
+      description: >-
+        To share email threads linked to multiple CRM records with colleagues in
+        the same organization. Accepts up to 100 record IDs per request.
+        Supports partial success - each record in the response is processed
+        independently, and individual results indicate success or failure.
+      summary: Share Record Emails
+      operationId: shareBulkEmails
+      parameters:
+        - name: moduleApiName
+          in: path
+          required: true
+          description: >-
+            Specify the API name of the module that contains the records whose
+            emails you want to share. Refer to [Get Modules
+            API](modules.yaml#$.paths./settings/modules.get) to retrieve
+            available module API names.
+          schema:
+            type: string
+            enum:
+              - Leads
+              - Contacts
+              - Accounts
+              - Deals
+              - CustomModule1
+          example: Leads
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Deals.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Tasks.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Events.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Calls.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Products.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Campaigns.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Cases.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Solutions.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Invoices.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Forecasts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Activities.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Notes.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Attachments.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.custom.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.CREATE
+      requestBody:
+        description: >-
+          The request body must contain an **ids** array with up to 100 record
+          IDs whose emails you want to share.
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request body schema for sharing emails in bulk,
+                containing an array of record IDs.
+              additionalProperties: false
+              properties:
+                ids:
+                  type: array
+                  description: >-
+                    Specify the list of record IDs whose emails you want to
+                    share. Accepts up to 100 record IDs per request.
+                  maxItems: 100
+                  items:
+                    type: string
+                    description: Represents the unique identifier of a CRM record.
+                    format: string
+              required:
+                - ids
+            examples:
+              BulkShare:
+                value:
+                  ids:
+                    - '1234567890'
+                    - '0987654321'
+                description: >-
+                  Shows a sample request body for sharing emails of multiple
+                  records, containing an array of record IDs.
+                summary: Sample bulk email share request
+        required: true
+      responses:
+        '200':
+          description: >-
+            Returns the list of per-record results when all email sharing
+            operations in the bulk request complete successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the 200 response schema for the shareBulkEmails
+                  operation, containing an array of per-record email sharing
+                  results.
+                additionalProperties: false
+                x-zs-$id: BulkShareEmailsResponse
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Represents the list of per-record email sharing results.
+                      Always present in the response.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the result for a single record in the bulk
+                        email sharing response.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the result code for the email sharing
+                            operation.
+
+                            Possible values: **SUCCESS** - the email sharing
+                            completed successfully. Always present in the
+                            response.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: >-
+                            Represents the details of the record that was
+                            shared. Always present in the response.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the shared
+                                record. Always present in the response.
+                              format: string
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the result message for the email sharing
+                            operation. Always present in the response.
+                          enum:
+                            - Successfully shared
+                        status:
+                          type: string
+                          description: >-
+                            Represents the overall operation status.
+
+                            Possible values: **success** - the email sharing
+                            completed successfully. Always present in the
+                            response.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+              examples:
+                Success:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '1234567890'
+                        message: Successfully shared
+                        status: success
+                  description: >-
+                    Shows the response when all email sharing operations in the
+                    bulk request complete successfully.
+                  summary: Successful bulk email sharing
+        '207':
+          description: >-
+            Returns a mix of success and failure results when some email sharing
+            operations succeed and others fail. Inspect each item in the `data`
+            array for the individual outcome.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the 207 partial success response schema for the
+                  shareBulkEmails operation, where each item indicates an
+                  individual record's outcome.
+                additionalProperties: false
+                x-zs-$id: BulkShareEmailsMultiStatusResponse
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Represents the list of per-record results for the partial
+                      success response. Always present in the response.
+                    maxItems: 100
+                    items:
+                      oneOf:
+                        - type: object
+                          additionalProperties: false
+                          description: >-
+                            Represents a per-record result where the email
+                            threads are already shared with colleagues.
+                          x-zs-$id: AlreadySharedResponse
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a record whose
+                                emails are already shared.
+
+                                Possible values: **ALREADY_SHARED** - the emails
+                                for this record are already shared with
+                                colleagues.
+                              enum:
+                                - ALREADY_SHARED
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the
+                                already-shared record. Always present in the
+                                response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    already-shared record. Always present in the
+                                    response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the message describing the
+                                already-shared status. Always present in the
+                                response.
+                              enum:
+                                - >-
+                                  Emails are already shared to the colleagues
+                                  already
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **error** - the emails are
+                                already shared. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                        - type: object
+                          x-zs-$id: SuccessResponse
+                          description: >-
+                            Represents a per-record result where email sharing
+                            completed successfully.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a successfully
+                                shared record.
+
+                                Possible values: **SUCCESS** - the email sharing
+                                completed successfully for this record.
+                              enum:
+                                - SUCCESS
+                            details:
+                              type: object
+                              description: >-
+                                Represents the details of the successfully
+                                shared record. Always present in the response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    successfully shared record. Always present
+                                    in the response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the result message for the
+                                successfully shared record. Always present in
+                                the response.
+                              enum:
+                                - Successfully shared
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **success** - the email sharing
+                                completed for this record. Always present in the
+                                response.
+                              enum:
+                                - success
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                        - type: object
+                          x-zs-$id: InvalidDataResponse
+                          description: >-
+                            Represents a per-record result where the record ID
+                            failed validation.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a record that
+                                failed validation.
+
+                                Possible values: **INVALID_DATA** - the record
+                                ID is invalid or not found.
+                              enum:
+                                - INVALID_DATA
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the invalid
+                                record. Always present in the response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    invalid record. Always present in the
+                                    response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message for the invalid
+                                data result. Always present in the response.
+                              enum:
+                                - the related id given seems to be invalid
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **error** - the record ID is
+                                invalid. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                        - type: object
+                          x-zs-$id: NotAllowed
+                          description: >-
+                            Represents a per-record result where the email
+                            sharing operation was not permitted for the record.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a record where
+                                the operation is not allowed.
+
+                                Possible values: **NOT_ALLOWED** - the operation
+                                is not permitted for this record.
+                              enum:
+                                - NOT_ALLOWED
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional error context for the
+                                not-allowed result. Always present in the
+                                response.
+                              additionalProperties: false
+                              properties:
+                                resource_path_index:
+                                  type: integer
+                                  description: >-
+                                    Represents the index of the resource path
+                                    element associated with this error. Always
+                                    present in the response.
+                                  format: int32
+                              required:
+                                - resource_path_index
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message for the not-allowed
+                                result. Always present in the response.
+                              format: string
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **error** - the operation is
+                                not allowed. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                        - type: object
+                          x-zs-$id: DuplicateDataError
+                          description: >-
+                            Represents a per-record result where the record ID
+                            was submitted more than once in the request.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a duplicate
+                                record ID.
+
+                                Possible values: **DUPLICATE_DATA** - this
+                                record ID appears more than once in the request.
+                              enum:
+                                - DUPLICATE_DATA
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the
+                                duplicate record. Always present in the
+                                response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    duplicate record. Always present in the
+                                    response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the message for the duplicate data
+                                result. Always present in the response.
+                              enum:
+                                - Duplicate Data
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **error** - a duplicate record
+                                ID was found. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                      description: >-
+                        Represents the outcome for a single record in the
+                        partial success response. Each item contains a result
+                        code, record details, and status.
+              examples:
+                MultiStatus:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '1234567890'
+                        message: Successfully shared
+                        status: success
+                      - code: ALREADY_SHARED
+                        details:
+                          id: '0987654321'
+                        message: Emails are already shared to the colleagues already
+                        status: error
+                  description: >-
+                    Shows the partial success response when some records succeed
+                    and others fail in a single bulk email share request.
+                  summary: Partial success - mixed sharing results
+        '400':
+          description: >-
+            The request failed for all records. Possible causes include invalid
+            record IDs, duplicate IDs, or a NOT_ALLOWED condition. Resolution:
+            Review the error details and correct the request before retrying.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: BulkShareEmailsError400Response
+                oneOf:
+                  - type: object
+                    description: >-
+                      Represents the INVALID_DATA error response when one or
+                      more record IDs in the bulk request are invalid.
+                    additionalProperties: false
+                    x-zs-$id: InvalidDataErrorResponse
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Represents the list of per-record INVALID_DATA results
+                          returned when record IDs fail validation.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents a per-record INVALID_DATA result in the
+                            bulk email sharing error response.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a record that
+                                failed validation.
+
+                                Possible values: **INVALID_DATA** - the record
+                                ID is invalid or not found.
+                              enum:
+                                - INVALID_DATA
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the invalid
+                                record. Always present in the response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    invalid record. Always present in the
+                                    response.
+                                  format: string
+                              required: []
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message for the invalid
+                                data result. Always present in the response.
+                              enum:
+                                - the related id given seems to be invalid
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this error result.
+
+                                Possible values: **error** - the record ID is
+                                invalid. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                  - type: object
+                    description: >-
+                      Represents the NOT_ALLOWED error response when the bulk
+                      email sharing operation is not permitted.
+                    additionalProperties: false
+                    x-zs-$id: NotAllowedErrorResponse
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Represents the list of per-record NOT_ALLOWED results
+                          returned when the operation is not permitted.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents a per-record NOT_ALLOWED result in the
+                            bulk email sharing error response.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a record where
+                                the operation is not permitted.
+
+                                Possible values: **NOT_ALLOWED** - the operation
+                                is not allowed for this record.
+                              enum:
+                                - NOT_ALLOWED
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional error context for the
+                                not-allowed result. Always present in the
+                                response.
+                              additionalProperties: false
+                              properties:
+                                resource_path_index:
+                                  type: integer
+                                  description: >-
+                                    Represents the index of the resource path
+                                    element where the error occurred. Always
+                                    present in the response.
+                                  format: int32
+                              required:
+                                - resource_path_index
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message for the not-allowed
+                                result. Always present in the response.
+                              format: string
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this error result.
+
+                                Possible values: **error** - the operation is
+                                not allowed. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                  - type: object
+                    description: >-
+                      Represents the DUPLICATE_DATA error response when
+                      duplicate record IDs are present in the bulk request.
+                    additionalProperties: false
+                    x-zs-$id: DuplicateDataErrorResponse
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Represents the list of per-record DUPLICATE_DATA
+                          results returned when duplicate record IDs are
+                          submitted.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents a per-record DUPLICATE_DATA result in the
+                            bulk email sharing error response.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a duplicate
+                                record ID.
+
+                                Possible values: **DUPLICATE_DATA** - this
+                                record ID appears more than once in the request.
+                              enum:
+                                - DUPLICATE_DATA
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the
+                                duplicate record. Always present in the
+                                response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    duplicate record. Always present in the
+                                    response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message for the duplicate
+                                data result. Always present in the response.
+                              enum:
+                                - Duplicate Data
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this error result.
+
+                                Possible values: **error** - a duplicate record
+                                ID was found. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                description: >-
+                  Represents the 400 error response schema for the
+                  shareBulkEmails operation, returned when per-record or
+                  request-level validation fails.
+              examples:
+                InvalidData:
+                  value:
+                    data:
+                      - code: INVALID_DATA
+                        details:
+                          id: '3249415000000548012'
+                        message: the related id given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows the error response when one or more record IDs in the
+                    bulk request fail validation.
+                  summary: INVALID_DATA - invalid record ID
+        '403':
+          description: >-
+            The authenticated user lacks the required module CREATE permission.
+            Resolution: Ensure the access token includes the correct
+            `ZohoCRM.modules.{moduleName}.CREATE` scope.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the NO_PERMISSION error response when the
+                  authenticated user lacks the required module CREATE
+                  permission.
+                additionalProperties: false
+                x-zs-$id: PermissionDeniedErrorResponse
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **NO_PERMISSION** - the authenticated
+                      user lacks the required module CREATE permission. Always
+                      present in the response.
+                    enum:
+                      - NO_PERMISSION
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional context about the missing
+                      permission. Always present in the response.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of required permission identifiers
+                          that the user lacks.
+                        maxItems: 10
+                        items:
+                          type: string
+                          description: Represents a required permission identifier.
+                          format: string
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the missing
+                      permission. Always present in the response.
+                    enum:
+                      - permission denied
+                  status:
+                    type: string
+                    description: >-
+                      Represents the overall response status.
+
+                      Possible values: **error** - the request failed. Always
+                      present in the response.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                PermissionDenied:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - ZohoCRM.modules.Leads.DELETE
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required permission to share emails.
+                  summary: NO_PERMISSION - permission denied
+  /{moduleApiName}/actions/unshare_emails:
+    post:
+      description: >-
+        To revoke email sharing for multiple CRM records in a single request.
+        Accepts up to 100 record IDs per request. The `data` array in the 207
+        response contains an item for each record, indicating success or
+        failure.
+      summary: Unshare emails in bulk
+      operationId: unshareBulkEmails
+      parameters:
+        - name: moduleApiName
+          in: path
+          required: true
+          description: >-
+            Specify the API name of the module that contains the records whose
+            email sharing you want to revoke. Refer to [Get Modules
+            API](modules.yaml#$.paths./settings/modules.get) to retrieve
+            available module API names.
+          schema:
+            type: string
+            enum:
+              - Leads
+              - Contacts
+              - Accounts
+              - Deals
+              - CustomModule1
+          example: Leads
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Deals.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Tasks.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Events.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Calls.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Products.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Campaigns.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Cases.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Solutions.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Invoices.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Forecasts.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Activities.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Notes.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.Attachments.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.custom.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.DELETE
+      requestBody:
+        description: >-
+          The request body must contain an **ids** array with up to 100 record
+          IDs whose email sharing you want to revoke.
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request body schema for unsharing emails in bulk,
+                containing an array of record IDs.
+              additionalProperties: false
+              properties:
+                ids:
+                  type: array
+                  description: >-
+                    Specify the list of record IDs whose email sharing you want
+                    to revoke. Accepts up to 100 record IDs per request.
+                  maxItems: 100
+                  items:
+                    type: string
+                    description: Represents the unique identifier of a CRM record.
+                    format: string
+              required:
+                - ids
+            examples:
+              BulkUnshare:
+                value:
+                  ids:
+                    - '1234567890'
+                    - '0987654321'
+                description: >-
+                  Shows a sample request body for revoking email sharing for
+                  multiple records, containing an array of record IDs.
+                summary: Sample bulk email unshare request
+        required: true
+      responses:
+        '207':
+          description: >-
+            Returns a mix of success and failure results when some email
+            unsharing operations succeed and others fail. Inspect each item in
+            the `data` array for the individual outcome.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the 207 partial success response schema for the
+                  unshareBulkEmails operation, where each item indicates an
+                  individual record's outcome.
+                additionalProperties: false
+                x-zs-$id: BulkUnshareEmailsMultiStatusResponse
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Represents the list of per-record results for the bulk
+                      email unsharing operation. Always present in the response.
+                    maxItems: 100
+                    items:
+                      oneOf:
+                        - type: object
+                          x-zs-$id: NotSharedError
+                          description: >-
+                            Represents a per-record result where the emails are
+                            not currently shared for the specified record.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a record whose
+                                emails are not currently shared.
+
+                                Possible values: **NOT_SHARED** - the emails for
+                                this record are not shared with colleagues.
+                              enum:
+                                - NOT_SHARED
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the record.
+                                Always present in the response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    record. Always present in the response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the message describing the not-shared
+                                status. Always present in the response.
+                              enum:
+                                - >-
+                                  Emails are not  shared to the colleagues
+                                  already
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **error** - the emails are not
+                                currently shared. Always present in the
+                                response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                        - type: object
+                          x-zs-$id: SuccessResponseBulkUnshare
+                          description: >-
+                            Represents a per-record result where email sharing
+                            was successfully revoked.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a successfully
+                                unshared record.
+
+                                Possible values: **SUCCESS** - the email sharing
+                                was successfully revoked for this record.
+                              enum:
+                                - SUCCESS
+                            details:
+                              type: object
+                              description: >-
+                                Represents the details of the record whose email
+                                sharing was revoked. Always present in the
+                                response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    successfully unshared record. Always present
+                                    in the response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the result message for the
+                                successfully unshared record. Always present in
+                                the response.
+                              enum:
+                                - Sharing revoked successfully
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **success** - the email sharing
+                                was revoked for this record. Always present in
+                                the response.
+                              enum:
+                                - success
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                        - type: object
+                          x-zs-$id: InvalidDataErrorResponseBulk
+                          description: >-
+                            Represents a per-record result where the record ID
+                            failed validation.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a record that
+                                failed validation.
+
+                                Possible values: **INVALID_DATA** - the record
+                                ID is invalid or not found.
+                              enum:
+                                - INVALID_DATA
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the invalid
+                                record. Always present in the response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    invalid record. Always present in the
+                                    response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message for the invalid
+                                data result. Always present in the response.
+                              enum:
+                                - the related id given seems to be invalid
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **error** - the record ID is
+                                invalid. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                        - type: object
+                          x-zs-$id: NotAllowedErrorResponseSharing
+                          description: >-
+                            Represents a per-record result where the unsharing
+                            operation was not permitted for the record.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a record where
+                                the operation is not allowed.
+
+                                Possible values: **NOT_ALLOWED** - the unsharing
+                                operation is not permitted for this record.
+                              enum:
+                                - NOT_ALLOWED
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional error context for the
+                                not-allowed result. Always present in the
+                                response.
+                              additionalProperties: false
+                              properties:
+                                resource_path_index:
+                                  type: integer
+                                  description: >-
+                                    Represents the index of the resource path
+                                    element associated with this error. Always
+                                    present in the response.
+                                  format: int32
+                              required:
+                                - resource_path_index
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message for the not-allowed
+                                result. Always present in the response.
+                              format: string
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **error** - the operation is
+                                not allowed. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                        - type: object
+                          x-zs-$id: DuplicateDataErrorResponseSharing
+                          description: >-
+                            Represents a per-record result where the record ID
+                            was submitted more than once in the request.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the result code for a duplicate
+                                record ID.
+
+                                Possible values: **DUPLICATE_DATA** - this
+                                record ID appears more than once in the request.
+                              enum:
+                                - DUPLICATE_DATA
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the
+                                duplicate record. Always present in the
+                                response.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    duplicate record. Always present in the
+                                    response.
+                                  format: string
+                              required:
+                                - id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the message for the duplicate data
+                                result. Always present in the response.
+                              enum:
+                                - Duplicate Data
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status for this result item.
+
+                                Possible values: **error** - a duplicate record
+                                ID was found. Always present in the response.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                      description: >-
+                        Represents the outcome for a single record in the
+                        partial success response. Each item contains a result
+                        code, record details, and status.
+              examples:
+                InvalidData:
+                  value:
+                    data:
+                      - code: INVALID_DATA
+                        details:
+                          id: '3249415000000548012'
+                        message: the related id given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows the partial success response when some records fail
+                    validation during a bulk email unsharing request.
+                  summary: INVALID_DATA - invalid record ID
+        '403':
+          description: >-
+            The authenticated user lacks the required module DELETE permission.
+            Resolution: Ensure the access token includes the correct
+            `ZohoCRM.modules.{moduleName}.DELETE` scope.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the NO_PERMISSION error response when the
+                  authenticated user lacks the required module DELETE
+                  permission.
+                additionalProperties: false
+                x-zs-$id: PermissionDeniedErrorResponseSharing
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **NO_PERMISSION** - the authenticated
+                      user lacks the required module DELETE permission. Always
+                      present in the response.
+                    enum:
+                      - NO_PERMISSION
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional context about the missing
+                      permission. Always present in the response.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of required permission identifiers
+                          that the user lacks.
+                        maxItems: 10
+                        items:
+                          type: string
+                          description: Represents a required permission identifier.
+                          format: string
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the missing
+                      permission. Always present in the response.
+                    enum:
+                      - permission denied
+                  status:
+                    type: string
+                    description: >-
+                      Represents the overall response status.
+
+                      Possible values: **error** - the request failed. Always
+                      present in the response.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                PermissionDenied:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - ZohoCRM.modules.Leads.DELETE
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required permission to unshare emails.
+                  summary: NO_PERMISSION - permission denied
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the record whose emails you want to
+        manage. The ID must belong to a record in the specified module. Use the
+        [Get Records API](record.yaml#$.paths./module.get) to retrieve the
+        record IDs.
+      schema:
+        type: string
+        format: int64
+        pattern: ^[0-9]+$
+        example: '1034369001076415228'
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.ALL: >-
+              Grants full create, read, update, and delete access to records
+              across all modules in the Zoho CRM organization.
+            ZohoCRM.modules.CREATE: >-
+              Grants permission to create records across all modules in the Zoho
+              CRM organization.
+            ZohoCRM.modules.DELETE: >-
+              Grants permission to delete records across all modules in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Leads.CREATE: >-
+              Grants permission to create records in the Leads module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Leads.DELETE: >-
+              Grants permission to delete records in the Leads module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Leads.WRITE: >-
+              Grants permission to update records in the Leads module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Leads.All: >-
+              Grants full create, read, update, and delete access to records in
+              the Leads module in the Zoho CRM organization.
+            ZohoCRM.modules.Contacts.CREATE: >-
+              Grants permission to create records in the Contacts module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Contacts.DELETE: >-
+              Grants permission to delete records in the Contacts module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Accounts.CREATE: >-
+              Grants permission to create records in the Accounts module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Accounts.DELETE: >-
+              Grants permission to delete records in the Accounts module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Deals.CREATE: >-
+              Grants permission to create records in the Deals module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Deals.DELETE: >-
+              Grants permission to delete records in the Deals module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Tasks.CREATE: >-
+              Grants permission to create records in the Tasks module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Tasks.DELETE: >-
+              Grants permission to delete records in the Tasks module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Events.CREATE: >-
+              Grants permission to create records in the Events module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Events.DELETE: >-
+              Grants permission to delete records in the Events module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Calls.CREATE: >-
+              Grants permission to create records in the Calls module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Calls.DELETE: >-
+              Grants permission to delete records in the Calls module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Products.CREATE: >-
+              Grants permission to create records in the Products module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Products.DELETE: >-
+              Grants permission to delete records in the Products module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Vendors.CREATE: >-
+              Grants permission to create records in the Vendors module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Vendors.DELETE: >-
+              Grants permission to delete records in the Vendors module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Campaigns.CREATE: >-
+              Grants permission to create records in the Campaigns module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Campaigns.DELETE: >-
+              Grants permission to delete records in the Campaigns module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Cases.CREATE: >-
+              Grants permission to create records in the Cases module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Cases.DELETE: >-
+              Grants permission to delete records in the Cases module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Solutions.CREATE: >-
+              Grants permission to create records in the Solutions module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Solutions.DELETE: >-
+              Grants permission to delete records in the Solutions module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Quotes.CREATE: >-
+              Grants permission to create records in the Quotes module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Quotes.DELETE: >-
+              Grants permission to delete records in the Quotes module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Invoices.CREATE: >-
+              Grants permission to create records in the Invoices module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Invoices.DELETE: >-
+              Grants permission to delete records in the Invoices module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Forecasts.CREATE: >-
+              Grants permission to create records in the Forecasts module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Forecasts.DELETE: >-
+              Grants permission to delete records in the Forecasts module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Activities.CREATE: >-
+              Grants permission to create records in the Activities module in
+              the Zoho CRM organization.
+            ZohoCRM.modules.Activities.DELETE: >-
+              Grants permission to delete records in the Activities module in
+              the Zoho CRM organization.
+            ZohoCRM.modules.Notes.CREATE: >-
+              Grants permission to create records in the Notes module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Notes.DELETE: >-
+              Grants permission to delete records in the Notes module in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Attachments.CREATE: >-
+              Grants permission to create attachment records in the Zoho CRM
+              organization.
+            ZohoCRM.modules.Attachments.DELETE: >-
+              Grants permission to delete attachment records in the Zoho CRM
+              organization.
+            ZohoCRM.modules.custom.CREATE: >-
+              Grants permission to create records in custom modules in the Zoho
+              CRM organization.
+            ZohoCRM.modules.custom.DELETE: >-
+              Grants permission to delete records in custom modules in the Zoho
+              CRM organization.

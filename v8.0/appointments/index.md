@@ -1,0 +1,24 @@
+# Appointments Apis
+
+- [OpenAPI specification](appointments.yaml)
+- [Get Appointment Records](mds/getAppointmentsS.md)
+  - To retrieve appointment records from your Zoho CRM organization. Use the `page` and `per_page` parameters to paginate up to 2,000 records, or use the `page_token` received in a prior response to paginate beyond 2,000 records up to a maximum of 100,000. Each request returns a maximum of 200 records. Subform data is not included when retrieving multiple appointments. The API returns field values containing sensitive health data only when the Restrict Data access through API option is disabled in compliance settings.
+  - [Examples](mds/examples/getAppointmentsS.md)
+- [Update appointment records ](mds/updateAppointmentsS.md)
+  - To update one or more appointment records in your Zoho CRM organization. You can update a maximum of 100 appointments per API call.
+  - [Examples](mds/examples/updateAppointmentsS.md)
+- [Create Appointment records](mds/createAppointmentsS.md)
+  - To create one or more appointment records in your Zoho CRM organization.
+  - [Examples](mds/examples/createAppointmentsS.md)
+- [Delete one or more appointment records ](mds/deleteAppointmentsS.md)
+  - To delete one or more appointment records in your Zoho CRM organization. Note that this API will not delete any deals created on the completion of the deleted appointments.
+  - [Examples](mds/examples/deleteAppointmentsS.md)
+- [Get an Appointment Record by ID ](mds/getAppointmentById.md)
+  - To retrieve the details of a single appointment record from your Zoho CRM organization.
+  - [Examples](mds/examples/getAppointmentById.md)
+- [Update an Appointment Record by ID](mds/updateAppointmentById.md)
+  - To update a single appointment record by its ID in your Zoho CRM organization.
+  - [Examples](mds/examples/updateAppointmentById.md)
+- [Delete an Appointment by ID ](mds/deleteAppointmentById.md)
+  - To delete a single appointment record from your Zoho CRM organization by its unique ID. Note that this operation will not delete any deals created upon completion of the appointment.
+  - [Examples](mds/examples/deleteAppointmentById.md)

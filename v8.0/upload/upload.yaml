@@ -1,0 +1,328 @@
+openapi: 3.1.0
+info:
+  title: Upload File
+  description: >-
+    Upload File API enables developers to upload a ZIP file and retrieve a file
+    ID for use in a subsequent Create Bulk Write Job request.
+  version: '8'
+servers:
+  - url: https://upload.zoho.{dc}/crm/{version}
+    description: Represents the Zoho Upload Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain (TLD) of the Zoho CRM data center. Possible
+          values: com, eu, in, cn, au.
+      version:
+        description: The version of the Zoho CRM API, such as v8.
+        default: v8
+paths:
+  /upload:
+    post:
+      summary: Upload a file to CRM
+      description: >-
+        To upload a CSV file in ZIP format for bulk write API. The response
+        contains the **file_id**. Use this ID while making the bulk write
+        request.
+      operationId: uploadFile
+      parameters:
+        - $ref: '#/components/parameters/CrmOrg'
+        - $ref: '#/components/parameters/Feature'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              description: >-
+                Specify the multipart/form-data payload containing the ZIP file
+                to upload for the bulk write operation.
+              properties:
+                file:
+                  type: object
+                  description: >-
+                    Specify the file to upload. The file must be a ZIP archive
+                    containing one or more CSV files, with a maximum of **25,000
+                    records** per file. The maximum file size is **25 MB.**  If
+                    there are more records, make a separate API call by with a
+                    ZIP file containing the next 25,000 records in the module.
+
+                    Please note that the **Subform** and **multi-module lookup
+                    (MxN linking module)** fields are treated as separate
+                    modules in Zoho CRM. This is a parent-child modulecase, for
+                    example, the Contacts module is the parent module, and the
+                    subform within it is the child module. So, **prepare
+                    separate CSV files for parent and child modules**, then ZIP
+                    them together into a ZIP file and upload.
+
+                    For more details on preparing the input file for
+                    parent-child record imports, refer to [Kaizen #131 - Bulk
+                    Write for parent-child records using Scala
+                    SDK.](https://help.zoho.com/portal/en/community/topic/kaizen-131-bulk-write-for-parent-child-records-scala-sdk) 
+                  additionalProperties: true
+              required:
+                - file
+              additionalProperties: false
+            examples:
+              Sample:
+                summary: Sample file upload request
+                value:
+                  file:
+                    filename: example.zip
+                    contentType: application/octet-stream
+                    data: <binary>
+                description: Shows a sample file upload request with a ZIP archive payload.
+        required: true
+        description: >-
+          The request body must contain the ZIP file to upload as a
+          multipart/form-data payload. The file must be in ZIP format and must
+          not exceed 25 MB.
+      responses:
+        '200':
+          description: >-
+            Returns the details of the uploaded file, including the **file ID**
+            and creation timestamp.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: UploadSuccessResponse
+                description: >-
+                  Represents the response returned when a file is uploaded
+                  successfully.
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                    description: |-
+                      Represents the status of the upload operation. 
+                       Possible values:
+                      **success** - The file was uploaded successfully.
+                  code:
+                    type: string
+                    enum:
+                      - FILE_UPLOAD_SUCCESS
+                    description: >-
+                      Represents the result code for the upload operation.
+
+                      Possible values: 
+
+                      **FILE_UPLOAD_SUCCESS** - The file was uploaded
+                      successfully.
+                  message:
+                    type: string
+                    enum:
+                      - file uploaded.
+                    description: >-
+                      Represents the message confirming the outcome of the
+                      upload operation.
+                  details:
+                    type: object
+                    description: >-
+                      Represents the details of the uploaded file, including the
+                      file ID and creation time.
+                    properties:
+                      file_id:
+                        type: string
+                        description: >-
+                          Represents the unique ID assigned to the uploaded
+                          file. Use this ID in the Create Bulk Write Job
+                          request.
+                        maxLength: 255
+                      created_time:
+                        type: string
+                        format: date-time
+                        description: >-
+                          Represents the date and time when the file was
+                          uploaded, in ISO 8601 format.
+                    required:
+                      - file_id
+                      - created_time
+                    additionalProperties: false
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+                additionalProperties: false
+              examples:
+                Success:
+                  summary: Response of a successful file upload.
+                  value:
+                    status: success
+                    code: FILE_UPLOAD_SUCCESS
+                    message: file uploaded.
+                    details:
+                      file_id: abc123xyz
+                      created_time: '2024-06-01T12:34:56Z'
+                  description: >-
+                    Shows a successful file upload response with the assigned
+                    **file ID** and creation timestamp.
+        '400':
+          description: >-
+            The request is invalid. 
+
+            Resolution: Check the request for missing or invalid headers,
+            unsupported features, or an invalid file format, and resubmit.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: UploadErrorResponse
+                description: >-
+                  Represents the error response returned when the file upload
+                  request fails.
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: |-
+                      Represents the status of the upload operation.  
+                      Possible values: 
+                      **error** - The upload operation failed.
+                  code:
+                    type: string
+                    enum:
+                      - INVALID_DATA
+                      - NOT_SUPPORTED_FEATURE
+                      - MANDATORY_NOT_FOUND
+                      - INVALID_FILE_FORMAT
+                    description: >-
+                      Represents the error code for the upload failure. 
+
+                      Possible values: 
+
+                      **INVALID_DATA** - The request data is invalid.
+
+                      **NOT_SUPPORTED_FEATURE** - The specified feature is not
+                      supported. 
+
+                      **MANDATORY_NOT_FOUND** - A required field is missing. 
+
+                      **INVALID_FILE_FORMAT** - The uploaded file format is not
+                      supported.
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the reason for the
+                      upload failure.
+                    maxLength: 255
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional details about the upload failure,
+                      when provided.
+                    additionalProperties: true
+                required:
+                  - status
+                  - code
+                  - message
+                additionalProperties: false
+              examples:
+                InvalidOrgHeader:
+                  summary: Invalid **X-CRM-ORG** header
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: Invalid data - x-crm-org
+                    details: {}
+                  description: >-
+                    Shows an error response when the **X-CRM-ORG** header
+                    contains an invalid **organization ID.**
+                FeatureNotSupported:
+                  summary: Feature not supported response
+                  value:
+                    status: error
+                    code: NOT_SUPPORTED_FEATURE
+                    message: Feature is not supported
+                    details: {}
+                  description: >-
+                    Shows an error response when the specified feature is not
+                    supported.
+                FeatureHeaderMissing:
+                  summary: Missing feature header
+                  value:
+                    status: error
+                    code: MANDATORY_NOT_FOUND
+                    message: Required key feature is not available
+                    details: {}
+                  description: >-
+                    Shows an error response when the feature header is missing
+                    from the request.
+                OrgHeaderMissing:
+                  summary: Missing **X-CRM-ORG** header
+                  value:
+                    status: error
+                    code: MANDATORY_NOT_FOUND
+                    message: Required key x-crm-org is not available
+                    details: {}
+                  description: >-
+                    Shows an error response when the **X-CRM-ORG** header is
+                    missing from the request.
+                InvalidFileFormat:
+                  summary: Unsupported file format
+                  value:
+                    status: error
+                    code: INVALID_FILE_FORMAT
+                    message: invalid file format. only zip format is supported
+                    details: {}
+                  description: >-
+                    Shows an error response when the uploaded file is not in ZIP
+                    format.
+                ImportFileTooLarge:
+                  summary: Import file exceeds size limit
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: Import file size should be less than 25 mb.
+                    details: {}
+                  description: >-
+                    Shows an error response when the uploaded file exceeds the
+                    25 MB size limit.
+      security:
+        - OAuth2:
+            - ZohoFiles.files.ALL
+components:
+  parameters:
+    Feature:
+      name: feature
+      in: header
+      description: |-
+        Specify the feature for which the file upload is being performed.
+        Possible values: 
+        **bulk-write** - Indicates a bulk write operation.
+      required: true
+      schema:
+        type: string
+        enum:
+          - bulk-write
+    CrmOrg:
+      name: X-CRM-ORG
+      in: header
+      required: true
+      description: >-
+        Static CRM organization identifier. This value is fixed per account and
+        shared during onboarding.
+      schema:
+        type: integer
+        format: int32
+  headers: {}
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoFiles.files.ALL: Allows access to all file operations in ZohoFiles
+            ZohoFiles.files.CREATE: Access to ZohoFiles.files.CREATE scope

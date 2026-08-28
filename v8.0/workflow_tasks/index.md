@@ -1,0 +1,24 @@
+# Automation Tasks
+
+- [OpenAPI specification](workflow_tasks.yaml)
+- [List automation task definitions with optional filters](mds/getWorkflowTasks.md)
+  - PURPOSE: Retrieves a paginated list of automation task definitions. Supports filtering by module, feature_type, and name (via filter param). PAGINATION: page (default 1), per_page (default 200, max 200). Use info.more_records to determine if additional pages exist. A 204 response indicates no tasks match the supplied filters. Use this before PUT/DELETE to discover task IDs.
+  - [Examples](mds/examples/getWorkflowTasks.md)
+- [Update an automation task definition by ID (full replacement)](mds/updateWorkflowTask.md)
+  - PURPOSE: Updates an existing automation task definition identified by the path parameter ID. PREREQUISITES: (1) Call GET /settings/automation/tasks/{id} to obtain the current task structure. (2) Call GET /settings/layouts?module=Tasks to verify supported fields and identify mandatory fields where required: true in the field info. BEHAVIOR: This is a full replacement - all field_mappings must be provided, not just the changed ones. KEY CONSTRAINTS: Locked tasks (locked by workflow rules, approval processes, or blueprints) return 401 AUTHORIZATION_ERROR. Read-only tasks return 400.
+  - [Examples](mds/examples/updateWorkflowTask.md)
+- [Create an Automation Task ](mds/createWorkflowTasks.md)
+  - PURPOSE: Creates an automation task definition used by workflow rules, approval processes, blueprints, kiosks, scoring rules, and case escalation rules. PREREQUISITES: (1) Call GET /settings/automation/tasks to check existing task definitions and avoid duplicates. (2) Call GET /settings/layouts?module=Tasks to discover supported fields and identify mandatory fields where required: true in the field info. STRUCTURE: The request body contains a tasks array with exactly 1 task object. Each task requires: name (string), module ({api_name, id}), and field_mappings (array). Omitting mandatory fields returns REQUIRED_DATA_NOT_FOUND. Returns the created task ID.
+  - [Examples](mds/examples/createWorkflowTasks.md)
+- [Delete automation task definitions by IDs (bulk)](mds/deleteTasks.md)
+  - PURPOSE: Deletes one or more automation task definitions by their IDs. MANDATORY: ids query parameter (comma-separated task IDs, max 10). KEY CONSTRAINTS: Tasks associated with active workflow rules, approval processes, or blueprints cannot be deleted (returns NOT_ALLOWED error). Returns per-task success/error status. Use GET /settings/automation/tasks to discover task IDs before deleting.
+  - [Examples](mds/examples/deleteTasks.md)
+- [Automation Task](mds/getTaskById.md)
+  - PURPOSE: Retrieves the full details of a specific automation task definition including field mappings, module association, lock status, and metadata. MANDATORY: id path parameter (string - automation task definition ID, not a Task record ID). Returns 204 if the task does not exist. Use this to inspect the current state before updating via PUT.
+  - [Examples](mds/examples/getTaskById.md)
+- [Automation Task](mds/updateWorkflowTaskById.md)
+  - PURPOSE: Updates an existing automation task definition identified by the path parameter ID. PREREQUISITES: (1) Call GET /settings/automation/tasks/{id} to obtain the current task structure. (2) Call GET /settings/layouts?module=Tasks to verify supported fields and identify mandatory fields where required: true in the field info. BEHAVIOR: This is a full replacement - all field_mappings must be provided, not just the changed ones. KEY CONSTRAINTS: Locked tasks (locked by workflow rules, approval processes, or blueprints) return 401 AUTHORIZATION_ERROR. Read-only tasks return 400.
+  - [Examples](mds/examples/updateWorkflowTaskById.md)
+- [Automation Task](mds/deleteTaskById.md)
+  - PURPOSE: Deletes a single automation task definition by its ID. MANDATORY: id path parameter (string - automation task definition ID, not a Task record ID). KEY CONSTRAINTS: Tasks associated with active workflow rules, approval processes, or blueprints cannot be deleted (returns NOT_ALLOWED). Returns success/error status.
+  - [Examples](mds/examples/deleteTaskById.md)

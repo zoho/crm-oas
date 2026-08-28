@@ -1,0 +1,1628 @@
+openapi: 3.1.0
+info:
+  title: Cadence Execution
+  description: >-
+    Cadence execution operations allow Zoho CRM users to manually enroll or
+    unenroll module records in automated follow-up sequences called Cadences.
+    This API enables developers to enroll and unenroll records in Cadences for
+    supported modules, returning per-record success or error statuses in the
+    response.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`
+    variables:
+      dc:
+        description: >-
+          The top-level domain of the Zoho CRM API server. Possible values:
+          **eu**, **com**, **au**, **in**, **jp**, **cn**, **ca**. Default:
+          **com**.
+        default: com
+        enum:
+          - eu
+          - com
+          - au
+          - in
+          - jp
+          - cn
+          - ca
+      version:
+        description: 'The API version for the request. Default: **v8**.'
+        default: v8
+paths:
+  /{module}/actions/enrol_in_cadences:
+    post:
+      summary: Enroll Records to Cadences
+      description: |-
+        Enrolls CRM records into one or more cadences.
+        **Notes**
+        - Only Manual Enrollment cadences can be enrolled through this API.
+        - Available only in Enterprise edition and above.
+        - Supports Leads, Contacts, Deals, Vendors, and custom modules.
+        - A request may contain up to 5 cadence IDs.
+        - A request may contain up to 100 record IDs.
+      x-zs-llm-description: >-
+        Enrolls the given records into the given manual_enrollment cadences. v8
+        takes a flat cadences_ids array (by id) and an ids array of record ids.
+        Returns 200 when processed synchronously, 202 when accepted for
+        asynchronous processing, or 207 Multi-Status for mixed per-record
+        outcomes.
+      x-zs-llm-examples:
+        - SamplePostRequest
+      operationId: postEnrolInCadences
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Deals.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.custom.CREATE
+      parameters:
+        - $ref: '#/components/parameters/Module'
+      requestBody:
+        description: >-
+          The request body must contain a Cadence IDs array and a record IDs
+          array for the enrollment request.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCadencesRequest'
+            examples:
+              SamplePostRequest:
+                summary: Sample enroll records request
+                value:
+                  cadences_ids:
+                    - '534412000002201155'
+                    - '534412000002201156'
+                  ids:
+                    - '1234567890234567'
+                    - '1234567890456789'
+                    - '2345678902345678'
+                description: >-
+                  Shows a sample request with Cadence IDs and record IDs for
+                  enrollment into Cadences.
+      responses:
+        '200':
+          description: Returns the enrollment result for all records in the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostcadencesResponse200'
+              examples:
+                Success200:
+                  summary: Successful enrollment result
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '534412000002201155'
+                          cadences:
+                            - name: Cadence 1
+                              id: '1234567890456789'
+                            - name: Cadence 2
+                              id: '1234567890456789'
+                        message: records manually enrolled
+                        status: success
+                  description: >-
+                    Shows the successful enrollment result for a record,
+                    including the record ID and the associated Cadences.
+        '202':
+          description: >-
+            The enrollment request was accepted and queued for background
+            processing. The response body contains a SCHEDULED status marker.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostcadencesResponse202'
+              examples:
+                Success202:
+                  summary: Enrollment request accepted for background processing
+                  value:
+                    data:
+                      - code: SCHEDULED
+                        details: {}
+                        message: Cadence manual enrolment is in progress.
+                        status: success
+                  description: None
+        '207':
+          description: >-
+            Returns a multi-status response when some records were enrolled
+            successfully and others failed. Each item in the data array
+            independently indicates success or failure for the corresponding
+            record.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostcadencesResponse207'
+              examples:
+                Success207:
+                  summary: Multi-status response with partial enrollment success
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '534412000002201155'
+                          cadences:
+                            - name: Cadence 1
+                              id: '1234567890456789'
+                            - name: Cadence 2
+                              id: '1234567890456789'
+                        message: records manually enrolled
+                        status: success
+                      - code: INVALID_DATA
+                        details:
+                          api_name: ids
+                          json_path: $.ids[1]
+                        message: given id seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a multi-status response with one successful and one
+                    failed per-record enrollment result.
+        '400':
+          description: >-
+            The request could not be processed due to invalid or unsupported
+            input.
+
+            **Resolution:** The record IDs and Cadence IDs must be valid, the
+            API must be accessed from a supported domain, and the specified
+            Cadences must support manual enrollment.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: EnrolCadences400Schema
+                oneOf:
+                  - $ref: >-
+                      #/components/schemas/ErrorResponseApiNotSupportedClientPortal
+                  - $ref: '#/components/schemas/ErrorResponseApiNotSupportedDomain'
+                  - $ref: '#/components/schemas/ErrorResponseLimitExceededCadenceIds'
+                  - $ref: '#/components/schemas/ErrorResponseLimitExceededRecordIds'
+                  - $ref: '#/components/schemas/ErrorResponseNotAllowed'
+                  - $ref: '#/components/schemas/ErrorResponseInvalidDataCadenceIds'
+                  - $ref: '#/components/schemas/ErrorResponseMandatoryNotFound'
+                  - $ref: '#/components/schemas/ErrorResponseDataInvalidDataType'
+                  - $ref: '#/components/schemas/ErrorResponseDataInvalidId'
+                  - $ref: '#/components/schemas/ErrorResponseDataInvalidIdArray'
+                description: >-
+                  Represents one of the possible error responses for a 400 Bad
+                  Request status, indicating an invalid or unsupported request
+                  parameter.
+              examples:
+                ApiNotSupportedResponse1:
+                  summary: API_NOT_SUPPORTED error for client portal users
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_login_user_type: Client Portal User
+                    message: api not supported for client portal user
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when a client
+                    portal user attempts to call this API.
+                ApiNotSupportedResponse2:
+                  summary: API_NOT_SUPPORTED error for unsupported domain
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      supported_domains:
+                        - eu
+                        - com
+                        - in
+                        - au
+                        - ca
+                        - cn
+                        - jp
+                    message: api not supported
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when the API is
+                    accessed from an unsupported domain.
+                LimitExceededResponse1:
+                  summary: LIMIT_EXCEEDED error - Cadence ID array exceeds the limit
+                  value:
+                    code: LIMIT_EXCEEDED
+                    details:
+                      limit: 5
+                      limit_due_to:
+                        - api_name: cadences_ids
+                          json_path: $.cadences_ids
+                    message: Limit Exceeded, You cannot give more than 5 cadences ids
+                    status: error
+                  description: >-
+                    Shows the LIMIT_EXCEEDED error returned when more than five
+                    Cadence IDs are included in the request.
+                LimitExceededResponse2:
+                  summary: LIMIT_EXCEEDED error for ids exceeding 100
+                  value:
+                    code: LIMIT_EXCEEDED
+                    details:
+                      limit: 100
+                      limit_due_to:
+                        - api_name: ids
+                          json_path: $.ids
+                    message: Limit Exceeded, You cannot give more than 100 record ids
+                    status: error
+                  description: >-
+                    Shows the LIMIT_EXCEEDED error returned when more than 100
+                    record IDs are included in the request.
+                NotAllowedResponse1:
+                  summary: NOT_ALLOWED error for non-manual Cadence ID
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      api_name: cadences_id
+                      json_path: $.cadences_id[0]
+                    message: id given is not manual enrollment cadence
+                    status: error
+                  description: >-
+                    Shows the NOT_ALLOWED error returned when a Cadence ID in
+                    the request does not correspond to a manual enrollment
+                    Cadence.
+                InvalidDataResponse1:
+                  summary: INVALID_DATA error - invalid entry in Cadence ID array
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 5
+                      api_name: cadences_ids
+                      json_path: $.cadences_ids
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Shows the INVALID_DATA error returned when an entry in the
+                    Cadence ID array is invalid, such as exceeding the maximum
+                    string length.
+                MandatoryNotFoundResponse1:
+                  summary: Error response - record IDs not provided
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    details:
+                      api_name: ids
+                      json_path: $.ids
+                    message: Record ids not found
+                    status: error
+                  description: None
+                MandatoryNotFoundResponse2:
+                  summary: Error response - Cadence IDs not provided
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    details:
+                      api_name: cadences_ids
+                      json_path: $.cadences_ids
+                    message: Cadences ids not found
+                    status: error
+                  description: None
+                InvalidDataResponse2:
+                  summary: Error response - record IDs expected as an array
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      expected_data_type: jsonarray
+                      api_name: ids
+                      json_path: $.ids
+                    message: Record ids not found
+                    status: error
+                  description: None
+                InvalidDataResponse3:
+                  summary: Error response - Cadence IDs expected as an array
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      expected_data_type: jsonarray
+                      api_name: cadences_ids
+                      json_path: $.cadences_ids
+                    message: Cadences ids not found
+                    status: error
+                  description: None
+                InvalidDataResponse4:
+                  summary: Error response - invalid Cadence ID provided
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: cadences_ids
+                      json_path: $.cadences_ids
+                    message: the given id seems to be invalid
+                    status: error
+                  description: None
+                InvalidDataResponse5:
+                  summary: Error response - invalid record ID provided
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: ids
+                      json_path: $.ids
+                    message: the given id seems to be invalid
+                    status: error
+                  description: None
+        '403':
+          description: >-
+            The requesting user does not have the required permission to perform
+            Cadence enrollment.
+
+            **Resolution:** The CRM administrator must grant the
+            **Crm_Implied_Manage_UnEnroll_Series** permission to the user's
+            profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse403'
+                description: >-
+                  Represents the error response for a 403 Forbidden status,
+                  indicating insufficient permissions to perform the enrollment
+                  operation.
+              examples:
+                NoPermissionResponse1:
+                  summary: NO_PERMISSION error for missing profile permission
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_UnEnroll_Series
+                    message: No permission
+                    status: error
+                  description: >-
+                    Shows the NO_PERMISSION error returned when the requesting
+                    user's CRM profile lacks the
+                    Crm_Implied_Manage_UnEnroll_Series permission.
+  /{module}/actions/unenrol_from_cadences:
+    post:
+      summary: Un-enroll Records from Cadences
+      description: >-
+        To manually unenroll records of a supported module from one or more
+        Cadences in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Removes the given records from the given cadences. Updates
+        CRMENTITYSERIES (Member_Status=Un-enrolled,
+        Series_Status=Stopped/Completed/Failed, UNENROLLED_DATE=now), deletes
+        any scheduled future follow-up actions for the affected records
+        (CRMTRIGGERENTITYREL) and pending scheduled enrollments
+        (CRMWFRULEENTITYREL).
+      x-zs-llm-examples:
+        - SamplePostRequest
+      operationId: postUnenrolFromCadences
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Deals.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.custom.CREATE
+      parameters:
+        - $ref: '#/components/parameters/Module'
+      requestBody:
+        description: >-
+          The request body must contain a Cadence IDs array and a record IDs
+          array for the unenrollment request.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCadencesRequest'
+            examples:
+              SamplePostRequest:
+                summary: Sample unenroll records request
+                value:
+                  cadences_ids:
+                    - '534412000002201155'
+                    - '534412000002201156'
+                  ids:
+                    - '1234567890234567'
+                    - '1234567890456789'
+                    - '2345678902345678'
+                description: >-
+                  Shows a sample request with Cadence IDs and record IDs for
+                  un-enrollment from Cadences.
+      responses:
+        '200':
+          description: Returns the un-enrollment result for all records in the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostcadencesResponse200'
+              examples:
+                Success200:
+                  summary: Successful un-enrollment result
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '534412000002201155'
+                          cadences:
+                            - name: Cadence 1
+                              id: '1234567890456789'
+                            - name: Cadence 2
+                              id: '1234567890456789'
+                        message: records manually unenrolled
+                        status: success
+                  description: >-
+                    Shows the successful un-enrollment result for a record,
+                    including the record ID and the associated Cadences.
+        '207':
+          description: >-
+            Returns a multi-status response when some records were unenrolled
+            successfully and others failed. Each item in the data array
+            independently indicates success or failure for the corresponding
+            record.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostcadencesResponse207'
+              examples:
+                Success207:
+                  summary: Multi-status response with partial un-enrollment success
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '534412000002201155'
+                          cadences:
+                            - name: Cadence 1
+                              id: '1234567890456789'
+                            - name: Cadence 2
+                              id: '1234567890456789'
+                        message: records manually unenrolled
+                        status: success
+                      - code: INVALID_DATA
+                        details:
+                          api_name: ids
+                          json_path: $.ids[1]
+                        message: given id seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a multi-status response with one successful and one
+                    failed per-record un-enrollment result.
+        '400':
+          description: >-
+            The request could not be processed due to invalid or unsupported
+            input.
+
+            **Resolution:** The record IDs and Cadence IDs must be valid, the
+            API must be accessed from a supported domain, and the specified
+            Cadences must support manual enrollment.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UnenrolCadences400Schema
+                oneOf:
+                  - $ref: >-
+                      #/components/schemas/ErrorResponseApiNotSupportedClientPortal
+                  - $ref: '#/components/schemas/ErrorResponseApiNotSupportedDomain'
+                  - $ref: '#/components/schemas/ErrorResponseLimitExceededCadenceIds'
+                  - $ref: '#/components/schemas/ErrorResponseLimitExceededRecordIds'
+                  - $ref: '#/components/schemas/ErrorResponseNotAllowed'
+                  - $ref: '#/components/schemas/ErrorResponseInvalidDataCadenceIds'
+                  - $ref: '#/components/schemas/ErrorResponseMandatoryNotFound'
+                  - $ref: '#/components/schemas/ErrorResponseDataInvalidDataType'
+                  - $ref: '#/components/schemas/ErrorResponseDataInvalidId'
+                  - $ref: '#/components/schemas/ErrorResponseDataInvalidIdArray'
+                description: >-
+                  Represents one of the possible error responses for a 400 Bad
+                  Request status, indicating an invalid or unsupported request
+                  parameter.
+              examples:
+                ApiNotSupportedResponse1:
+                  summary: API_NOT_SUPPORTED error for client portal users
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_login_user_type: Client Portal User
+                    message: api not supported for client portal user
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when a client
+                    portal user attempts to call this API.
+                ApiNotSupportedResponse2:
+                  summary: API_NOT_SUPPORTED error for unsupported domain
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      supported_domains:
+                        - eu
+                        - com
+                        - in
+                        - au
+                        - ca
+                        - cn
+                        - jp
+                    message: api not supported
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when the API is
+                    accessed from an unsupported domain.
+                LimitExceededResponse1:
+                  summary: LIMIT_EXCEEDED error - Cadence ID array exceeds the limit
+                  value:
+                    code: LIMIT_EXCEEDED
+                    details:
+                      limit: 5
+                      limit_due_to:
+                        - api_name: cadences_ids
+                          json_path: $.cadences_ids
+                    message: Limit Exceeded, You cannot give more than 5 cadences ids
+                    status: error
+                  description: >-
+                    Shows the LIMIT_EXCEEDED error returned when more than five
+                    Cadence IDs are included in the request.
+                LimitExceededResponse2:
+                  summary: LIMIT_EXCEEDED error for ids exceeding 100
+                  value:
+                    code: LIMIT_EXCEEDED
+                    details:
+                      limit: 100
+                      limit_due_to:
+                        - api_name: ids
+                          json_path: $.ids
+                    message: Limit Exceeded, You cannot give more than 100 record ids
+                    status: error
+                  description: >-
+                    Shows the LIMIT_EXCEEDED error returned when more than 100
+                    record IDs are included in the request.
+                NotAllowedResponse1:
+                  summary: NOT_ALLOWED error for non-manual Cadence ID
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      api_name: cadences_id
+                      json_path: $.cadences_id[0]
+                    message: id given is not manual enrollment cadence
+                    status: error
+                  description: >-
+                    Shows the NOT_ALLOWED error returned when a Cadence ID in
+                    the request does not correspond to a manual enrollment
+                    Cadence.
+                InvalidDataResponse1:
+                  summary: INVALID_DATA error - invalid entry in Cadence ID array
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 5
+                      api_name: cadences_ids
+                      json_path: $.cadences_ids
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Shows the INVALID_DATA error returned when an entry in the
+                    Cadence ID array is invalid, such as exceeding the maximum
+                    string length.
+                MandatoryNotFoundResponse1:
+                  summary: Error response - record IDs not provided
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    details:
+                      api_name: ids
+                      json_path: $.ids
+                    message: Record ids not found
+                    status: error
+                  description: None
+                MandatoryNotFoundResponse2:
+                  summary: Error response - Cadence IDs not provided
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    details:
+                      api_name: cadences_ids
+                      json_path: $.cadences_ids
+                    message: Cadences ids not found
+                    status: error
+                  description: None
+                InvalidDataResponse2:
+                  summary: Error response - record IDs expected as an array
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      expected_data_type: jsonarray
+                      api_name: ids
+                      json_path: $.ids
+                    message: Record ids not found
+                    status: error
+                  description: None
+                InvalidDataResponse3:
+                  summary: Error response - Cadence IDs expected as an array
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      expected_data_type: jsonarray
+                      api_name: cadences_ids
+                      json_path: $.cadences_ids
+                    message: Cadences ids not found
+                    status: error
+                  description: None
+                InvalidDataResponse4:
+                  summary: Error response - invalid Cadence ID provided
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: cadences_ids
+                      json_path: $.cadences_ids
+                    message: the given id seems to be invalid
+                    status: error
+                  description: None
+                InvalidDataResponse5:
+                  summary: Error response - invalid record ID provided
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: ids
+                      json_path: $.ids
+                    message: the given id seems to be invalid
+                    status: error
+                  description: None
+                InvalidDataResponseArray:
+                  summary: Error response - multiple invalid record IDs
+                  value:
+                    data:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: ids
+                          json_path: $.ids[0]
+                        message: given id seems to be invalid
+                        status: error
+                      - code: INVALID_DATA
+                        details:
+                          api_name: ids
+                          json_path: $.ids[1]
+                        message: given id seems to be invalid
+                        status: error
+                  description: None
+        '403':
+          description: >-
+            The requesting user does not have the required permission to perform
+            Cadence un-enrollment.
+
+            **Resolution:** The CRM administrator must grant the
+            **Crm_Implied_Manage_UnEnroll_Series** permission to the user's
+            profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse403'
+                description: >-
+                  Represents the error response for a 403 Forbidden status,
+                  indicating insufficient permissions to perform the
+                  un-enrollment operation.
+              examples:
+                NoPermissionResponse1:
+                  summary: NO_PERMISSION error for missing profile permission
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_UnEnroll_Series
+                    message: No permission
+                    status: error
+                  description: >-
+                    Shows the NO_PERMISSION error returned when the requesting
+                    user's CRM profile lacks the
+                    Crm_Implied_Manage_UnEnroll_Series permission.
+components:
+  parameters:
+    Module:
+      name: module
+      example: Leads
+      description: >-
+        Specify the API name of the module. Refer to the [Get
+        Modules](modules.yaml#$.paths./settings/modules.get) resource for valid
+        values.
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 100
+  schemas:
+    PostCadencesRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload for enrolling or un-enrolling records in
+        one or more Cadences.
+      properties:
+        cadences_ids:
+          type: array
+          description: >-
+            A list of Cadence IDs to use for the enrollment or un-enrollment
+            operation.
+          items:
+            type: string
+            description: A unique identifier of a Cadence.
+            maxLength: 255
+          maxItems: 5
+          x-zs-$ref:
+            resource: cadences
+            origins:
+              - operationId: getCadences
+                propertyId: CadenceId
+              - operationId: postCadences
+                propertyId: CadenceResultId
+          maxLength: 255
+        ids:
+          type: array
+          description: >-
+            Specify the list of record IDs to enroll in or un-enroll from the
+            specified Cadences.
+          items:
+            type: string
+            description: A unique identifier of a record.
+            maxLength: 255
+          maxItems: 100
+      required:
+        - cadences_ids
+        - ids
+    PostcadencesResponse200:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the successful response body for a Cadence enrollment or
+        un-enrollment operation.
+      properties:
+        data:
+          type: array
+          description: Represents the list of operation results for the request.
+          items:
+            $ref: '#/components/schemas/SuccessDataNested'
+          maxItems: 100
+      x-zs-$id: PostcadencesResponse200
+    PostcadencesResponse202:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the asynchronous acceptance response returned when the
+        enrollment or unenrollment request is queued for background processing.
+      properties:
+        data:
+          type: array
+          description: >-
+            Represents a single-entry array containing the SCHEDULED status
+            marker for the queued enrollment request.
+          items:
+            $ref: '#/components/schemas/ScheduledDataNested'
+          maxItems: 1
+      x-zs-$id: PostcadencesResponse202
+    ScheduledDataNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the status marker returned with HTTP 202 when the enrollment
+        or unenrollment request is queued for background processing.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the processing status code. For 202 responses, this is
+            always **SCHEDULED**.
+          enum:
+            - SCHEDULED
+          maxLength: 255
+        details:
+          type: object
+          description: >-
+            Represents additional details about the scheduled operation. This
+            object is currently empty and reserved for future use.
+          additionalProperties: true
+        message:
+          type: string
+          description: >-
+            Represents the message describing the current processing state of
+            the enrollment request.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Represents the overall status of the scheduled operation. For 202
+            responses, this is always **success**.
+          enum:
+            - success
+          maxLength: 255
+    SuccessDataNested:
+      type: object
+      additionalProperties: false
+      description: Represents a successful per-record operation result.
+      properties:
+        code:
+          type: string
+          description: Represents the result code for the record operation.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/DetailsNested'
+        message:
+          type: string
+          description: >-
+            Represents the message indicating the outcome of the record
+            operation.
+          maxLength: 255
+        status:
+          type: string
+          description: The status of the record operation.
+          maxLength: 255
+      x-zs-$id: SuccessDataNested
+    DetailsNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the details of a successful per-record operation result,
+        including the record ID and the associated Cadences.
+      properties:
+        cadences:
+          type: array
+          description: Specify the list of Cadences associated with the operation result.
+          items:
+            $ref: '#/components/schemas/CadencesNested'
+          maxItems: 2
+        id:
+          type: string
+          description: Represents the unique ID of the record.
+          maxLength: 255
+    CadencesNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a Cadence in the operation result, including its unique ID
+        and name.
+      properties:
+        name:
+          type: string
+          description: Represents the name of the Cadence.
+          maxLength: 255
+        id:
+          type: string
+          description: Represents the unique ID of the Cadence.
+          maxLength: 255
+    ErrorDataNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a failed per-record operation result in a multi-status
+        response.
+      properties:
+        code:
+          type: string
+          description: >-
+            Indicates the error code for the per-record failure. Possible
+            values: **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+          maxLength: 255
+        details:
+          type: object
+          description: >-
+            JSON object specifying the details of the per-record error,
+            including the affected field name and JSON path.
+          additionalProperties: true
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the request field that caused the
+                per-record error. Possible values: **ids**.
+              maxLength: 255
+              enum:
+                - ids
+            json_path:
+              type: string
+              description: >-
+                Indicates the JSON path to the specific value in the request
+                that triggered the per-record error.
+              maxLength: 255
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the reason for the
+            per-record failure.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Indicates the status of the per-record result. Possible values:
+            **error**.
+          enum:
+            - error
+          maxLength: 255
+      x-zs-$id: ErrorDataNested
+    PostcadencesResponse207:
+      type: object
+      additionalProperties: false
+      description: >-
+        Specify the multi-status response body for a Cadence enrollment or
+        un-enrollment operation where some records succeeded and others failed.
+      properties:
+        data:
+          type: array
+          description: >-
+            Specify the list of per-record operation results. Each item
+            indicates success or failure for the corresponding record in the
+            request.
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/SuccessDataNested'
+              - $ref: '#/components/schemas/ErrorDataNested'
+            description: >-
+              Specify a single per-record result that indicates success or
+              failure for a specific record in the request.
+          maxItems: 100
+      x-zs-$id: PostcadencesResponse207
+    ErrorResponse403:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when the requesting user does not
+        have permission to perform Cadence enrollment or un-enrollment.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code for the permission failure. Possible
+            values: **NO_PERMISSION**. 
+          enum:
+            - NO_PERMISSION
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Indicates the error details containing the CRM permissions required
+            to perform this operation. 
+          properties:
+            permissions:
+              type: array
+              description: >-
+                Represents the list of CRM permissions required to perform this
+                operation.
+              items:
+                type: string
+                description: >-
+                  Indicates a CRM permission name required to perform this
+                  operation.
+                maxLength: 255
+              maxItems: 25
+        message:
+          type: string
+          description: >-
+            Represents the error message for the permission failure. Possible
+            values: **No permission**. 
+          enum:
+            - No permission
+        status:
+          type: string
+          description: 'Indicates the error status. Possible values: **error**. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response 403
+      x-zs-$id: ErrorResponse403
+    ErrorResponseLimitExceededCadenceIds:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the LIMIT_EXCEEDED error returned when the Cadence IDs array
+        exceeds the allowed maximum of 5 per request.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of limit violation.
+            The value is **LIMIT_EXCEEDED**.
+          enum:
+            - LIMIT_EXCEEDED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details containing the limit value and the
+            fields that caused the limit violation.
+          properties:
+            limit:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum allowed count for the Cadence IDs array
+                per request.
+            limit_due_to:
+              type: array
+              description: >-
+                Represents the list of fields responsible for the limit
+                violation.
+              items:
+                type: object
+                additionalProperties: false
+                description: Represents a field that contributed to the limit violation.
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the field that caused the limit
+                      violation.
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path of the field that caused the
+                      limit violation.
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - limit
+            - limit_due_to
+        message:
+          type: string
+          description: Represents the error message describing the limit violation.
+          enum:
+            - Limit Exceeded, You cannot give more than 5 cadences ids
+        status:
+          type: string
+          description: Represents the error status. The value is **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseLimitExceededCadenceIds
+    ErrorResponseInvalidDataCadenceIds:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the INVALID_DATA error returned when the Cadence IDs array
+        contains an invalid ID or has the wrong data type.
+      properties:
+        code:
+          type: string
+          description: Represents the error code. The value is **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with validation information for the
+            invalid Cadence ID.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: Represents the maximum allowed length for the Cadence ID value.
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains the invalid
+                Cadence ID.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that contains the invalid
+                Cadence ID.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: Represents the error message describing the invalid Cadence ID.
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: Represents the error status. The value is **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseInvalidDataCadenceIds
+    ErrorResponseApiNotSupportedClientPortal:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when the authenticated user is a
+        Client Portal user, which is an unsupported user type for this API.
+      properties:
+        code:
+          type: string
+          description: Represents the error code. The value is **API_NOT_SUPPORTED**.
+          enum:
+            - API_NOT_SUPPORTED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details containing the unsupported login user
+            type.
+          properties:
+            unsupported_login_user_type:
+              type: string
+              description: >-
+                Represents the login user type that is not supported by this
+                API.
+              maxLength: 255
+          required:
+            - unsupported_login_user_type
+        message:
+          type: string
+          description: Represents the error message describing the unsupported user type.
+          enum:
+            - api not supported for client portal user
+        status:
+          type: string
+          description: Represents the error status. The value is **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseApiNotSupportedClientPortal
+    ErrorResponseNotAllowed:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when a Cadence does not support
+        manual enrollment - only manual_enrollment type Cadences are supported
+        by this API.
+      properties:
+        code:
+          type: string
+          description: Represents the error code. The value is **NOT_ALLOWED**.
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the Cadence that does not
+            support manual enrollment.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field associated with the
+                NOT_ALLOWED error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field associated with the
+                NOT_ALLOWED error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message describing why the operation is not
+            allowed for this Cadence.
+          enum:
+            - id given is not manual enrollment cadence
+        status:
+          type: string
+          description: Represents the error status. The value is **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseNotAllowed
+    ErrorResponseApiNotSupportedDomain:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when the caller's Zoho
+        data-center domain does not support the Cadence execution API.
+      properties:
+        code:
+          type: string
+          description: Represents the error code. The value is **API_NOT_SUPPORTED**.
+          enum:
+            - API_NOT_SUPPORTED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details including the list of supported domains
+            for this API.
+          properties:
+            supported_domains:
+              type: array
+              description: >-
+                Represents the list of Zoho data-center domains that support the
+                Cadence execution API.
+              items:
+                type: string
+                description: Represents a supported Zoho data-center domain.
+                maxLength: 255
+              maxItems: 25
+          required:
+            - supported_domains
+        message:
+          type: string
+          description: Represents the error message describing the domain restriction.
+          enum:
+            - api not supported
+        status:
+          type: string
+          description: Represents the error status. The value is **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseApiNotSupportedDomain
+    ErrorResponseLimitExceededRecordIds:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when the **ids** array exceeds
+        the allowed maximum of 100 record IDs per request.
+      properties:
+        code:
+          type: string
+          description: Represents the error code. The value is **LIMIT_EXCEEDED**.
+          enum:
+            - LIMIT_EXCEEDED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details containing the limit value and the
+            fields that caused the limit violation.
+          properties:
+            limit:
+              type: integer
+              format: int32
+              description: Represents the maximum allowed count for the **ids** array.
+            limit_due_to:
+              type: array
+              description: >-
+                Represents the list of fields responsible for the limit
+                violation.
+              items:
+                type: object
+                additionalProperties: false
+                description: Represents a field that contributed to the limit violation.
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the field that caused the limit
+                      violation.
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path of the field that caused the
+                      limit violation.
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - limit
+            - limit_due_to
+        message:
+          type: string
+          description: Represents the error message describing the limit violation.
+          enum:
+            - Limit Exceeded, You cannot give more than 100 record ids
+        status:
+          type: string
+          description: Represents the error status. The value is **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseLimitExceededRecordIds
+    ErrorResponseMandatoryNotFound:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the MANDATORY_NOT_FOUND error indicating that a required
+        top-level array - record IDs or Cadence IDs - was missing from the
+        request body.
+      properties:
+        code:
+          type: string
+          description: Represents the error code. The value is **MANDATORY_NOT_FOUND**.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents the error details identifying the missing required field.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the missing required field.
+              enum:
+                - ids
+                - cadences_ids
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the missing required field.
+              enum:
+                - $.ids
+                - $.cadences_ids
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message describing the missing field.
+          enum:
+            - Record ids not found
+            - Cadences ids not found
+        status:
+          type: string
+          description: Represents the error status. The value is **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseMandatoryNotFound
+    ErrorResponseDataInvalidDataType:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the INVALID_DATA error returned when the **ids** or Cadence
+        IDs field has the wrong data type - for example, a string was supplied
+        where an array is expected.
+      properties:
+        code:
+          type: string
+          description: Represents the error code. The value is **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details containing the expected data type
+            information.
+          properties:
+            expected_data_type:
+              type: string
+              description: Represents the data type expected for the field.
+              enum:
+                - jsonarray
+              maxLength: 255
+            api_name:
+              type: string
+              description: Represents the API name of the field with the wrong data type.
+              enum:
+                - ids
+                - cadences_ids
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the field with the wrong data type.
+              enum:
+                - $.ids
+                - $.cadences_ids
+              maxLength: 1000
+          required:
+            - expected_data_type
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message describing the data type mismatch.
+          enum:
+            - Record ids not found
+            - Cadences ids not found
+        status:
+          type: string
+          description: Represents the error status. The value is **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseDataInvalidDataType
+    ErrorResponseDataInvalidId:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the INVALID_DATA error returned when an individual record ID
+        or Cadence ID in the request arrays is invalid.
+      properties:
+        code:
+          type: string
+          description: Represents the error code. The value is **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents the error details identifying the invalid ID.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field containing the invalid ID.
+              enum:
+                - ids
+                - cadences_ids
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the field containing the invalid ID.
+              maxLength: 1000
+            expected_data_type:
+              type: string
+              description: >-
+                Represents the expected data type for the field. Present when
+                the error is caused by a data type mismatch.
+              enum:
+                - bigint
+                - jsonarray
+              maxLength: 255
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message describing the invalid ID.
+          enum:
+            - the given id seems to be invalid
+            - given id seems to be invalid
+            - invalid cadence id is given
+        status:
+          type: string
+          description: Represents the error status. The value is **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseDataInvalidId
+    ErrorResponseDataInvalidIdArray:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the array-form error response returned when one or more
+        record IDs in the **ids** array are invalid.
+      properties:
+        data:
+          type: array
+          description: >-
+            Represents the list of per-record error entries for each invalid
+            record ID.
+          items:
+            type: object
+            additionalProperties: false
+            description: Represents the error entry for a single invalid record ID.
+            properties:
+              code:
+                type: string
+                description: >-
+                  Represents the error code for the invalid record ID. The value
+                  is **INVALID_DATA**.
+                enum:
+                  - INVALID_DATA
+              details:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents the error details identifying the invalid record
+                  ID.
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the field containing the
+                      invalid record ID.
+                    enum:
+                      - ids
+                      - cadences_ids
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path of the field containing the
+                      invalid record ID.
+                    pattern: ^\$\.(ids|cadences_ids)\[[0-9]+\]$
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              message:
+                type: string
+                description: Represents the error message for the invalid record ID.
+                enum:
+                  - given id seems to be invalid
+                  - invalid cadence id is given
+                  - the given id seems to be invalid
+              status:
+                type: string
+                description: Represents the error status. The value is **error**.
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+          minItems: 1
+          maxItems: 100
+      required:
+        - data
+      title: Error Response Core
+      x-zs-$id: ErrorResponseDataInvalidIdArray
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.Leads.CREATE: Required to enroll / unenroll Leads records into Cadences.
+            ZohoCRM.modules.Contacts.CREATE: Required to enroll / unenroll Contacts records into Cadences.
+            ZohoCRM.modules.Accounts.CREATE: Required to enroll / unenroll Accounts records into Cadences.
+            ZohoCRM.modules.Deals.CREATE: Required to enroll / unenroll Deals records into Cadences.
+            ZohoCRM.modules.Tasks.CREATE: Reserved (Tasks are not a valid Cadence module).
+            ZohoCRM.modules.Events.CREATE: Reserved (Events are not a valid Cadence module).
+            ZohoCRM.modules.Calls.CREATE: Reserved (Calls are not a valid Cadence module).
+            ZohoCRM.modules.Products.CREATE: Reserved (Products are not a valid Cadence module).
+            ZohoCRM.modules.Vendors.CREATE: Required to enroll / unenroll Vendors records into Cadences.
+            ZohoCRM.modules.Campaigns.CREATE: Reserved (Campaigns are not a valid Cadence module).
+            ZohoCRM.modules.Cases.CREATE: Reserved (Cases are not a valid Cadence module).
+            ZohoCRM.modules.Solutions.CREATE: Reserved (Solutions are not a valid Cadence module).
+            ZohoCRM.modules.Quotes.CREATE: Required to enroll / unenroll Quotes records into Cadences.
+            ZohoCRM.modules.Invoices.CREATE: Reserved (Invoices are not a valid Cadence module).
+            ZohoCRM.modules.Forecasts.CREATE: Reserved (Forecasts are not a valid Cadence module).
+            ZohoCRM.modules.Activities.CREATE: Reserved (Activities are not a valid Cadence module).
+            ZohoCRM.modules.Notes.CREATE: Reserved (Notes are not a valid Cadence module).
+            ZohoCRM.modules.Attachments.CREATE: Reserved (Attachments are not a valid Cadence module).
+            ZohoCRM.modules.custom.CREATE: Required to enroll / unenroll records on any custom module.

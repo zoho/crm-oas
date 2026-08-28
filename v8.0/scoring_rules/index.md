@@ -1,0 +1,33 @@
+# Scoring Rules
+
+- [OpenAPI specification](scoring_rules.yaml)
+- [Scoring Rules](mds/getScoringRules.md)
+  - To retrieve a list of Scoring Rules configured in your Zoho CRM organization.
+  - [Examples](mds/examples/getScoringRules.md)
+- [Scoring Rules](mds/putScoringRules.md)
+  - Updates one or more scoring rules. Returns 200 (all success) or 207 (partial success).
+  - [Examples](mds/examples/putScoringRules.md)
+- [Scoring Rules](mds/postScoringRules.md)
+  - Creates one or more scoring rules for specified modules and layouts. Only Leads and Contacts modules support signal rules. Deals, Accounts and Custom Modules do not support signal rules.
+  - [Examples](mds/examples/postScoringRules.md)
+- [Scoring Rules](mds/deleteScoringRules.md)
+  - Permanently deletes multiple scoring rules
+  - [Examples](mds/examples/deleteScoringRules.md)
+- [Get scoring rule by ID](mds/getScoringRuleById.md)
+  - To retrieve the details of a specific Scoring Rule by its ID in your Zoho CRM organization.
+  - [Examples](mds/examples/getScoringRuleById.md)
+- [Update a scoring rules by ID](mds/putScoringRuleById.md)
+  - To update a specific Scoring Rule by its ID in your Zoho CRM organization.
+  - [Examples](mds/examples/putScoringRuleById.md)
+- [Delete a scoring rules by ID](mds/deleteScoringRuleById.md)
+  - Permanently deletes a single scoring rule identified by ruleId
+  - [Examples](mds/examples/deleteScoringRuleById.md)
+- [Activate a scoring rule](mds/putActivate.md)
+  - Activates an inactive scoring rule identified by `ruleId`, enabling it to start evaluating and scoring CRM records based on its configured criteria.
+  - [Examples](mds/examples/putActivate.md)
+- [Deactivate a scoring rule](mds/deleteActivate.md)
+  - Deactivates an active scoring rule identified by `ruleId`, suspending its scoring evaluation without deleting it.
+  - [Examples](mds/examples/deleteActivate.md)
+- [Clone a scoring rule](mds/postClone.md)
+  - To clone a Scoring Rule in your Zoho CRM organization.
+  - [Examples](mds/examples/postClone.md)

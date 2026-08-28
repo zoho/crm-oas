@@ -1,0 +1,2614 @@
+openapi: 3.1.0
+info:
+  title: Notes
+  description: >-
+    Retrieve, create, update, and delete note records attached to any Zoho CRM
+    module record. Notes carry a title, body text, and a parent record
+    reference, and support up to five file attachments.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Zoho CRM API server. Replace {dc} with your data-center TLD and {version}
+      with the target API version.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          Data-center top-level domain for the CRM account (for example, com,
+          eu, in, au, or cn).
+      version:
+        default: v8
+        description: API version to target (for example, v8).
+paths:
+  /Notes:
+    get:
+      operationId: getNotesModule
+      summary: Notes
+      description: Retrieves a list of notes.
+      x-zs-llm-description: >-
+        Lists note records across modules and supports pagination, sorting, and
+        field filtering. Use this to discover note ids before calling get-by-id,
+        update, or delete operations.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.notes.READ
+      parameters:
+        - $ref: '#/components/parameters/Fields'
+        - $ref: '#/components/parameters/Ids'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageToken'
+        - $ref: '#/components/parameters/SortOrder'
+        - $ref: '#/components/parameters/SortBy'
+      responses:
+        '200':
+          description: Successful response with note records
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: NotesGetResponse
+                description: Response containing note data and pagination information
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Array of note records
+                    maxItems: 200
+                    items:
+                      type: object
+                      description: >-
+                        A note record with static fields and dynamic additional
+                        properties
+                      additionalProperties: true
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier of the note
+                          format: int64
+                        Note_Title:
+                          type:
+                            - string
+                            - 'null'
+                          description: The title of the note
+                          maxLength: 120
+                        Note_Content:
+                          type:
+                            - string
+                            - 'null'
+                          description: The content/body of the note
+                          maxLength: 65535
+                        $attachments:
+                          type:
+                            - array
+                            - 'null'
+                          description: Attachments associated with the note
+                          maxItems: 5
+                          items:
+                            type: object
+                            description: Attachment file details
+                            additionalProperties: true
+                            properties:
+                              $file_id:
+                                type: string
+                                description: Unique file identifier for the attachment
+                                maxLength: 255
+                              File_Name:
+                                type: string
+                                description: Name of the attached file
+                                maxLength: 255
+                              Size:
+                                type: string
+                                description: File size in bytes
+                                format: int64
+                              id:
+                                type: string
+                                description: Unique identifier of the attachment record
+                                format: int64
+                        Parent_Id:
+                          type: object
+                          description: Parent record information
+                          additionalProperties: false
+                          properties:
+                            module:
+                              type: object
+                              description: Module information of the parent record
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: API name of the parent module
+                                  maxLength: 50
+                                id:
+                                  type: string
+                                  description: Module ID
+                                  format: int64
+                              required:
+                                - api_name
+                                - id
+                            name:
+                              type: string
+                              description: Name of the parent record
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: Unique identifier of the parent record
+                              format: int64
+                          required:
+                            - module
+                            - id
+                            - name
+                      required:
+                        - id
+                  info:
+                    type: object
+                    description: Pagination metadata
+                    additionalProperties: false
+                    properties:
+                      page:
+                        type: integer
+                        format: int32
+                        description: Current page number
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: Number of records per page
+                      count:
+                        type: integer
+                        format: int32
+                        description: Number of records in current page
+                      more_records:
+                        type: boolean
+                        description: Indicates if more records are available
+                      next_page_token:
+                        type:
+                          - string
+                          - 'null'
+                        description: Token for retrieving the next page of note records.
+                        maxLength: 2000
+                      previous_page_token:
+                        type:
+                          - string
+                          - 'null'
+                        description: >-
+                          Token for retrieving the previous page of note
+                          records.
+                        maxLength: 2000
+                      page_token_expiry:
+                        type:
+                          - string
+                          - 'null'
+                        format: date-time
+                        description: Expiry time of page tokens
+                      sort_by:
+                        type: string
+                        description: Field by which the results are sorted
+                        maxLength: 50
+                      sort_order:
+                        type: string
+                        description: Sort order of the results
+                        enum:
+                          - asc
+                          - desc
+                    required:
+                      - page
+                      - per_page
+                      - count
+                      - more_records
+                required:
+                  - data
+                  - info
+              examples:
+                SuccessResponse:
+                  summary: Successful notes retrieval
+                  value:
+                    data:
+                      - id: '1043386000020244003'
+                        Note_Title: null
+                        Note_Content: sdf
+                        $attachments:
+                          - $file_id: 2rsp48b6960fb9f4d444dada8740791775f35
+                            File_Name: 20251117_194524.jpg
+                            Size: '1623514'
+                            id: '1043386000020248003'
+                        Parent_Id:
+                          module:
+                            api_name: Leads
+                            id: '1043386000000002175'
+                          name: a
+                          id: '1043386000019763257'
+                        Owner:
+                          name: Prasanna
+                          id: '1043386000000322001'
+                          email: prasanna.saravanan@zohocorp.com
+                        Modified_Time: '2025-11-19T19:27:53+05:30'
+                        Created_Time: '2025-11-14T11:54:12+05:30'
+                    info:
+                      page: 1
+                      per_page: 200
+                      count: 1
+                      more_records: false
+                      next_page_token: null
+                      previous_page_token: null
+                      page_token_expiry: null
+                      sort_by: Created_Time
+                      sort_order: asc
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: Bad Request - Invalid parameters or malformed request
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetNotesBadRequestError
+                oneOf:
+                  - $ref: '#/components/schemas/RequiredParamMissingError'
+                  - $ref: '#/components/schemas/DiscretePaginationLimitExceededError'
+                  - $ref: '#/components/schemas/ExpiredValueError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createNotesModule
+      summary: Create Notes
+      description: Creates one or more note records.
+      x-zs-llm-description: >-
+        Creates one or more standalone note records. For each item, provide at
+        least one of Note_Content or Note_Title, and include Parent_Id when the
+        note should be attached to a specific CRM record.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.notes.CREATE
+      requestBody:
+        description: Request body containing note data to create
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request payload for creating notes
+              additionalProperties: false
+              properties:
+                data:
+                  type: array
+                  description: Array of note objects to create
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: Note object with title, content, and parent information
+                    additionalProperties: true
+                    properties:
+                      Note_Content:
+                        type:
+                          - string
+                          - 'null'
+                        description: The content/body of the note
+                        maxLength: 65535
+                      Note_Title:
+                        type:
+                          - string
+                          - 'null'
+                        description: The title of the note
+                        maxLength: 120
+                      Parent_Id:
+                        type: object
+                        description: Parent record information
+                        additionalProperties: false
+                        properties:
+                          module:
+                            type: object
+                            description: Module information of the parent record
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: API name of the parent module
+                                maxLength: 50
+                              id:
+                                type: string
+                                description: Module ID
+                                format: int64
+                          id:
+                            type: string
+                            description: Unique identifier of the parent record
+                            format: int64
+                        required:
+                          - module
+                          - id
+              required:
+                - data
+            examples:
+              CreateNote:
+                summary: Create a note for a lead
+                value:
+                  data:
+                    - Note_Title: Contacted
+                      Note_Content: Need to do further tracking
+                      Parent_Id:
+                        module:
+                          api_name: Leads
+                          id: '4876876000000002175'
+                        id: '4876876000005996165'
+            x-zs-llm-examples:
+              - CreateNote
+        required: true
+      responses:
+        '201':
+          description: Created - Note(s) successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: NotesPostSuccessResponse
+                description: Success response for note creation
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Array of creation results
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: Individual note creation result
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Result code
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: Result message
+                          maxLength: 500
+                        status:
+                          type: string
+                          description: Status of the operation
+                          enum:
+                            - success
+                        details:
+                          type: object
+                          description: Created note details
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Unique identifier of the created note
+                              format: int64
+                            Modified_Time:
+                              type: string
+                              description: Timestamp when the note was last modified
+                              format: date-time
+                            Created_Time:
+                              type: string
+                              description: Timestamp recording note creation
+                              format: date-time
+                            Created_By:
+                              type: object
+                              description: User who created the note
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  type: string
+                                  description: Name of the user
+                                  maxLength: 120
+                                id:
+                                  type: string
+                                  description: Unique identifier of the user
+                                  format: int64
+                              required:
+                                - name
+                                - id
+                            Modified_By:
+                              type: object
+                              description: User who last modified the note
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  type: string
+                                  description: Name of the user
+                                  maxLength: 255
+                                id:
+                                  type: string
+                                  description: Unique identifier of the user
+                                  format: int64
+                              required:
+                                - name
+                                - id
+                          required:
+                            - id
+                            - Modified_Time
+                            - Created_Time
+                            - Created_By
+                            - Modified_By
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - data
+              examples:
+                SuccessfulCreation:
+                  summary: Note successfully created
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2023-12-19T16:45:07+05:30'
+                          Modified_By:
+                            name: Patricia Boyle
+                            id: '4876876000000327001'
+                          Created_Time: '2023-12-19T16:45:07+05:30'
+                          id: '4876876000006021002'
+                          Created_By:
+                            name: Patricia Boyle
+                            id: '4876876000000327001'
+                        message: record added
+                        status: success
+        '207':
+          description: >-
+            Multi-Status - Partial success with some records created and some
+            failed
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreateNotesMultiStatusResponse207
+                type: object
+                description: Multi-status response for note creation with mixed results
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Array of creation results with mixed success and error
+                      statuses
+                    maxItems: 100
+                    items:
+                      oneOf:
+                        - x-zs-$id: CreateNoteSuccessResult
+                          type: object
+                          description: Successful note creation result
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Result code
+                              enum:
+                                - SUCCESS
+                            message:
+                              type: string
+                              description: Result message
+                              maxLength: 500
+                            status:
+                              type: string
+                              description: Status of the operation
+                              enum:
+                                - success
+                            details:
+                              type: object
+                              description: Created note details
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: Unique identifier of the created note
+                                  format: int64
+                                Modified_Time:
+                                  type: string
+                                  description: Timestamp when the note was last modified
+                                  format: date-time
+                                Created_Time:
+                                  type: string
+                                  description: Timestamp recording note creation
+                                  format: date-time
+                                Created_By:
+                                  type: object
+                                  description: User who created the note
+                                  additionalProperties: false
+                                  properties:
+                                    name:
+                                      type: string
+                                      description: Name of the user
+                                      maxLength: 255
+                                    id:
+                                      type: string
+                                      description: Unique identifier of the user
+                                      format: int64
+                                  required:
+                                    - name
+                                    - id
+                                Modified_By:
+                                  type: object
+                                  description: User who last modified the note
+                                  additionalProperties: false
+                                  properties:
+                                    name:
+                                      type: string
+                                      description: Name of the user
+                                      maxLength: 255
+                                    id:
+                                      type: string
+                                      description: Unique identifier of the user
+                                      format: int64
+                                  required:
+                                    - name
+                                    - id
+                              required:
+                                - id
+                                - Modified_Time
+                                - Created_Time
+                                - Created_By
+                                - Modified_By
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                        - x-zs-$id: CreateNoteErrorResult
+                          type: object
+                          description: Failed note creation result
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Error code
+                              enum:
+                                - EXPECTED_FIELD_MISSING
+                                - INVALID_DATA
+                            message:
+                              type: string
+                              description: Error message
+                              maxLength: 500
+                            status:
+                              type: string
+                              description: Status of the operation
+                              enum:
+                                - error
+                            details:
+                              type: object
+                              description: Error details
+                              additionalProperties: true
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                required:
+                  - data
+              examples:
+                PartialSuccess:
+                  summary: Partial success - some notes created, some failed
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2026-01-05T14:27:48+05:30'
+                          Modified_By:
+                            name: Prasanna CEO
+                            id: '111111000000059489'
+                          Created_Time: '2026-01-05T14:27:48+05:30'
+                          id: '111111000000116018'
+                          Created_By:
+                            name: Prasanna CEO
+                            id: '111111000000059489'
+                        message: record added
+                        status: success
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_fields:
+                            - api_name: Note_Content
+                              json_path: $.data[1].Note_Content
+                            - api_name: Note_Title
+                              json_path: $.data[1].Note_Title
+                        message: should contain either content or title
+                        status: error
+        '400':
+          description: Bad Request - Invalid parameters or malformed request
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NotesPostErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/ExpectedFieldMissingError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidDataLimitExceededError'
+                  - $ref: '#/components/schemas/NotAllowedError'
+                  - $ref: '#/components/schemas/FileSizeExceedsError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - User lacks required permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoPermissionError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      operationId: updateNotesModule
+      summary: Update Notes
+      description: >-
+        Updates one or more existing note records. Either note content or note
+        title must be provided (at least one is mandatory) for each note.
+      x-zs-llm-description: >-
+        Bulk-updates existing notes by id. Each item must include id and at
+        least one editable note field such as Note_Content or Note_Title. Prefer
+        this endpoint when updating multiple notes in one request.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.notes.UPDATE
+      requestBody:
+        description: Request body containing note data to update
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request payload for updating notes
+              additionalProperties: false
+              properties:
+                data:
+                  type: array
+                  description: Array of note objects to update
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: Note object with an ID, title, and/or content to update.
+                    additionalProperties: true
+                    properties:
+                      id:
+                        type: string
+                        description: Unique identifier of the note to update
+                        format: int64
+                      Note_Content:
+                        type:
+                          - string
+                          - 'null'
+                        description: The content/body of the note
+                        maxLength: 65535
+                      Note_Title:
+                        type:
+                          - string
+                          - 'null'
+                        description: The title of the note
+                        maxLength: 120
+                    required:
+                      - id
+              required:
+                - data
+            examples:
+              UpdateMultipleNotes:
+                summary: Update multiple notes
+                value:
+                  data:
+                    - id: '4876876000006021002'
+                      Note_Title: Follow-up Completed
+                      Note_Content: Customer requested additional information
+                    - id: '4876876000006021003'
+                      Note_Title: Meeting Notes
+                      Note_Content: Discussed project requirements
+            x-zs-llm-examples:
+              - UpdateMultipleNotes
+        required: true
+      responses:
+        '200':
+          description: Success - Note(s) successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: NotesUpdateSuccessResponse
+                description: Success response for note update
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Array of update results
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: Individual note update result
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Result code
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: Result message
+                          maxLength: 500
+                        status:
+                          type: string
+                          description: Status of the operation
+                          enum:
+                            - success
+                        details:
+                          type: object
+                          description: Updated note details
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Unique identifier of the updated note
+                              format: int64
+                            Modified_Time:
+                              type: string
+                              description: Timestamp when the note was last modified
+                              format: date-time
+                            Created_Time:
+                              type: string
+                              description: Timestamp recording note creation
+                              format: date-time
+                            Created_By:
+                              type: object
+                              description: User who created the note
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  type: string
+                                  description: Name of the user
+                                  maxLength: 255
+                                id:
+                                  type: string
+                                  description: Unique identifier of the user
+                                  format: int64
+                              required:
+                                - name
+                                - id
+                            Modified_By:
+                              type: object
+                              description: User who last modified the note
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  type: string
+                                  description: Name of the user
+                                  maxLength: 255
+                                id:
+                                  type: string
+                                  description: Unique identifier of the user
+                                  format: int64
+                              required:
+                                - name
+                                - id
+                          required:
+                            - id
+                            - Modified_Time
+                            - Created_Time
+                            - Created_By
+                            - Modified_By
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - data
+              examples:
+                SuccessfulUpdate:
+                  summary: Notes successfully updated
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2023-12-19T17:30:15+05:30'
+                          Modified_By:
+                            name: Patricia Boyle
+                            id: '4876876000000327001'
+                          Created_Time: '2023-12-19T16:45:07+05:30'
+                          id: '4876876000006021002'
+                          Created_By:
+                            name: Patricia Boyle
+                            id: '4876876000000327001'
+                        message: record updated
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2023-12-19T17:30:16+05:30'
+                          Modified_By:
+                            name: Patricia Boyle
+                            id: '4876876000000327001'
+                          Created_Time: '2023-12-19T16:45:08+05:30'
+                          id: '4876876000006021003'
+                          Created_By:
+                            name: Patricia Boyle
+                            id: '4876876000000327001'
+                        message: record updated
+                        status: success
+        '207':
+          description: >-
+            Multi-Status - Partial success with some records updated and some
+            failed
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateNotesMultiStatusResponse207
+                type: object
+                description: Multi-status response for note update with mixed results
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Array of update results with mixed success and error
+                      statuses
+                    maxItems: 100
+                    items:
+                      oneOf:
+                        - x-zs-$id: UpdateNoteSuccessResult
+                          type: object
+                          description: Successful note update result
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Result code
+                              enum:
+                                - SUCCESS
+                            message:
+                              type: string
+                              description: Result message
+                              maxLength: 500
+                            status:
+                              type: string
+                              description: Status of the operation
+                              enum:
+                                - success
+                            details:
+                              type: object
+                              description: Updated note details
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: Unique identifier of the updated note
+                                  format: int64
+                                Modified_Time:
+                                  type: string
+                                  description: Timestamp when the note was last modified
+                                  format: date-time
+                                Created_Time:
+                                  type: string
+                                  description: Timestamp recording note creation
+                                  format: date-time
+                                Created_By:
+                                  type: object
+                                  description: User who created the note
+                                  additionalProperties: false
+                                  properties:
+                                    name:
+                                      type: string
+                                      description: Name of the user
+                                      maxLength: 255
+                                    id:
+                                      type: string
+                                      description: Unique identifier of the user
+                                      format: int64
+                                  required:
+                                    - name
+                                    - id
+                                Modified_By:
+                                  type: object
+                                  description: User who last modified the note
+                                  additionalProperties: false
+                                  properties:
+                                    name:
+                                      type: string
+                                      description: Name of the user
+                                      maxLength: 255
+                                    id:
+                                      type: string
+                                      description: Unique identifier of the user
+                                      format: int64
+                                  required:
+                                    - name
+                                    - id
+                              required:
+                                - id
+                                - Modified_Time
+                                - Created_Time
+                                - Created_By
+                                - Modified_By
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                        - x-zs-$id: UpdateNoteErrorResult
+                          type: object
+                          description: Failed note update result
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Error code
+                              enum:
+                                - EXPECTED_FIELD_MISSING
+                                - MANDATORY_NOT_FOUND
+                                - INVALID_DATA
+                            message:
+                              type: string
+                              description: Error message
+                              maxLength: 500
+                            status:
+                              type: string
+                              description: Status of the operation
+                              enum:
+                                - error
+                            details:
+                              type: object
+                              description: Error details
+                              additionalProperties: true
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                required:
+                  - data
+              examples:
+                PartialSuccess:
+                  summary: Partial success - some notes updated, some failed
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2026-01-05T14:27:48+05:30'
+                          Modified_By:
+                            name: Prasanna CEO
+                            id: '111111000000059489'
+                          Created_Time: '2026-01-05T14:27:48+05:30'
+                          id: '111111000000116018'
+                          Created_By:
+                            name: Prasanna CEO
+                            id: '111111000000059489'
+                        message: record updated
+                        status: success
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_fields:
+                            - api_name: Note_Content
+                              json_path: $.data[1].Note_Content
+                            - api_name: Note_Title
+                              json_path: $.data[1].Note_Title
+                        message: should contain either content or title
+                        status: error
+        '400':
+          description: Bad Request - Invalid parameters or malformed request
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NotesUpdateErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/ExpectedFieldMissingError'
+                  - $ref: '#/components/schemas/MandatoryNotFoundError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidDataLimitExceededError'
+                  - $ref: '#/components/schemas/NotAllowedError'
+                  - $ref: '#/components/schemas/CannotPerformActionError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      operationId: deleteNotesModule
+      summary: Notes
+      description: Permanently deletes one or more notes using comma-separated note IDs.
+      x-zs-llm-description: >-
+        Deletes multiple notes by ids query parameter. Use this for batch
+        cleanup and inspect 207 responses to handle mixed success per note id.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.notes.DELETE
+      parameters:
+        - $ref: '#/components/parameters/Ids'
+      responses:
+        '200':
+          description: Success - Note(s) successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: NotesDeleteSuccessResponse
+                description: Success response for note deletion
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Array of deletion results
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: Individual note deletion result
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Result code
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: Result message
+                          maxLength: 500
+                        status:
+                          type: string
+                          description: Status of the operation
+                          enum:
+                            - success
+                        details:
+                          type: object
+                          description: Deleted note details
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Unique identifier of the deleted note
+                              format: int64
+                          required:
+                            - id
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - data
+              examples:
+                SuccessfulDeletion:
+                  summary: Note successfully deleted
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '4876876000006021002'
+                        message: record deleted
+                        status: success
+                BulkDeletion:
+                  summary: Multiple notes successfully deleted
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '4876876000006021002'
+                        message: record deleted
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          id: '4876876000006021003'
+                        message: record deleted
+                        status: success
+        '207':
+          description: >-
+            Multi-Status - Partial success with some records deleted and some
+            failed
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeleteNotesMultiStatusResponse207
+                type: object
+                description: Multi-status response for note deletion with mixed results
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Array of deletion results with mixed success and error
+                      statuses
+                    maxItems: 100
+                    items:
+                      oneOf:
+                        - x-zs-$id: DeleteNoteSuccessResult
+                          type: object
+                          description: Successful note deletion result
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Result code
+                              enum:
+                                - SUCCESS
+                            message:
+                              type: string
+                              description: Result message
+                              maxLength: 500
+                            status:
+                              type: string
+                              description: Status of the operation
+                              enum:
+                                - success
+                            details:
+                              type: object
+                              description: Deleted note details
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: Unique identifier of the deleted note
+                                  format: int64
+                              required:
+                                - id
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                        - x-zs-$id: DeleteNoteErrorResult
+                          type: object
+                          description: Failed note deletion result
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Error code
+                              enum:
+                                - INVALID_DATA
+                            message:
+                              type: string
+                              description: Error message
+                              maxLength: 500
+                            status:
+                              type: string
+                              description: Status of the operation
+                              enum:
+                                - error
+                            details:
+                              type: object
+                              description: Error details
+                              additionalProperties: true
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Unique identifier of the note that failed to
+                                    delete
+                                  format: int64
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                required:
+                  - data
+              examples:
+                PartialSuccess:
+                  summary: Partial success - some notes deleted, some failed
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000116001'
+                        message: record deleted
+                        status: success
+                      - code: INVALID_DATA
+                        details:
+                          id: '111111000000116002'
+                        message: record not deleted
+                        status: error
+        '400':
+          description: Bad Request - Invalid parameters or missing required parameter
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeleteNotesBadRequestError
+                oneOf:
+                  - $ref: '#/components/schemas/RequiredParamMissingError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /Notes/{id}:
+    get:
+      operationId: getNoteById
+      summary: Get a Specific Note
+      description: Retrieves details of a specific note by its ID.
+      x-zs-llm-description: >-
+        Fetches a single note by id and optional fields filter. Use this before
+        update or delete calls to confirm the exact target note and available
+        data.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.notes.READ
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Fields'
+      responses:
+        '200':
+          description: Successfully retrieved the note
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: NotesGetByIdSuccessResponse
+                description: Response containing a single note
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Array containing the single requested note
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        A note record with static fields and dynamic additional
+                        properties
+                      additionalProperties: true
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier of the note
+                          format: int64
+                        Note_Title:
+                          type:
+                            - string
+                            - 'null'
+                          description: The title of the note
+                          maxLength: 120
+                        Note_Content:
+                          type: string
+                          description: The content/body of the note
+                          maxLength: 65535
+                        $attachments:
+                          type:
+                            - array
+                            - 'null'
+                          description: Attachments associated with the note
+                          maxItems: 5
+                          items:
+                            type: object
+                            description: Attachment file details
+                            additionalProperties: true
+                            properties:
+                              $file_id:
+                                type: string
+                                description: Unique file identifier for the attachment
+                                maxLength: 255
+                              File_Name:
+                                type: string
+                                description: Name of the attached file
+                                maxLength: 255
+                              Size:
+                                type: string
+                                description: File size in bytes
+                                format: int64
+                              id:
+                                type: string
+                                description: Unique identifier of the attachment record
+                                format: int64
+                        Parent_Id:
+                          type: object
+                          description: Parent record information
+                          additionalProperties: false
+                          properties:
+                            module:
+                              type: object
+                              description: Module information of the parent record
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: API name of the parent module
+                                  maxLength: 50
+                                id:
+                                  type: string
+                                  description: Module ID
+                                  format: int64
+                              required:
+                                - api_name
+                                - id
+                            name:
+                              type: string
+                              description: Name of the parent record
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: Unique identifier of the parent record
+                              format: int64
+                          required:
+                            - module
+                            - id
+                            - name
+                      required:
+                        - id
+                required:
+                  - data
+              examples:
+                SuccessResponse:
+                  summary: Successful note retrieval
+                  value:
+                    data:
+                      - id: '1043386000020244003'
+                        Note_Title: null
+                        Note_Content: sdf
+                        $attachments:
+                          - $file_id: 2rsp48b6960fb9f4d444dada8740791775f35
+                            File_Name: 20251117_194524.jpg
+                            Size: '1623514'
+                            id: '1043386000020248003'
+                        Parent_Id:
+                          module:
+                            api_name: Leads
+                            id: '1043386000000002175'
+                          name: a
+                          id: '1043386000019763257'
+                        Owner:
+                          name: Prasanna
+                          id: '1043386000000322001'
+                          email: prasanna.saravanan@zohocorp.com
+                        Modified_Time: '2025-11-19T19:27:53+05:30'
+                        Created_Time: '2025-11-14T11:54:12+05:30'
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: Bad Request - Invalid parameters or malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequiredParamMissingError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      operationId: updateNoteById
+      summary: Update a Specific Note
+      description: >-
+        Updates a specific note by its ID. Either note content or note title
+        must be provided (at least one is mandatory).
+      x-zs-llm-description: >-
+        Updates one note identified by path id. Provide at least one of
+        Note_Content or Note_Title in the request body. Use this for single-note
+        edits where bulk update is unnecessary.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.notes.UPDATE
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        description: Request body containing note data to update
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request payload for updating a note
+              additionalProperties: false
+              properties:
+                data:
+                  type: array
+                  description: Array containing the note to update (single item only)
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: Note object with title and/or content to update
+                    additionalProperties: true
+                    properties:
+                      Note_Content:
+                        type:
+                          - string
+                          - 'null'
+                        description: The content/body of the note
+                        maxLength: 65535
+                      Note_Title:
+                        type:
+                          - string
+                          - 'null'
+                        description: The title of the note
+                        maxLength: 120
+              required:
+                - data
+            examples:
+              UpdateNote:
+                summary: Update a note's content and title
+                value:
+                  data:
+                    - Note_Title: Follow-up Completed
+                      Note_Content: Customer requested additional information
+            x-zs-llm-examples:
+              - UpdateNote
+        required: true
+      responses:
+        '200':
+          description: Success - Note successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: NotesUpdateByIdSuccessResponse
+                description: Success response for note update
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Array of update results
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: Individual note update result
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Result code
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: Result message
+                          maxLength: 500
+                        status:
+                          type: string
+                          description: Status of the operation
+                          enum:
+                            - success
+                        details:
+                          type: object
+                          description: Updated note details
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Unique identifier of the updated note
+                              format: int64
+                            Modified_Time:
+                              type: string
+                              description: Timestamp when the note was last modified
+                              format: date-time
+                            Created_Time:
+                              type: string
+                              description: Timestamp recording note creation
+                              format: date-time
+                            Created_By:
+                              type: object
+                              description: User who created the note
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  type: string
+                                  description: Name of the user
+                                  maxLength: 255
+                                id:
+                                  type: string
+                                  description: Unique identifier of the user
+                                  format: int64
+                              required:
+                                - name
+                                - id
+                            Modified_By:
+                              type: object
+                              description: User who last modified the note
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  type: string
+                                  description: Name of the user
+                                  maxLength: 255
+                                id:
+                                  type: string
+                                  description: Unique identifier of the user
+                                  format: int64
+                              required:
+                                - name
+                                - id
+                          required:
+                            - id
+                            - Modified_Time
+                            - Created_Time
+                            - Created_By
+                            - Modified_By
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - data
+              examples:
+                SuccessfulUpdate:
+                  summary: Note successfully updated
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2023-12-19T17:30:15+05:30'
+                          Modified_By:
+                            name: Patricia Boyle
+                            id: '4876876000000327001'
+                          Created_Time: '2023-12-19T16:45:07+05:30'
+                          id: '4876876000006021002'
+                          Created_By:
+                            name: Patricia Boyle
+                            id: '4876876000000327001'
+                        message: record updated
+                        status: success
+        '400':
+          description: Bad Request - Invalid parameters or malformed request
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NotesUpdateByIdErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/ExpectedFieldMissingErrorSingle'
+                  - $ref: '#/components/schemas/InvalidDataErrorSingle'
+                  - $ref: '#/components/schemas/InvalidIdError'
+                  - $ref: '#/components/schemas/NotAllowedErrorSingle'
+                  - $ref: '#/components/schemas/CannotPerformActionErrorSingle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      operationId: deleteNoteById
+      summary: Delete a Specific Note
+      description: Permanently deletes a specific note by its ID.
+      x-zs-llm-description: >-
+        Deletes one note by path id. Use this for a single known target; for
+        deleting multiple notes, use the module-level bulk delete endpoint with
+        ids query parameter.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.notes.DELETE
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Success - Note successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: NotesDeleteByIdSuccessResponse
+                description: Success response for note deletion
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Array of deletion results
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: Individual note deletion result
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Result code
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: Result message
+                          maxLength: 500
+                        status:
+                          type: string
+                          description: Status of the operation
+                          enum:
+                            - success
+                        details:
+                          type: object
+                          description: Deleted note details
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Unique identifier of the deleted note
+                              format: int64
+                          required:
+                            - id
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - data
+              examples:
+                SuccessfulDeletion:
+                  summary: Note successfully deleted
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '4876876000006021002'
+                        message: record deleted
+                        status: success
+        '400':
+          description: Bad Request - Invalid data
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NotesDeleteByIdErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidDataErrorSingle'
+                  - $ref: '#/components/schemas/InvalidIdError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: >-
+        Unique identifier of the note. Use the [Get Notes
+        API](notes.yaml#$.paths./Notes.get) to retrieve the note IDs.
+      schema:
+        type: string
+        format: int64
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Page number for pagination
+      schema:
+        type: integer
+        format: int32
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      description: Number of records per page
+      schema:
+        type: integer
+        format: int32
+    Ids:
+      name: ids
+      in: query
+      required: false
+      description: >-
+        Comma-separated list of note IDs to retrieve specific notes. Use the
+        [Get Notes API](notes.yaml#$.paths./Notes.get) to retrieve the note IDs.
+      schema:
+        type: string
+        maxLength: 1024
+    SortBy:
+      name: sort_by
+      in: query
+      required: false
+      description: Field name to sort results by
+      schema:
+        type: string
+        enum:
+          - Modified_Time
+          - Created_Time
+          - id
+    SortOrder:
+      name: sort_order
+      in: query
+      required: false
+      description: Sort order (ascending or descending)
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+    Fields:
+      name: fields
+      in: query
+      required: false
+      description: Comma-separated list of field API names to include in the response
+      schema:
+        type: string
+        maxLength: 1024
+    PageToken:
+      name: page_token
+      in: query
+      required: false
+      description: Page token for retrieving records beyond the 2000-record limit.
+      schema:
+        type: string
+        maxLength: 2000
+  responses:
+    NoContent:
+      description: >-
+        No content - The request was successful but there are no records to
+        return
+    Unauthorized:
+      description: Unauthorized - Authentication failed
+      content:
+        application/json:
+          schema:
+            type: object
+            x-zs-$id: UnauthorizedErrorResponse
+            description: Error response for authentication failures
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - AUTHENTICATION_FAILURE
+                  - OAUTH_SCOPE_MISMATCH
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+          examples:
+            AuthenticationFailure:
+              summary: Authentication failed
+              value:
+                code: AUTHENTICATION_FAILURE
+                details: {}
+                message: Authentication failed
+                status: error
+            OAuthScopeMismatch:
+              summary: OAuth scope mismatch
+              value:
+                code: OAUTH_SCOPE_MISMATCH
+                details: {}
+                message: invalid oauth scope to access this URL
+                status: error
+    NotFound:
+      description: Not Found - The requested resource does not exist
+      content:
+        application/json:
+          schema:
+            type: object
+            x-zs-$id: NotFoundErrorResponse
+            description: Error response for not found requests
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - INVALID_URL_PATTERN
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+          examples:
+            InvalidUrlPattern:
+              summary: Invalid URL pattern
+              value:
+                code: INVALID_URL_PATTERN
+                details: {}
+                message: Please check if the URL trying to access is a correct one
+                status: error
+    InternalServerError:
+      description: Internal Server Error - An unexpected error occurred on the server
+      content:
+        application/json:
+          schema:
+            type: object
+            x-zs-$id: InternalServerErrorResponse
+            description: Error response for internal server errors
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - INTERNAL_ERROR
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+          examples:
+            InternalError:
+              summary: Internal server error
+              value:
+                code: INTERNAL_ERROR
+                details: {}
+                message: Internal Server Error
+                status: error
+  schemas:
+    RequiredParamMissingError:
+      type: object
+      description: Error response for required parameter missing
+      x-zs-$id: RequiredParamMissingError
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Error code indicating the type of error
+          enum:
+            - REQUIRED_PARAM_MISSING
+        details:
+          type: object
+          description: Additional details about the error
+          additionalProperties: true
+          properties:
+            param_name:
+              type: string
+              description: The name of the missing parameter
+              maxLength: 255
+        message:
+          type: string
+          description: Error message returned when the operation fails.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the response
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+    ExpectedFieldMissingError:
+      x-zs-$id: ExpectedFieldMissingError
+      type: object
+      description: Error response for missing expected fields
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results
+          maxItems: 100
+          items:
+            type: object
+            description: Error details for missing expected fields
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - EXPECTED_FIELD_MISSING
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+                properties:
+                  expected_fields:
+                    type: array
+                    description: List of expected fields that are missing
+                    maxItems: 2
+                    items:
+                      type: object
+                      description: Expected field details
+                      additionalProperties: false
+                      properties:
+                        api_name:
+                          type: string
+                          description: API name of the expected field
+                          maxLength: 255
+                        json_path:
+                          type: string
+                          description: JSON path to the expected field
+                          maxLength: 500
+                      required:
+                        - api_name
+                        - json_path
+                required:
+                  - expected_fields
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    MandatoryNotFoundError:
+      x-zs-$id: MandatoryNotFoundError
+      type: object
+      description: Error response for mandatory field not found
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results
+          maxItems: 100
+          items:
+            type: object
+            description: Error details for missing mandatory field
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - MANDATORY_NOT_FOUND
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+                properties:
+                  api_name:
+                    type: string
+                    description: The API name of the missing mandatory field
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: The JSON path to the missing field
+                    maxLength: 500
+                required:
+                  - api_name
+                  - json_path
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    InvalidDataError:
+      x-zs-$id: InvalidDataError
+      type: object
+      description: Error response for invalid field data
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results
+          maxItems: 100
+          items:
+            type: object
+            description: Error details for invalid data
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - INVALID_DATA
+              details:
+                type: object
+                description: >-
+                  Additional details about the error, can include various
+                  constraint information
+                additionalProperties: true
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    NoPermissionError:
+      x-zs-$id: NoPermissionError
+      type: object
+      description: Error response when user lacks required permissions
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results
+          maxItems: 100
+          items:
+            type: object
+            description: Error details for permission denied
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - NO_PERMISSION
+              details:
+                type: object
+                description: Additional details about required permissions
+                additionalProperties: false
+                properties:
+                  permissions:
+                    type: array
+                    description: List of required permissions
+                    maxItems: 10
+                    items:
+                      type: string
+                      description: Permission name
+                      maxLength: 255
+                required:
+                  - permissions
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    FileSizeExceedsError:
+      x-zs-$id: FileSizeExceedsError
+      type: object
+      description: Error response when attachment file size exceeds the limit
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results
+          maxItems: 100
+          items:
+            type: object
+            description: Error details for file size exceeded
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - FILE_SIZE_EXCEEDS
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+                properties:
+                  api_name:
+                    type: string
+                    description: API name of the field
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: JSON path to the field
+                    maxLength: 255
+                required:
+                  - api_name
+                  - json_path
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    NotAllowedError:
+      x-zs-$id: NotAllowedError
+      type: object
+      description: Error response when operation is not allowed
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results
+          maxItems: 100
+          items:
+            type: object
+            description: Error details for not allowed operation
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - NOT_ALLOWED
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+                properties:
+                  api_name:
+                    type: string
+                    description: API name of the field
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: JSON path to the field
+                    maxLength: 500
+                required:
+                  - api_name
+                  - json_path
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    CannotPerformActionError:
+      x-zs-$id: CannotPerformActionError
+      type: object
+      description: Error response when user cannot perform action on a record
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results
+          maxItems: 100
+          items:
+            type: object
+            description: Error details for cannot perform action
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - CANNOT_PERFORM_ACTION
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    CannotPerformActionErrorSingle:
+      x-zs-$id: CannotPerformActionErrorSingle
+      type: object
+      description: >-
+        Error response when user cannot perform action on a record in single
+        record operations
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results for single record
+          maxItems: 1
+          items:
+            type: object
+            description: Error details for cannot perform action
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - CANNOT_PERFORM_ACTION
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    InvalidDataLimitExceededError:
+      x-zs-$id: InvalidDataLimitExceededError
+      type: object
+      description: Error response when data array exceeds maximum limit
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Error code indicating the type of error
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          description: Additional details about the error
+          additionalProperties: false
+          properties:
+            maximum_length:
+              type: integer
+              description: Maximum allowed number of elements in data array
+              format: int32
+            api_name:
+              type: string
+              description: API name of the field that exceeded the limit
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path to the field that exceeded the limit
+              maxLength: 500
+          required:
+            - maximum_length
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message returned when the operation fails.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the response
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+    ExpiredValueError:
+      x-zs-$id: ExpiredValueError
+      type: object
+      description: Error response when a token or value has expired
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Error code indicating the type of error
+          enum:
+            - EXPIRED_VALUE
+        details:
+          type: object
+          description: Additional details about the expired value
+          additionalProperties: false
+          properties:
+            param_name:
+              type: string
+              description: Name of the parameter with expired value
+              maxLength: 100
+          required:
+            - param_name
+        message:
+          type: string
+          description: Error message returned when the operation fails.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the response
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+    DiscretePaginationLimitExceededError:
+      x-zs-$id: DiscretePaginationLimitExceededError
+      type: object
+      description: Error response for pagination limit exceeded
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Error code indicating the type of error
+          enum:
+            - DISCRETE_PAGINATION_LIMIT_EXCEEDED
+        details:
+          type: object
+          description: Additional details about the pagination limit
+          additionalProperties: true
+          properties:
+            limit:
+              type: integer
+              description: >-
+                Maximum number of records that can be retrieved without
+                page_token
+              format: int32
+        message:
+          type: string
+          description: Error message returned when the operation fails.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the response
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+    InvalidIdError:
+      x-zs-$id: InvalidIdError
+      type: object
+      description: Error response when an invalid record ID is provided
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Error code indicating the type of error
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          description: Additional details about the error
+          additionalProperties: false
+          properties:
+            resource_path_index:
+              type: integer
+              description: Index in the resource path where the invalid ID was found
+              format: int32
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message returned when the operation fails.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the response
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+    ExpectedFieldMissingErrorSingle:
+      x-zs-$id: ExpectedFieldMissingErrorSingle
+      type: object
+      description: Error response for missing expected fields in single record operations
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results for single record
+          maxItems: 1
+          items:
+            type: object
+            description: Error details for missing expected fields
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - EXPECTED_FIELD_MISSING
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+                properties:
+                  expected_fields:
+                    type: array
+                    description: List of expected fields that are missing
+                    maxItems: 2
+                    items:
+                      type: object
+                      description: Expected field details
+                      additionalProperties: false
+                      properties:
+                        api_name:
+                          type: string
+                          description: API name of the expected field
+                          maxLength: 255
+                        json_path:
+                          type: string
+                          description: JSON path to the expected field
+                          maxLength: 500
+                required:
+                  - expected_fields
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    InvalidDataErrorSingle:
+      x-zs-$id: InvalidDataErrorSingle
+      type: object
+      description: Error response for invalid data in single record operations
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results for single record
+          maxItems: 1
+          items:
+            type: object
+            description: Error details for invalid data
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - INVALID_DATA
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: true
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+    NotAllowedErrorSingle:
+      x-zs-$id: NotAllowedErrorSingle
+      type: object
+      description: Error response when operation is not allowed in single record operations
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of error results for single record
+          maxItems: 1
+          items:
+            type: object
+            description: Error details for not allowed operation
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error
+                enum:
+                  - NOT_ALLOWED
+              details:
+                type: object
+                description: Additional details about the error
+                additionalProperties: false
+                properties:
+                  api_name:
+                    type: string
+                    description: API name of the field
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: JSON path to the field
+                    maxLength: 500
+                required:
+                  - api_name
+                  - json_path
+              message:
+                type: string
+                description: Error message returned when the operation fails.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the response
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+  headers: {}
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.notes.READ: Read access to Notes
+            ZohoCRM.modules.notes.CREATE: Create access to Notes
+            ZohoCRM.modules.notes.UPDATE: Update access to Notes
+            ZohoCRM.modules.notes.DELETE: Delete access to Notes
+            ZohoCRM.modules.notes.ALL: All access to Notes
+            ZohoCRM.modules.ALL: All access to all modules
+            ZohoCRM.settings.ALL: All access to settings
+            ZohoCRM.org.READ: Read access to organization details

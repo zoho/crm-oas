@@ -1,0 +1,21 @@
+# Deal Contact Roles
+
+- [OpenAPI specification](deal_contact_roles.yaml)
+- [Deal Contact Roles](mds/getAssociatedContactRoles.md)
+  - Retrieve contact roles associated with a deal.
+  - [Examples](mds/examples/getAssociatedContactRoles.md)
+- [Deal Contact Roles](mds/upsertContactRoleRelations.md)
+  - Add contact roles to a deal or update existing contact role relations in bulk.
+  - [Examples](mds/examples/upsertContactRoleRelations.md)
+- [Deal Contact Roles](mds/deleteContactRoleRelations.md)
+  - Remove one or more contact role associations from a deal using their relation IDs.
+  - [Examples](mds/examples/deleteContactRoleRelations.md)
+- [Deal Contact Roles](mds/getDealContactRoleForContact.md)
+  - Retrieves the contact role relation for a specific contact associated with a deal.
+  - [Examples](mds/examples/getDealContactRoleForContact.md)
+- [Deal Contact Roles](mds/associateContactRoleToDeal.md)
+  - Assign or update a contact role for a specific contact on a deal.
+  - [Examples](mds/examples/associateContactRoleToDeal.md)
+- [Deal Contact Roles](mds/deleteContactRoleRelation.md)
+  - Remove a specific contact-deal relation using the contact identifier in the path.
+  - [Examples](mds/examples/deleteContactRoleRelation.md)

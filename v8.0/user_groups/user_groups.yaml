@@ -1,0 +1,3671 @@
+openapi: 3.1.0
+info:
+  title: User Groups
+  description: >-
+    User groups in Zoho CRM let you organize users into collections for
+    centralized access control and resource sharing. You can create, update, and
+    delete groups, retrieve their associated sources and counts, and view which
+    CRM resources are bound to each group.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Zoho CRM public API base URL. Replace {dc} with your data center code and
+      {version} with the API version.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: |-
+          Specify the data center domain suffix for your Zoho CRM account.
+          Possible values:
+          **com** - United States (default)
+          **eu** - Europe
+          **in** - India
+          **cn** - China
+          **au** - Australia
+      version:
+        default: v8
+        description: Specify the API version to use. Default is v8.
+paths:
+  /settings/user_groups:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.READ
+      summary: Get user groups
+      description: >-
+        To retrieve a paginated list of user groups configured in your Zoho CRM
+        organization, with optional filtering by name or criteria, and optional
+        inclusion of member source counts.
+      operationId: getUserGroups
+      parameters:
+        - $ref: '#/components/parameters/Filters'
+        - $ref: '#/components/parameters/Include'
+        - $ref: '#/components/parameters/Ids'
+        - $ref: '#/components/parameters/Name'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: >-
+            Returns a paginated list of user groups configured in your Zoho CRM
+            organization.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserGroupsResponse
+                description: >-
+                  Represents the successful response for retrieving the list of
+                  user groups in the Zoho CRM organization, containing a
+                  paginated array of user group objects and pagination metadata.
+                type: object
+                additionalProperties: false
+                properties:
+                  user_groups:
+                    description: >-
+                      Represents the list of user group objects returned for the
+                      current page. 
+                    type: array
+                    maxItems: 200
+                    items:
+                      description: >-
+                        Represents a single user group configured in the Zoho
+                        CRM organization, including its name, description,
+                        member sources, and creation and modification metadata.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        created_by:
+                          description: >-
+                            Represents the CRM user who created this user
+                            group. 
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: >-
+                                Represents the display name of the CRM user who
+                                created the user group. 
+                              type: string
+                              maxLength: 512
+                            id:
+                              description: >-
+                                Represents the unique ID of the CRM user who
+                                created the user group. 
+                              type: string
+                              maxLength: 19
+                          required:
+                            - name
+                            - id
+                        modified_by:
+                          description: >-
+                            Represents the CRM user who last modified this user
+                            group, or null if the group has not been modified
+                            since creation. 
+                          oneOf:
+                            - description: >-
+                                Represents the CRM user who last modified the
+                                user group, containing the user ID and display
+                                name.
+                              type: object
+                              x-zs-$id: ModifiedBy
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  description: >-
+                                    Represents the display name of the CRM user
+                                    who last modified the user group. 
+                                  type: string
+                                  maxLength: 512
+                                id:
+                                  description: >-
+                                    Represents the unique ID of the CRM user who
+                                    last modified the user group. 
+                                  type: string
+                                  maxLength: 19
+                              required:
+                                - name
+                                - id
+                            - x-zs-$id: NoModifierInfo
+                              description: >-
+                                Indicates that the user group has not been
+                                modified since its creation.
+                              type: 'null'
+                        modified_time:
+                          description: >-
+                            Represents the date and time at which the user group
+                            was last modified, in ISO 8601 format, or null if
+                            the group has not been modified since creation. 
+                          oneOf:
+                            - x-zs-$id: ModificationTimestamp
+                              description: >-
+                                Represents the date and time of the most recent
+                                modification to the user group, in ISO 8601
+                                format.
+                              type: string
+                              format: date-time
+                            - x-zs-$id: NoModificationTimestamp
+                              description: >-
+                                Indicates that the user group has not been
+                                modified since its creation.
+                              type: 'null'
+                        created_time:
+                          description: >-
+                            Represents the date and time of user group creation,
+                            in ISO 8601 format. 
+                          type: string
+                          format: date-time
+                        description:
+                          description: >-
+                            Represents the description of the user group, or
+                            null if no description was provided. 
+                          oneOf:
+                            - x-zs-$id: GroupDescriptionText
+                              description: >-
+                                Represents the text description of the user
+                                group.
+                              type: string
+                              maxLength: 250
+                            - x-zs-$id: NoDescriptionProvided
+                              description: >-
+                                Indicates that no description was provided for
+                                this user group.
+                              type: 'null'
+                        id:
+                          x-zs-$id: UserGroupId
+                          description: 'Represents the unique ID of the user group. '
+                          type: string
+                          maxLength: 19
+                        name:
+                          description: 'Represents the name of the user group. '
+                          type: string
+                          maxLength: 250
+                          x-zs-$id: UserGroupName
+                        sources_count:
+                          description: >-
+                            Represents the count of member sources for the user
+                            group, categorized by source type. Returned when the
+                            **include** parameter is set to **sources_count**.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            territories:
+                              description: >-
+                                Represents the number of CRM territories
+                                configured as member sources of this group.
+                              type: integer
+                              format: int32
+                            roles:
+                              description: >-
+                                Represents the number of CRM roles configured as
+                                member sources of this group.
+                              type: integer
+                              format: int32
+                            groups:
+                              description: >-
+                                Represents the number of other user groups
+                                configured as member sources of this group.
+                              type: integer
+                              format: int32
+                            users:
+                              description: >-
+                                Represents the count of CRM users configured as
+                                member sources of this group, categorized by
+                                user status.
+                              type: integer
+                              format: int32
+                      required:
+                        - created_by
+                        - modified_by
+                        - modified_time
+                        - created_time
+                        - description
+                        - id
+                        - name
+                  info:
+                    type: object
+                    description: >-
+                      Represents the pagination metadata for the current page of
+                      results. 
+                    additionalProperties: false
+                    properties:
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the number of user group records returned
+                          per page. 
+                      count:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the number of user group records returned
+                          in the current page. 
+                      page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the current page number in the paginated
+                          response. 
+                      more_records:
+                        type: boolean
+                        description: >-
+                          Indicates whether additional pages of user group
+                          records are available beyond the current page. 
+
+                          Possible values:
+
+                          **true** - More records are available on subsequent
+                          pages.
+
+                          **false** - No more records remain after the current
+                          page.
+                    required:
+                      - per_page
+                      - count
+                      - page
+                      - more_records
+                required:
+                  - user_groups
+                  - info
+              examples:
+                Success:
+                  summary: Successful response with user groups
+                  value:
+                    user_groups:
+                      - created_time: '2022-11-21T12:33:12+05:30'
+                        sources_count:
+                          territories: 1
+                          roles: 2
+                          users: 2
+                          groups: 1
+                        modified_time: '2022-11-21T13:21:46+05:30'
+                        name: group 1
+                        modified_by:
+                          name: Patricia Boyle
+                          id: '3652397000000186017'
+                        description: groups API
+                        id: '3652397000009949005'
+                        created_by:
+                          name: Patricia Boyle
+                          id: '3652397000000186017'
+                      - created_time: '2023-12-01T10:00:00Z'
+                        sources_count:
+                          roles: 2
+                        modified_time: null
+                        name: group test
+                        modified_by: null
+                        description: null
+                        id: '3652397000009952001'
+                        created_by:
+                          name: Patricia Boyle
+                          id: '3652397000000186017'
+                    info:
+                      per_page: 200
+                      count: 2
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows a paginated response containing two user groups with
+                    their ID, name, description, creation and modification
+                    metadata, and pagination info.
+        '204':
+          description: No user groups have been created for this Zoho CRM organization.
+        '400':
+          description: >-
+            The filters parameter contains invalid data. **Resolution:** Provide
+            a valid filter expression in the **filters** parameter.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupsInvalidDataError
+                description: >-
+                  Represents the error response returned when a request
+                  parameter contains invalid data.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the request validation
+                      failure. 
+
+                      Possible values:
+
+                      **INVALID_DATA** - One or more request parameters contain
+                      invalid data.
+                    type: string
+                    enum:
+                      - INVALID_DATA
+                  details:
+                    description: >-
+                      Represents additional details about the validation error,
+                      including the name of the parameter that caused the
+                      failure. 
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      param_name:
+                        description: >-
+                          Represents the name of the request parameter that
+                          contains invalid data. 
+                        type: string
+                        maxLength: 100
+                    required:
+                      - param_name
+                  message:
+                    description: >-
+                      Represents the error message describing the validation
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: |-
+                      Represents the status of the request outcome. 
+                      Possible values:
+                      **error** - The request failed due to a validation error.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                NoPermission:
+                  summary: Invalid filters parameter
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      param_name: filters
+                    message: The given filters is not a valid json
+                    status: error
+                  description: >-
+                    Shows the error response when the filters parameter value is
+                    not a valid JSON string.
+        '403':
+          description: >-
+            The authenticated user does not have permission to access user
+            groups. **Resolution:** Grant the **Crm_Implied_Manage_Groups**
+            permission in the CRM profile settings.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupsPermissionError
+                description: >-
+                  Represents the error response returned when the authenticated
+                  user lacks the required CRM permission to access user groups.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the authorization failure. 
+
+                      Possible values:
+
+                      **NO_PERMISSION** - The authenticated user does not have
+                      permission to access user groups.
+                    type: string
+                    enum:
+                      - NO_PERMISSION
+                  details:
+                    description: >-
+                      Represents additional details about the authorization
+                      failure, including the missing permissions. 
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        description: >-
+                          Represents the name of the CRM permission that the
+                          authenticated user lacks to access user groups. 
+                        type: string
+                        maxLength: 100
+                    required:
+                      - permissions
+                  message:
+                    description: >-
+                      Represents the error message describing the authorization
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: >-
+                      Represents the status of the request outcome. 
+
+                      Possible values:
+
+                      **error** - The request failed due to an authorization
+                      error.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                NoPermission:
+                  summary: User does not have permission to access groups
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions: Crm_Implied_Manage_Groups
+                    message: You do not have permission to access user groups
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user does
+                    not have the required CRM permission to access user groups.
+    post:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.CREATE
+      summary: Create a user group
+      description: >-
+        To create a new user group in your Zoho CRM organization with a
+        specified name, optional description, and member sources (users, roles,
+        or territories).
+      operationId: createGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: Request body schema for creating a user group.
+              type: object
+              additionalProperties: false
+              properties:
+                user_groups:
+                  description: >-
+                    Specify an array containing up to 10 user group objects to
+                    create.
+                  type: array
+                  maxItems: 10
+                  items:
+                    description: >-
+                      Specify the details of the user group to create, including
+                      its name, optional description, and member sources.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      description:
+                        description: >-
+                          Specify an optional text description for the user
+                          group.
+                        oneOf:
+                          - x-zs-$id: UserGroupDescriptionText
+                            description: Specify the text description for the user group.
+                            type: string
+                            maxLength: 250
+                          - x-zs-$id: NoDescriptionProvidedForCreateUserGroup
+                            description: Use null to indicate no description.
+                            type: 'null'
+                      name:
+                        description: Specify the name of the user group.
+                        type: string
+                        maxLength: 250
+                      sources:
+                        description: >-
+                          Specify the array of member sources for the user
+                          group.
+                        type: array
+                        maxItems: 200
+                        items:
+                          description: >-
+                            Specify one member source entry for the user group,
+                            including the source type, the source identifier,
+                            and optional flags for subordinates or
+                            sub-territories.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            type:
+                              description: >-
+                                Specify the type of the member source being
+                                added to the user group.
+
+                                Possible values:
+
+                                **territories** - Add a CRM territory as a
+                                member source.
+
+                                **roles** - Add a CRM role as a member source.
+
+                                **users** - Add individual CRM users as a member
+                                source.
+                              type: string
+                              enum:
+                                - territories
+                                - roles
+                                - users
+                            source:
+                              description: >-
+                                Specify the identifier of the source to add to
+                                the user group.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  description: >-
+                                    Specify the unique ID of the user, role, or
+                                    territory to add as a member source.
+                                  type: string
+                                  maxLength: 19
+                              required:
+                                - id
+                            subordinates:
+                              description: >-
+                                Specify whether to include users in subordinate
+                                roles when the source type is **roles**.
+
+                                Possible values:
+
+                                **true** - Include users in subordinate roles.
+
+                                **false** - Do not include users in subordinate
+                                roles.
+                              oneOf:
+                                - x-zs-$id: BooleanFlagToIncludeSubordinates
+                                  description: >-
+                                    Specify true to include users in subordinate
+                                    roles, or false to exclude them.
+                                  type: boolean
+                                - x-zs-$id: NoSubordinatesFlagProvided
+                                  description: Use null to omit the subordinates flag.
+                                  type: 'null'
+                            sub_territories:
+                              description: >-
+                                Specify whether to include members from
+                                sub-territories when the source type is
+                                **territories**.
+
+                                Possible values:
+
+                                **true** - Include members from sub-territories.
+
+                                **false** - Do not include members from
+                                sub-territories.
+                              oneOf:
+                                - x-zs-$id: BooleanFlagToIncludeTerritories
+                                  description: >-
+                                    Specify true to include members from
+                                    sub-territories, or false to exclude them.
+                                  type: boolean
+                                - x-zs-$id: ToNoSubTerritoriesFlagProvided
+                                  description: Use null to omit the sub-territories flag.
+                                  type: 'null'
+                          required:
+                            - type
+                            - source
+                    required:
+                      - name
+                      - sources
+              required:
+                - user_groups
+            examples:
+              CreateGroupExample:
+                summary: Create a user group with role and territory sources
+                value:
+                  user_groups:
+                    - name: Sales Team
+                      description: Sales department user group
+                      sources:
+                        - type: users
+                          source:
+                            id: '3652397000000186017'
+                        - type: roles
+                          source:
+                            id: '3652397000000026008'
+                          subordinates: true
+                description: >-
+                  Shows a request body for creating a user group named "Sample
+                  Group" with a role source (including subordinates) and a
+                  territory source (including sub-territories).
+        required: true
+        description: >-
+          Provide the user group details including the name, optional
+          description, and member sources (users, roles, or territories).
+      responses:
+        '201':
+          description: >-
+            User group created successfully. Returns the new group ID and a
+            success status.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ResponseForUserGroupCreation
+                description: Response schema for a successful user group creation.
+                type: object
+                additionalProperties: false
+                properties:
+                  user_groups:
+                    description: >-
+                      Represents the array containing the result of the user
+                      group creation operation. 
+                    type: array
+                    maxItems: 10
+                    items:
+                      description: >-
+                        Represents the creation result for the user group,
+                        including the status, result code, message, and the ID
+                        of the newly created group.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        code:
+                          description: >-
+                            Represents the result code for the user group
+                            creation operation. 
+
+                            Possible values:
+
+                            **SUCCESS** - The user group creation succeeded.
+                          type: string
+                          enum:
+                            - SUCCESS
+                        message:
+                          description: >-
+                            Represents the result message for the user group
+                            creation operation. 
+                          type: string
+                          maxLength: 500
+                        status:
+                          description: >-
+                            Represents the status of the user group creation
+                            operation. 
+
+                            Possible values:
+
+                            **success** - The user group creation succeeded.
+                          type: string
+                          enum:
+                            - success
+                        details:
+                          description: >-
+                            Represents additional details about the created user
+                            group. 
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            id:
+                              x-zs-$id: UserGroupResultId
+                              description: >-
+                                Represents the unique ID of the newly created
+                                user group. 
+                              type: string
+                              maxLength: 19
+                          required:
+                            - id
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - user_groups
+              examples:
+                SuccessWithId:
+                  summary: User group created successfully
+                  value:
+                    user_groups:
+                      - code: SUCCESS
+                        message: User group created successfully
+                        status: success
+                        details:
+                          id: '3652397000009949005'
+                  description: >-
+                    Shows the success response for a user group creation,
+                    returning the new group ID and a SUCCESS code.
+        '400':
+          description: >-
+            The user group could not be created. **Resolution:** Check that the
+            **name** field is provided and unique, all required fields are
+            present, and source IDs are valid.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserGroupCreationFailures
+                description: Response schema for a failed user group creation.
+                type: object
+                additionalProperties: false
+                properties:
+                  user_groups:
+                    description: >-
+                      Represents the array containing the error details for the
+                      failed user group creation operation. 
+                    type: array
+                    maxItems: 10
+                    items:
+                      description: >-
+                        Represents the error details for a user group creation
+                        failure, including the error code, message, status, and
+                        field-level details.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        status:
+                          description: >-
+                            Represents the status of the user group creation
+                            operation. 
+
+                            Possible values:
+
+                            **error** - The user group creation failed.
+                          type: string
+                          enum:
+                            - error
+                        code:
+                          description: >-
+                            Represents the error code for the user group
+                            creation failure. 
+
+                            Possible values:
+
+                            **DUPLICATE_DATA** - A user group with the same name
+                            already exists.
+
+                            **INVALID_DATA** - One or more field values are
+                            invalid.
+
+                            **MANDATORY_NOT_FOUND** - A required field is
+                            missing from the request.
+                          type: string
+                          enum:
+                            - DUPLICATE_DATA
+                            - INVALID_DATA
+                            - MANDATORY_NOT_FOUND
+                        message:
+                          description: >-
+                            Represents the error message describing the user
+                            group creation failure. 
+                          type: string
+                          maxLength: 500
+                        details:
+                          description: >-
+                            Represents additional details about the creation
+                            error, including the API name and JSON path of the
+                            problematic field. 
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            api_name:
+                              description: >-
+                                Represents the API name of the field that caused
+                                the creation error. 
+                              type: string
+                              maxLength: 100
+                            json_path:
+                              description: >-
+                                Represents the JSON path to the field that
+                                caused the creation error. 
+                              type: string
+                              maxLength: 200
+                          required:
+                            - api_name
+                            - json_path
+                      required:
+                        - status
+                        - code
+                        - message
+                        - details
+                required:
+                  - user_groups
+              examples:
+                CreateGroupError:
+                  summary: Invalid request body for group creation
+                  value:
+                    user_groups:
+                      - status: error
+                        code: DUPLICATE_DATA
+                        message: A user group with the same name already exists.
+                        details:
+                          api_name: name
+                          json_path: $.user_groups[0].name
+                  description: >-
+                    Shows the error response when the request body is invalid,
+                    such as a missing required field or a duplicate group name.
+  /settings/user_groups/{group}:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.READ
+      operationId: getGroup
+      summary: Get a user group
+      description: >-
+        To retrieve the details of a specific user group in your Zoho CRM
+        organization by its unique ID, with optional inclusion of member source
+        counts.
+      parameters:
+        - $ref: '#/components/parameters/Group'
+        - $ref: '#/components/parameters/Include'
+        - $ref: '#/components/parameters/Filters'
+        - $ref: '#/components/parameters/Ids'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '200':
+          description: >-
+            Returns the details of the specified user group, including name,
+            description, creation and modification metadata, and optional source
+            counts.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserGroupSuccessResponse
+                description: >-
+                  Response schema containing the details of the specified user
+                  group.
+                type: object
+                additionalProperties: false
+                properties:
+                  user_groups:
+                    description: >-
+                      Represents an array containing the details of the
+                      specified user group. 
+                    type: array
+                    maxItems: 200
+                    items:
+                      description: >-
+                        Represents the details of a user group, including its
+                        name, description, creation and modification metadata,
+                        and optional member source counts.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        created_by:
+                          description: 'Represents the user who created this user group. '
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: >-
+                                Represents the name of the user who created this
+                                group. 
+                              type: string
+                              maxLength: 512
+                            id:
+                              description: >-
+                                Represents the unique ID of the user who created
+                                this group. 
+                              type: string
+                              maxLength: 19
+                          required:
+                            - name
+                            - id
+                        modified_by:
+                          description: >-
+                            Represents the user who last modified this user
+                            group. 
+                          oneOf:
+                            - x-zs-$id: ModifierUserInformation
+                              description: >-
+                                Represents the user who last modified this
+                                group, with their ID and name.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  description: >-
+                                    Represents the name of the user who last
+                                    modified this group. 
+                                  type: string
+                                  maxLength: 512
+                                id:
+                                  description: >-
+                                    Represents the unique ID of the user who
+                                    last modified this group. 
+                                  type: string
+                                  maxLength: 19
+                              required:
+                                - name
+                                - id
+                            - x-zs-$id: NoModifierInformationAvailable
+                              description: >-
+                                Indicates that this group has not been modified
+                                since creation.
+                              type: 'null'
+                        modified_time:
+                          description: >-
+                            Represents the date and time when the user group was
+                            last modified. 
+                          oneOf:
+                            - x-zs-$id: LastModificationTimestamp
+                              description: >-
+                                Represents the timestamp of the last
+                                modification in ISO 8601 format.
+                              type: string
+                              format: date-time
+                            - x-zs-$id: NoModificationTimeAvailable
+                              description: >-
+                                Indicates that the group has not been modified
+                                since creation.
+                              type: 'null'
+                        created_time:
+                          description: >-
+                            Represents the date and time of user group creation,
+                            in ISO 8601 format. 
+                          type: string
+                          format: date-time
+                        description:
+                          description: >-
+                            Represents the text description of the user group.
+                            Present in the response when a description was
+                            provided during group creation.
+                          oneOf:
+                            - x-zs-$id: GroupDescription
+                              description: >-
+                                Represents the text description of the user
+                                group.
+                              type: string
+                              maxLength: 250
+                            - x-zs-$id: NoGroupDescription
+                              description: >-
+                                Indicates that no description was provided for
+                                the user group.
+                              type: 'null'
+                        id:
+                          description: 'Represents the unique identifier of the user group. '
+                          type: string
+                          maxLength: 19
+                          x-zs-$id: GroupId
+                        name:
+                          description: 'Represents the name of the user group. '
+                          type: string
+                          maxLength: 250
+                        sources_count:
+                          description: >-
+                            Represents the count of member sources by type for
+                            this user group. Present when the **include** query
+                            parameter includes **sources_count**.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            territories:
+                              description: >-
+                                Represents the number of territory sources in
+                                this user group. Present when **sources_count**
+                                is included.
+                              type: integer
+                              format: int32
+                            roles:
+                              description: >-
+                                Represents the number of role sources in this
+                                user group. Present when **sources_count** is
+                                included.
+                              type: integer
+                              format: int32
+                            groups:
+                              description: >-
+                                Represents the number of group sources in this
+                                user group. Present when **sources_count** is
+                                included.
+                              type: integer
+                              format: int32
+                            users:
+                              description: >-
+                                Represents the count of individual user sources
+                                in this group, broken down by user status.
+                                Present when **sources_count** is included.
+                              type: integer
+                              format: int32
+                      required:
+                        - created_by
+                        - modified_by
+                        - modified_time
+                        - created_time
+                        - description
+                        - id
+                        - name
+                  info:
+                    type: object
+                    description: 'Represents pagination information for the response. '
+                    additionalProperties: false
+                    properties:
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the maximum number of user group records
+                          returned per page. 
+                      count:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the total number of user groups returned in
+                          the current response. 
+                      page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the current page number in the paginated
+                          response. 
+                      more_records:
+                        type: boolean
+                        description: >-
+                          Indicates whether additional user group records are
+                          available beyond the current page. 
+                    required:
+                      - per_page
+                      - count
+                      - page
+                      - more_records
+                required:
+                  - user_groups
+              examples:
+                Success:
+                  summary: Successful response with the user group details
+                  value:
+                    user_groups:
+                      - created_time: '2022-11-21T12:33:12+05:30'
+                        sources_count:
+                          territories: 1
+                          roles: 2
+                          users: 3
+                          groups: 1
+                        modified_time: '2022-11-21T13:21:46+05:30'
+                        name: group 1
+                        modified_by:
+                          name: Patricia Boyle
+                          id: '3652397000000186017'
+                        description: groups API
+                        id: '3652397000009949005'
+                        created_by:
+                          name: Patricia Boyle
+                          id: '3652397000000186017'
+                    info:
+                      per_page: 200
+                      count: 1
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows the details of a specific user group, including its
+                    name, description, creation and modification metadata, and
+                    member source counts.
+        '204':
+          description: The specified user group was not found or has no data to return.
+        '400':
+          description: >-
+            The group ID in the URL is invalid. **Resolution:** Provide a valid
+            numeric user group ID in the **group** path parameter.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupPermissionIssue
+                description: Response schema for an invalid group ID error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the request failure. 
+
+                      Possible values:
+
+                      **INVALID_DATA** - The group ID in the URL is invalid or
+                      does not reference an existing user group.
+                    type: string
+                    enum:
+                      - INVALID_DATA
+                  details:
+                    description: 'Represents additional details about the request error. '
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      resource_path_index:
+                        description: >-
+                          Represents the index of the path segment where the
+                          invalid resource ID was found. 
+                        type: integer
+                        format: int32
+                    required:
+                      - resource_path_index
+                  message:
+                    description: >-
+                      Represents the error message describing the request
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: |-
+                      Represents the status of the request operation. 
+                      Possible values:
+                      **error** - The request failed due to an invalid group ID.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid group ID in request URL
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the group ID in the URL does
+                    not match an existing user group.
+        '404':
+          description: >-
+            The request URL does not match any configured endpoint pattern.
+            **Resolution:** Verify the request URL follows the pattern
+            /settings/user_groups/{group}.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupInvalidURLPatternErrorSingleGet
+                description: Response schema for an invalid URL pattern error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the URL pattern failure. 
+
+                      Possible values:
+
+                      **INVALID_URL_PATTERN** - The request URL does not match
+                      any configured API endpoint.
+
+                      **URL_RULE_NOT_CONFIGURED** - The URL routing rule for
+                      this endpoint is not configured.
+                    type: string
+                    enum:
+                      - INVALID_URL_PATTERN
+                      - URL_RULE_NOT_CONFIGURED
+                  details:
+                    description: >-
+                      Represents additional details about the URL pattern
+                      error. 
+                    type: object
+                    additionalProperties: false
+                    properties: {}
+                  message:
+                    description: >-
+                      Represents the error message describing the URL pattern
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: |-
+                      Represents the status of the request operation. 
+                      Possible values:
+                      **error** - The request URL pattern was invalid.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the request URL does not match
+                    any configured API endpoint pattern.
+    put:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.UPDATE
+      summary: Update a user group
+      description: >-
+        To update the name, description, and member sources of an existing user
+        group in your Zoho CRM organization.
+      operationId: updateGroup
+      parameters:
+        - $ref: '#/components/parameters/Group'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: Request body schema for updating a user group.
+              type: object
+              additionalProperties: false
+              properties:
+                user_groups:
+                  description: Specify an array containing one user group object to update.
+                  type: array
+                  maxItems: 1
+                  items:
+                    description: >-
+                      Specify the updated details for the user group, including
+                      the name, optional description, and member sources.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      description:
+                        description: >-
+                          Specify an updated text description for the user
+                          group, or null to remove the description.
+                        oneOf:
+                          - x-zs-$id: UserGroupDescription
+                            description: >-
+                              Specify the updated text description for the user
+                              group.
+                            type: string
+                            maxLength: 250
+                          - x-zs-$id: NoUserGroupDescriptionProvided
+                            description: Use null to remove the existing description.
+                            type: 'null'
+                      name:
+                        description: >-
+                          The name to be updated for the user group. Accepts
+                          alphanumeric characters. Note that the name must be
+                          unique for each group.
+                        type: string
+                        maxLength: 250
+                      sources:
+                        description: >-
+                          Specify the updated array of member sources for the
+                          user group. Replaces all existing sources.
+                        type: array
+                        maxItems: 200
+                        items:
+                          description: >-
+                            Specify one member source entry to add to the user
+                            group, including the source type, identifier, and
+                            optional flags.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            type:
+                              description: >-
+                                Specify the type of the member source being
+                                updated for the user group.
+
+                                Possible values:
+
+                                **territories** - Add a CRM territory as a
+                                member source.
+
+                                **roles** - Add a CRM role as a member source.
+
+                                **users** - Add individual CRM users as a member
+                                source.
+                              type: string
+                              enum:
+                                - territories
+                                - roles
+                                - users
+                            source:
+                              description: >-
+                                Specify the identifier of the source to add to
+                                the user group.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  description: >-
+                                    Specify the unique ID of the user, role, or
+                                    territory to add as a member source.
+                                  type: string
+                                  maxLength: 19
+                              required:
+                                - id
+                            subordinates:
+                              description: >-
+                                Specify whether to include users in subordinate
+                                roles when the source type is **roles** or
+                                **territories**.
+
+                                Possible values:
+
+                                **true** - Include users in subordinate roles.
+
+                                **false** - Do not include users in subordinate
+                                roles.
+                              oneOf:
+                                - x-zs-$id: FlagToIncludeSubordinatesForGET
+                                  description: >-
+                                    Specify **true** to include users in
+                                    subordinate roles, or false to exclude them.
+                                  type: boolean
+                                - x-zs-$id: NoSubordinatesFlagProvidedForGET
+                                  description: Use null to omit the subordinates flag.
+                                  type: 'null'
+                            sub_territories:
+                              description: >-
+                                Specify whether to include members from
+                                sub-territories when the source type is
+                                **territories**.
+
+                                Possible values:
+
+                                **true** - Include members from sub-territories.
+
+                                **false** - Do not include members from
+                                sub-territories.
+                              oneOf:
+                                - x-zs-$id: FlagToIncludeTerritoriesForGET
+                                  description: >-
+                                    Specify true to include members from
+                                    sub-territories, or false to exclude them.
+                                  type: boolean
+                                - x-zs-$id: NoSubTerritoriesFlagProvided
+                                  description: Use null to omit the sub-territories flag.
+                                  type: 'null'
+                          required:
+                            - type
+                            - source
+                    required:
+                      - name
+                      - sources
+              required:
+                - user_groups
+            examples:
+              UpdateGroupExample:
+                summary: Update a user group name, description, and sources
+                value:
+                  user_groups:
+                    - name: Updated Sales Team
+                      description: Updated sales department user group
+                      sources:
+                        - type: users
+                          source:
+                            id: '3652397000000186017'
+                        - type: roles
+                          source:
+                            id: '3652397000000026008'
+                          subordinates: true
+                description: >-
+                  Shows a request body for updating a user group with a new
+                  name, description, and a single territory source with
+                  sub-territories.
+        required: true
+        description: >-
+          Provide the updated user group details including the name, optional
+          description, and member sources.
+      responses:
+        '200':
+          description: >-
+            User group updated successfully. Returns the group ID and a success
+            status.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserGroupUpdateResponse
+                description: Response schema for a successful user group update.
+                type: object
+                additionalProperties: false
+                properties:
+                  user_groups:
+                    description: >-
+                      Represents the array containing the result of the user
+                      group update operation. 
+                    type: array
+                    maxItems: 1
+                    items:
+                      description: >-
+                        Represents the update result for the user group,
+                        including the status, result code, message, and the
+                        group ID.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        code:
+                          description: >-
+                            Represents the result code for the user group update
+                            operation. 
+
+                            Possible values:
+
+                            **SUCCESS** - The user group update succeeds.
+                          type: string
+                          enum:
+                            - SUCCESS
+                        message:
+                          description: >-
+                            Represents the result message for the user group
+                            update operation. 
+                          type: string
+                          maxLength: 500
+                        status:
+                          description: >-
+                            Represents the status of the user group update
+                            operation. 
+
+                            Possible values:
+
+                            **success** - The user group update succeeds.
+                          type: string
+                          enum:
+                            - success
+                        details:
+                          description: >-
+                            Represents additional details about the updated user
+                            group. 
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            id:
+                              description: >-
+                                Represents the unique ID of the updated user
+                                group. 
+                              type: string
+                              maxLength: 19
+                          required:
+                            - id
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - user_groups
+              examples:
+                SuccessWithId:
+                  summary: User group updated successfully
+                  value:
+                    user_groups:
+                      - code: SUCCESS
+                        message: User group updated successfully
+                        status: success
+                        details:
+                          id: '3652397000009949005'
+                  description: >-
+                    Shows the success response for a user group update,
+                    returning the group ID and a SUCCESS code.
+        '400':
+          description: >-
+            The user group could not be updated. **Resolution:** Verify the
+            group ID is valid and all field values in the request body are
+            correct.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupUpdateSinglePutFailure
+                description: >-
+                  Response schema for a failed user group update, covering both
+                  invalid field values and invalid group ID errors.
+                oneOf:
+                  - x-zs-$id: GroupUpdateSinglePutSourceError
+                    description: >-
+                      Indicates that the request body contains an invalid field
+                      value, with field-level error details.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      user_groups:
+                        description: >-
+                          Represents the array containing the error details for
+                          the failed update operation. 
+                        type: array
+                        maxItems: 1
+                        items:
+                          description: >-
+                            Represents the error details for a user group update
+                            failure due to invalid field values.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            status:
+                              description: |-
+                                Represents the status of the update operation. 
+                                Possible values:
+                                **error** - The user group update failed.
+                              type: string
+                              enum:
+                                - error
+                            code:
+                              description: >-
+                                Represents the error code for the update
+                                failure. 
+
+                                Possible values:
+
+                                **INVALID_DATA** - One or more field values in
+                                the request body are invalid.
+
+                                **MANDATORY_NOT_FOUND** - A required field is
+                                missing from the request body.
+
+                                **DUPLICATE_DATA** - A user group with the same
+                                name already exists.
+                              type: string
+                              enum:
+                                - INVALID_DATA
+                                - MANDATORY_NOT_FOUND
+                                - DUPLICATE_DATA
+                            message:
+                              description: >-
+                                Represents the error message describing the
+                                update failure. 
+                              type: string
+                              maxLength: 500
+                            details:
+                              description: >-
+                                Represents additional details about the update
+                                error, including the problematic field
+                                information. 
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  description: >-
+                                    Represents the API name of the field that
+                                    caused the update error. 
+                                  type: string
+                                  maxLength: 100
+                                json_path:
+                                  description: >-
+                                    Represents the JSON path to the field that
+                                    caused the update error. 
+                                  type: string
+                                  maxLength: 200
+                              required:
+                                - api_name
+                                - json_path
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                    required:
+                      - user_groups
+                  - x-zs-$id: SingleGroupUpdateFailureInvalid
+                    description: >-
+                      Indicates that the group ID in the URL does not match an
+                      existing user group.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code for the invalid group ID
+                          failure. 
+
+                          Possible values:
+
+                          **INVALID_DATA** - The group ID in the URL does not
+                          reference an existing user group.
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        description: >-
+                          Represents additional details about the invalid group
+                          ID error. 
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            description: >-
+                              Represents the index of the path segment where the
+                              invalid resource ID was found. 
+                            type: integer
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        description: >-
+                          Represents the error message describing the invalid
+                          group ID failure. 
+                        type: string
+                        maxLength: 500
+                      status:
+                        description: >-
+                          Represents the status of the update request. 
+
+                          Possible values:
+
+                          **error** - The request failed because the group ID is
+                          invalid.
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+              examples:
+                InvalidData:
+                  summary: Invalid group ID in request URL
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the group ID in the URL does
+                    not match an existing user group.
+                SourceError:
+                  summary: Invalid source ID in sources array
+                  value:
+                    user_groups:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.user_groups[0].source[0].id
+                        message: The User Id given seems to be Invalid
+                        status: error
+                  description: >-
+                    Shows the error response when the sources array contains
+                    invalid data, such as a non-existent source ID.
+        '404':
+          description: >-
+            The request URL does not match any configured endpoint pattern.
+            **Resolution:** Verify the request URL follows the pattern
+            /settings/user_groups/{group}.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupInvalidURLPatternErrorSinglePut
+                description: Response schema for an invalid URL pattern error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the URL pattern failure. 
+
+                      Possible values:
+
+                      **INVALID_URL_PATTERN** - The request URL does not match
+                      any configured API endpoint.
+                    type: string
+                    enum:
+                      - INVALID_URL_PATTERN
+                  details:
+                    description: >-
+                      Represents additional details about the URL pattern
+                      error. 
+                    type: object
+                    additionalProperties: false
+                    properties: {}
+                  message:
+                    description: >-
+                      Represents the error message describing the URL pattern
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: |-
+                      Represents the status of the request. 
+                      Possible values:
+                      **error** - The request URL pattern was invalid.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the request URL does not match
+                    any configured API endpoint pattern.
+    delete:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.DELETE
+      summary: Delete a user group
+      description: >-
+        To delete an existing user group from your Zoho CRM organization. The
+        deletion may be immediate or scheduled for background processing,
+        depending on group size and active references.
+      operationId: deleteGroup
+      parameters:
+        - $ref: '#/components/parameters/Group'
+      responses:
+        '200':
+          description: >-
+            User group deletion completed. Returns a success code with the group
+            ID if deleted immediately, or a scheduled status with a job ID if
+            queued for processing.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserGroupDeletionFailure
+                description: >-
+                  Response schema for a successful user group deletion or
+                  scheduled deletion.
+                type: object
+                additionalProperties: false
+                properties:
+                  user_groups:
+                    description: >-
+                      Represents the array containing the result of the user
+                      group deletion operation. 
+                    type: array
+                    maxItems: 1
+                    items:
+                      description: >-
+                        Represents the deletion result for the user group,
+                        indicating whether it completes immediately or queues
+                        for background processing.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        code:
+                          description: >-
+                            Represents the result code for the user group
+                            deletion operation. 
+
+                            Possible values:
+
+                            **SUCCESS** - The user group deletion completes
+                            immediately.
+
+                            **SCHEDULED** - The user group deletion queues for
+                            background processing; the response includes a **job
+                            ID**.
+                          type: string
+                          enum:
+                            - SUCCESS
+                            - SCHEDULED
+                        message:
+                          description: >-
+                            Represents the result message for the user group
+                            deletion operation. 
+                          type: string
+                          maxLength: 500
+                        status:
+                          description: >-
+                            Represents the status of the user group deletion
+                            operation. 
+
+                            Possible values:
+
+                            **success** - The user group deletion completes
+                            immediately.
+
+                            **scheduled** - The user group deletion queues for
+                            background processing.
+                          type: string
+                          enum:
+                            - success
+                            - scheduled
+                        details:
+                          oneOf:
+                            - x-zs-$id: DetailsContainingTheDeletedGroupId
+                              description: >-
+                                Present when deletion completes immediately.
+                                Contains the deleted group ID.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  description: >-
+                                    Represents the unique ID of the user group
+                                    for which deletion completes immediately.
+                                    Present in immediate-deletion responses.
+                                  type: string
+                                  maxLength: 19
+                              required:
+                                - id
+                            - x-zs-$id: DetailsContainingTheScheduledJobID
+                              description: >-
+                                Present when the deletion was queued for
+                                background processing. Contains the scheduled
+                                job ID.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                job_id:
+                                  description: >-
+                                    Represents the ID of the scheduled deletion
+                                    job. Present when the deletion is queued for
+                                    background processing.
+                                  type: string
+                                  maxLength: 19
+                              required:
+                                - job_id
+                          description: >-
+                            Represents additional details about the deletion
+                            result, containing either the deleted group ID or a
+                            scheduled job ID. 
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - user_groups
+              examples:
+                SuccessWithId:
+                  summary: User group deleted immediately
+                  value:
+                    user_groups:
+                      - code: SUCCESS
+                        message: User group deleted successfully
+                        status: success
+                        details:
+                          id: '3652397000009949005'
+                  description: >-
+                    Shows the response for an immediate user group deletion,
+                    returning the deleted group ID and a SUCCESS code.
+                ScheduledWithJobId:
+                  summary: Deletion scheduled with job ID
+                  value:
+                    user_groups:
+                      - code: SCHEDULED
+                        message: User group deletion has been scheduled
+                        status: scheduled
+                        details:
+                          job_id: '3652397000009950001'
+                  description: >-
+                    Shows the response when a user group deletion is queued for
+                    background processing, returning a job ID for tracking.
+        '400':
+          description: >-
+            The request failed due to an invalid or missing group ID.
+            **Resolution:** Provide a valid numeric user group ID in the
+            **group** path parameter.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ErrorResponseForGroupsPermission
+                description: >-
+                  Response schema for a failed user group deletion, covering
+                  both invalid group ID and missing group ID errors.
+                oneOf:
+                  - x-zs-$id: DeleteGroupInvalidIdError
+                    description: >-
+                      Indicates that the group ID in the URL is invalid or does
+                      not reference an existing user group.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code for the request failure. 
+
+                          Possible values:
+
+                          **INVALID_DATA** - The group ID in the URL is invalid
+                          or does not reference an existing user group.
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        description: >-
+                          Represents additional details about the request
+                          error. 
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            description: >-
+                              Represents the index of the path segment where the
+                              invalid resource ID was found. 
+                            type: integer
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        description: >-
+                          Represents the error message describing the request
+                          failure. 
+                        type: string
+                        maxLength: 500
+                      status:
+                        description: >-
+                          Represents the status of the operation. 
+
+                          Possible values:
+
+                          **error** - The request failed because the group ID is
+                          invalid.
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - x-zs-$id: DeleteGroupMissingIdError
+                    description: Indicates that the group ID is absent from the URL.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      user_groups:
+                        description: >-
+                          Represents the array containing the error details for
+                          the failed deletion operation. 
+                        type: array
+                        maxItems: 1
+                        items:
+                          description: >-
+                            Represents the error details for a user group
+                            deletion failure due to a missing group ID in the
+                            URL.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            status:
+                              description: >-
+                                Represents the status of the deletion
+                                operation. 
+
+                                Possible values:
+
+                                **error** - The user group deletion failed.
+                              type: string
+                              enum:
+                                - error
+                            code:
+                              description: >-
+                                Represents the error code for the deletion
+                                failure. 
+
+                                Possible values:
+
+                                **MANDATORY_NOT_FOUND** - The group ID is
+                                missing from the request URL.
+                              type: string
+                              enum:
+                                - MANDATORY_NOT_FOUND
+                            message:
+                              description: >-
+                                Represents the error message describing the
+                                deletion failure. 
+                              type: string
+                              maxLength: 500
+                            details:
+                              description: >-
+                                Represents additional details about the deletion
+                                error, including the name of the missing
+                                parameter. 
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                param_name:
+                                  description: >-
+                                    Represents the name of the missing request
+                                    parameter. 
+                                  type: string
+                                  maxLength: 100
+                              required:
+                                - param_name
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                    required:
+                      - user_groups
+              examples:
+                InvalidData:
+                  summary: Invalid group ID in request URL
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the group ID in the URL does
+                    not match an existing user group.
+                MissingGroupId:
+                  summary: Missing group ID in request URL
+                  value:
+                    user_groups:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          param_name: ids
+                        message: Group ID missing in URL
+                        status: error
+                  description: >-
+                    Shows the error response when no group ID is provided in the
+                    request URL.
+        '404':
+          description: >-
+            The request URL does not match any configured endpoint pattern.
+            **Resolution:** Verify the request URL follows the pattern
+            /settings/user_groups/{group}.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupInvalidURLPatternErrorSingleDelete
+                description: Response schema for an invalid URL pattern error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the URL pattern failure. 
+
+                      Possible values:
+
+                      **INVALID_URL_PATTERN** - The request URL does not match
+                      any configured API endpoint.
+                    type: string
+                    enum:
+                      - INVALID_URL_PATTERN
+                  details:
+                    description: >-
+                      Represents additional details about the URL pattern
+                      error. 
+                    type: object
+                    additionalProperties: false
+                    properties: {}
+                  message:
+                    description: >-
+                      Represents the error message describing the URL pattern
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: |-
+                      Represents the status of the request. 
+                      Possible values:
+                      **error** - The request URL pattern was invalid.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the request URL does not match
+                    any configured API endpoint pattern.
+  /settings/user_groups/{group}/sources:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.READ
+      summary: Get sources for a user group
+      description: >-
+        To retrieve the paginated list of member sources configured for a
+        specific user group in your Zoho CRM organization.
+      operationId: getUserGroupSources
+      parameters:
+        - $ref: '#/components/parameters/Group'
+        - $ref: '#/components/parameters/Filters'
+        - $ref: '#/components/parameters/Include'
+        - name: type
+          in: query
+          required: false
+          description: |-
+            Filter sources by source type.
+            Possible values:
+            **users** - Return only user-type sources.
+            **roles** - Return only role-type sources.
+            **territories** - Return only territory-type sources.
+            **groups** - Return only group-type sources.
+          schema:
+            type: string
+            enum:
+              - users
+              - roles
+              - territories
+              - groups
+        - name: user_type
+          in: query
+          required: false
+          description: >-
+            Filter user-type sources by the user's status or type
+            classification.
+          schema:
+            type: string
+            maxLength: 100
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: >-
+            Returns the paginated list of member sources configured for the
+            specified user group.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserGroupGetSuccessResponse
+                description: >-
+                  Response schema containing the paginated list of member
+                  sources for the user group.
+                type: object
+                additionalProperties: false
+                properties:
+                  sources:
+                    description: >-
+                      Represents the array of member sources configured for the
+                      user group. 
+                    type: array
+                    maxItems: 200
+                    items:
+                      description: >-
+                        Represents one member source entry for the user group,
+                        including the source type, identifier, and optional
+                        flags for subordinates or sub-territories.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        source:
+                          description: 'Represents the identifier and name of the source. '
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: >-
+                                Represents the name of the source configured as
+                                a member. 
+                              type: string
+                              maxLength: 250
+                            id:
+                              description: >-
+                                Represents the unique ID of the user, role,
+                                territory, or group configured as a member
+                                source. 
+                              type: string
+                              maxLength: 19
+                          required:
+                            - name
+                            - id
+                        type:
+                          description: |-
+                            Represents the type of this member source. 
+                            Possible values:
+                            **users** - Individual CRM users.
+                            **roles** - CRM roles.
+                            **territories** - CRM territories.
+                            **groups** - CRM user groups.
+                          type: string
+                          enum:
+                            - users
+                            - roles
+                            - territories
+                            - groups
+                        subordinates:
+                          description: >-
+                            Indicates whether users in subordinate roles are
+                            included for role-type sources. Present when
+                            configured during group creation or update.
+                          type: boolean
+                        sub_territories:
+                          description: >-
+                            Indicates whether members from sub-territories are
+                            included for territory-type sources. Present when
+                            configured during group creation or update.
+                          type: boolean
+                      required:
+                        - source
+                        - type
+                  info:
+                    description: 'Represents pagination information for the response. '
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      per_page:
+                        description: >-
+                          Represents the maximum number of member source records
+                          returned per page. 
+                        type: integer
+                        format: int32
+                      count:
+                        description: >-
+                          Represents the total number of member sources returned
+                          in the current response. 
+                        type: integer
+                        format: int32
+                      page:
+                        description: >-
+                          Represents the current page number in the paginated
+                          response. 
+                        type: integer
+                        format: int32
+                      more_records:
+                        description: >-
+                          Indicates whether additional member source records are
+                          available beyond the current page. 
+                        type: boolean
+                    required:
+                      - per_page
+                      - count
+                      - page
+                      - more_records
+                required:
+                  - sources
+                  - info
+              examples:
+                Success:
+                  summary: Successful response with member sources
+                  value:
+                    sources:
+                      - source:
+                          name: Patricia Boyle
+                          id: '3652397000000186017'
+                        type: users
+                      - source:
+                          name: Sales Manager
+                          id: '3652397000000026008'
+                        type: roles
+                        subordinates: false
+                      - source:
+                          name: APAC Region
+                          id: '3652397000000095001'
+                        type: roles
+                        sub_territories: true
+                    info:
+                      per_page: 200
+                      count: 2
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows a paginated list of member sources for a user group,
+                    including a role source with subordinates and a territory
+                    source.
+        '204':
+          description: The specified user group has no member sources configured.
+        '400':
+          description: >-
+            The request failed due to an invalid group ID or an invalid query
+            parameter value. **Resolution:** Verify the group ID and ensure the
+            **type** parameter uses a valid value (users, roles, territories, or
+            groups).
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserGroupSourcesFailures
+                description: >-
+                  Response schema for a failed sources request, covering both
+                  invalid group ID and parameter pattern errors.
+                oneOf:
+                  - x-zs-$id: GetGroupSourcesInvalidDataError
+                    description: >-
+                      Indicates that the group ID in the URL path is invalid or
+                      does not match an existing user group.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        description: |-
+                          Represents the error code for the request failure. 
+                          Possible values:
+                          **INVALID_DATA** - The group ID in the URL is invalid.
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        description: >-
+                          Represents additional details about the request
+                          error. 
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            description: >-
+                              Represents the index of the path segment where the
+                              invalid resource ID was found. 
+                            type: integer
+                            format: int32
+                        required:
+                          - resource_path_index
+                      message:
+                        description: >-
+                          Represents the error message describing the request
+                          failure. 
+                        type: string
+                        maxLength: 500
+                      status:
+                        description: >-
+                          Represents the status of the request. 
+
+                          Possible values:
+
+                          **error** - The request failed because the group ID is
+                          invalid.
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - x-zs-$id: GetGroupSourcesPatternError
+                    description: >-
+                      Indicates that a query parameter value does not match the
+                      required pattern for valid source types.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code for the failed pattern
+                          validation. 
+
+                          Possible values:
+
+                          **PATTERN_NOT_MATCHED** - The query parameter value
+                          does not match the expected pattern.
+                        type: string
+                        enum:
+                          - PATTERN_NOT_MATCHED
+                      details:
+                        description: >-
+                          Represents additional details about the pattern
+                          validation failure. 
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          regex:
+                            description: >-
+                              Represents the regex pattern that the parameter
+                              value failed to match. 
+                            type: string
+                            const: users|roles|groups|territories
+                          param_name:
+                            description: >-
+                              Represents the name of the query parameter that
+                              failed the pattern validation. 
+                            type: string
+                            const: type
+                        required:
+                          - regex
+                          - param_name
+                      message:
+                        description: >-
+                          Represents the error message describing the pattern
+                          validation failure. 
+                        type: string
+                        maxLength: 500
+                      status:
+                        description: >-
+                          Represents the status of the request. 
+
+                          Possible values:
+
+                          **error** - The request failed because the parameter
+                          value did not match the allowed pattern.
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+              examples:
+                InvalidData:
+                  summary: Invalid group ID in request URL
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the group ID in the URL does
+                    not match an existing user group.
+                PatternNotMatched:
+                  summary: Query parameter value does not match required pattern
+                  value:
+                    code: PATTERN_NOT_MATCHED
+                    details:
+                      regex: users|roles|groups|territories
+                      param_name: type
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Shows the error response when a query parameter value does
+                    not match the required pattern of valid source types.
+  /settings/user_groups/{group}/actions/sources_count:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.READ
+      summary: Get source counts for a user group
+      description: >-
+        To retrieve the count of member sources by type (users, roles,
+        territories, and groups) for a specific user group in your Zoho CRM
+        organization.
+      operationId: getUserGroupSourcesCount
+      parameters:
+        - $ref: '#/components/parameters/Group'
+      responses:
+        '200':
+          description: >-
+            Returns the count of each type of member source configured in the
+            specified user group.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: SourceCountResponseForUserGroup
+                description: >-
+                  Response schema containing the source counts for the specified
+                  user group.
+                type: object
+                additionalProperties: false
+                properties:
+                  sources_count:
+                    description: >-
+                      Represents the array containing the member source counts
+                      for the specified user group. 
+                    type: array
+                    maxItems: 1
+                    items:
+                      description: >-
+                        Represents the count of each type of member source
+                        configured in the user group.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        territories:
+                          description: >-
+                            Represents the number of territory sources in this
+                            user group. Present when territory sources are
+                            configured.
+                          type: integer
+                          format: int32
+                        roles:
+                          description: >-
+                            Represents the number of role sources in this user
+                            group. Present when role sources are configured.
+                          type: integer
+                          format: int32
+                        groups:
+                          description: >-
+                            Represents the number of group sources in this user
+                            group. Present when group sources are configured.
+                          type: integer
+                          format: int32
+                        users:
+                          description: >-
+                            Represents the count of individual user sources by
+                            status. Present when user sources are configured.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            inactive:
+                              description: >-
+                                Represents the number of inactive users in this
+                                user group. 
+                              type: integer
+                              format: int32
+                            deleted:
+                              description: >-
+                                Represents the number of deleted users in this
+                                user group. 
+                              type: integer
+                              format: int32
+                            active:
+                              description: >-
+                                Represents the number of active users in this
+                                user group. 
+                              type: integer
+                              format: int32
+                          required:
+                            - inactive
+                            - deleted
+                            - active
+                required:
+                  - sources_count
+              examples:
+                Success:
+                  summary: Successful response with source counts
+                  value:
+                    sources_count:
+                      - territories: 1
+                        roles: 2
+                        users:
+                          inactive: 0
+                          deleted: 0
+                          active: 2
+                  description: >-
+                    Shows the source counts for a user group, including counts
+                    for roles, territories, and active, inactive, and deleted
+                    users.
+        '204':
+          description: The specified user group has no member sources configured.
+        '400':
+          description: >-
+            The group ID in the URL is invalid. **Resolution:** Provide a valid
+            numeric user group ID in the **group** path parameter.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupPermissionError
+                description: Response schema for an invalid group ID error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: |-
+                      Represents the error code for the request failure. 
+                      Possible values:
+                      **INVALID_DATA** - The group ID in the URL is invalid.
+                    type: string
+                    enum:
+                      - INVALID_DATA
+                  details:
+                    description: 'Represents additional details about the request error. '
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      resource_path_index:
+                        description: >-
+                          Represents the index of the path segment where the
+                          invalid resource ID was found. 
+                        type: integer
+                        format: int32
+                    required:
+                      - resource_path_index
+                  message:
+                    description: >-
+                      Represents the error message describing the request
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: >-
+                      Represents the status of the request. 
+
+                      Possible values:
+
+                      **error** - The request failed because the group ID is
+                      invalid.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid group ID in request URL
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the group ID in the URL does
+                    not match an existing user group.
+        '404':
+          description: >-
+            The request URL does not match any configured endpoint pattern.
+            **Resolution:** Verify the URL follows the pattern
+            /settings/user_groups/{group}/actions/sources_count.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupInvalidURLPatternErrorSourcesCount
+                description: Response schema for an invalid URL pattern error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the URL pattern failure. 
+
+                      Possible values:
+
+                      **INVALID_URL_PATTERN** - The request URL does not match
+                      any configured API endpoint.
+                    type: string
+                    enum:
+                      - INVALID_URL_PATTERN
+                  details:
+                    description: >-
+                      Represents additional details about the URL pattern
+                      error. 
+                    type: object
+                    additionalProperties: false
+                    properties: {}
+                  message:
+                    description: >-
+                      Represents the error message describing the URL pattern
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: |-
+                      Represents the status of the request. 
+                      Possible values:
+                      **error** - The request URL pattern was invalid.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the request URL does not match
+                    any configured API endpoint pattern.
+  /settings/user_groups/actions/associated_users_count:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.READ
+      summary: Get associated users count per user group
+      description: >-
+        To retrieve the count of users associated with user groups in your Zoho
+        CRM organization, optionally filtered by group criteria.
+      operationId: getUserGroupAssociatedUsersCount
+      parameters:
+        - $ref: '#/components/parameters/Filters'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: >-
+            Returns a paginated list of user groups with the count of users
+            associated with each group.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetAssociatedUsersCountResponse
+                description: >-
+                  Response schema containing the paginated associated user
+                  counts per user group.
+                type: object
+                additionalProperties: false
+                properties:
+                  associated_users_count:
+                    description: >-
+                      Represents the array of user group entries with their
+                      associated user counts. 
+                    type: array
+                    maxItems: 200
+                    items:
+                      description: >-
+                        Represents a user group and the count of users
+                        associated with it based on the provided filter
+                        criteria.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        user_group:
+                          description: 'Represents the user group details for this entry. '
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: 'Represents the name of the user group. '
+                              type: string
+                              maxLength: 512
+                            id:
+                              description: 'Represents the unique ID of the user group. '
+                              type: string
+                              maxLength: 19
+                          required:
+                            - name
+                            - id
+                        count:
+                          description: >-
+                            Represents the number of users associated with this
+                            user group. 
+                          type: integer
+                          format: int32
+                      required:
+                        - user_group
+                        - count
+                  info:
+                    type: object
+                    description: 'Represents pagination information for the response. '
+                    additionalProperties: false
+                    properties:
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the maximum number of user group entries
+                          returned per page. 
+                      count:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the total number of user group entries
+                          returned in the current response. 
+                      page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the current page number in the paginated
+                          response. 
+                      more_records:
+                        type: boolean
+                        description: >-
+                          Indicates whether additional user group entries are
+                          available beyond the current page. 
+                    required:
+                      - per_page
+                      - count
+                      - page
+                      - more_records
+                required:
+                  - associated_users_count
+                  - info
+              examples:
+                Success:
+                  summary: Successful response with associated user counts
+                  value:
+                    associated_users_count:
+                      - user_group:
+                          name: Sales Team Updated
+                          id: '4413474000003538005'
+                        count: 2
+                      - user_group:
+                          name: Sales Team 1766826714258
+                          id: '4413474000003538020'
+                        count: 2
+                    info:
+                      per_page: 200
+                      count: 1
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows a list of user groups with the count of users
+                    associated with each, including pagination information.
+        '204':
+          description: No user groups match the provided filter criteria.
+        '404':
+          description: >-
+            The request URL does not match any configured endpoint pattern.
+            **Resolution:** Verify the URL follows the pattern
+            /settings/user_groups/actions/associated_users_count.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupInvalidURLPatternAssoUserCount
+                description: Response schema for an invalid URL pattern error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the URL pattern failure. 
+
+                      Possible values:
+
+                      **INVALID_URL_PATTERN** - The request URL does not match
+                      any configured API endpoint.
+                    type: string
+                    enum:
+                      - INVALID_URL_PATTERN
+                  details:
+                    description: >-
+                      Represents additional details about the URL pattern
+                      error. 
+                    type: object
+                    additionalProperties: false
+                    properties: {}
+                  message:
+                    description: >-
+                      Represents the error message describing the URL pattern
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: |-
+                      Represents the status of the request. 
+                      Possible values:
+                      **error** - The request URL pattern was invalid.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the request URL does not match
+                    any configured API endpoint pattern.
+  /settings/user_groups/actions/get_assigned: {}
+  /settings/user_groups/actions/get_unassigned: {}
+  /users/{user}/actions/associated_groups:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.READ
+      summary: Get associated groups for a user
+      description: >-
+        To retrieve the paginated list of user groups associated with a specific
+        user in your Zoho CRM organization, with optional inclusion of member
+        sources and source counts.
+      operationId: getAssociatedGroupsForUser
+      parameters:
+        - name: user
+          in: path
+          required: true
+          description: >-
+
+
+            Specifies the unique ID of the user whose associated groups you want
+            to retrieve. Use the [Get Users](users#$.paths./users.get) API to
+            obtain user IDs. From API v9 onwards, UUID format is also accepted.
+          schema:
+            type: string
+            enum:
+              - '3652397000000186017'
+        - $ref: '#/components/parameters/Include'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: >-
+            Returns a paginated list of user groups associated with the
+            specified user.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: AssociatedUserGroupForSpecifiedUser
+                description: >-
+                  Response schema containing the paginated list of user groups
+                  associated with the specified user.
+                type: object
+                additionalProperties: false
+                properties:
+                  user_groups:
+                    description: >-
+                      Represents the array of user groups associated with the
+                      specified user. 
+                    type: array
+                    maxItems: 200
+                    items:
+                      description: >-
+                        Represents the details of a user group associated with
+                        the user, including metadata and optional sources and
+                        source counts.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        created_by:
+                          description: 'Represents the user who created this user group. '
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: >-
+                                Represents the name of the user who created this
+                                group. 
+                              type: string
+                              maxLength: 512
+                            id:
+                              description: >-
+                                Represents the unique ID of the user who created
+                                this group. 
+                              type: string
+                              maxLength: 19
+                          required:
+                            - name
+                            - id
+                        modified_by:
+                          description: >-
+                            Represents the user who last modified this user
+                            group. 
+                          oneOf:
+                            - x-zs-$id: ModifierUserInformationSpecifiedUser
+                              description: >-
+                                Represents the user who last modified this
+                                group, with their ID and name.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  description: >-
+                                    Represents the name of the user who last
+                                    modified this group. 
+                                  type: string
+                                  maxLength: 512
+                                id:
+                                  description: >-
+                                    Represents the unique ID of the user who
+                                    last modified this group. 
+                                  type: string
+                                  maxLength: 19
+                              required:
+                                - name
+                                - id
+                            - x-zs-$id: NoModifierInfoForGetSpecifiedUser
+                              description: >-
+                                Indicates that this group has not been modified
+                                since creation.
+                              type: 'null'
+                        modified_time:
+                          description: >-
+                            Represents the date and time when the user group was
+                            last modified. 
+                          oneOf:
+                            - x-zs-$id: TimeStampInISO8601FormatForSpecifiedUser
+                              description: >-
+                                Represents the timestamp of the last
+                                modification in ISO 8601 format.
+                              type: string
+                              format: date-time
+                            - x-zs-$id: NoModificationTimeForSpecifiedUser
+                              description: >-
+                                Indicates that the group has not been modified
+                                since creation.
+                              type: 'null'
+                        created_time:
+                          description: >-
+                            Represents the date and time of user group creation,
+                            in ISO 8601 format. 
+                          type: string
+                          format: date-time
+                        description:
+                          description: >-
+                            Represents the text description of the user group.
+                            Present in the response when a description was
+                            provided during group creation.
+                          oneOf:
+                            - x-zs-$id: GroupDescriptionForSpecifiedUser
+                              description: >-
+                                Represents the text description of the user
+                                group.
+                              type: string
+                              maxLength: 250
+                            - x-zs-$id: NoDescriptionForSpecifiedUser
+                              description: >-
+                                Indicates that no description was provided for
+                                the user group.
+                              type: 'null'
+                        id:
+                          description: 'Represents the unique identifier of the user group. '
+                          type: string
+                          maxLength: 19
+                        name:
+                          description: 'Represents the name of the user group. '
+                          type: string
+                          maxLength: 250
+                        sources:
+                          description: >-
+                            Represents the array of member sources configured
+                            for this user group. Present when the **include**
+                            query parameter includes **sources**.
+                          type: array
+                          maxItems: 200
+                          items:
+                            description: >-
+                              Represents one member source entry for this user
+                              group.
+                            type: object
+                            additionalProperties: false
+                            properties:
+                              source:
+                                description: >-
+                                  Represents the identifier and name of the
+                                  source. 
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                  name:
+                                    description: >-
+                                      Represents the name of the source
+                                      configured as a member. 
+                                    type: string
+                                    maxLength: 250
+                                  id:
+                                    description: >-
+                                      Represents the unique ID of the source
+                                      configured as a member. 
+                                    type: string
+                                    maxLength: 19
+                                required:
+                                  - name
+                                  - id
+                              type:
+                                description: |-
+                                  Represents the type of this member source. 
+                                  Possible values:
+                                  **users** - Individual CRM users.
+                                  **roles** - CRM roles.
+                                  **territories** - CRM territories.
+                                  **groups** - CRM user groups.
+                                type: string
+                                enum:
+                                  - users
+                                  - roles
+                                  - territories
+                                  - groups
+                              subordinates:
+                                description: >-
+                                  Indicates whether users in subordinate roles
+                                  are included for role-type sources. Present
+                                  when configured.
+                                type: boolean
+                              sub_territories:
+                                description: >-
+                                  Indicates whether members from sub-territories
+                                  are included for territory-type sources.
+                                  Present when configured.
+                                type: boolean
+                            required:
+                              - source
+                              - type
+                      required:
+                        - created_by
+                        - modified_by
+                        - modified_time
+                        - created_time
+                        - description
+                        - id
+                        - name
+                  info:
+                    type: object
+                    description: 'Represents pagination information for the response. '
+                    additionalProperties: false
+                    properties:
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the maximum number of user group records
+                          returned per page. 
+                      count:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the total number of user groups returned in
+                          the current response. 
+                      page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the current page number in the paginated
+                          response. 
+                      more_records:
+                        type: boolean
+                        description: >-
+                          Indicates whether additional user group records are
+                          available beyond the current page. 
+                    required:
+                      - per_page
+                      - count
+                      - page
+                      - more_records
+                required:
+                  - user_groups
+                  - info
+              examples:
+                Success:
+                  summary: Successful response with associated user groups
+                  value:
+                    user_groups:
+                      - created_time: '2022-11-21T12:33:12+05:30'
+                        modified_time: '2022-11-21T13:21:46+05:30'
+                        name: group 1
+                        modified_by:
+                          name: Patricia Boyle
+                          id: '3652397000000186017'
+                        description: groups API
+                        id: '3652397000009949005'
+                        created_by:
+                          name: Patricia Boyle
+                          id: '3652397000000186017'
+                    info:
+                      per_page: 200
+                      count: 1
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows a paginated list of user groups associated with a
+                    specific user, including group metadata and optional source
+                    counts.
+        '400':
+          description: >-
+            The user ID in the URL is invalid. **Resolution:** Provide a valid
+            numeric CRM user ID in the **user** path parameter.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupInvalidDataAssoGrps
+                description: Response schema for an invalid user ID error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: |-
+                      Represents the error code for the request failure. 
+                      Possible values:
+                      **INVALID_DATA** - The user ID in the URL is invalid.
+                    type: string
+                    enum:
+                      - INVALID_DATA
+                  details:
+                    description: 'Represents additional details about the request error. '
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      resource_path_index:
+                        description: >-
+                          Represents the index of the path segment where the
+                          invalid resource ID was found. 
+                        type: integer
+                        format: int32
+                    required:
+                      - resource_path_index
+                  message:
+                    description: >-
+                      Represents the error message describing the request
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: >-
+                      Represents the status of the request. 
+
+                      Possible values:
+
+                      **error** - The request failed because the user ID is
+                      invalid.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid user ID in request URL
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the user ID in the URL does
+                    not match an existing CRM user.
+        '404':
+          description: >-
+            The request URL does not match any configured endpoint pattern.
+            **Resolution:** Verify the URL follows the pattern
+            /users/{user}/actions/associated_groups.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupInvalidURLPatternAssoGrps
+                description: Response schema for an invalid URL pattern error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the URL pattern failure. 
+
+                      Possible values:
+
+                      **INVALID_URL_PATTERN** - The request URL does not match
+                      any configured API endpoint.
+                    type: string
+                    enum:
+                      - INVALID_URL_PATTERN
+                  details:
+                    description: >-
+                      Represents additional details about the URL pattern
+                      error. 
+                    type: object
+                    additionalProperties: false
+                    properties: {}
+                  message:
+                    description: >-
+                      Represents the error message describing the URL pattern
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: |-
+                      Represents the status of the request. 
+                      Possible values:
+                      **error** - The request URL pattern was invalid.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the request URL does not match
+                    any configured API endpoint pattern.
+  /settings/user_groups/{group}/actions/associations:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.user_groups.READ
+      summary: Get associations for a user group
+      description: >-
+        To retrieve the list of CRM resources, such as sharing rules, workflows,
+        assignment rules, and approval processes, that are associated with a
+        specific user group in your Zoho CRM organization.
+      operationId: getUserGroupAssociations
+      parameters:
+        - $ref: '#/components/parameters/Group'
+      responses:
+        '200':
+          description: >-
+            Returns the list of CRM resources, such as sharing rules, workflows,
+            and assignment rules, that are associated with the specified user
+            group.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Response schema containing the list of CRM resources
+                  associated with the specified user group.
+                properties:
+                  associations:
+                    type: array
+                    maxItems: 200
+                    description: >-
+                      Represents the array of CRM resources associated with the
+                      specified user group. 
+                    items:
+                      type: object
+                      additionalProperties: false
+                      description: >-
+                        Represents one CRM resource association for the user
+                        group, including the resource identifier, association
+                        type, and module details.
+                      properties:
+                        resource:
+                          type: object
+                          additionalProperties: false
+                          description: >-
+                            Represents the CRM resource that is associated with
+                            the user group. 
+                          properties:
+                            name:
+                              type: string
+                              description: 'Represents the name of the associated resource. '
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the associated
+                                resource (such as a sharing rule or workflow). 
+                              maxLength: 255
+                          required:
+                            - id
+                            - name
+                        details:
+                          type:
+                            - object
+                            - 'null'
+                          additionalProperties: false
+                          description: >-
+                            Represents the CRM module details for this
+                            association. 
+                          properties:
+                            module:
+                              type: object
+                              additionalProperties: false
+                              description: >-
+                                Represents the CRM module in which the
+                                associated resource is defined. 
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the module
+                                    containing the associated resource. 
+                                  maxLength: 255
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique ID of the module
+                                    containing the associated resource. 
+                                  maxLength: 255
+                              required:
+                                - api_name
+                                - id
+                          required:
+                            - module
+                        type:
+                          type: string
+                          description: >-
+                            Represents the category of CRM resource associated
+                            with the user group, such as **sharing rules**,
+                            **workflows**, or **automation rules**. 
+                          maxLength: 255
+                      required:
+                        - details
+                        - resource
+                        - type
+                      x-zs-$id: GETAssociationsNested
+                required:
+                  - associations
+                x-zs-$id: GetassociationsResponse200
+              examples:
+                Success200:
+                  summary: Successful response with group associations
+                  value:
+                    associations:
+                      - type: data_sharing
+                        resource:
+                          id: '16045511334961104'
+                          name: Sharing Rule Name
+                        details:
+                          module:
+                            id: '16045511334961105'
+                            api_name: Leads
+                      - type: workflow_rules
+                        resource:
+                          id: '16045511334961105'
+                          name: Workflow Name
+                        details: null
+                      - type: assignment_rules
+                        resource:
+                          id: '16045511334961106'
+                          name: Assignment Rule Name
+                        details:
+                          module:
+                            id: '16045511334961105'
+                            api_name: Leads
+                      - type: email_notifications
+                        resource:
+                          id: '16045511334961107'
+                          name: Email Notification Name
+                        details: null
+                      - type: approval_process
+                        resource:
+                          id: '16045511334961108'
+                          name: Approval Process Name
+                        details: null
+                      - type: review_process
+                        resource:
+                          id: '16045511334961109'
+                          name: Review Process Name
+                        details: null
+                      - type: calendar_bookings
+                        resource:
+                          id: '16045511334961110'
+                          name: Calendar Booking Name
+                        details:
+                          module:
+                            id: '16045511334961105'
+                            api_name: Leads
+                  description: >-
+                    Shows the list of CRM resources associated with a user
+                    group, including sharing rules and workflow entries with
+                    their module context.
+        '400':
+          description: >-
+            The group ID in the URL is invalid. **Resolution:** Provide a valid
+            numeric user group ID in the **group** path parameter.
+          content:
+            application/json:
+              schema:
+                description: Response schema for an invalid group ID error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: |-
+                      Represents the error code for the request failure. 
+                      Possible values:
+                      **INVALID_DATA** - The group ID in the URL is invalid.
+                    enum:
+                      - INVALID_DATA
+                  details:
+                    type: object
+                    additionalProperties: false
+                    description: 'Represents additional details about the request error. '
+                    properties:
+                      resource_path_index:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the index of the path segment where the
+                          invalid resource ID was found. 
+                    required:
+                      - resource_path_index
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the request
+                      failure. 
+                    maxLength: 500
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the request. 
+
+                      Possible values:
+
+                      **error** - The request failed because the group ID is
+                      invalid.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                title: Error Response Core
+                x-zs-$id: GetassociationsError400
+              examples:
+                InvalidDataResponse1:
+                  summary: Invalid group ID in request URL
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: the related id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the error response when the group ID in the URL does
+                    not match an existing user group.
+        '404':
+          description: >-
+            The request URL does not match any configured endpoint pattern.
+            **Resolution:** Verify the URL follows the pattern
+            /settings/user_groups/{group}/actions/associations.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GroupInvalidUrlGetAssoGrps
+                description: Response schema for an invalid URL pattern error.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for the URL pattern failure. 
+
+                      Possible values:
+
+                      **INVALID_URL_PATTERN** - The request URL does not match
+                      any configured API endpoint.
+                    type: string
+                    enum:
+                      - INVALID_URL_PATTERN
+                  details:
+                    description: >-
+                      Represents additional details about the URL pattern
+                      error. 
+                    type: object
+                    additionalProperties: false
+                    properties: {}
+                  message:
+                    description: >-
+                      Represents the error message describing the URL pattern
+                      failure. 
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: |-
+                      Represents the status of the request. 
+                      Possible values:
+                      **error** - The request URL pattern was invalid.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: The provided group ID is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the request URL does not match
+                    any configured API endpoint pattern.
+components:
+  parameters:
+    Group:
+      name: group
+      in: path
+      required: true
+      description: >-
+        Specify the unique ID of the user group to operate on. From API v9
+        onwards, UUID format is also accepted. Example: `1234567890`.
+      schema:
+        type: string
+        enum:
+          - '1234567890'
+    Include:
+      name: include
+      in: query
+      required: false
+      description: |-
+        Specify additional related data to include in the response.
+        Possible values:
+        **sources** - Include the list of sources for each group.
+        **sources_count** - Include the count of sources for each group.
+      schema:
+        type: string
+        enum:
+          - sources_count
+          - sources
+    Filters:
+      name: filters
+      in: query
+      required: false
+      description: >-
+        Filter criteria to narrow the results. Specify conditions as a
+        structured filter expression. Maximum 250 characters.
+      schema:
+        type: string
+        maxLength: 250
+    Ids:
+      name: ids
+      in: query
+      required: false
+      description: >-
+        Specify a comma-separated list of unique user group IDs to filter the
+        results by.
+      schema:
+        type: string
+        maxLength: 250
+    Name:
+      name: name
+      in: query
+      required: false
+      description: Specify the name of the user group to filter the results by.
+      schema:
+        type: string
+        maxLength: 250
+    Page:
+      name: page
+      in: query
+      required: false
+      description: >-
+        Specify the page number to retrieve paginated results. Default is 1.
+        Minimum value is 1.
+      schema:
+        type: integer
+        format: int32
+        default: 1
+        minimum: 1
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      description: >-
+        Specify the number of records to return per page. Default is 200.
+        Maximum value is 200.
+      schema:
+        type: integer
+        format: int32
+        default: 200
+        maximum: 200
+        minimum: 1
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.user_groups.ALL: Full access to CRM User Groups management
+            ZohoCRM.settings.user_groups.CREATE: Create CRM User Groups
+            ZohoCRM.settings.user_groups.READ: Get CRM User Groups
+            ZohoCRM.settings.user_groups.UPDATE: Update CRM User Groups
+            ZohoCRM.settings.user_groups.DELETE: Delete CRM User Groups

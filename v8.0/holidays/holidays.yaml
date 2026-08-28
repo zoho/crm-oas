@@ -1,0 +1,1762 @@
+openapi: 3.1.0
+info:
+  title: Holidays
+  description: >-
+    The Holidays resource represents non-working days configured for business
+    hours and shift schedules in Zoho CRM. This API enables developers to
+    create, retrieve, update, and delete business and shift holidays.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Production API server for Zoho CRM.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: The regional top-level domain of the Zoho CRM API server.
+      version:
+        enum:
+          - v8
+        default: v8
+        description: The API version used in the request URL.
+tags:
+  - name: Holidays
+    description: >-
+      Operations for managing holidays that affect business hours and shift
+      schedules
+paths:
+  /settings/holidays:
+    get:
+      tags:
+        - Holidays
+      summary: Holidays
+      description: >-
+        To retrieve the list of holidays configured in Zoho CRM. Business
+        holidays apply to all users, while shift holidays are specific to
+        configured shift schedules. Returns paginated results.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.business_hours.READ
+      operationId: getHolidays
+      parameters:
+        - $ref: '#/components/parameters/Year'
+        - $ref: '#/components/parameters/Type'
+        - $ref: '#/components/parameters/ShiftId'
+        - name: page
+          in: query
+          required: false
+          description: Specify the page number for paginated results. Defaults to 1.
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+      responses:
+        '200':
+          description: >-
+            Returns a paginated list of holidays matching the specified filter
+            criteria.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: HolidaysSuccessResponseDeleteSingle
+                properties:
+                  holidays:
+                    type: array
+                    description: >-
+                      Contains the list of holidays matching the specified
+                      filter criteria. 
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: 'Represents the name of the holiday. '
+                          maxLength: 80
+                          minLength: 1
+                          pattern: ^[^#%^&*]+$
+                        date:
+                          type: string
+                          format: date
+                          description: >-
+                            Represents the date of the holiday in **YYYY-MM-DD**
+                            format. 
+                        type:
+                          type: string
+                          description: >-
+                            The type of holiday that you want to fetch. The
+                            possible values are **business_holiday** and
+                            **shift_holiday**.
+                          enum:
+                            - business_holiday
+                            - shift_holiday
+                        shift_hour:
+                          type:
+                            - object
+                            - 'null'
+                          description: >-
+                            Represents the shift hour associated with this
+                            holiday. Contains null for business holidays. 
+                          properties:
+                            name:
+                              type: string
+                              description: >-
+                                Represents the name of the shift hour. Always
+                                present when the shift_hour object is included
+                                in the response.
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the shift
+                                hour. Always present when the shift_hour object
+                                is included in the response.
+                              pattern: ^[0-9]+$
+                              maxLength: 255
+                              x-zs-$id: HolidaysShiftHourId
+                          required:
+                            - name
+                            - id
+                          additionalProperties: false
+                        id:
+                          type: string
+                          description: >-
+                            Represents the unique identifier of the holiday
+                            record. 
+                          pattern: ^[0-9]+$
+                          maxLength: 255
+                          x-zs-$id: HolidaysId
+                        year:
+                          type: integer
+                          format: int32
+                          description: 'Represents the year in which the holiday falls. '
+                          minimum: 2000
+                          maximum: 2100
+                      required:
+                        - name
+                        - date
+                        - type
+                        - shift_hour
+                        - id
+                        - year
+                      description: Represents a single holiday record in the response.
+                      additionalProperties: false
+                    maxItems: 100
+                  info:
+                    type: object
+                    description: Contains pagination metadata for the response.
+                    properties:
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the number of holiday records returned per
+                          page.
+                        minimum: 1
+                      page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the current page number in the paginated
+                          results. Page numbers begin at one.
+                        minimum: 1
+                      count:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the total number of holiday records
+                          returned in this page of results.
+                        minimum: 0
+                      more_records:
+                        type: boolean
+                        description: >-
+                          Indicates whether more holiday records are available
+                          on subsequent pages.
+                    additionalProperties: false
+                required:
+                  - holidays
+                description: >-
+                  Represents the response body containing the list of holidays
+                  and pagination metadata.
+                additionalProperties: false
+              examples:
+                Default:
+                  value:
+                    holidays: []
+                  description: >-
+                    Shows the response when no holidays match the specified
+                    filter criteria.
+                  summary: Default response with empty holidays list
+        '204':
+          description: No holidays were found matching the specified filter criteria.
+        '400':
+          description: >-
+            One or more query parameter values do not match the expected format.
+            **Resolution** The request must include valid values for all query
+            parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: HolidaysErrorResponse
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - PATTERN_NOT_MATCHED
+                    description: >-
+                      Indicates the validation error type. Possible values:
+                      **PATTERN_NOT_MATCHED**.
+                  details:
+                    type: object
+                    description: >-
+                      Contains additional details about the validation error,
+                      such as the affected parameter name.
+                    additionalProperties: true
+                  message:
+                    type: string
+                    description: Describes the specific validation error that occurred.
+                    maxLength: 255
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: 'Indicates the response status. Possible values: **error**.'
+                description: >-
+                  Represents the error response body returned when a query
+                  parameter value fails validation.
+                additionalProperties: false
+              examples:
+                PatternNotMatched:
+                  value:
+                    code: PATTERN_NOT_MATCHED
+                    details:
+                      param_name: type
+                    message: Please check whether the input values are correct
+                    status: error
+                  description: >-
+                    Shows the error response when a query parameter contains an
+                    invalid value.
+                  summary: Invalid query parameter value
+    post:
+      tags:
+        - Holidays
+      summary: Holidays
+      description: >-
+        To create one or more business or shift holidays in Zoho CRM. Business
+        holidays apply to all users, while shift holidays must specify a valid
+        shift_hour identifier.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.business_hours.CREATE
+      operationId: createHolidays
+      requestBody:
+        description: >-
+          The request body must contain a holidays array. You can include a
+          maximum of **100** objects per request.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                holidays:
+                  type: array
+                  description: >-
+                    Specify the list of holidays to create. At least **one**
+                    holiday object is required.
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Specify the name of the holiday.
+                        maxLength: 80
+                        minLength: 1
+                        pattern: ^[^#%^&*]+$
+                      date:
+                        type: string
+                        format: date
+                        description: >-
+                          Specify the date of the holiday in **YYYY-MM-DD**
+                          format.
+                      type:
+                        type: string
+                        description: >-
+                          Specify the type of holiday. Possible values:
+                          **business_holiday**, **shift_holiday**.
+                        enum:
+                          - business_holiday
+                          - shift_holiday
+                      shift_hour:
+                        type: object
+                        description: >-
+                          Specify the shift hour associated with this holiday.
+                          Required when the type field is set to
+                          **shift_holiday**.
+                        properties:
+                          name:
+                            type: string
+                            description: Specify the name of the shift hour.
+                            maxLength: 255
+                          id:
+                            type: string
+                            description: >-
+                              Specify the unique identifier of the shift hour.
+                              Use the [Get Shift Hours
+                              API](shift_hours.yaml#$.paths./settings/business_hours/shift_hours.get)
+                              to get the ID of the shift hour.
+                            pattern: ^[0-9]+$
+                            maxLength: 255
+                        required:
+                          - name
+                          - id
+                        additionalProperties: false
+                    required:
+                      - name
+                      - date
+                      - type
+                    description: Specify the details for a single holiday to create.
+                    additionalProperties: false
+                  maxItems: 100
+                info:
+                  type: object
+                  properties:
+                    per_page:
+                      type: integer
+                      format: int32
+                      description: Specify the number of records to include per page.
+                    page:
+                      type: integer
+                      format: int32
+                      description: Specify the page number to retrieve.
+                    count:
+                      type: integer
+                      format: int32
+                      description: Specify the total count of records.
+                    more_records:
+                      type: boolean
+                      description: >-
+                        Specify whether more records are available on subsequent
+                        pages.
+                  description: >-
+                    Contains optional pagination context included in the request
+                    schema.
+                  additionalProperties: false
+              description: Represents the request body schema for creating holidays.
+              additionalProperties: false
+              required:
+                - holidays
+            examples:
+              Default:
+                description: >-
+                  Shows the response the API returns after creating the holidays
+                  successfully.
+                summary: Default success response after creating holidays
+                value:
+                  holidays:
+                    - name: New Year
+                      date: '2025-01-01'
+                      type: business_holiday
+            x-zs-llm-examples:
+              - Default
+        required: true
+      responses:
+        '201':
+          description: Returns the result for each holiday submitted in the create request.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: HolidaysSuccessResponseCreate
+                properties:
+                  holidays:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: >-
+                            Indicates the result code for this holiday creation.
+                            Possible values: **SUCCESS**. 
+                        details:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier assigned to the
+                                created holiday.
+                              maxLength: 255
+                              x-zs-$id: HolidaysDetailsId
+                          description: 'Contains the details of the created holiday record. '
+                          additionalProperties: false
+                        message:
+                          type: string
+                          description: >-
+                            Describes the result of the holiday creation
+                            operation. 
+                          maxLength: 255
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: >-
+                            Indicates the status of the holiday creation.
+                            Possible values: success. 
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                      description: Represents the creation result for a single holiday.
+                      additionalProperties: false
+                    description: >-
+                      Contains the result for each holiday submitted in the
+                      create request. 
+                    maxItems: 100
+                required:
+                  - holidays
+                description: >-
+                  Represents the response body the API returns after creating
+                  one or more holidays.
+                additionalProperties: false
+              examples:
+                Default:
+                  value:
+                    holidays: []
+                  description: >-
+                    Shows a sample 400 error response returned when holiday
+                    validation fails.
+                  summary: Default 400 error response for holiday creation
+        '207':
+          $ref: '#/components/responses/HolidaysMultiStatusResponse'
+        '400':
+          description: >-
+            One or more holidays in the request failed validation.
+            **Resolution** Each holiday must include the required fields (name,
+            date, type) with valid values.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: HolidaysErrorResponse400Create
+                properties:
+                  holidays:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - MANDATORY_NOT_FOUND
+                            - LIMIT_EXCEEDED
+                            - DUPLICATE_DATA
+                            - DEPENDENT_FIELD_MISSING
+                            - INVALID_DATA
+                          description: >-
+                            Indicates the validation error type for this
+                            holiday. Possible values: **MANDATORY_NOT_FOUND,
+                            LIMIT_EXCEEDED, DUPLICATE_DATA,
+                            DEPENDENT_FIELD_MISSING, INVALID_DATA**.
+                        details:
+                          type: object
+                          description: >-
+                            Contains additional details about the validation
+                            error, such as the affected field name and JSON
+                            path.
+                          additionalProperties: true
+                        message:
+                          type: string
+                          description: >-
+                            Describes the specific validation error that
+                            occurred for this holiday.
+                          maxLength: 255
+                        status:
+                          type: string
+                          enum:
+                            - error
+                          description: >-
+                            Indicates the response status for this holiday.
+                            Possible values: **error.**
+                      description: >-
+                        Represents the validation error result for a single
+                        holiday.
+                      additionalProperties: false
+                    description: >-
+                      Contains the validation error result for each holiday
+                      submitted in the request.
+                    maxItems: 100
+                description: >-
+                  Represents the error response body returned when one or more
+                  holidays fail validation.
+                additionalProperties: false
+              examples:
+                MissingDate:
+                  value:
+                    holidays:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: date
+                          json_path: $.holidays[0].date
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows the error when the date field is missing from the
+                    holiday object.
+                  summary: Missing required date field
+                MissingType:
+                  value:
+                    holidays:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: type
+                          json_path: $.holidays[0].type
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows the error when the type field is missing from the
+                    holiday object.
+                  summary: Missing required type field
+                MissingName:
+                  value:
+                    holidays:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows the error when the name field is missing from the
+                    holiday object.
+                  summary: Missing required name field
+                LimitExceeded:
+                  value:
+                    holidays:
+                      - code: LIMIT_EXCEEDED
+                        details:
+                          limit: 52
+                          limit_due_to:
+                            - api_name: type
+                              json_path: $.holidays[0].type
+                        message: Holidays limit exceeds
+                        status: error
+                  description: >-
+                    Shows the error when the maximum holiday limit for the
+                    specified type is exceeded.
+                  summary: Holiday limit exceeded for the specified type
+                DuplicateData:
+                  value:
+                    holidays:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Shows the error when a holiday with the same name already
+                    exists.
+                  summary: Duplicate holiday name and date combination
+                DependentFieldMissing:
+                  value:
+                    holidays:
+                      - code: DEPENDENT_FIELD_MISSING
+                        details:
+                          dependee:
+                            api_name: type
+                            json_path: $.holidays[0].type
+                          api_name: shift_hour
+                          json_path: $.holidays[0].shift_hour
+                        message: Shift id is required for shift holidays
+                        status: error
+                  description: >-
+                    Shows the error when a required dependent field is missing
+                    for the **shift_holiday** type.
+                  summary: Missing dependent field for shift holiday
+                InvalidDataMaxLength:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          maximum_length: 80
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows the error when the holiday name exceeds the maximum
+                    allowed length.
+                  summary: Holiday name exceeds maximum length
+                InvalidDataDateRange:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: date
+                          json_path: $.holidays[0].date
+                        message: Date Should be between current and next financial year
+                        status: error
+                  description: >-
+                    Shows the error when the holiday date falls outside the
+                    allowed financial year range.
+                  summary: Holiday date outside allowed range
+                InvalidDataShiftId:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.holidays[0].shift_hour.id
+                        message: Invalid shift id
+                        status: error
+                  description: Shows the error when the shift_hour ID value is not valid.
+                  summary: Invalid shift hour ID value
+                InvalidDataSpecialChars:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: >-
+                          Holiday Name should not contain special characters:#,
+                          %, ^, &, *
+                        status: error
+                  description: >-
+                    Shows the error when the holiday name contains disallowed
+                    special characters.
+                  summary: Holiday name contains invalid special characters
+                InvalidDataType:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: type
+                          json_path: $.holidays[0].type
+                          supported_values:
+                            - business_holiday
+                            - shift_holiday
+                        message: Invalid type
+                        status: error
+                  description: >-
+                    Shows the error when the type field contains an unsupported
+                    value.
+                  summary: Invalid holiday type value
+                InvalidDataDateFormat:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: date
+                          api_name: date
+                          json_path: $.holidays[0].date
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows an error when the date field does not conform to the
+                    expected date format.
+                  summary: Holiday date in invalid format
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+    put:
+      tags:
+        - Holidays
+      summary: Multiple Holidays
+      description: >-
+        To update one or more existing holiday records in Zoho CRM by providing
+        each holiday ID with the updated field values.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.business_hours.UPDATE
+      operationId: updateHolidays
+      requestBody:
+        description: >-
+          The request body must contain a holidays array. You can include a
+          maximum of **100** objects per request.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  x-zs-$id: HolidaysSuccessResponseUpdate
+                  properties:
+                    holidays:
+                      type: array
+                      description: >-
+                        Specify the list of holidays to update. Each entry must
+                        include the holiday **ID**.
+                      minItems: 1
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            description: Specify the updated name for the holiday.
+                            maxLength: 80
+                            minLength: 1
+                            pattern: ^[^#%^&*]+$
+                          date:
+                            type: string
+                            format: date
+                            description: >-
+                              Specify the updated date for the holiday in
+                              **YYYY-MM-DD** format.
+                          type:
+                            type: string
+                            description: >-
+                              Specify the updated type of holiday. Possible
+                              values: **business_holiday, shift_holiday**.
+                            enum:
+                              - business_holiday
+                              - shift_holiday
+                          shift_hour:
+                            type: object
+                            description: >-
+                              Specify the updated shift hour associated with
+                              this holiday. Required when the type field is set
+                              to shift_holiday.
+                            properties:
+                              name:
+                                type: string
+                                description: Specify the name of the shift hour.
+                                maxLength: 255
+                              id:
+                                type: string
+                                description: >-
+                                  Specify the unique identifier of the shift
+                                  hour. Use the [Get Shift Hours
+                                  API](shift_hours.yaml#$.paths./settings/business_hours/shift_hours.get)
+                                  to get the ID of the shift hour.
+                                pattern: ^[0-9]+$
+                                maxLength: 255
+                            required:
+                              - name
+                              - id
+                            additionalProperties: false
+                          id:
+                            type: string
+                            description: >-
+                              Specify the unique identifier of the holiday to
+                              update.
+                            pattern: ^[0-9]+$
+                            maxLength: 255
+                        required:
+                          - id
+                        description: Specify the updated details for a single holiday.
+                        additionalProperties: false
+                      maxItems: 100
+                    info:
+                      type: object
+                      properties:
+                        per_page:
+                          type: integer
+                          format: int32
+                          description: Specify the number of records to include per page.
+                        page:
+                          type: integer
+                          format: int32
+                          description: Specify the page number to retrieve.
+                        count:
+                          type: integer
+                          format: int32
+                          description: Specify the total count of records.
+                        more_records:
+                          type: boolean
+                          description: >-
+                            Specify whether more records are available on
+                            subsequent pages.
+                      description: >-
+                        Contains optional pagination context included in the
+                        request schema.
+                      additionalProperties: false
+                  description: >-
+                    Represents the request body containing the array of holidays
+                    to update.
+                  additionalProperties: false
+                  required:
+                    - holidays
+              description: Represents the request body schema for bulk updating holidays.
+            examples:
+              Default:
+                description: Shows a sample request body for updating multiple holidays.
+                summary: Default request body for bulk holiday update
+                value:
+                  holidays:
+                    - id: '4150868000011382033'
+                      name: New Year Updated
+            x-zs-llm-examples:
+              - Default
+        required: true
+      responses:
+        '200':
+          description: Returns the result of the bulk holiday update operation.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: HolidaysSuccessResponseUpdateBulk
+                properties:
+                  holidays:
+                    type: array
+                    description: >-
+                      Contains the operation result for each holiday submitted
+                      in the update request. 
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Indicates the validation error type. Possible
+                            values: DUPLICATE_DATA, DEPENDENT_FIELD_MISSING,
+                            INVALID_DATA.
+                          maxLength: 255
+                        details:
+                          type: object
+                          description: >-
+                            Contains additional details about the update
+                            operation result.
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the updated
+                                holiday.
+                              maxLength: 255
+                          additionalProperties: false
+                        message:
+                          type: string
+                          description: >-
+                            Describes the result of the update operation for
+                            this holiday.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: >-
+                            Indicates the status of the update operation for
+                            this holiday.
+                          maxLength: 255
+                      description: Represents the update result for a single holiday.
+                      additionalProperties: false
+                    maxItems: 100
+                required:
+                  - holidays
+                description: >-
+                  Represents the response body the API returns after updating
+                  one or more holidays.
+                additionalProperties: false
+              examples:
+                Default:
+                  value:
+                    holidays: []
+                  description: >-
+                    Shows the response the API returns after updating one or
+                    more holidays successfully.
+                  summary: Default success response after updating holidays
+        '207':
+          $ref: '#/components/responses/HolidaysMultiStatusResponse'
+        '400':
+          description: >-
+            One or more holidays in the request failed validation.
+            **Resolution** Each holiday must include a valid ID, and all updated
+            field values must conform to the expected format and constraints.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: HolidaysErrorResponse400UpdateBulk
+                properties:
+                  holidays:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - DUPLICATE_DATA
+                            - DEPENDENT_FIELD_MISSING
+                            - INVALID_DATA
+                          description: >-
+                            Indicates the validation error type. Possible
+                            values: DUPLICATE_DATA, DEPENDENT_FIELD_MISSING,
+                            INVALID_DATA.
+                        details:
+                          type: object
+                          description: >-
+                            Contains additional details about the validation
+                            error, such as the affected field name and JSON
+                            path.
+                          additionalProperties: true
+                        message:
+                          type: string
+                          description: >-
+                            Describes the specific validation error for this
+                            holiday.
+                          maxLength: 255
+                        status:
+                          type: string
+                          enum:
+                            - error
+                          description: >-
+                            Indicates the response status for this holiday.
+                            Possible values: error.
+                      description: >-
+                        Represents the validation error result for a single
+                        holiday.
+                      additionalProperties: false
+                    description: >-
+                      Contains the validation error result for each holiday in
+                      the request.
+                    maxItems: 100
+                description: >-
+                  Represents the error response body when one or more holidays
+                  fail validation during the bulk update.
+                additionalProperties: false
+              examples:
+                DuplicateData:
+                  value:
+                    holidays:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Shows the error when a holiday with the same name already
+                    exists.
+                  summary: Duplicate holiday name in bulk update
+                DependentFieldMissing:
+                  value:
+                    holidays:
+                      - code: DEPENDENT_FIELD_MISSING
+                        details:
+                          dependee:
+                            api_name: type
+                            json_path: $.holidays[0].type
+                          api_name: shift_hour
+                          json_path: $.holidays[0].shift_hour
+                        message: Shift id is required for shift holidays
+                        status: error
+                  description: >-
+                    Shows the error when a required dependent field is missing
+                    for the shift_holiday type.
+                  summary: Missing dependent field for shift holiday in bulk update
+                InvalidDataMaxLength:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          maximum_length: 80
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows the error when the holiday name exceeds the maximum
+                    allowed length.
+                  summary: Holiday name exceeds maximum length in bulk update
+                InvalidDataDateRange:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: date
+                          json_path: $.holidays[0].date
+                        message: Date Should be between current and next financial year
+                        status: error
+                  description: >-
+                    Shows the error when the holiday date falls outside the
+                    allowed financial year range.
+                  summary: Holiday date outside allowed range in bulk update
+                InvalidDataShiftId:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.holidays[0].shift_hour.id
+                        message: Invalid shift id
+                        status: error
+                  description: Shows the error when the shift_hour ID value is not valid.
+                  summary: Invalid shift hour ID in bulk update
+                InvalidDataSpecialChars:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: >-
+                          Holiday Name should not contain special characters:#,
+                          %, ^, &, *
+                        status: error
+                  description: >-
+                    Shows the error when the holiday name contains disallowed
+                    special characters.
+                  summary: >-
+                    Holiday name contains invalid special characters in bulk
+                    update
+                InvalidDataType:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: type
+                          json_path: $.holidays[0].type
+                          supported_values:
+                            - business_holiday
+                            - shift_holiday
+                        message: Invalid type
+                        status: error
+                  description: >-
+                    Shows the error when the type field contains an unsupported
+                    value.
+                  summary: Invalid holiday type value in bulk update
+                InvalidDataDateFormat:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: date
+                          api_name: date
+                          json_path: $.holidays[0].date
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows the error when the date field does not conform to the
+                    expected date format.
+                  summary: Holiday date in invalid format in bulk update
+                InvalidHolidayId:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: long
+                          api_name: id
+                          json_path: $.holidays[0].id
+                        message: Invalid holiday id
+                        status: error
+                  description: >-
+                    Shows the error when a holiday ID in the request does not
+                    correspond to an existing holiday record.
+                  summary: Invalid holiday ID in bulk update
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /settings/holidays/{holidayId}:
+    put:
+      tags:
+        - Holidays
+      summary: A specific holiday
+      description: >-
+        To update the name or date of a specific holiday record in Zoho CRM
+        using its unique identifier.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.business_hours.UPDATE
+      operationId: updateHoliday
+      parameters:
+        - $ref: '#/components/parameters/HolidayId'
+      requestBody:
+        description: The request body must contain a holidays array with one object.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                holidays:
+                  type: array
+                  description: Specify the updated details for the holiday.
+                  minItems: 1
+                  maxItems: 1
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type:
+                          - string
+                          - 'null'
+                        description: Specify the new name for the holiday.
+                        maxLength: 80
+                        minLength: 1
+                        pattern: ^[^#%^&*]+$
+                      date:
+                        type:
+                          - string
+                          - 'null'
+                        format: date
+                        description: >-
+                          Specify the new date for the holiday in **YYYY-MM-DD**
+                          format.
+                    description: Specify the fields to update for the holiday.
+                    additionalProperties: false
+              description: >-
+                Represents the request body schema for updating a single
+                holiday.
+              additionalProperties: false
+            examples:
+              Default:
+                value: {}
+                description: Shows the request body used to update the holiday record.
+                summary: Default success response after updating a holiday
+            x-zs-llm-examples:
+              - Default
+        required: true
+      responses:
+        '200':
+          description: Returns the result of the holiday update operation.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: HolidaysSuccessResponseUpdateSingle
+                properties:
+                  holidays:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: >-
+                            Indicates the result code for the holiday update.
+                            Possible values: **SUCCESS**. 
+                        details:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the updated
+                                holiday.
+                              maxLength: 255
+                          description: >-
+                            Contains the details of the updated holiday,
+                            including its unique identifier. 
+                          additionalProperties: false
+                        message:
+                          type: string
+                          description: >-
+                            Describes the result of the holiday update
+                            operation. 
+                          maxLength: 255
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: >-
+                            Indicates the status of the holiday update. Possible
+                            values: success. 
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                      description: Represents the update result for the holiday record.
+                      additionalProperties: false
+                    description: 'Contains the result for the updated holiday. '
+                    maxItems: 100
+                required:
+                  - holidays
+                description: >-
+                  Represents the response body the API returns after updating
+                  the holiday.
+                additionalProperties: false
+              examples:
+                Default:
+                  value:
+                    holidays: []
+                  description: >-
+                    Shows a sample 400 error response when holiday update
+                    validation fails.
+                  summary: Default 400 error response for holiday update
+        '400':
+          description: >-
+            One or more holiday fields in the request failed validation.
+            **Resolution** All field values must conform to the expected format
+            and constraints.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: HolidaysErrorResponses
+                oneOf:
+                  - type: object
+                    x-zs-$id: HolidaysErrorResponse400Update
+                    additionalProperties: false
+                    description: >-
+                      Represents the error response body when a bulk update is
+                      attempted for a single holiday endpoint.
+                    properties:
+                      holidays:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InvalidDataResponse'
+                        description: >-
+                          Contains the validation errors for holidays in the
+                          request. 
+                        maxItems: 100
+                    required:
+                      - holidays
+                  - $ref: '#/components/schemas/InvalidDataResponse'
+                description: >-
+                  Represents the error response body returned when the holiday
+                  update fails validation.
+              examples:
+                DuplicateData:
+                  value:
+                    holidays:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Shows the error when the updated holiday name already exists
+                    for another holiday.
+                  summary: Duplicate holiday name
+                InvalidDataMaxLength:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          maximum_length: 80
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows the error when the updated holiday name exceeds the
+                    maximum allowed length.
+                  summary: Holiday name exceeds maximum length
+                InvalidDataDateRange:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: date
+                          json_path: $.holidays[0].date
+                        message: Date Should be between current and next financial year
+                        status: error
+                  description: >-
+                    Shows the error when the updated date falls outside the
+                    allowed financial year range.
+                  summary: Holiday date outside allowed range
+                InvalidDataSpecialChars:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: name
+                          json_path: $.holidays[0].name
+                        message: >-
+                          Holiday Name should not contain special characters:#,
+                          %, ^, &, *
+                        status: error
+                  description: >-
+                    Shows the error when the updated holiday name contains
+                    disallowed special characters.
+                  summary: Holiday name contains invalid special characters
+                InvalidDataDateFormat:
+                  value:
+                    holidays:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: date
+                          api_name: date
+                          json_path: $.holidays[0].date
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows the error when the updated date does not conform to
+                    the expected date format.
+                  summary: Holiday date in invalid format
+    get:
+      tags:
+        - Holidays
+      summary: A specific holiday
+      description: >-
+        To retrieve the complete details of a specific holiday record from Zoho
+        CRM using its unique identifier.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.business_hours.READ
+      operationId: getHoliday
+      parameters:
+        - $ref: '#/components/parameters/HolidayId'
+        - $ref: '#/components/parameters/Year'
+        - $ref: '#/components/parameters/Type'
+        - $ref: '#/components/parameters/ShiftId'
+      responses:
+        '200':
+          description: Returns the details of the requested holiday record.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: HolidaysSuccessResponseGet
+                properties:
+                  holidays:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          maxLength: 80
+                          description: 'Represents the name of the holiday. '
+                        date:
+                          type: string
+                          format: date
+                          description: >-
+                            Represents the date of the holiday in **YYYY-MM-DD**
+                            format. 
+                        type:
+                          type: string
+                          enum:
+                            - business_holiday
+                            - shift_holiday
+                          description: >-
+                            Indicates the type of holiday. Possible values:
+                            **business_holiday, shift_holiday**. 
+                        shift_hour:
+                          type:
+                            - object
+                            - 'null'
+                          properties:
+                            name:
+                              type: string
+                              description: >-
+                                Represents the name of the shift hour. Always
+                                present when the shift_hour object is included
+                                in the response.
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: >-
+                                Specifies the unique identifier of the shift
+                                hour. Always present when the shift_hour object
+                                is included in the response.
+                              maxLength: 255
+                              x-zs-$id: HolidayShiftHourId
+                          required:
+                            - name
+                            - id
+                          description: >-
+                            Represents the shift hour associated with this
+                            holiday. Contains null for business holidays. 
+                          additionalProperties: false
+                        id:
+                          type: string
+                          description: >-
+                            Represents the unique identifier of the holiday
+                            record. 
+                          maxLength: 255
+                          x-zs-$id: HolidayId
+                        year:
+                          type: integer
+                          format: int32
+                          description: 'Specifies the year in which the holiday falls. '
+                      required:
+                        - name
+                        - date
+                        - type
+                        - shift_hour
+                        - id
+                        - year
+                      description: Specifies a single holiday record in the response.
+                      additionalProperties: false
+                    description: >-
+                      Contains the holiday record matching the specified
+                      identifier. 
+                    maxItems: 100
+                  info:
+                    type: object
+                    properties:
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the number of holiday records returned per
+                          page.
+                      page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Indicates the current page number in the paginated
+                          results. Page numbers begin at one.
+                      count:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the total number of holiday records
+                          returned in this page of results.
+                      more_records:
+                        type: boolean
+                        description: >-
+                          Indicates whether more holiday records are available
+                          on subsequent pages.
+                    description: Contains pagination metadata for the response.
+                    additionalProperties: false
+                required:
+                  - holidays
+                description: >-
+                  Represents the response body containing the details of the
+                  requested holiday record.
+                additionalProperties: false
+              examples:
+                Default:
+                  value:
+                    holidays: []
+                  description: >-
+                    Shows the response the API returns after retrieving the
+                    holiday by its unique identifier.
+                  summary: Default response with holiday details
+        '204':
+          description: No holiday was found for the specified identifier.
+    delete:
+      tags:
+        - Holidays
+      summary: Holiday
+      description: >-
+        To permanently delete a holiday from Zoho CRM using its unique
+        identifier. The deletion cannot be undone.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.business_hours.DELETE
+      operationId: deleteHoliday
+      parameters:
+        - $ref: '#/components/parameters/HolidayId'
+        - $ref: '#/components/parameters/Year'
+      responses:
+        '200':
+          description: Returns the result of the delete operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HolidaysSuccessResponse'
+              examples:
+                Default:
+                  value:
+                    holidays: []
+                  description: >-
+                    Shows the response the API returns after deleting the
+                    holiday successfully.
+                  summary: Default response confirming holiday deletion
+        '400':
+          description: >-
+            Invalid holiday ID. **Resolution** The holiday ID in the request
+            path must be a valid identifier of an existing holiday record.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: HolidaysErrorResponses400Delete
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INVALID_DATA
+                    description: >-
+                      Indicates the validation error type. Possible values:
+                      **INVALID_DATA**.
+                  details:
+                    type: object
+                    description: >-
+                      Contains additional details about the validation error,
+                      including the path index of the invalid resource
+                      identifier.
+                    additionalProperties: true
+                  message:
+                    type: string
+                    description: Describes the specific validation error that occurred.
+                    maxLength: 255
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: 'Indicates the response status. Possible values: **error**.'
+                description: >-
+                  Represents the error response body returned when the holiday
+                  ID fails validation.
+                additionalProperties: false
+              examples:
+                InvalidId:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: Invalid ID
+                    status: error
+                  description: >-
+                    Shows the error response when the provided holiday ID does
+                    not correspond to an existing holiday.
+                  summary: Invalid holiday ID in request path
+security:
+  - OAuth2:
+      - ZohoCRM.settings.business_hours.READ
+      - ZohoCRM.settings.business_hours.CREATE
+      - ZohoCRM.settings.business_hours.UPDATE
+      - ZohoCRM.settings.business_hours.DELETE
+components:
+  schemas:
+    HolidaysSuccessResponse:
+      type: object
+      x-zs-$id: HolidaysSuccessResponse
+      properties:
+        holidays:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                  - SUCCESS
+                description: >-
+                  Indicates the result code for the holiday operation. Possible
+                  values: SUCCESS. 
+              details:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Represents the unique identifier of the created holiday.
+                    maxLength: 255
+                description: >-
+                  Contains the details of the processed holiday, including its
+                  unique identifier. 
+                additionalProperties: false
+              message:
+                type: string
+                description: 'Describes the result of the holiday creation operation. '
+                maxLength: 255
+              status:
+                type: string
+                enum:
+                  - success
+                description: >-
+                  Indicates the status of the holiday creation operation.
+                  Possible values: success. 
+            required:
+              - code
+              - details
+              - message
+              - status
+            description: Represents the result for a single holiday creation request.
+            additionalProperties: false
+          description: >-
+            Contains the result for each holiday included in the create
+            request. 
+          maxItems: 100
+      required:
+        - holidays
+      description: >-
+        Represents the success response body the API returns after creating
+        holidays.
+      additionalProperties: false
+    InvalidDataResponse:
+      x-zs-$id: HolidaysErrorResponse400UpdateWithoutRoot
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - DUPLICATE_DATA
+            - INVALID_DATA
+            - DEPENDENT_FIELD_MISSING
+          description: >-
+            Indicates the validation error type. Possible values:
+            DUPLICATE_DATA, INVALID_DATA, DEPENDENT_FIELD_MISSING.
+        details:
+          type: object
+          description: Contains additional information about the validation error.
+          additionalProperties: true
+        message:
+          type: string
+          description: Describes the specific validation error that occurred.
+          maxLength: 255
+        status:
+          type: string
+          enum:
+            - error
+          description: 'Indicates the response status. Possible values: error.'
+      description: >-
+        Represents the error response body returned when a holiday request fails
+        due to validation errors.
+      additionalProperties: false
+  parameters:
+    Year:
+      name: year
+      in: query
+      required: false
+      description: Specify the year for which to filter holidays.
+      schema:
+        type: integer
+        format: int32
+        minimum: 2000
+        maximum: 2100
+        description: The Year of the object.
+      examples:
+        Current:
+          value: 2024
+          summary: Current year
+        Next:
+          value: 2025
+          summary: Next year
+    Type:
+      name: type
+      in: query
+      required: false
+      description: |-
+        Specify the type of holidays to retrieve.
+        Possible values: business_holiday, shift_holiday.
+      schema:
+        type: string
+        enum:
+          - business_holiday
+          - shift_holiday
+        description: The Type of the object.
+      examples:
+        Business:
+          value: business_holiday
+          summary: Business holidays
+        Shift:
+          value: shift_holiday
+          summary: Shift holidays
+    ShiftId:
+      name: shift_id
+      in: query
+      required: false
+      description: >-
+        Specify the unique identifier of the shift hour whose holidays to
+        retrieve. Required when the type parameter is set to shift_holiday.
+      schema:
+        type: string
+        pattern: ^[0-9]+$
+        minLength: 1
+        maxLength: 30
+        description: The Shift id of the object.
+      examples:
+        Default:
+          value: '5725767000000296005'
+          summary: Example shift ID
+    HolidayId:
+      name: holidayId
+      in: path
+      required: true
+      description: Specify the unique identifier of the holiday.
+      schema:
+        type: string
+        pattern: ^[0-9]+$
+        minLength: 1
+        maxLength: 30
+        description: The Holiday id of the object.
+      examples:
+        Default:
+          value: '5725767000000525001'
+          summary: Example holiday ID
+  responses:
+    HolidaysMultiStatusResponse:
+      description: >-
+        Returned when a batch request partially succeeds — some items succeed
+        and some fail. Each item in the holidays array carries its own code,
+        status, message, and details.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HolidaysSuccessResponse'
+          examples:
+            Default:
+              value:
+                holidays:
+                  - code: SUCCESS
+                    details:
+                      id: '12345'
+                    message: Holiday created successfully
+                    status: success
+              description: >-
+                Example multi-status response where some items succeed and
+                others fail.
+              summary: An example multi-status response.
+    ForbiddenError:
+      description: >-
+        The user does not have sufficient permission to perform the requested
+        operation. **Resolution** The CRM administrator must grant the required
+        permission to the user's profile.
+      content:
+        application/json:
+          schema:
+            type: object
+            x-zs-$id: HolidaysForbiddenError
+            properties:
+              code:
+                type: string
+                enum:
+                  - NO_PERMISSION
+                description: >-
+                  Indicates the error code for the permission violation.
+                  Possible values: NO_PERMISSION. 
+              details:
+                type: object
+                description: Contains additional information about the permission error.
+                additionalProperties: true
+              message:
+                type: string
+                description: >-
+                  Describes the specific permission requirement that was not
+                  met. 
+                maxLength: 255
+              status:
+                type: string
+                enum:
+                  - error
+                description: 'Indicates the response status. Possible values: error. '
+            required:
+              - code
+              - message
+              - status
+            description: >-
+              Represents the error response body returned when the user lacks
+              permission to perform the requested operation.
+            additionalProperties: false
+          examples:
+            NoPermission:
+              value:
+                code: NO_PERMISSION
+                details: {}
+                message: Permission to read holiday data is required
+                status: error
+              description: >-
+                Shows the error response when a user lacks the CRM profile
+                permission required to access holiday data.
+              summary: No permission to access holiday data
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.business_hours.UPDATE: Grants permission to update holiday records in Zoho CRM.
+            ZohoCRM.settings.business_hours.CREATE: Grants permission to create holiday records in Zoho CRM.
+            ZohoCRM.settings.business_hours.READ: >-
+              Grants permission to retrieve holiday and business hours settings
+              in Zoho CRM.
+            ZohoCRM.settings.business_hours.DELETE: Grants permission to delete holiday records in Zoho CRM.

@@ -1,0 +1,33 @@
+# User Groups
+
+- [OpenAPI specification](user_groups.yaml)
+- [Get user groups](mds/getUserGroups.md)
+  - To retrieve a paginated list of user groups configured in your Zoho CRM organization, with optional filtering by name or criteria, and optional inclusion of member source counts.
+  - [Examples](mds/examples/getUserGroups.md)
+- [Create a user group](mds/createGroup.md)
+  - To create a new user group in your Zoho CRM organization with a specified name, optional description, and member sources (users, roles, or territories).
+  - [Examples](mds/examples/createGroup.md)
+- [Get a user group](mds/getGroup.md)
+  - To retrieve the details of a specific user group in your Zoho CRM organization by its unique ID, with optional inclusion of member source counts.
+  - [Examples](mds/examples/getGroup.md)
+- [Update a user group](mds/updateGroup.md)
+  - To update the name, description, and member sources of an existing user group in your Zoho CRM organization.
+  - [Examples](mds/examples/updateGroup.md)
+- [Delete a user group](mds/deleteGroup.md)
+  - To delete an existing user group from your Zoho CRM organization. The deletion may be immediate or scheduled for background processing, depending on group size and active references.
+  - [Examples](mds/examples/deleteGroup.md)
+- [Get sources for a user group](mds/getUserGroupSources.md)
+  - To retrieve the paginated list of member sources configured for a specific user group in your Zoho CRM organization.
+  - [Examples](mds/examples/getUserGroupSources.md)
+- [Get source counts for a user group](mds/getUserGroupSourcesCount.md)
+  - To retrieve the count of member sources by type (users, roles, territories, and groups) for a specific user group in your Zoho CRM organization.
+  - [Examples](mds/examples/getUserGroupSourcesCount.md)
+- [Get associated users count per user group](mds/getUserGroupAssociatedUsersCount.md)
+  - To retrieve the count of users associated with user groups in your Zoho CRM organization, optionally filtered by group criteria.
+  - [Examples](mds/examples/getUserGroupAssociatedUsersCount.md)
+- [Get associated groups for a user](mds/getAssociatedGroupsForUser.md)
+  - To retrieve the paginated list of user groups associated with a specific user in your Zoho CRM organization, with optional inclusion of member sources and source counts.
+  - [Examples](mds/examples/getAssociatedGroupsForUser.md)
+- [Get associations for a user group](mds/getUserGroupAssociations.md)
+  - To retrieve the list of CRM resources, such as sharing rules, workflows, assignment rules, and approval processes, that are associated with a specific user group in your Zoho CRM organization.
+  - [Examples](mds/examples/getUserGroupAssociations.md)

@@ -1,0 +1,1345 @@
+openapi: 3.1.0
+info:
+  title: Mass Delete Records API
+  description: >-
+    Mass delete is a Zoho CRM feature that enables users to delete multiple
+    records from a module simultaneously, either by providing record IDs or a
+    custom view ID. This API enables developers to initiate bulk record deletion
+    and retrieve the status of asynchronously scheduled mass delete jobs.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Represents the Local Zoho Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: Represents the API Server URL TLD
+      version:
+        default: v8
+        description: Represents the API Version
+paths:
+  /{module}/actions/mass_delete:
+    post:
+      operationId: massDelete
+      summary: Delete records in bulk by record IDs or Custom View
+      description: >-
+        To delete records in bulk from a specified module in your Zoho CRM
+        organization, either by providing record IDs for synchronous deletion or
+        a Custom View ID for asynchronous batch deletion.
+      parameters:
+        - $ref: '#/components/parameters/Module'
+      requestBody:
+        description: >-
+          The request body must contain either an **ids** array to delete
+          specific records or a **cvid** field to delete records from a Custom
+          View.
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Specify either a list of record IDs or a Custom View ID to
+                identify the records to delete. Use the **territory** property
+                to filter by territory when using a Custom View ID.
+              properties:
+                ids:
+                  type: array
+                  items:
+                    x-zs-$ref:
+                      resource: record
+                      origins:
+                        - operationId: getRecords
+                          propertyId: RecordsId
+                    description: Each string represents a unique record ID to delete.
+                    type: string
+                    format: int64
+                  minItems: 1
+                  maxItems: 500
+                  description: >-
+                    Specify the list of record IDs to delete. Use the [Get
+                    Records API](record.yaml#$.paths./{module}.get) to get the
+                    valid records ID. 
+                cvid:
+                  type: string
+                  pattern: ^[0-9]+$
+                  format: string
+                  description: |
+                    Specify the unique ID of the Custom View for which you want
+                    to delete records. Use the [Get Custom
+                    Views](custom_views.yaml#$.paths./settings/custom_views.get)
+                    API for valid values.
+
+
+                    > Note:
+
+                    > The cvid key is supported for mass delete via API in the
+                    following editions:
+
+                    > - Enterprise
+
+                    > - Ultimate
+
+                    > - CRM Plus
+
+                    > - Zoho One Enterprise
+                territory:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      pattern: ^[0-9]+$
+                      format: string
+                      description: >-
+                        Specify the unique ID of the territory for which you
+                        want to delete records. Use the [Get Territories
+                        API](territories.yaml#$.paths./settings/territories.get)
+                        to get the ID of the territory.
+                      x-zs-$ref:
+                        resource: territories
+                        origins:
+                          - operationId: getTerritories
+                            propertyId: TerritoriesId
+                    include_child:
+                      type: boolean
+                      description: |
+                        Specify whether to include records from child
+                        territories in the delete operation.
+
+                        Possible values:
+
+                        **true** - Include records from child territories.
+
+                        **false** - Restrict the delete operation to records in
+                        the specified territory only.
+                  additionalProperties: false
+                  required:
+                    - id
+                  description: >-
+                    The unique ID of the territory whose records you want to
+                    delete. This key is valid only when you provide a custom
+                    view ID. 
+              oneOf:
+                - description: >-
+                    Specify record IDs to delete in bulk. This variant requires
+                    the **ids** array and does not allow **cvid** or
+                    **territory**.
+                  x-zs-$id: MassDeleteIdsRequest
+                  type: object
+                  properties:
+                    ids:
+                      description: >-
+                        Specify the list of record IDs to delete. Use the [Get
+                        Records API](record.yaml#$.paths./{module}.get) to get
+                        the valid record values. 
+                      type: array
+                      items:
+                        description: Specify a unique record ID to delete.
+                        type: string
+                        pattern: ^[0-9]+$
+                        format: string
+                      minItems: 1
+                      maxItems: 500
+                  required:
+                    - ids
+                  additionalProperties: false
+                - description: >-
+                    Specify a Custom View ID to delete all records from that
+                    view. You can also include a **territory** filter if
+                    required. If **cvid** is provided the API does not accept
+                    the **ids** array.
+                  x-zs-$id: MassDeleteCvidRequest
+                  type: object
+                  properties:
+                    cvid:
+                      description: >-
+                        Specify the unique ID of the Custom View for which you
+                        want to delete records.  Refer to the [Get Custom
+                        Views](custom_views.yaml#$.paths./settings/custom_views.get)
+                        resource for valid values.
+                      type: string
+                      pattern: ^[0-9]+$
+                      format: string
+                    territory:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          pattern: ^[0-9]+$
+                          format: string
+                          description: >-
+                            Specify the unique ID of the territory for which you
+                            want to delete records. Refer to the [Get
+                            Territories](territories.yaml#$.paths./settings/territories.get)
+                            resource for valid values.
+                        include_child:
+                          type: boolean
+                          description: |
+                            Specify whether to include records from child
+                            territories in the delete operation.
+
+                            Possible values:
+
+                            **true** - Include records from child territories.
+
+                            **false** - Restrict the delete operation to records
+                            in the specified territory only.
+                      additionalProperties: false
+                      required:
+                        - id
+                      description: >-
+                        Specify the territory filter to restrict the delete
+                        operation to records within a specific territory. Only
+                        valid when using **cvid**.
+                  required:
+                    - cvid
+                  additionalProperties: false
+              additionalProperties: false
+            examples:
+              MultipleIds:
+                value:
+                  ids:
+                    - '1990117000035827873'
+                    - '1990117000035107169'
+                    - '1990117000035107158'
+                    - '1990117000035107147'
+                    - '1990117000035107136'
+                    - '1990117000035107125'
+                    - '1990117000035107114'
+                    - '1990117000035107103'
+                    - '1990117000035107092'
+                    - '1990117000035107081'
+                description: >-
+                  Shows a mass delete operation that specifies a list of record
+                  IDs to delete.
+                summary: An example of mass delete operation using multiple record IDs.
+              CVIDAndTerritory:
+                value:
+                  cvid: '3652397000000538003'
+                  territory:
+                    id: '3652397000007622003'
+                    include_child: true
+                description: >-
+                  Shows a mass delete operation using a Custom View ID with a
+                  territory filter applied.
+                summary: >-
+                  An example of mass delete operation using Custom View ID and
+                  territory filter.
+        required: true
+      responses:
+        '200':
+          description: >-
+            Returns the result of the mass delete operation, either a per-record
+            deletion status for ID-based requests or a job ID for
+            custom-view-based requests.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the success response payload for a mass delete
+                  operation.
+                properties:
+                  data:
+                    description: >-
+                      Contains the array of success responses for record
+                      deletions or batch job scheduling. 
+                    type: array
+                    minItems: 1
+                    maxItems: 500
+                    items:
+                      oneOf:
+                        - description: >-
+                            Represents the success response for a record deleted
+                            synchronously, including the record ID in the
+                            details.
+                          type: object
+                          properties:
+                            status:
+                              description: 'Represents the status of the response. '
+                              type: string
+                              const: success
+                            code:
+                              description: 'Represents the success code for the response. '
+                              type: string
+                              const: SUCCESS
+                            message:
+                              description: >-
+                                Represents the success message for the
+                                response. 
+                              type: string
+                              const: record is deleted
+                            details:
+                              description: >-
+                                Contains the details of the deleted record,
+                                including the record ID. 
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  pattern: ^[0-9]+$
+                                  format: string
+                                  description: 'Represents the ID of the deleted record. '
+                              required:
+                                - id
+                              additionalProperties: false
+                          additionalProperties: false
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                          x-zs-$id: MassDeleteStatusSuccessResponse
+                        - description: >-
+                            Represents the success response when a mass delete
+                            job is scheduled asynchronously, including the job
+                            ID in the details.
+                          type: object
+                          properties:
+                            status:
+                              description: 'Represents the status of the response. '
+                              type: string
+                              const: success
+                            code:
+                              description: 'Represents the success code for the response. '
+                              type: string
+                              const: SUCCESS
+                            message:
+                              description: >-
+                                Represents the success message for the
+                                response. 
+                              type: string
+                              const: mass delete scheduled successfully
+                            details:
+                              description: >-
+                                Contains the details of the scheduled batch
+                                delete job, including the job ID. 
+                              type: object
+                              properties:
+                                job_id:
+                                  type: string
+                                  pattern: ^[0-9]+$
+                                  format: string
+                                  description: >-
+                                    Represents the unique ID of the scheduled
+                                    mass delete job. Use this ID with the [Mass
+                                    Delete Status API](mass_delete.yaml
+
+                                    #$.paths./{module}/actions/mass_delete.get)
+                                    to track the job progress. 
+                              required:
+                                - job_id
+                              additionalProperties: false
+                          additionalProperties: false
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                          x-zs-$id: MassDeleteStatusBatchResponse
+                      description: >-
+                        Represents an individual success response for either a
+                        record deletion or a scheduled batch delete job.
+                additionalProperties: false
+                required:
+                  - data
+                x-zs-$id: MassDeleteSuccessResponse
+              examples:
+                MultipleRecordsDeleted:
+                  summary: >-
+                    An example of multiple records deleted synchronously by
+                    record IDs.
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '1990117000035107169'
+                        message: record is deleted
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          id: '1990117000035827873'
+                        message: record is deleted
+                        status: success
+                  description: >-
+                    Shows the success response when multiple records are deleted
+                    synchronously using their record IDs.
+                CVIDMassDeleteScheduled:
+                  summary: >-
+                    An example of mass delete job scheduled using Custom View
+                    ID.
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          job_id: '1990117000035877396'
+                        message: mass delete scheduled successfully
+                        status: success
+                  description: >-
+                    Shows the success response when a mass delete job is
+                    scheduled using a Custom View ID, returning the job ID for
+                    status tracking.
+        '207':
+          description: >-
+            Returns a multi-status response when record deletion is partially
+            successful. Each item in the **data** array independently indicates
+            success or failure for the corresponding record.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the multi-status response payload when some records
+                  were deleted and others failed validation.
+                type: object
+                properties:
+                  data:
+                    description: >-
+                      Contains the array of per-record results for the mass
+                      delete operation. Each item independently indicates
+                      success or failure for the corresponding record. 
+                    type: array
+                    minItems: 1
+                    maxItems: 500
+                    items:
+                      oneOf:
+                        - type: object
+                          description: >-
+                            Represents the success entry for a record that was
+                            successfully deleted in the multi-status response.
+                          properties:
+                            status:
+                              type: string
+                              const: success
+                              description: 'Represents the status of the response. '
+                            code:
+                              type: string
+                              const: SUCCESS
+                              description: 'Represents the success code for the response. '
+                            message:
+                              type: string
+                              const: record is deleted
+                              description: >-
+                                Represents the success message for the
+                                response. 
+                            details:
+                              description: >-
+                                Contains the details of the successfully deleted
+                                record, including the record ID. 
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  pattern: ^[0-9]+$
+                                  format: string
+                                  description: >-
+                                    Represents the ID of the successfully
+                                    deleted record. 
+                              additionalProperties: false
+                              required:
+                                - id
+                          additionalProperties: false
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                          x-zs-$id: MassDeleteStatusMultiCodeErrorObject
+                        - description: >-
+                            Represents the error entry for a record that failed
+                            deletion in the multi-status response.
+                          type: object
+                          properties:
+                            status:
+                              type: string
+                              const: error
+                              description: 'Represents the status of the response. '
+                            code:
+                              type: string
+                              enum:
+                                - INVALID_DATA
+                              description: 'Represents the error code for the response. '
+                            message:
+                              type: string
+                              format: string
+                              description: >-
+                                Represents the error message describing the
+                                reason for the deletion failure. 
+                            details:
+                              description: >-
+                                Contains the details of the record that failed
+                                deletion, including the record ID. 
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  pattern: ^[0-9]+$
+                                  format: string
+                                  description: >-
+                                    Represents the ID of the record that failed
+                                    deletion. 
+                              additionalProperties: false
+                              required:
+                                - id
+                          additionalProperties: false
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                          x-zs-$id: MassDeleteInvaliddataObject
+                      description: >-
+                        Represents an individual record result, independently
+                        indicating success or failure for that record.
+                additionalProperties: false
+                required:
+                  - data
+                x-zs-$id: MassDeleteStatus207
+              examples:
+                MixedResults:
+                  summary: >-
+                    An example of partial success: some records deleted, others
+                    failed validation.
+                  value:
+                    data:
+                      - status: success
+                        code: SUCCESS
+                        message: record is deleted
+                        details:
+                          id: '1990117000035107169'
+                      - status: error
+                        code: INVALID_DATA
+                        message: Record locked or invalid permissions
+                        details:
+                          id: '1990117000035827873'
+                  description: >-
+                    Shows the multi-status response when some records are
+                    deleted successfully and others fail validation.
+        '400':
+          description: |
+            The request is invalid due to a missing required field, invalid data
+            type, unsupported module, or no records found in the Custom View.
+
+            **Resolution:** The request body must include either a valid **ids**
+            array or a valid **cvid** key, and the module API name in the
+            request path must be supported.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: >-
+                      Represents the error response when neither the **ids** nor
+                      the **cvid** field is provided in the request body.
+                    type: object
+                    properties:
+                      status:
+                        description: 'Represents the status of the error response. '
+                        type: string
+                        const: error
+                      code:
+                        description: 'Represents the error code for the response. '
+                        type: string
+                        const: MANDATORY_NOT_FOUND
+                      message:
+                        description: 'Represents the error message for the response. '
+                        type: string
+                        const: required field not found
+                      details:
+                        description: >-
+                          Contains additional details about the error, including
+                          the name and expected data type of the missing field. 
+                        type: object
+                        properties:
+                          api_name:
+                            type: string
+                            format: string
+                            description: >-
+                              Represents the API name of the missing required
+                              field. 
+                          expected_data_type:
+                            type: string
+                            format: string
+                            description: >-
+                              Represents the expected data type of the missing
+                              required field. 
+                        additionalProperties: false
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: MassDeleteStatusMandatoryNotFoundObject
+                  - description: >-
+                      Represents the error response when a mass delete job is
+                      already scheduled or running for the provided Custom View
+                      ID.
+                    type: object
+                    properties:
+                      status:
+                        description: 'Represents the status of the error response. '
+                        type: string
+                        const: error
+                      code:
+                        description: >-
+                          Represents the error code returned when a mass delete
+                          job is already running for the provided Custom View. 
+                        type: string
+                        const: ALREADY_SCHEDULED
+                      message:
+                        description: >-
+                          Represents the error message indicating that a mass
+                          delete job is already scheduled for the provided
+                          Custom View. 
+                        type: string
+                        format: string
+                      details:
+                        description: >-
+                          Represents additional details about the scheduling
+                          conflict, including the request parameter that
+                          triggered the error. 
+                        type: object
+                        properties:
+                          api_name:
+                            type: string
+                            format: string
+                            description: >-
+                              Represents the API name of the key that caused the
+                              scheduling conflict. 
+                            enum:
+                              - cvid
+                        additionalProperties: false
+                        required:
+                          - api_name
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: MassDeleteStatusAlreadyScheduled
+                  - description: >-
+                      Represents the error response when the provided **cvid**
+                      or one of the **ids** values is invalid.
+                    type: object
+                    properties:
+                      status:
+                        description: Represents the status of the error response.
+                        type: string
+                        const: error
+                      code:
+                        description: 'Represents the error code for the response. '
+                        type: string
+                        const: INVALID_DATA
+                      message:
+                        type: string
+                        format: string
+                        description: 'Represents the error message for the response. '
+                      details:
+                        description: >-
+                          Contains additional details about the invalid field,
+                          including its name, JSON path, and ID.
+                        type: object
+                        properties:
+                          api_name:
+                            type: string
+                            format: string
+                            description: 'Represents the API name of the invalid field. '
+                          json_path:
+                            type: string
+                            format: string
+                            description: >-
+                              Represents the JSON path to the invalid field in
+                              the request. 
+                          id:
+                            type: string
+                            pattern: ^[0-9]+$
+                            format: string
+                            description: >-
+                              Represents the invalid record ID that triggered
+                              the error. 
+                        additionalProperties: false
+                        required:
+                          - api_name
+                          - json_path
+                          - id
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: MassDeleteStatusInvalidCvid
+                  - description: >-
+                      Represents the error response when the module name in the
+                      request path is invalid.
+                    type: object
+                    properties:
+                      status:
+                        description: 'Represents the status of the error response. '
+                        type: string
+                        const: error
+                      code:
+                        description: 'Represents the error code for the response. '
+                        type: string
+                        const: INVALID_MODULE
+                      message:
+                        description: Represents the error message for the response.
+                        type: string
+                        const: the module name given seems to be invalid
+                      details:
+                        description: >-
+                          Contains additional details about the error, including
+                          the index of the invalid path segment. 
+                        type: object
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            const: 0
+                            description: >-
+                              Represents the index of the resource path segment
+                              that contains the invalid module name. 
+                        required:
+                          - resource_path_index
+                        additionalProperties: false
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: MassDeleteStatusInvalidModule
+                  - description: >-
+                      Represents the error response when mass delete is not
+                      supported for the specified module.
+                    type: object
+                    properties:
+                      status:
+                        description: 'Represents the status of the error response. '
+                        type: string
+                        const: error
+                      code:
+                        description: 'Represents the error code for the response. '
+                        type: string
+                        const: NOT_SUPPORTED
+                      message:
+                        description: 'Represents the error message for the response. '
+                        type: string
+                        format: string
+                      details:
+                        description: >-
+                          Contains additional details about the error, including
+                          the index of the unsupported resource path segment. 
+                        type: object
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            const: 0
+                            description: >-
+                              Represents the index of the unsupported resource
+                              path segment. 
+                        additionalProperties: false
+                        required:
+                          - resource_path_index
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: MassDeleteStatusNotSupportedObject
+                  - description: >-
+                      Represents the error response when no records are found in
+                      the specified Custom View.
+                    type: object
+                    properties:
+                      status:
+                        description: 'Represents the status of the error response. '
+                        type: string
+                        const: error
+                      code:
+                        description: 'Represents the error code for the response. '
+                        type: string
+                        const: NO_RECORDS_FOUND
+                      message:
+                        description: 'Represents the error message for the response. '
+                        type: string
+                        const: no record found to update
+                      details:
+                        description: Contains additional details about the error.
+                        type: object
+                        additionalProperties: false
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: MassDeleteStatusNoRecordsFoundObject
+                x-zs-$id: MassDeleteBadrequest
+                description: >-
+                  Represents the error response payload for an invalid request.
+                  Contains one of the possible error scenarios.
+              examples:
+                MissingRequiredField:
+                  summary: An example of missing required field (ids or cvid).
+                  value:
+                    status: error
+                    code: MANDATORY_NOT_FOUND
+                    message: required field not found
+                    details:
+                      api_name: ids
+                      expected_data_type: jsonarray
+                  description: >-
+                    Shows the error response when neither the **ids** array nor
+                    the **cvid** field is included in the request body.
+                InvalidCvid:
+                  summary: Example of an invalid Custom View ID.
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: the cvid given seems to be invalid
+                    details:
+                      api_name: cvid
+                      json_path: $.cvid
+                      id: '3652397000000538003'
+                  description: >-
+                    Shows the error response when the specified Custom View ID
+                    is invalid.
+                InvalidDataType:
+                  summary: Example of an invalid data type for ids field.
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: ids
+                      json_path: $.ids[0]
+                      id: '1990117000035827873'
+                    message: the id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the error response when the **ids** array contains an
+                    invalid record ID format.
+                InvalidModule:
+                  summary: An example of unsupported or invalid module name.
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      resource_path_index: 0
+                    message: the module name given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the error response when the module API name in the
+                    request path is invalid or not supported.
+                OperationNotSupported:
+                  summary: An example of mass delete not supported for this module.
+                  value:
+                    status: error
+                    code: NOT_SUPPORTED
+                    message: Mass delete is not supported for this module
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows the error response when the mass delete operation is
+                    not supported for the specified module.
+                NoRecordsFound:
+                  summary: An example of no records found in the specified Custom View.
+                  value:
+                    status: error
+                    code: NO_RECORDS_FOUND
+                    message: no record found to update
+                    details: {}
+                  description: >-
+                    Shows the error response when the Custom View specified by
+                    **cvid** contains no records to delete.
+        '403':
+          description: >
+            The current user does not have permission to delete records in the
+            specified module.
+
+            Resolution: Request the mass delete permission for this module from
+            your CRM administrator.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: MassDeleteStatusNoPermissionObject
+                description: >-
+                  Represents the error response returned when the current user
+                  lacks the permission required to delete records in the
+                  specified module.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: |
+                      Represents the error code for the failed request.
+
+                      Possible values:
+
+                      **NO_PERMISSION** - The current user does not have
+                      permission to delete records in this module.
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the missing
+                      permission.
+                    maxLength: 500
+                  status:
+                    type: string
+                    description: |
+                      Represents the status of the response.
+                      Possible values:
+                      **error** - The request failed due to an error.
+                    enum:
+                      - error
+                  details:
+                    type: object
+                    description: >-
+                      Represents the additional error details about the missing
+                      permission.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of permission keys required to
+                          perform this operation.
+                        maxItems: 1
+                        items:
+                          type: string
+                          description: >-
+                            Represents a permission key required to perform this
+                            operation.
+                          maxLength: 255
+                    required:
+                      - permissions
+                required:
+                  - code
+                  - message
+                  - status
+                  - details
+              examples:
+                NoPermission:
+                  value:
+                    code: NO_PERMISSION
+                    message: permission denied
+                    status: error
+                    details:
+                      permissions:
+                        - Crm_Implied_Mass_Delete_Leads
+                  description: >-
+                    Shows the error response when the current user lacks the
+                    mass delete permission for the module.
+                  summary: Example of missing mass-delete permission for the module.
+      security:
+        - OAuth2:
+            - ZohoCRM.mass_delete.DELETE
+    get:
+      operationId: getMassDeleteJobStatus
+      summary: Retrieve mass delete job status
+      description: >-
+        To retrieve the status and record counts of a previously scheduled mass
+        delete job in your Zoho CRM organization.
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - name: job_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            format: string
+          description: >-
+            Specify the job ID returned in the response of the [Mass Delete
+            API](mass_delete.yaml#$.paths./{module}/actions/mass_delete.post).
+      responses:
+        '200':
+          description: >-
+            Returns the current status and record counts of the requested mass
+            delete job.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the response payload for a successful mass delete
+                  job status retrieval.
+                type: object
+                properties:
+                  data:
+                    description: 'Contains the mass delete job status details. '
+                    type: array
+                    items:
+                      description: >-
+                        Represents an individual mass delete job status object,
+                        including the current status and record counts.
+                      type: object
+                      properties:
+                        Status:
+                          type: string
+                          enum:
+                            - COMPLETED
+                            - SCHEDULED
+                            - QUEUED
+                            - RUNNING
+                            - SUSPENDED
+                            - FAILED
+                          description: |
+                            Represents the current status of the mass delete
+                            job. 
+
+                            Possible values:
+
+                            **COMPLETED** - The job has finished processing all
+                            records.
+
+                            **SCHEDULED** - The job is scheduled and waiting to
+                            start.
+
+                            **QUEUED** - The job is in the queue awaiting
+                            processing.
+
+                            **RUNNING** - The job is currently in progress.
+
+                            **SUSPENDED** - The job has been paused.
+
+                            **FAILED** - The job ended with an error and did not
+                            complete.
+                        Total_Count:
+                          type: integer
+                          format: int32
+                          minimum: 0
+                          description: >-
+                            Represents the total number of records targeted for
+                            deletion by the mass delete job. 
+                        Deleted_Count:
+                          type: integer
+                          format: int32
+                          minimum: 0
+                          description: >-
+                            Represents the number of records successfully
+                            deleted by the mass delete job. 
+                        Failed_Count:
+                          type: integer
+                          format: int32
+                          minimum: 0
+                          description: >-
+                            Represents the number of records that could not be
+                            deleted by the mass delete job. 
+                      additionalProperties: false
+                      required:
+                        - Status
+                        - Total_Count
+                        - Deleted_Count
+                        - Failed_Count
+                    minItems: 1
+                    maxItems: 1
+                additionalProperties: false
+                required:
+                  - data
+                x-zs-$id: GetMassDeleteSuccess
+              examples:
+                CompletedJob:
+                  summary: >-
+                    An example of completed mass delete job with all records
+                    deleted.
+                  value:
+                    data:
+                      - Status: COMPLETED
+                        Failed_Count: 0
+                        Deleted_Count: 18
+                        Total_Count: 18
+                  description: >-
+                    Shows the status response for a completed mass delete job
+                    where all targeted records were successfully deleted.
+                InProgressJob:
+                  summary: An example of mass delete job currently in progress.
+                  value:
+                    data:
+                      - Status: RUNNING
+                        Failed_Count: 0
+                        Deleted_Count: 12
+                        Total_Count: 18
+                  description: >-
+                    Shows the status response when a mass delete job is
+                    currently running, with a portion of the targeted records
+                    already deleted.
+                PartialFailure:
+                  summary: >-
+                    Example of mass delete job completed with some record
+                    failures.
+                  value:
+                    data:
+                      - Status: COMPLETED
+                        Failed_Count: 3
+                        Deleted_Count: 15
+                        Total_Count: 18
+                  description: >-
+                    Shows the status response for a completed mass delete job
+                    where some records were successfully deleted and others
+                    failed.
+        '400':
+          description: |
+            The request is invalid due to a missing or invalid inputs.
+
+            **Resolution:** The **job_id** query parameter is mandatory, and the
+            module API name in the request path must be valid.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: >-
+                      Represents the error response when the required **job_id**
+                      query parameter is missing from the request.
+                    type: object
+                    properties:
+                      status:
+                        description: 'Represents the status of the error response. '
+                        type: string
+                        const: error
+                      code:
+                        description: Represents the error code for the response.
+                        type: string
+                        const: MANDATORY_NOT_FOUND
+                      message:
+                        description: 'Represents the error message for the response. '
+                        type: string
+                        const: mandatory param missing
+                      details:
+                        description: >-
+                          Contains additional details about the error, including
+                          the name of the missing parameter. 
+                        type: object
+                        properties:
+                          param_name:
+                            type: string
+                            const: job_id
+                            description: >-
+                              Represents the name of the missing required query
+                              parameter. 
+                        required:
+                          - param_name
+                        additionalProperties: false
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: MassDeleteMandatoryNotFoundObject
+                  - description: >-
+                      Represents the error response when the **job_id** value is
+                      invalid or does not refer to an existing mass delete job.
+                    type: object
+                    properties:
+                      status:
+                        description: Represents the status of the error response.
+                        type: string
+                        const: error
+                      code:
+                        description: Represents the error code for the response.
+                        type: string
+                        const: INVALID_DATA
+                      message:
+                        description: 'Represents the error message for the response. '
+                        type: string
+                        const: The jobid given seems to be invalid
+                      details:
+                        description: >-
+                          Contains additional details about the error, including
+                          the name of the invalid parameter. 
+                        type: object
+                        properties:
+                          param_name:
+                            type: string
+                            const: job_id
+                            description: >-
+                              Represents the name of the invalid query
+                              parameter. 
+                        required:
+                          - param_name
+                        additionalProperties: false
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: MassDeleteStatusInvalidJobIdObject
+                  - description: >-
+                      Represents the error response when the module name in the
+                      request path is invalid.
+                    type: object
+                    properties:
+                      status:
+                        description: Represents the status of the error response.
+                        type: string
+                        const: error
+                      code:
+                        description: 'Represents the error code for the response. '
+                        type: string
+                        const: INVALID_MODULE
+                      message:
+                        description: 'Represents the error message for the response. '
+                        type: string
+                        const: the module name given seems to be invalid
+                      details:
+                        description: >-
+                          Contains additional details about the error, including
+                          the index of the invalid path segment. 
+                        type: object
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            const: 0
+                            description: >-
+                              Represents the index of the resource path segment
+                              that contains the invalid module name. 
+                        required:
+                          - resource_path_index
+                        additionalProperties: false
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: GetMassDeleteInvalidModuleObject
+                  - description: >-
+                      Represents the error response when the **job_id**
+                      parameter value cannot be parsed due to an invalid format.
+                    type: object
+                    properties:
+                      status:
+                        description: 'Represents the status of the error response. '
+                        type: string
+                        const: error
+                      code:
+                        description: 'Represents the error code for the response. '
+                        type: string
+                        const: UNABLE_TO_PARSE_DATA_TYPE
+                      message:
+                        description: Represents the error message for the response.
+                        type: string
+                        const: >-
+                          either the request body or parameters is in wrong
+                          format
+                      details:
+                        description: 'Contains additional details about the error. '
+                        type: object
+                        additionalProperties: false
+                    additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    x-zs-$id: GetMassDeleteUnableToParseObject
+                x-zs-$id: GetMassDeleteBadrequest
+                description: >-
+                  Represents the error response payload for an invalid request.
+                  Contains one of the possible error scenarios.
+              examples:
+                MissingJobId:
+                  summary: An example of missing required job_id parameter.
+                  value:
+                    status: error
+                    code: MANDATORY_NOT_FOUND
+                    message: mandatory param missing
+                    details:
+                      param_name: job_id
+                  description: >-
+                    Shows the error response when the required **job_id** query
+                    parameter is not included in the request.
+                InvalidJobIdFormat:
+                  summary: An example of invalid job_id format (non-numeric).
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: The jobid given seems to be invalid
+                    details:
+                      param_name: job_id
+                  description: >-
+                    Shows the error response when the **job_id** query parameter
+                    value does not match a valid job ID.
+                InvalidModule:
+                  summary: An example of invalid module name in path.
+                  value:
+                    status: error
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows the error response when the module API name specified
+                    in the request path is invalid.
+                UnableToParseJobId:
+                  summary: An example of non-numeric job_id causing parse failure.
+                  value:
+                    status: error
+                    code: UNABLE_TO_PARSE_DATA_TYPE
+                    message: either the request body or parameters is in wrong format
+                    details: {}
+                  description: >-
+                    Shows the error response when the **job_id** parameter value
+                    cannot be parsed due to an invalid data format.
+      security:
+        - OAuth2:
+            - ZohoCRM.mass_delete.READ
+components:
+  parameters:
+    Module:
+      name: module
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - Leads
+          - Accounts
+          - Contacts
+          - Deals
+          - Campaigns
+          - Tasks
+          - Calls
+          - Meetings
+          - Cases
+          - Solutions
+          - Products
+          - Vendors
+          - Price_Books
+          - Quotes
+          - Sales_Orders
+          - Purchase_Orders
+          - Invoices
+          - Custom
+          - Services
+          - Appointments
+        minLength: 1
+      description: >-
+        Specify the API name of the CRM module for the mass delete operation.
+        Make a [Get Modules API](modules.yaml#$.paths./settings/modules.get)
+        call for valid values.
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.mass_delete.DELETE: >-
+              Grants permission to delete records in bulk from any supported CRM
+              module.
+            ZohoCRM.mass_delete.READ: >-
+              Grants permission to retrieve the status of mass delete jobs from
+              any supported CRM module.

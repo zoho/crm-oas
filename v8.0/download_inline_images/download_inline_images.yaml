@@ -1,0 +1,220 @@
+openapi: 3.1.0
+info:
+  title: Download Inline Images of an Email
+  description: >-
+    Inline images are graphics embedded directly within the body of an email,
+    displayed alongside the email content. This API helps to download inline
+    images from emails associated with CRM records.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /{module}/{recordId}/Emails/actions/download_inline_images:
+    get:
+      summary: Download an inline image from an email
+      operationId: getDownloadInlineImages
+      description: >-
+        To download an inline image embedded in an email associated with a
+        record in your Zoho CRM organization.
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/RecordId'
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/MessageId'
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Returns the binary data of the requested inline image file.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+                description: >-
+                  Contains the binary data of the inline image file embedded in
+                  the email.
+                x-zs-$id: CrmEmailsInlineImageBinary
+        '400':
+          description: >
+            The request contains invalid parameters or references an invalid
+            module.
+
+            **Resolution:** Ensure that you have provided valid values to the
+            parameters and module name.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response returned when the inline image
+                  download request fails due to invalid parameters or missing
+                  data.
+                type: object
+                x-zs-$id: CrmEmailsDownloadError
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: |
+                      Indicates the outcome of the API request. 
+                      Possible values:
+                      **error** - The request failed due to an error condition.
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: >
+                      Represents the error code identifying the type of issue. 
+
+                      Possible values:
+
+                      **INVALID_URL_PATTERN** - The request URL format is
+                      incorrect.
+
+                      **INVALID_DATA** - The provided data is invalid.
+
+                      **INVALID_REQUEST_METHOD** - The HTTP method is not
+                      supported for this endpoint.
+
+                      **INVALID_TOKEN** - The access token is invalid or
+                      expired.
+
+                      **INVALID_MODULE** - The specified module does not exist
+                      or is not accessible.
+
+                      **REQUIRED_PARAM_MISSING** - A required parameter is
+                      missing from the request.
+                    enum:
+                      - INVALID_URL_PATTERN
+                      - INVALID_DATA
+                      - INVALID_REQUEST_METHOD
+                      - INVALID_TOKEN
+                      - INVALID_MODULE
+                      - REQUIRED_PARAM_MISSING
+                  message:
+                    type: string
+                    description: 'Represents the error message describing the issue. '
+                    maxLength: 255
+                  details:
+                    type: object
+                    description: >-
+                      Contains additional context about the error, such as the
+                      specific field or parameter that caused the issue. 
+                    additionalProperties: true
+                    properties:
+                      resource_path_index:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the zero-based index of the path segment in
+                          the request URL that caused the error.
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+              examples:
+                ErrorExample:
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: The provided record ID is invalid
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Demonstrates the error response when the record ID in the
+                    request URL is invalid. 
+
+                    The **resource_path_index** indicates which path segment
+                    caused the error.
+                  summary: INVALID_DATA error for an invalid record ID.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.emails.READ
+            - ZohoCRM.modules.leads.all
+            - ZohoCRM.modules.contacts.all
+            - ZohoCRM.modules.deals.all
+components:
+  parameters:
+    RecordId:
+      name: recordId
+      in: path
+      required: true
+      description: >-
+        Specify the unique ID of the record associated with the email containing
+        the inline image.
+      schema:
+        type: string
+        maxLength: 100
+    Module:
+      name: module
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the module to which the record belongs.
+        Supported modules include Leads, Accounts, Contacts, Deals, Quotes,
+        Invoices, Sales Orders, Purchase Orders, and custom modules.
+      schema:
+        type: string
+        maxLength: 50
+    MessageId:
+      name: message_id
+      in: query
+      required: true
+      description: >-
+        Specify the message ID of the email containing the inline image. Refer
+        to the **message_id** key in the response of [Send Mail
+        API](send_mail.yaml#$.paths./{moduleName}/{id}/actions/send_mail.post)
+        or [Get Emails
+        API](emails.yaml#$.paths./{moduleApiName}/{id}/Emails.get) to obtain
+        this ID.
+      schema:
+        type: string
+        maxLength: 500
+    UserId:
+      name: user_id
+      in: query
+      required: true
+      description: >-
+        The unique ID of the record owner whose email you want to retrieve. Use
+        the [Get Users API](users.yaml#$.paths./users.get) to get the user's ID.
+      schema:
+        type: integer
+        format: int64
+    Id:
+      name: id
+      in: query
+      required: true
+      description: >-
+        Specify the unique ID of the inline image to download. Refer to the
+        **img_id** property in the **content** key of the [Get Emails
+        API](emails.yaml#$.paths./{moduleApiName}/{id}/Emails.get) response to
+        obtain this ID.
+      schema:
+        type: string
+        maxLength: 1000
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: Zoho IAM OAuth2 Authentication
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.emails.READ: Read emails
+            ZohoCRM.modules.leads.all: All lead access
+            ZohoCRM.modules.contacts.all: All contact access
+            ZohoCRM.modules.deals.all: All deal access

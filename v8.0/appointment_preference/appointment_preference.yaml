@@ -1,0 +1,1226 @@
+openapi: 3.1.0
+info:
+  title: Appointment Preferences Apis
+  description: >-
+    This API enables developers to retrieve and update the appointment
+    preferences configured for the CRM organization.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Public Zoho API Server URL for your account region.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The data center domain (top-level domain) corresponding to the
+          account's region.
+      version:
+        default: v8
+        description: API Version
+paths:
+  /settings/appointment_preferences:
+    get:
+      operationId: getAppointmentPreference
+      summary: Get Appointment Preferences
+      description: >-
+        Fetches the existing configuration for appointment preferences,
+        including rules for deal creation, job sheet visibility, and mark as
+        complete configurations.
+      x-zs-llm-description: >-
+        Use this API to fetch the current org appointment preference
+        configuration before sending updates.
+      parameters:
+        - $ref: '#/components/parameters/Include'
+      responses:
+        '200':
+          description: 'Contains the details of the requested resource. '
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetAppointmentPreferenceResponse
+                type: object
+                description: >-
+                  Returns the appointment preferences configured for the Zoho
+                  CRM organization.
+                additionalProperties: false
+                properties:
+                  appointment_preferences:
+                    type: object
+                    description: >-
+                      Represents the complete set of appointment preferences
+                      configured in the CRM organization. 
+                    additionalProperties: false
+                    properties:
+                      show_job_sheet:
+                        type: boolean
+                        description: >
+                          Represents whether filling out the job sheet is
+                          mandatory for marking an appointment as 'completed'.
+
+                          Possible values:
+
+                          **true** - Job sheet is mandatory for appointment
+                          completion.
+
+                          **false** - Job sheet is not mandatory for appointment
+                          completion.
+                      when_duration_exceeds:
+                        type: string
+                        enum:
+                          - mark_as_complete
+                          - ask_appointment_provider_to_complete
+                        description: >
+                          Represents who has to mark the appointment as
+                          'Completed' when the service duration gets over.
+
+                          Possible values:
+
+                          **mark_as_complete** - The appointment is
+                          automatically marked as 'completed'.
+
+                          **ask_appointment_provider_to_complete** - User has to
+                          manually mark the appointment as 'completed'.
+                      when_appointment_completed:
+                        type: string
+                        enum:
+                          - do_not_create_deal
+                          - create_deal
+                        description: >
+                          Represents whether a deal has to be created when an
+                          appointment is completed.
+
+                          Possible values:
+
+                          **create_deal** - Deal is created when any appointment
+                          is marked 'Completed'.
+
+                          **do_not_create_deal** - Deal is not created when any
+                          appointment is marked 'Completed'.
+                      allow_booking_outside_service_availability:
+                        type: boolean
+                        description: >
+                          Denotes if you can create appointments outside service
+                          availability.
+
+                          Possible values:
+
+                          **true** - You can create appointments outside service
+                          availability.
+
+                          **false** - You can not create appointments outside
+                          service availability.
+                      allow_booking_outside_businesshours:
+                        type: boolean
+                        description: >
+                          Denotes if you can create appointments outside
+                          business hours.
+
+                          Possible values:
+
+                          **true** - You can create appointments outside
+                          business hours.
+
+                          **false** - You can not create appointments outside
+                          business hours.
+                      sharing_enabled:
+                        type: boolean
+                        description: >-
+                          Indicates whether sharing of the associated record in
+                          appointments with the appointment owner is enabled.
+                      sharing_details:
+                        type: object
+                        description: >-
+                          Details about the sharing configuration for
+                          appointment-associated records. When sharing is
+                          enabled, the record associated in the appointment
+                          field is shared with the appointment owner with the
+                          configured permission level.
+                        additionalProperties: false
+                        properties:
+                          sharing_computation_status:
+                            type: boolean
+                            description: >-
+                              Indicates whether the sharing computation is
+                              currently in progress or completed.
+                          permission:
+                            type: string
+                            enum:
+                              - read_only
+                              - read_write
+                              - full_access
+                            description: >-
+                              The permission level granted to the appointment
+                              owner for the associated record.
+                      deal_record_configuration:
+                        type: object
+                        description: >-
+                          Contains the field mappings and layout details for
+                          record configuration in Deals from the Appointments
+                          module.
+                        additionalProperties: false
+                        properties:
+                          layout:
+                            type: object
+                            description: >-
+                              Represents the Deals module layout used when
+                              creating deal records after an appointment is
+                              completed. 
+                            additionalProperties: false
+                            properties:
+                              name:
+                                type: string
+                                description: >-
+                                  Represents the display name of the Deals
+                                  module layout as shown in the Zoho CRM
+                                  interface. 
+                                maxLength: 255
+                              id:
+                                type: string
+                                description: >-
+                                  Represents the unique identifier of the Deals
+                                  module layout.
+                                maxLength: 64
+                            required:
+                              - name
+                          field_mappings:
+                            type: array
+                            description: >-
+                              Contains the field mappings that define how
+                              appointment and service data populates deal fields
+                              when Zoho CRM creates a deal automatically after
+                              the appointment completion.
+                            items:
+                              type: object
+                              description: >-
+                                Represents a single field mapping entry,
+                                containing the target Deals module field,
+                                mapping type, and mapped value. 
+                              additionalProperties: false
+                              properties:
+                                type:
+                                  type: string
+                                  enum:
+                                    - static
+                                    - merge_field
+                                  description: >
+                                    Indicates the type of field mapping applied
+                                    to populate the deal field. 
+
+                                    Possible values:
+
+                                    **static** - A fixed value applies to the
+                                    deal field regardless of appointment data.
+
+                                    **merge_field** - The field value maps from
+                                    the appointment or service module data.
+                                value:
+                                  description: >-
+                                    Represents the value assigned to the Deals
+                                    module field during deal creation. 
+                                  oneOf:
+                                    - x-zs-$id: MergeFieldExpression
+                                      type: string
+                                      description: >-
+                                        Represents a merge-field expression that
+                                        maps data from the Appointments or
+                                        Services module to the deal field.
+                                      maxLength: 1000
+                                    - x-zs-$id: StructuredStaticValue
+                                      type: object
+                                      additionalProperties: true
+                                      description: >-
+                                        Represents a structured static value for
+                                        lookup or complex deal fields, provided
+                                        as an object with a name and an
+                                        identifier.
+                                field:
+                                  type: object
+                                  description: >-
+                                    Represents the Deals module field to which
+                                    the appointment data is mapped. 
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the Deals
+                                        module field. 
+                                      maxLength: 100
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the unique identifier of the
+                                        Deals module field. 
+                                      maxLength: 20
+                                  required:
+                                    - api_name
+                                    - id
+                              required:
+                                - type
+                                - value
+                                - field
+                            maxItems: 100
+                          id:
+                            type: string
+                            description: >-
+                              Represents the unique identifier of the deal
+                              record configuration. 
+                            maxLength: 20
+                        required:
+                          - layout
+                          - field_mappings
+                          - id
+                    required:
+                      - show_job_sheet
+                      - when_appointment_completed
+                      - allow_booking_outside_service_availability
+                      - allow_booking_outside_businesshours
+                      - deal_record_configuration
+                required:
+                  - appointment_preferences
+              examples:
+                SuccessResponse:
+                  summary: >-
+                    Example of successful retrieval of appointment preferences
+                    with deal record configuration.
+                  value:
+                    appointment_preferences:
+                      allow_booking_outside_businesshours: true
+                      sharing_enabled: true
+                      sharing_details:
+                        sharing_computation_status: false
+                        permission: read_only
+                      deal_record_configuration:
+                        layout:
+                          name: Standard
+                          id: '4838129000000095023'
+                        field_mappings:
+                          - field:
+                              api_name: Owner
+                              id: '4838129000000000515'
+                            type: merge_field
+                            value: ${!Appointments__s.Owner}
+                          - field:
+                              api_name: Amount
+                              id: '4838129000000000517'
+                            type: merge_field
+                            value: ${!Appointments__s.Service_Name.Price}
+                          - field:
+                              api_name: Deal_Name
+                              id: '4838129000000000519'
+                            type: merge_field
+                            value: ${!Appointments__s.Appointment_Name}
+                          - field:
+                              api_name: Closing_Date
+                              id: '4838129000000000521'
+                            type: merge_field
+                            value: ${!Appointments__s.Appointment_Start_Time}
+                          - field:
+                              api_name: Account_Name
+                              id: '4838129000000000523'
+                            type: static
+                            value:
+                              name: Printing Dimensions (Sample)
+                              id: '4838129000000659698'
+                          - field:
+                              api_name: Stage
+                              id: '4838129000000000525'
+                            type: static
+                            value: Closed Won
+                        id: '4838129000000718001'
+                      show_job_sheet: true
+                      when_duration_exceeds: ask_appointment_provider_to_complete
+                      when_appointment_completed: create_deal
+                      allow_booking_outside_service_availability: true
+                  description: >-
+                    Shows a complete appointment preferences response including
+                    deal record configuration with layout and field mappings.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.modules.READ
+    put:
+      operationId: updateAppointmentPreference
+      summary: Update Appointment Preferences
+      description: >-
+        To update the appointment preference settings in your Zoho CRM
+        organization, including booking constraints, job sheet requirements,
+        deal creation configuration, and record-sharing settings.
+      x-zs-llm-description: >-
+        Use this API to update org appointment preferences. Prefer fetching
+        current values first for nested or dependent settings.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Contains the appointment preference settings to update in the
+                Zoho CRM organization.
+              additionalProperties: false
+              properties:
+                appointment_preferences:
+                  type: object
+                  description: >-
+                    Specify the appointment preferences to configure for the
+                    Zoho CRM organization.
+                  additionalProperties: false
+                  properties:
+                    show_job_sheet:
+                      type: boolean
+                      description: >
+                        Represents whether filling out the job sheet is
+                        mandatory for marking an appointment as 'completed'. You
+                        can mandate job sheets only when
+                        **when_duration_exceeds:
+                        ask_appointment_provider_to_complete**.
+
+                        Possible values:
+
+                        **true** - Job sheet is mandatory for appointment
+                        completion.
+
+                        **false** - Job sheet is not mandatory for appointment
+                        completion.
+                    when_duration_exceeds:
+                      type: string
+                      enum:
+                        - mark_as_complete
+                        - ask_appointment_provider_to_complete
+                      description: >
+                        Represents who has to mark the appointment as
+                        'Completed' when the service duration gets over.
+
+                        Possible values:
+
+                        **mark_as_complete** - The appointment is automatically
+                        marked as 'completed'.
+
+                        **ask_appointment_provider_to_complete** - User have to
+                        manually mark the appointment as 'completed'.
+                    when_appointment_completed:
+                      type: string
+                      enum:
+                        - do_not_create_deal
+                        - create_deal
+                      description: >
+                        Represents whether a deal has to be created, when an
+                        appointment is completed.
+
+                        Possible values:
+
+                        **create_deal** - Deal is created when any appointment
+                        is marked 'Completed'.
+
+                        **do_not_create_deal** - Deal is not created when any
+                        appointment is marked 'Completed'.
+                    allow_booking_outside_service_availability:
+                      type: boolean
+                      description: >
+                        Denotes if you can create appointments outside service
+                        availability.
+
+                        Possible values:
+
+                        **true** - You can create appointments outside service
+                        availability.
+
+                        **false** - You cannot create appointments outside
+                        service availability.
+                    allow_booking_outside_businesshours:
+                      type: boolean
+                      description: >
+                        Denotes if you can create appointments outside business
+                        hours. You can configure this preference only when
+                        **allow_booking_outside_service_availability:true**.
+
+                        Possible values:
+
+                        **true** - You can create appointments outside business
+                        hours.
+
+                        **false** - You cannot create appointments outside
+                        business hours.
+                    sharing_enabled:
+                      type: boolean
+                      description: >-
+                        Set to true to enable sharing of the associated record
+                        in appointments with the appointment owner. When set to
+                        true, sharing_details must also be provided.
+                    sharing_details:
+                      type: object
+                      description: >-
+                        Sharing configuration for appointment-associated
+                        records. Defines the permission level granted to the
+                        appointment owner for the associated record. Required
+                        when sharing_enabled is set to true.
+                      additionalProperties: false
+                      properties:
+                        permission:
+                          type: string
+                          enum:
+                            - read_only
+                            - read_write
+                            - full_access
+                          description: >-
+                            The permission level granted to the appointment
+                            owner for the associated record.
+                      required:
+                        - permission
+                    deal_record_configuration:
+                      type: object
+                      description: >-
+                        Specify the configuration for creating Deal records when
+                        an appointment is completed, including the layout and
+                        field mappings.
+                      additionalProperties: false
+                      properties:
+                        layout:
+                          type: object
+                          description: >-
+                            Specify the Deals module layout to use when creating
+                            deal records from completed appointments.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              description: >-
+                                Specify the unique identifier of the Deals
+                                module layout. You can get the ID using the [Get
+                                Layouts
+                                API](layouts.yaml#$.paths./settings/layouts.get).
+                              x-zs-$ref:
+                                resource: layouts
+                                origins:
+                                  - operationId: getLayouts
+                                    propertyId: LayoutId
+                                  - operationId: getLayoutById
+                                    propertyId: LayoutId
+                              type: string
+                              format: int64
+                              pattern: ^[0-9]{1,19}$
+                              minLength: 1
+                              maxLength: 19
+                              example: '4832675000000850800'
+                            name:
+                              type: string
+                              description: Specify the name of the Deals module layout.
+                              maxLength: 50
+                          required:
+                            - id
+                        field_mappings:
+                          type: array
+                          maxItems: 100
+                          description: >-
+                            Specify the field mappings that define how
+                            appointment and service data populates the Deals
+                            module fields when a deal is created.
+                          items:
+                            type: object
+                            description: >-
+                              Each object specifies the details for each field
+                              mapping, including the target Deals module field,
+                              the mapping type, and the corresponding value.
+                            additionalProperties: false
+                            properties:
+                              type:
+                                type: string
+                                enum:
+                                  - static
+                                  - merge_field
+                                description: >
+                                  Specify the type of field mapping to use.
+
+                                  Possible values:
+
+                                  **static** - Set a fixed value for the deal
+                                  field regardless of appointment data.
+
+                                  **merge_field** - Map the deal field value
+                                  from appointment or service module data.
+                              value:
+                                description: >
+                                  Denotes the value of the Deals fields. The
+                                  format of this key's value depends on the
+                                  mapping **type**.
+
+
+                                  **Value for merge_field**: The datatype of
+                                  this value is a string. To merge any field
+                                  from a module, it should be specified like
+                                  this **${module_api_name.field_api_name}**.
+
+                                  Example: ${Appointments__s.Appointment_Name}
+
+
+                                  **Value for static**: The datatype of this
+                                  value is a JSON object. It contains the name
+                                  and ID of the entity.
+
+
+                                  When you want to give static values that look
+                                  up to a different module, make a GET API call
+                                  of the specific module and provide the
+                                  relevant ID and name of the record. You can
+                                  also give standard text values enclosed in a
+                                  string.
+                                x-zs-llm-description: >-
+                                  Use a merge-field expression for merge_field
+                                  mappings and a static value or object for
+                                  static mappings.
+                                oneOf:
+                                  - x-zs-$id: MergeFieldExpressions
+                                    type: string
+                                    description: >-
+                                      Specify a merge-field expression that
+                                      references appointment or service module
+                                      data using the format
+                                      **${!module_api_name.field_api_name}**.
+                                    maxLength: 1000
+                                  - x-zs-$id: StructuredStaticValues
+                                    type: object
+                                    additionalProperties: true
+                                    description: >-
+                                      Specify a structured static value for
+                                      lookup and complex deal fields, provided
+                                      as an object with a **name** and an
+                                      **ID**.
+                              field:
+                                type: object
+                                description: >-
+                                  Specify the Deals module field to which the
+                                  appointment data is mapped. Use the [Get
+                                  Fields
+                                  API](fields.yaml#$.paths./settings/fields.get)
+                                  call to fetch the API name and ID of the
+                                  field. 
+                                additionalProperties: false
+                                properties:
+                                  api_name:
+                                    description: >-
+                                      Provide the API name of the Deals module
+                                      field.
+                                    x-zs-$ref:
+                                      resource: fields
+                                      origins:
+                                        - operationId: getFields
+                                          propertyId: FieldsApiName
+                                        - operationId: getFieldsWithID
+                                          propertyId: FieldsApiName
+                                    type: string
+                                    example: api_name30
+                                    maxLength: 50
+                                    pattern: ^[A-Za-z][A-Za-z0-9_]*$
+                                  id:
+                                    description: >-
+                                      Provide the Unique ID of the Deals module
+                                      field. Use the [Get Fields
+                                      API](fields.yaml$#.paths./settings/fields.get)
+                                      to get the valid API name and ID of the
+                                      field.
+                                    x-zs-$ref:
+                                      resource: fields
+                                      origins:
+                                        - operationId: getFields
+                                          propertyId: FieldsId
+                                        - operationId: getFieldsWithID
+                                          propertyId: FieldsId
+                                    type: string
+                                    format: int64
+                                    example: '1385208000000973001'
+                                required:
+                                  - api_name
+                                  - id
+                            required:
+                              - value
+                              - field
+                              - type
+                      required:
+                        - layout
+                        - field_mappings
+                  required:
+                    - allow_booking_outside_service_availability
+                    - allow_booking_outside_businesshours
+                    - deal_record_configuration
+            examples:
+              ExpectedRequest:
+                summary: >-
+                  Example of appointment preferences update with deal record
+                  configuration and sharing settings.
+                value:
+                  appointment_preferences:
+                    when_duration_exceeds: ask_appointment_provider_to_complete
+                    show_job_sheet: true
+                    allow_booking_outside_service_availability: true
+                    allow_booking_outside_businesshours: true
+                    when_appointment_completed: create_deal
+                    sharing_enabled: true
+                    sharing_details:
+                      permission: full_access
+                    deal_record_configuration:
+                      layout:
+                        id: '4838717000000095023'
+                        name: Standard
+                      field_mappings:
+                        - field:
+                            id: '4838717000000000515'
+                            api_name: Owner
+                          type: merge_field
+                          value: ${!Appointments__s.Created_By}
+                        - field:
+                            id: '4838717000000000517'
+                            api_name: Amount
+                          type: merge_field
+                          value: ${!Appointments__s.Service_Name.Price}
+                        - field:
+                            id: '4838717000000000519'
+                            api_name: Deal_Name
+                          type: merge_field
+                          value: ${!Appointments__s.Appointment_Name}
+                        - field:
+                            id: '4838717000000000521'
+                            api_name: Closing_Date
+                          type: merge_field
+                          value: ${!Appointments__s.Appointment_Start_Time}
+                        - field:
+                            id: '4838717000000000523'
+                            api_name: Account_Name
+                          type: static
+                          value:
+                            id: '4838717000000659093'
+                            name: Chapman (Sample)
+                        - field:
+                            id: '4838717000000000525'
+                            api_name: Stage
+                          type: static
+                          value: Closed Won
+                description: >-
+                  Shows a complete appointment preferences update request with
+                  deal record configuration, sharing settings, and field
+                  mappings.
+        description: 'Contains the input data required to process the request. '
+        x-zs-llm-examples:
+          - ExpectedRequest
+      responses:
+        '200':
+          description: >-
+            Returns the status confirmation after successfully updating the
+            appointment preferences.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateAppointmentPreferenceResponse
+                type: object
+                description: >-
+                  Returns the status information confirming the outcome of the
+                  appointment preferences update.
+                additionalProperties: false
+                properties:
+                  appointment_preferences:
+                    type: object
+                    description: >-
+                      Represents the response details confirming the outcome of
+                      the update operation. 
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - success
+                        description: >
+                          Indicates whether the appointment preferences update
+                          was successful. 
+
+                          Possible values:
+
+                          **success** - The appointment preferences were updated
+                          successfully.
+                      code:
+                        type: string
+                        enum:
+                          - SUCCESS
+                        description: >
+                          Represents the response code for the update
+                          operation. 
+
+                          Possible values:
+
+                          **SUCCESS** - The appointment preferences were updated
+                          successfully.
+                      message:
+                        type: string
+                        enum:
+                          - Appointments preferences updated successfully
+                        description: >
+                          Represents the success message for the update
+                          operation. 
+
+                          Possible values:
+
+                          **Appointments preferences updated successfully**
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional metadata about the update
+                          operation. 
+                        additionalProperties: true
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                required:
+                  - appointment_preferences
+              examples:
+                SuccessResponse:
+                  summary: >-
+                    Example of a successful appointment preferences update
+                    response.
+                  value:
+                    appointment_preferences:
+                      code: SUCCESS
+                      details: {}
+                      message: Appointments preferences updated successfully
+                      status: success
+                  description: >-
+                    Shows the success response returned after updating
+                    appointment preferences, with status, code, and message
+                    fields.
+        '400':
+          description: >
+            The request contains missing mandatory fields or invalid data.
+
+            **Resolution:** The request body must include all required fields
+            with valid values. Refer to the details key in the error response
+            for the specific field and JSON path.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: AppointmentPreferenceErrorResponse
+                type: object
+                description: >-
+                  Returns the error details when the appointment preferences
+                  update request is invalid or incomplete.
+                additionalProperties: false
+                properties:
+                  appointment_preferences:
+                    description: >-
+                      Represents the error details returned when the appointment
+                      preference update fails validation. 
+                    oneOf:
+                      - x-zs-$id: MandatoryFieldMissingError
+                        type: object
+                        description: >-
+                          Represents an error response returned when a mandatory
+                          field is missing from the update request.
+                        additionalProperties: false
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                              - error
+                            description: >
+                              Indicates the outcome of the request.
+
+                              Possible values:
+
+                              **error** - The request failed due to a validation
+                              error.
+                          code:
+                            type: string
+                            enum:
+                              - MANDATORY_NOT_FOUND
+                            description: >
+                              Represents the error code returned when a required
+                              field is missing from the request.
+
+                              Possible values:
+
+                              **MANDATORY_NOT_FOUND** - A required field is
+                              absent from the request body.
+                          message:
+                            type: string
+                            description: >-
+                              Represents the error message describing the
+                              missing mandatory field.
+                            maxLength: 1000
+                          details:
+                            type: object
+                            description: >-
+                              Represents the details identifying the missing
+                              mandatory field, including its API name and JSON
+                              path.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the missing
+                                  mandatory field.
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the missing
+                                  mandatory field in the request body.
+                                maxLength: 1000
+                      - x-zs-$id: InvalidDataError
+                        type: object
+                        description: >-
+                          Represents an error response returned when a field
+                          value has an invalid data type or unsupported value.
+                        additionalProperties: false
+                        properties:
+                          status:
+                            type: string
+                            description: >
+                              Indicates the outcome of the request.
+
+                              Possible values:
+
+                              **error** - The request failed due to invalid
+                              data.
+                            enum:
+                              - error
+                          code:
+                            type: string
+                            description: >
+                              Represents the error code returned when an invalid
+                              value is provided in the request.
+
+                              Possible values:
+
+                              **INVALID_DATA** - The request contains a field
+                              with an invalid value or unsupported data type.
+                            enum:
+                              - INVALID_DATA
+                          message:
+                            type: string
+                            description: >-
+                              Represents the error message describing the
+                              invalid data issue.
+                            maxLength: 1000
+                          details:
+                            type: object
+                            description: >-
+                              Represents the details identifying the field with
+                              invalid data, including the expected data type and
+                              JSON path.
+                            additionalProperties: false
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: >-
+                                  Represents the expected data type for the
+                                  field that received invalid data.
+                                maxLength: 255
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field that
+                                  contains invalid data.
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field with
+                                  invalid data in the request body.
+                                maxLength: 1000
+                      - x-zs-$id: DependentMismatchError
+                        type: object
+                        description: >-
+                          Represents an error response returned when a field
+                          value conflicts with the value of a dependent field.
+                        additionalProperties: false
+                        properties:
+                          status:
+                            type: string
+                            description: >
+                              Indicates the outcome of the request.
+
+                              Possible values:
+
+                              **error** - The request failed due to a dependent
+                              field mismatch.
+                            enum:
+                              - error
+                          code:
+                            type: string
+                            description: >
+                              Represents the error code returned when a field
+                              value conflicts with the value of a dependent
+                              field.
+
+                              Possible values:
+
+                              **DEPENDENT_MISMATCH** - The submitted value for a
+                              field is incompatible with the current value of a
+                              field it depends on.
+                            enum:
+                              - DEPENDENT_MISMATCH
+                          message:
+                            type: string
+                            description: >-
+                              Represents the error message describing the
+                              dependent field conflict.
+                            maxLength: 1000
+                          details:
+                            type: object
+                            description: >-
+                              Represents the details identifying the field with
+                              the conflicting value and the dependee field,
+                              including their API names and JSON paths.
+                            additionalProperties: false
+                            properties:
+                              dependee:
+                                type: object
+                                description: >-
+                                  Represents the details of the dependee field
+                                  whose value conflicts with the submitted
+                                  request.
+                                additionalProperties: false
+                                properties:
+                                  api_name:
+                                    type: string
+                                    description: >-
+                                      Represents the API name of the dependee
+                                      field.
+                                    maxLength: 100
+                                  json_path:
+                                    type: string
+                                    description: >-
+                                      Represents the JSON path to the dependee
+                                      field in the request body.
+                                    maxLength: 1000
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field with the
+                                  conflicting value.
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field with the
+                                  conflicting value in the request body.
+                                maxLength: 1000
+                      - x-zs-$id: DependentFieldMissingError
+                        type: object
+                        description: >-
+                          Represents an error response returned when a required
+                          dependent field is absent from the request. For
+                          example, **sharing_details** requires
+                          **sharing_enabled** to be present.
+                        additionalProperties: false
+                        properties:
+                          status:
+                            type: string
+                            description: >
+                              Indicates the outcome of the request.
+
+                              Possible values:
+
+                              **error** - The request failed due to a missing
+                              dependent field.
+                            enum:
+                              - error
+                          code:
+                            type: string
+                            description: >
+                              Represents the error code returned when a required
+                              dependent field is absent from the request.
+
+                              Possible values:
+
+                              **DEPENDENT_FIELD_MISSING** - A field that depends
+                              on another field being present is missing from the
+                              request body.
+                            enum:
+                              - DEPENDENT_FIELD_MISSING
+                          message:
+                            type: string
+                            description: >-
+                              Represents the error message describing the
+                              missing dependent field.
+                            maxLength: 1000
+                          details:
+                            type: object
+                            description: >-
+                              Represents the details identifying the missing
+                              dependent field and the dependee field that
+                              requires it.
+                            additionalProperties: false
+                            properties:
+                              dependee:
+                                type: object
+                                description: >-
+                                  Represents the details of the dependee field
+                                  whose presence requires the missing dependent
+                                  field.
+                                additionalProperties: false
+                                properties:
+                                  api_name:
+                                    type: string
+                                    description: >-
+                                      Represents the API name of the dependee
+                                      field.
+                                    maxLength: 100
+                                  json_path:
+                                    type: string
+                                    description: >-
+                                      Represents the JSON path to the dependee
+                                      field in the request body.
+                                    maxLength: 1000
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field that is
+                                  missing from the request.
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the missing
+                                  dependent field in the request body.
+                                maxLength: 1000
+                required:
+                  - appointment_preferences
+              examples:
+                MandatoryFieldMissing:
+                  summary: >-
+                    Example of an error when a required field is absent from the
+                    request.
+                  value:
+                    appointment_preferences:
+                      status: error
+                      code: MANDATORY_NOT_FOUND
+                      message: Mandatory fields are missing
+                      details:
+                        api_name: allow_booking_outside_service_availability
+                        json_path: >-
+                          appointment_preferences.allow_booking_outside_service_availability
+                  description: >-
+                    Shows the error response when
+                    **allow_booking_outside_service_availability**, a required
+                    field, is missing from the request.
+                InvalidData:
+                  summary: >-
+                    Example of an error when a field receives a value of the
+                    wrong data type.
+                  value:
+                    appointment_preferences:
+                      status: error
+                      code: INVALID_DATA
+                      details:
+                        expected_data_type: boolean
+                        api_name: show_job_sheet
+                        json_path: $.appointment_preferences.show_job_sheet
+                      message: invalid data
+                  description: >-
+                    Shows the error response when **show_job_sheet** is provided
+                    with a non-Boolean value.
+                DependentMismatch:
+                  summary: >-
+                    Example of an error due to dependent mismatch - a
+                    conflicting booking preference setting.
+                  value:
+                    appointment_preferences:
+                      status: error
+                      code: DEPENDENT_MISMATCH
+                      details:
+                        dependee:
+                          api_name: allow_booking_outside_service_availability
+                          json_path: >-
+                            $.appointment_preferences.allow_booking_outside_service_availability
+                        api_name: allow_booking_outside_businesshours
+                        json_path: >-
+                          $.appointment_preferences.allow_booking_outside_businesshours
+                      message: >-
+                        allow_booking_outside_service_availability must be
+                        enabled to set allow_booking_outside_businesshours to
+                        true
+                  description: >-
+                    Shows the error response when
+                    **allow_booking_outside_businesshours** is set to **true**
+                    while **allow_booking_outside_service_availability** is
+                    **false**.
+                DependentFieldMissing:
+                  summary: >-
+                    Example of dependent field missing error when
+                    sharing_enabled is set but sharing_details is absent.
+                  value:
+                    appointment_preferences:
+                      status: error
+                      code: DEPENDENT_FIELD_MISSING
+                      details:
+                        dependee:
+                          api_name: sharing_enabled
+                          json_path: $.appointment_preferences.sharing_enabled
+                        api_name: sharing_details
+                        json_path: $.appointment_preferences.sharing_details
+                      message: Dependent Field missing
+                  description: >-
+                    Shows the error response when **sharing_details** is
+                    included in the request body without setting
+                    **sharing_enabled** to **true**.
+                MandatoryNotFoundSharingEnabled:
+                  summary: >-
+                    Example of an error when sharing_details is present but
+                    sharing_enabled is missing.
+                  value:
+                    appointment_preferences:
+                      status: error
+                      code: MANDATORY_NOT_FOUND
+                      details:
+                        api_name: sharing_enabled
+                        json_path: $.appointment_preferences.sharing_enabled
+                      message: required field not found
+                  description: >-
+                    Shows the error response when **sharing_details** is
+                    included in the request body without the required
+                    **sharing_enabled** field.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.modules.UPDATE
+security:
+  - OAuth2:
+      - ZohoCRM.settings.modules.ALL
+components:
+  parameters:
+    Include:
+      name: include
+      in: query
+      required: false
+      description: >
+        Specify this key to fetch deal record configuration when
+        **when_appointment_completed:create_deal**.
+
+        Possible values: **deal_record_configuration**.
+      schema:
+        type: string
+        enum:
+          - deal_record_configuration
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth 2.0 authorization using Zoho Accounts for secure API access.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.modules.ALL: >-
+              Grants full access to read and update appointment preference
+              settings in the Zoho CRM organization.
+            ZohoCRM.settings.modules.UPDATE: >-
+              Grants permission to update appointment preference settings in the
+              Zoho CRM organization.
+            ZohoCRM.settings.modules.READ: >-
+              Grants permission to retrieve appointment preference settings from
+              the Zoho CRM organization.

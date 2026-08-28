@@ -1,0 +1,903 @@
+openapi: 3.1.0
+info:
+  title: Unblock Email Address API
+  description: >
+    In certain scenarios, a mail you sent gets bounced in Zoho CRM due to
+    reasons such as invalid email address, full mailbox, blocked domain, email
+    server down, large email, and so on.
+
+
+    There are two types of bounces:
+
+
+    - **Soft Bounces**  - An email cannot be delivered to a recipient's email
+    address temporarily.
+
+    Example: Email Server is down.
+
+    - **Hard Bounces** - An email id permanently undeliverable. 
+
+    Example: Invalid email address.
+
+    You can now unblock the **soft bounced emails** using **Unblock Email API**.
+
+
+    For more details, refer to [Avoiding email
+    bounces](https://help.zoho.com/portal/en/kb/crm/connect-with-customers/email/reports-and-analytics/articles/dealing-with-bounce-warnings#Avoiding_email_bounces)
+    to know more about email bounce management in Zoho CRM. 
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+        default: com
+        description: API Server URL TLD
+      version:
+        description: API Version
+        default: v8
+paths:
+  /{module}/actions/unblock_email:
+    post:
+      operationId: unblockEmailByModule
+      summary: Unblock emails for multiple records in a module
+      description: >-
+        To unblock soft-bounced email addresses for multiple records in your
+        Zoho CRM organization. When emails sent from CRM bounce temporarily, the
+        Email field on the affected records is blocked. This operation removes
+        those blocks in bulk so email communication with the records can resume.
+      x-zs-llm-description: >-
+        Use to unblock the `Email` field for up to 100 records of a module in a
+        single call. Pass `module` in the path (currently `Leads` only), and
+        send `ids` (array of record ids, max 100) and `unblock_fields:
+        ["Email"]` in the body. Returns a `data` array with per-record SUCCESS
+        results.
+      parameters:
+        - $ref: '#/components/parameters/Module'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Specify the record IDs and email fields to unblock in bulk.
+              additionalProperties: false
+              properties:
+                ids:
+                  type: array
+                  description: >-
+                    Specify the record IDs for which you want to unblock the
+                    email fields. Use the [Get Records
+                    API](record.yaml#$.paths./{module}.get) to get valid values.
+                    You can specify up to 500 record IDs.
+                  maxItems: 100
+                  items:
+                    type: string
+                    description: >-
+                      Each string specifies the unique identifier of the record
+                      for which you want to unblock the email.
+                    maxLength: 50
+                unblock_fields:
+                  type: array
+                  description: |
+                    To unblock emails, specify one or both of the system-defined
+                    fields : **Email** and **Secondary_Email**.
+                  maxItems: 2
+                  items:
+                    type: string
+                    description: >-
+                      Each string specifies the API name of the field that has
+                      the email address to unblock.
+                    enum:
+                      - Email
+              required:
+                - ids
+                - unblock_fields
+            examples:
+              UnblockMultipleEmails:
+                value:
+                  ids:
+                    - '5545974000000224001'
+                    - '5545974000000224002'
+                  unblock_fields:
+                    - Email
+                description: >-
+                  Shows a request to unblock the **Email** field for multiple
+                  records by specifying their record IDs.
+                summary: >-
+                  An example response to unblock emails for multiple records in
+                  a module.
+            x-zs-llm-examples:
+              - UnblockMultipleEmails
+        required: true
+        description: 'The request body contains the data required to perform the operation. '
+      responses:
+        '200':
+          description: >-
+            Returns the per-record results of the bulk email unblock operation,
+            including the status code, record details, and a confirmation
+            message for each record.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: UnblockEmailByModuleResponse200
+                description: >-
+                  Contains the per-record results of the bulk email unblock
+                  operation.
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Contains the list of per-record results for the bulk email
+                      unblock operation.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents the result of the unblock
+                        operation for an individual record, including the status
+                        code, record details, and confirmation message.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Represents the result code of the unblock operation.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: >-
+                            Contains the identifying information of the record
+                            for which the email was unblocked.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Each string represents the unique identifier of
+                                the record for which the email was unblocked.
+                              maxLength: 50
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the descriptive message returned by the
+                            server for the unblock operation.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: >-
+                            Represents the overall status of the unblock
+                            operation for the record.
+                          maxLength: 50
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - data
+              examples:
+                SuccessfulUnblock:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '5545974000000224001'
+                        message: Email unblocked successfully
+                        status: success
+                  description: >-
+                    Shows a successful response after unblocking the email field
+                    for a single record in the bulk request, including the
+                    record ID and confirmation message.
+                  summary: >-
+                    An example response of successful bulk email unblock
+                    request.
+        '400':
+          description: |
+            The request is invalid.
+
+            **Resolution:** Valid module API names and record IDs must be
+            specified, and the OAuth token must include the required scope.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UnblockEmailByModuleResponse400
+                oneOf:
+                  - type: object
+                    x-zs-$id: UnblockEmailByModuleAuthError
+                    description: >-
+                      Represents an error response returned when the request
+                      fails due to an invalid or expired OAuth token.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: >-
+                          Represents the response status indicating an error
+                          occurred.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code returned by the server.
+
+                          Possible values:
+
+                          **INVALID_URL_PATTERN** - The request URL is
+                          incorrect.
+
+                          **INVALID_DATA** - The request contains invalid data.
+
+                          **INVALID_REQUEST_METHOD** - The HTTP method is not
+                          valid for this endpoint.
+
+                          **INVALID_TOKEN** - The OAuth token is invalid or
+                          expired.
+                        enum:
+                          - INVALID_URL_PATTERN
+                          - INVALID_DATA
+                          - INVALID_REQUEST_METHOD
+                          - INVALID_TOKEN
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned by the server
+                          indicating the issue.
+                        enum:
+                          - invalid oauth token
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context about the error, such as
+                          the field or parameter that caused the failure.
+                        additionalProperties: true
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: UnblockEmailByModuleRequestError
+                    description: >-
+                      Represents an error response returned when the request
+                      fails due to an invalid module name, incorrect request
+                      URL, or invalid record data.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: >-
+                          Represents the response status indicating an error
+                          occurred.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code returned by the server.
+
+                          Possible values:
+
+                          **INVALID_URL_PATTERN** - The request URL is
+                          incorrect.
+
+                          **INVALID_DATA** - The request contains invalid data.
+
+                          **INVALID_REQUEST_METHOD** - The HTTP method is not
+                          valid for this endpoint.
+
+                          **INVALID_MODULE** - The specified module name is not
+                          valid.
+                        enum:
+                          - INVALID_URL_PATTERN
+                          - INVALID_DATA
+                          - INVALID_REQUEST_METHOD
+                          - INVALID_MODULE
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the reason the
+                          request failed, such as an invalid token, invalid
+                          record, or invalid module name.
+                        enum:
+                          - invalid oauth token
+                          - Invalid record provided
+                          - the module name given seems to be invalid
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context about the error, including
+                          the index of the resource in the request path that
+                          caused the failure.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the zero-based index of the resource
+                              segment in the request path that triggered the
+                              error.
+                            format: int32
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: UnblockEmailByModuleDataError
+                    description: >-
+                      Represents an error response returned when the request
+                      fails due to invalid data, a missing mandatory field, or
+                      an invalid module name.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: >-
+                          Represents the response status indicating an error
+                          occurred.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code returned by the server.
+
+                          Possible values:
+
+                          **INVALID_DATA** - The request contains invalid data.
+
+                          **INVALID_MODULE** - The specified module name is not
+                          valid.
+
+                          **MANDATORY_NOT_FOUND** - A required field is missing
+                          from the request body.
+                        enum:
+                          - INVALID_DATA
+                          - INVALID_MODULE
+                          - MANDATORY_NOT_FOUND
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the validation
+                          or data issue encountered by the server.
+                        maxLength: 500
+                      details:
+                        oneOf:
+                          - type: object
+                            x-zs-$id: UnblockEmailByModuleDataErrorWithType
+                            description: >-
+                              Contains the expected data type, API name, and
+                              JSON path of the field that caused the validation
+                              error.
+                            additionalProperties: false
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: >-
+                                  Represents the data type expected by the
+                                  server for the field that caused the error.
+                                maxLength: 50
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field that
+                                  caused the validation error.
+                                maxLength: 255
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field in the
+                                  request body that caused the validation error.
+                                maxLength: 1000
+                          - type: object
+                            x-zs-$id: UnblockEmailByModuleDataErrorWithoutType
+                            description: >-
+                              Contains the API name and JSON path of the field
+                              that caused the validation error.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field that
+                                  caused the validation error.
+                                maxLength: 255
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field in the
+                                  request body that caused the validation error.
+                                maxLength: 1000
+                        description: >-
+                          Contains additional context about the validation
+                          error, including the expected data type and the field
+                          that caused the failure.
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                description: >-
+                  Contains one of several error response structures returned
+                  when the bulk unblock request fails due to invalid parameters,
+                  authentication issues, or data validation errors.
+              examples:
+                InvalidToken:
+                  value:
+                    status: error
+                    code: INVALID_TOKEN
+                    message: invalid oauth token
+                    details: {}
+                  description: >-
+                    Shows an error response returned when the provided OAuth
+                    token is invalid or expired.
+                  summary: An example response for invalid OAuth token error.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.leads.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.accounts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.contacts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.deals.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.quotes.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.salesorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.purchaseorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.custom.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.cases.UPDATE
+  /{module}/{id}/actions/unblock_email:
+    post:
+      operationId: unblockEmailById
+      summary: Unblock email for a single record
+      description: >-
+        To unblock a soft-bounced email address for a single record in your Zoho
+        CRM organization. When an email sent from CRM bounces temporarily, the
+        Email field on the affected record is blocked. This operation removes
+        that block so email communication with the record can resume.
+      x-zs-llm-description: >-
+        Use to unblock the `Email` field for a single record. Pass `module`
+        (currently `Leads` only) and the record `id` in the path; body requires
+        `unblock_fields: ["Email"]`. Returns a single SUCCESS result with the
+        unblocked record id.
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Specify the email fields to unblock for the record.
+              additionalProperties: false
+              properties:
+                unblock_fields:
+                  type: array
+                  description: |
+                    To unblock emails, specify one or both of the system-defined
+                    fields : **Email** and **Secondary_Email**.
+
+
+                    > **Note**
+
+                    > - The permanently blocked emails cannot be unblocked.
+
+                    > - A temporarily blocked email can be unblocked up to **5
+                    times**.
+
+                    > - A **custom email field** cannot be unblocked.
+
+                    > - You cannot merge records that are **locked** or in an
+                    **Approval Process/Review Process**.
+                  maxItems: 1
+                  items:
+                    type: string
+                    description: Each string represents an email address to unblock.
+                    enum:
+                      - Email
+              required:
+                - unblock_fields
+            examples:
+              UnblockSingleEmail:
+                value:
+                  unblock_fields:
+                    - Email
+                description: >-
+                  Shows a request to unblock the **Email** field for a single
+                  record in a module.
+                summary: >-
+                  An example to unblock the primary email field for a single
+                  record.
+            x-zs-llm-examples:
+              - UnblockSingleEmail
+        required: true
+        description: 'The request body contains the data required to perform the operation. '
+      responses:
+        '200':
+          description: >-
+            Returns the result of the email unblock operation, including the
+            status code, record details, and a confirmation message.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: UnblockEmailByIdResponse200
+                description: >-
+                  Contains the result of the email unblock operation for the
+                  specified record.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: Represents the status code of the unblock operation.
+                    enum:
+                      - SUCCESS
+                  details:
+                    type: object
+                    description: >-
+                      Contains the details of the record for which the email was
+                      unblocked.
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                        description: >-
+                          Represents the unique identifier of the record for
+                          which the email was unblocked.
+                        maxLength: 50
+                    required:
+                      - id
+                  message:
+                    type: string
+                    description: >-
+                      Represents the descriptive message returned by the server
+                      for the unblock operation.
+                    maxLength: 255
+                  status:
+                    type: string
+                    description: >-
+                      Represents the overall status of the unblock operation for
+                      the record.
+                    maxLength: 255
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                SuccessfulSingleUnblock:
+                  value:
+                    code: SUCCESS
+                    details:
+                      id: '5545974000000224001'
+                    message: Email unblocked successfully
+                    status: success
+                  description: >-
+                    Shows a successful response after unblocking the email field
+                    for a single record, including the record ID and
+                    confirmation message.
+                  summary: >-
+                    An example response of successful email unblock for a single
+                    record.
+        '400':
+          description: |
+            The request is invalid.
+
+
+            **Resolution:** A valid module API name and record ID must be
+            specified in the request URL, and the OAuth token must include the
+            required scope.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UnblockEmailByIdResponse400
+                oneOf:
+                  - type: object
+                    x-zs-$id: UnblockEmailByModuleAuthError1
+                    description: >-
+                      Represents an error response returned when the request
+                      fails due to an invalid or expired OAuth token.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: >-
+                          Represents the response status indicating an error
+                          occurred.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code returned by the server.
+
+                          Possible values:
+
+                          **INVALID_URL_PATTERN** - The request URL is
+                          incorrect.
+
+                          **INVALID_DATA** - The request contains invalid data.
+
+                          **INVALID_REQUEST_METHOD** - The HTTP method is not
+                          valid for this endpoint.
+
+                          **INVALID_TOKEN** - The OAuth token is invalid or
+                          expired.
+                        enum:
+                          - INVALID_URL_PATTERN
+                          - INVALID_DATA
+                          - INVALID_REQUEST_METHOD
+                          - INVALID_TOKEN
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned by the server
+                          indicating the issue.
+                        enum:
+                          - invalid oauth token
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context about the error, such as
+                          the field or parameter that caused the failure.
+                        additionalProperties: true
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: UnblockEmailByModuleRequestError2
+                    description: >-
+                      Represents an error response returned when the request
+                      fails due to an invalid module name, incorrect request
+                      URL, or invalid record data.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: >-
+                          Represents the response status indicating an error
+                          occurred.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code returned by the server.
+
+                          Possible values:
+
+                          **INVALID_URL_PATTERN** - The request URL is
+                          incorrect.
+
+                          **INVALID_DATA** - The request contains invalid data.
+
+                          **INVALID_REQUEST_METHOD** - The HTTP method is not
+                          valid for this endpoint.
+
+                          **INVALID_MODULE** - The specified module name is not
+                          valid.
+                        enum:
+                          - INVALID_URL_PATTERN
+                          - INVALID_DATA
+                          - INVALID_REQUEST_METHOD
+                          - INVALID_MODULE
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the reason the
+                          request failed, such as an invalid token, invalid
+                          record, or invalid module name.
+                        enum:
+                          - invalid oauth token
+                          - Invalid record provided
+                          - the module name given seems to be invalid
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context about the error, including
+                          the index of the resource in the request path that
+                          caused the failure.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the zero-based index of the resource
+                              segment in the request path that triggered the
+                              error.
+                            format: int32
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: UnblockEmailByModuleDataError3
+                    description: >-
+                      Represents an error response returned when the request
+                      fails due to invalid data, a missing mandatory field, or
+                      an invalid module name.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: >-
+                          Represents the response status indicating an error
+                          occurred.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code returned by the server.
+
+                          Possible values:
+
+                          **INVALID_DATA** - The request contains invalid data.
+
+                          **INVALID_MODULE** - The specified module name is not
+                          valid.
+
+                          **MANDATORY_NOT_FOUND** - A required field is missing
+                          from the request body.
+                        enum:
+                          - INVALID_DATA
+                          - INVALID_MODULE
+                          - MANDATORY_NOT_FOUND
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the validation
+                          or data issue encountered by the server.
+                        maxLength: 500
+                      details:
+                        oneOf:
+                          - type: object
+                            x-zs-$id: UnblockEmailByModuleDataErrorWithType4
+                            description: >-
+                              Contains the expected data type, API name, and
+                              JSON path of the field that caused the validation
+                              error.
+                            additionalProperties: false
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: >-
+                                  Represents the data type expected by the
+                                  server for the field that caused the error.
+                                maxLength: 255
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field that
+                                  caused the validation error.
+                                maxLength: 255
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field in the
+                                  request body that caused the validation error.
+                                maxLength: 1000
+                          - type: object
+                            x-zs-$id: UnblockEmailByModuleDataErrorWithoutType5
+                            description: >-
+                              Contains the API name and JSON path of the field
+                              that caused the validation error.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field that
+                                  caused the validation error.
+                                maxLength: 255
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field in the
+                                  request body that caused the validation error.
+                                maxLength: 1000
+                        description: >-
+                          Contains additional context about the validation
+                          error, including the expected data type and the field
+                          that caused the failure.
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                description: >-
+                  Contains one of several error response structures returned
+                  when the unblock request fails due to invalid parameters,
+                  authentication issues, or data validation errors.
+              examples:
+                InvalidTokenError:
+                  value:
+                    status: error
+                    code: INVALID_TOKEN
+                    message: invalid oauth token
+                    details: {}
+                  description: >-
+                    Shows an error response returned when the provided OAuth
+                    token is invalid or expired.
+                  summary: An example response of invalid OAuth token.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.leads.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.accounts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.contacts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.deals.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.quotes.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.salesorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.purchaseorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.custom.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.cases.UPDATE
+components:
+  parameters:
+    Module:
+      name: module
+      in: path
+      description: >-
+        Represents the module API name. Use the [Get Modules
+        API](modules.yaml#$.paths./settings/modules.get) to get valid values. 
+      required: true
+      schema:
+        type: string
+        enum:
+          - Leads
+    Id:
+      name: id
+      in: path
+      description: >-
+        Represents the unique ID of the record. Use the [Get Records
+        API](record.yaml#$.paths./{module}.get) to get valid values.
+      required: true
+      schema:
+        type: string
+        maxLength: 50
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.leads.UPDATE: Update access to Leads module
+            ZohoCRM.modules.accounts.UPDATE: Update access to Accounts module
+            ZohoCRM.modules.contacts.UPDATE: Update access to Contacts module
+            ZohoCRM.modules.deals.UPDATE: Update access to Deals module
+            ZohoCRM.modules.quotes.UPDATE: Update access to Quotes module
+            ZohoCRM.modules.salesorders.UPDATE: Update access to Sales Orders module
+            ZohoCRM.modules.purchaseorders.UPDATE: Update access to Purchase Orders module
+            ZohoCRM.modules.custom.UPDATE: Update access to Custom modules
+            ZohoCRM.modules.cases.UPDATE: Update access to Cases module

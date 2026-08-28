@@ -1,0 +1,1761 @@
+openapi: 3.1.0
+info:
+  title: Zia organization enrichment
+  description: >-
+    The Zia Organization Enrichment API exposes endpoints that schedule and
+    track Zia-powered enrichment jobs in Zoho CRM. Use these endpoints to enrich
+    organization records with publicly available details such as address,
+    primary contact, industries, revenue, and social media handles based on
+    supplied trigger values like name, email, or website.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Base URL for the Zoho CRM REST API. Substitute the `dc` and `version`
+      variables to target the appropriate data center and API version.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - ca
+          - au
+          - sa
+          - ae
+        default: com
+        description: >-
+          Specify the Zoho data center to which the CRM organization belongs.
+          Selecting the correct data center is required to route the request to
+          the right region.
+
+          Possible values:
+
+          **com** - United States data center.
+
+          **eu** - European Union data center.
+
+          **in** - India data center.
+
+          **ca** - Canada data center.
+
+          **au** - Australia data center.
+
+          **sa** - Saudi Arabia data center.
+
+          **ae** - United Arab Emirates data center.
+      version:
+        description: >-
+          Specify the major version of the Zoho CRM REST API to invoke. The
+          value forms part of the request path and selects the contract that the
+          server uses to handle the request.
+        default: v8
+paths:
+  /__zia_org_enrichment:
+    post:
+      operationId: submitOrgEnrichmentRequest
+      summary: Trigger organization-level enrichment for a CRM record
+      description: >-
+        To submit a request that schedules a Zia organization enrichment job in
+        your Zoho CRM organization. The job runs asynchronously and uses the
+        supplied name, email, or website to retrieve publicly available details
+        such as address, primary contact, industries, and social media handles,
+        and to populate the configured fields of the target module or record.
+      x-zs-llm-description: >-
+        Triggers Zia organization enrichment for a CRM record by module and
+        record ID.
+      parameters:
+        - name: module
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 255
+            description: CRM module name from which enrichment is triggered.
+          description: >-
+            Specify the API name of the CRM module for which enrichment is to be
+            triggered. Use the [Get Modules
+            API](modules.yaml#$.paths./settings/modules.get) to retrieve the
+            list of valid module API names.
+        - name: record_id
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 19
+            description: Unique CRM record ID for which enrichment is requested.
+          description: >-
+            Specify the unique identifier of the record for which enrichment is
+            to be triggered. When omitted, the job runs at the module level. Use
+            the records API of the target module to retrieve record identifiers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Defines the body of a Zia organization enrichment request. Wraps
+                the list of enrichment inputs under the `__zia_org_enrichment`
+                key.
+              properties:
+                __zia_org_enrichment:
+                  type: array
+                  description: >-
+                    Specify the list of enrichment requests to schedule. You can
+                    supply up to 50 entries in a single call.
+                  items:
+                    type: object
+                    description: >-
+                      Represents a single Zia organization enrichment request
+                      that defines the trigger fields used to identify the
+                      organization.
+                    properties:
+                      enrich_based_on:
+                        type: object
+                        description: >-
+                          Specify the details of the fields on whose values you
+                          want to trigger enrichment.  Note that you must
+                          provide at least one of the following values in the
+                          input. Based on these values, Zia will look for
+                          information on the web and enrich fields as per
+                          [Enrichment
+                          Configuration.](zia_enrichment.yaml#$.paths./settings/zia/data_enrichment.get))
+                          Note that the values of these keys must be at least
+                          three characters long and only in English.
+                        properties:
+                          name:
+                            type: string
+                            description: >-
+                              Specify the name of the organization  that Zia
+                              uses as a trigger value to look up enrichment
+                              data.
+                            maxLength: 255
+                          email:
+                            type: string
+                            format: email
+                            description: >-
+                              Specify the email address of the organization that
+                              Zia uses as a trigger value to look up enrichment
+                              data.
+                          website:
+                            type: string
+                            format: website
+                            description: >-
+                              Specify the website domain of the organization
+                              that Zia uses as a trigger value to look up
+                              enrichment data.
+                        required:
+                          - name
+                        additionalProperties: false
+                    required:
+                      - enrich_based_on
+                    additionalProperties: false
+                  maxItems: 50
+              required:
+                - __zia_org_enrichment
+              additionalProperties: false
+            examples:
+              Example1:
+                value:
+                  __zia_org_enrichment:
+                    - enrich_based_on:
+                        name: zoho
+                        email: sales@zohocorp.com
+                        website: www.zoho.com
+                description: >-
+                  Demonstrates a request that triggers organization enrichment
+                  for the Accounts module by supplying all three trigger fields.
+                summary: Schedule enrichment with name, email, and website
+        description: >-
+          Specify the payload that contains the list of enrichment requests.
+          Each request supplies trigger values that Zia uses to look up public
+          information about the organization.
+      responses:
+        '202':
+          description: >-
+            Returns a confirmation that the enrichment job has been accepted and
+            queued for asynchronous execution.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreateOrgEnrichmentResponse
+                type: object
+                properties:
+                  __zia_org_enrichment:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Indicates the scheduling outcome of the enrichment
+                            request.
+
+
+                            Possible values:
+
+                            **SCHEDULED** - The enrichment job has been queued
+                            for asynchronous execution.
+                          enum:
+                            - SCHEDULED
+                        details:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Shows the unique identifier assigned to the
+                                scheduled enrichment job. Use this identifier
+                                with GET `/__zia_org_enrichment/{id}` to
+                                retrieve job status and enriched data.
+                              maxLength: 255
+                          required:
+                            - id
+                          description: >-
+                            Contains identifying information about the scheduled
+                            enrichment job.
+                          additionalProperties: false
+                        message:
+                          type: string
+                          description: >-
+                            Provides a message that describes the outcome of the
+                            scheduling request.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: >-
+                            Indicates whether the scheduling request succeeded.
+
+
+                            Possible values:
+
+                            **success** - The enrichment job was successfully
+                            accepted and queued.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                      description: >-
+                        Represents the scheduling result of a single enrichment
+                        request.
+                      additionalProperties: false
+                    description: >-
+                      Contains the list of scheduling results, one entry per
+                      submitted enrichment request.
+                    maxItems: 50
+                required:
+                  - __zia_org_enrichment
+                description: >-
+                  Defines the response body returned when a Zia organization
+                  enrichment job is successfully scheduled.
+                additionalProperties: false
+              examples:
+                Example:
+                  value:
+                    __zia_org_enrichment:
+                      - code: SCHEDULED
+                        details:
+                          id: '917992000008742464'
+                        message: Org Enrichment scheduled successfully
+                        status: success
+                  description: >-
+                    Demonstrates the response returned when the enrichment
+                    request is accepted and a job identifier is issued.
+                  summary: Enrichment job scheduled
+        '400':
+          description: >-
+            Returned when the request cannot be processed because of validation
+            failures, missing inputs, exceeded enrichment limits, an unsupported
+            module, or because the data enrichment feature is not enabled or not
+            supported. Resolution: review the returned `code` and `details` to
+            identify the offending input and resend the request after correcting
+            it.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: OrgEnrichmentErrorResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: OrgEnrichmentValidationErrorResponse
+                    properties:
+                      __zia_org_enrichment:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Identifies the validation failure that was
+                                raised.
+
+
+                                Possible values:
+
+                                **INVALID_DATA** - A value supplied in
+                                `enrich_based_on` is incorrect, shorter than
+                                three characters, in a non-English language, or
+                                has the wrong data type.
+
+                                **MANDATORY_NOT_FOUND** - The mandatory key
+                                `enrich_based_on` was not supplied in the input.
+                              enum:
+                                - INVALID_DATA
+                                - MANDATORY_NOT_FOUND
+                            details:
+                              type: object
+                              properties:
+                                expected_data_type:
+                                  type: string
+                                  description: >-
+                                    Indicates the data type that the field
+                                    expects when the supplied value uses an
+                                    incorrect type.
+                                  maxLength: 255
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Identifies the field whose value failed
+                                    validation.
+
+
+                                    Possible values:
+
+                                    **name** - The organization name in
+                                    `enrich_based_on`.
+
+                                    **email** - The organization email in
+                                    `enrich_based_on`.
+
+                                    **website** - The organization website in
+                                    `enrich_based_on`.
+
+                                    **enrich_based_on** - The `enrich_based_on`
+                                    object itself.
+                                  enum:
+                                    - name
+                                    - email
+                                    - website
+                                    - enrich_based_on
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    Shows the JSON path that points to the exact
+                                    field in the request payload that failed
+                                    validation.
+                                  enum:
+                                    - >-
+                                      $.__zia_org_enrichment[0].enrich_based_on.name
+                                    - >-
+                                      $.__zia_org_enrichment[0].enrich_based_on.email
+                                    - >-
+                                      $.__zia_org_enrichment[0].enrich_based_on.website
+                                    - $.__zia_org_enrichment[0].enrich_based_on
+                              required:
+                                - api_name
+                                - json_path
+                              description: >-
+                                Contains additional context that identifies the
+                                invalid or missing input field.
+                              additionalProperties: false
+                            message:
+                              type: string
+                              description: >-
+                                Provides a message that explains the validation
+                                failure like "You have not specified the key
+                                "enrich_based_on" in the input".
+                              maxLength: 255
+                            status:
+                              type: string
+                              description: >-
+                                Indicates that the request ended in failure.
+
+
+                                Possible values:
+
+                                **error** - The request could not be processed
+                                because of a validation error.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                          description: >-
+                            Represents a single validation error related to the
+                            `enrich_based_on` input.
+                          additionalProperties: false
+                        description: >-
+                          Contains the list of validation errors detected in the
+                          submitted enrichment requests.
+                        maxItems: 50
+                    required:
+                      - __zia_org_enrichment
+                    description: >-
+                      Returned when one or more values inside `enrich_based_on`
+                      are invalid or when the mandatory `enrich_based_on` key
+                      itself is missing.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: OrgEnrichmentLimitExceededErrorResponse
+                    properties:
+                      __zia_org_enrichment:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Identifies the limit violation that was raised.
+
+
+                                Possible values:
+
+                                **LIMIT_EXCEEDED** - The organization has used
+                                up its enrichment quota for the current edition.
+                              enum:
+                                - LIMIT_EXCEEDED
+                            details:
+                              type: object
+                              properties:
+                                limit:
+                                  type: integer
+                                  description: >-
+                                    Shows the maximum number of enrichments
+                                    allowed for the organization based on its
+                                    CRM edition and user count.
+                                  format: int32
+                                limit_due_to:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      api_name:
+                                        type: string
+                                        description: >-
+                                          Identifies the API name of the field
+                                          that contributed to the limit breach.
+                                        enum:
+                                          - enrich_based_on
+                                      json_path:
+                                        type: string
+                                        description: >-
+                                          Shows the JSON path that points to the
+                                          field in the request payload that
+                                          contributed to the limit breach.
+                                        enum:
+                                          - >-
+                                            $.__zia_org_enrichment[0].enrich_based_on
+                                    required:
+                                      - api_name
+                                      - json_path
+                                    description: >-
+                                      Identifies a single input field that
+                                      contributed to the enrichment limit
+                                      breach.
+                                    additionalProperties: false
+                                  description: >-
+                                    Lists the input fields that contributed to
+                                    the limit breach.
+                                  maxItems: 1
+                              required:
+                                - limit
+                                - limit_due_to
+                              description: >-
+                                Contains additional context about the enrichment
+                                limit that was breached.
+                              additionalProperties: false
+                            message:
+                              type: string
+                              description: >-
+                                Provides a message that explains the limit
+                                violation like, "You have created more than the
+                                allowed enrichments for your org."
+                              maxLength: 255
+                            status:
+                              type: string
+                              description: >-
+                                Indicates that the request ended in failure.
+
+
+                                Possible values:
+
+                                **error** - The request could not be processed
+                                because the enrichment limit was breached.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                          description: >-
+                            Represents a single limit-exceeded error for an
+                            enrichment request.
+                          additionalProperties: false
+                        description: >-
+                          Contains the list of enrichment requests that breached
+                          the configured limit.
+                        maxItems: 1
+                    required:
+                      - __zia_org_enrichment
+                    description: >-
+                      Returned when the organization has reached its allowed
+                      enrichment quota and the new request cannot be accepted.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: CreateOrgEnrichmentExpectedFieldsMissingResponse
+                    properties:
+                      __zia_org_enrichment:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Identifies the missing-input failure that was
+                                raised.
+
+
+                                Possible values:
+
+                                **EXPECTED_FIELD_MISSING** - None of the trigger
+                                fields expected inside `enrich_based_on` were
+                                supplied.
+                              enum:
+                                - EXPECTED_FIELD_MISSING
+                            details:
+                              type: object
+                              properties:
+                                expected_fields:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      api_name:
+                                        type: string
+                                        description: >-
+                                          Shows the API name of the expected
+                                          trigger field.
+                                        enum:
+                                          - name
+                                          - email
+                                          - website
+                                      json_path:
+                                        type: string
+                                        description: >-
+                                          Shows the JSON path at which the
+                                          expected trigger field should appear in
+                                          the request payload.
+                                        enum:
+                                          - >-
+                                            $.__zia_org_enrichment[0].enrich_based_on.name
+                                          - >-
+                                            $.__zia_org_enrichment[0].enrich_based_on.email
+                                          - >-
+                                            $.__zia_org_enrichment[0].enrich_based_on.website
+                                    required:
+                                      - api_name
+                                      - json_path
+                                    description: >-
+                                      Identifies a single trigger field that the
+                                      request was expected to include.
+                                    additionalProperties: false
+                                  description: >-
+                                    Lists the trigger fields that the request
+                                    must include inside `enrich_based_on`.
+                                  maxItems: 50
+                              required:
+                                - expected_fields
+                              description: >-
+                                Contains the list of trigger fields that the
+                                request was expected to include.
+                              additionalProperties: false
+                            message:
+                              type: string
+                              description: >-
+                                Provides a message that explains which trigger
+                                fields are expected like, "You have not
+                                specified any key in the "enrich_based_on" JSON
+                                object."
+                              maxLength: 255
+                            status:
+                              type: string
+                              description: >-
+                                Indicates that the request ended in failure.
+
+
+                                Possible values:
+
+                                **error** - The request could not be processed
+                                because no expected trigger field was supplied.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                          description: >-
+                            Represents a single error reporting the absence of
+                            expected trigger fields.
+                          additionalProperties: false
+                        description: >-
+                          Contains the list of errors identifying the missing
+                          expected fields.
+                        maxItems: 50
+                    required:
+                      - __zia_org_enrichment
+                    description: >-
+                      Returned when the `enrich_based_on` object was supplied
+                      but does not include any of the expected trigger fields.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: OrgEnrichmentInvalidParamErrorResponse
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Identifies the parameter-level failure that was
+                          raised.
+
+
+                          Possible values:
+
+                          **REQUIRED_PARAM_MISSING** - The required `module`
+                          query parameter was not supplied.
+
+                          **INVALID_DATA** - The supplied `module` value is not
+                          supported for organization enrichment.
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                          - INVALID_DATA
+                          - NOT_SUPPORTED
+                      details:
+                        type: object
+                        properties:
+                          param_name:
+                            type: string
+                            description: >-
+                              Shows the name of the query parameter that
+                              triggered the failure.
+                            enum:
+                              - module
+                              - record_id
+                        required:
+                          - param_name
+                        description: >-
+                          Contains additional context that identifies the
+                          offending query parameter.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Provides a message that explains the parameter-level
+                          failure.
+                        maxLength: 255
+                      status:
+                        type: string
+                        description: >-
+                          Indicates that the request ended in failure.
+
+
+                          Possible values:
+
+                          **error** - The request could not be processed because
+                          of a parameter-level failure.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Returned when a required query parameter is missing or
+                      when the supplied `module` value is not supported for
+                      organization enrichment.
+                    additionalProperties: false
+                  - $ref: '#/components/schemas/FeatureNotEnableOrNotSupported'
+                  - type: object
+                    x-zs-$id: OrgEnrichmentInvalidDataErrorResponse
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Identifies the array-level validation failure that was
+                          raised.
+
+
+                          Possible values:
+
+                          **INVALID_DATA** - The submitted
+                          `__zia_org_enrichment` array contains more entries
+                          than the allowed maximum.
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        properties:
+                          maximum_length:
+                            type: integer
+                            description: >-
+                              Shows the maximum number of entries allowed in the
+                              array.
+                            format: int32
+                          api_name:
+                            type: string
+                            description: >-
+                              Identifies the array field whose cardinality was
+                              exceeded.
+                            enum:
+                              - __zia_org_enrichment
+                          json_path:
+                            type: string
+                            description: >-
+                              Shows the JSON path that points to the array field
+                              whose cardinality was exceeded.
+                            enum:
+                              - $.__zia_org_enrichment
+                        required:
+                          - maximum_length
+                          - api_name
+                          - json_path
+                        description: >-
+                          Contains additional context about the array-level
+                          validation failure.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Provides a message that explains the array cardinality
+                          violation.
+                        maxLength: 255
+                      status:
+                        type: string
+                        description: >-
+                          Indicates that the request ended in failure.
+
+
+                          Possible values:
+
+                          **error** - The request could not be processed because
+                          the array exceeded its allowed cardinality.
+                        maxLength: 255
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Returned when the top-level `__zia_org_enrichment` array
+                      exceeds its allowed cardinality.
+                    additionalProperties: false
+                description: >-
+                  Defines the set of bad-request error envelopes that the POST
+                  `/__zia_org_enrichment` endpoint can return. Exactly one
+                  variant matches the failure condition.
+              examples:
+                Example:
+                  value:
+                    __zia_org_enrichment:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: text
+                          api_name: name
+                          json_path: $.__zia_org_enrichment[0].enrich_based_on.name
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Demonstrates the response returned when a value supplied
+                    inside `enrich_based_on` is not valid.
+                  summary: Invalid value in enrich_based_on
+                Example2:
+                  value:
+                    __zia_org_enrichment:
+                      - code: LIMIT_EXCEEDED
+                        details:
+                          limit: 1500
+                          limit_due_to:
+                            - api_name: enrich_based_on
+                              json_path: $.__zia_org_enrichment[0].enrich_based_on
+                        message: enrichment data limit exceeded
+                        status: error
+                  description: >-
+                    Demonstrates the response returned when the organization has
+                    used up its enrichment quota.
+                  summary: Enrichment limit exceeded
+                Example3:
+                  value:
+                    __zia_org_enrichment:
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_fields:
+                            - api_name: name
+                              json_path: $.__zia_org_enrichment[0].enrich_based_on.name
+                            - api_name: email
+                              json_path: $.__zia_org_enrichment[0].enrich_based_on.email
+                            - api_name: website
+                              json_path: >-
+                                $.__zia_org_enrichment[0].enrich_based_on.website
+                        message: Specify atleast one field
+                        status: error
+                  description: >-
+                    Demonstrates the response returned when the
+                    `enrich_based_on` object does not contain any of the
+                    expected trigger fields.
+                  summary: Expected trigger fields missing
+                Example4:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      param_name: module
+                    message: The given module is not supported for Org Enrichment
+                    status: error
+                  description: >-
+                    Demonstrates the response returned when the supplied
+                    `module` value is not supported for organization enrichment.
+                  summary: Module not supported
+                Example5:
+                  value:
+                    code: FEATURE_NOT_ENABLED
+                    details: {}
+                    message: Data Enrichment feature not enabled
+                    status: error
+                  description: >-
+                    Demonstrates the response returned when the data enrichment
+                    feature is not enabled for the organization.
+                  summary: Data enrichment feature not enabled
+                Example6:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: __zia_org_enrichment
+                      json_path: $.__zia_org_enrichment
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Demonstrates the response returned when the top-level
+                    `__zia_org_enrichment` array contains more entries than the
+                    allowed maximum.
+                  summary: Array cardinality exceeded
+        '403':
+          description: >-
+            Returned when the authenticated user does not have the required
+            permission to access the data enrichment feature. Resolution:
+            contact the system administrator to be granted the Manage or View
+            Data Enrichment profile permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoPermission'
+              examples:
+                Example:
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: No permission to access this feature
+                    status: error
+                  description: >-
+                    Demonstrates the response returned when the authenticated
+                    user does not have permission to access the data enrichment
+                    feature.
+                  summary: Permission denied
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.intelligence.CREATE
+    get:
+      summary: Get Zia Org Enrichment
+      description: >-
+        To retrieve the paginated list of Zia organization enrichment jobs that
+        have been scheduled in your Zoho CRM organization. Each entry includes
+        the job identifier, current status, creation timestamp, and the user who
+        triggered the job.
+      x-zs-llm-description: >-
+        Lists Zia organization enrichment records with pagination and filter
+        support.
+      operationId: getZiaOrgEnrichment
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Perpage'
+        - $ref: '#/components/parameters/Sortby'
+        - $ref: '#/components/parameters/Sortorder'
+        - $ref: '#/components/parameters/Status'
+      responses:
+        '200':
+          description: >-
+            Returns the paginated list of organization enrichment jobs along
+            with pagination metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetOrgEnrichmentResponse
+                description: >-
+                  Defines the response body returned when the list of
+                  organization enrichment jobs is retrieved successfully.
+                additionalProperties: false
+                properties:
+                  __zia_org_enrichment:
+                    type: array
+                    description: >-
+                      Contains the list of organization enrichment jobs for the
+                      current page.
+                    items:
+                      type: object
+                      description: >-
+                        Represents a single organization enrichment job and its
+                        scheduling metadata.
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 19
+                          description: >-
+                            Shows the unique identifier of the organization
+                            enrichment job. Use this identifier with GET
+                            `/__zia_org_enrichment/{id}` to retrieve the
+                            enriched data of the job.
+                          x-zs-$id: ZiaOrgEnrichmentId
+                        status:
+                          type: string
+                          enum:
+                            - SCHEDULED
+                            - COMPLETED
+                            - DATA_NOT_FOUND
+                            - FAILED
+                            - RUNNING
+                          description: >-
+                            Indicates the current execution status of the
+                            enrichment job.
+
+
+                            Possible values:
+
+                            **SCHEDULED** - The job is queued and yet to run.
+
+                            **COMPLETED** - The job has finished and enriched
+                            data is available.
+
+                            **FAILED** - The job ended in a failure.
+
+                            **DATA_NOT_FOUND** - The job completed but Zia could
+                            not locate public data to enrich.
+                        created_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Shows the timestamp at which the enrichment job was
+                            scheduled, in ISO 8601 format.
+                        created_by:
+                          type: object
+                          description: >-
+                            Identifies the CRM user who triggered the enrichment
+                            job.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Shows the unique identifier of the CRM user who
+                                triggered the enrichment job.
+                              maxLength: 19
+                            name:
+                              type: string
+                              description: >-
+                                Shows the display name of the CRM user who
+                                triggered the enrichment job.
+                              maxLength: 255
+                          required:
+                            - id
+                            - name
+                      required:
+                        - id
+                        - status
+                        - created_time
+                        - created_by
+                    maxItems: 200
+                  info:
+                    type: object
+                    description: >-
+                      Contains pagination metadata for the current page of
+                      enrichment jobs.
+                    additionalProperties: false
+                    properties:
+                      per_page:
+                        type: integer
+                        description: >-
+                          Shows the configured number of enrichment jobs per
+                          page.
+                        format: int32
+                        maximum: 200
+                      count:
+                        type: integer
+                        maximum: 200
+                        format: int32
+                        description: >-
+                          Shows the number of enrichment jobs returned in the
+                          current page.
+                      page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Shows the page number that this response corresponds
+                          to.
+                      more_records:
+                        type: boolean
+                        description: >-
+                          Indicates whether additional enrichment jobs exist
+                          beyond the current page. When the value is `true`,
+                          fetch the next page using the `page` parameter.
+                    required:
+                      - per_page
+                      - count
+                      - page
+                      - more_records
+                required:
+                  - __zia_org_enrichment
+                  - info
+              examples:
+                Example1:
+                  value:
+                    __zia_org_enrichment:
+                      - id: '111111000000075013'
+                        status: SCHEDULED
+                        created_time: '2023-07-31T01:00:26Z'
+                        created_by:
+                          id: '111111000000050755'
+                          name: Krishna Prakash
+                      - id: '111111000000075024'
+                        status: SCHEDULED
+                        created_time: '2023-07-31T01:05:15Z'
+                        created_by:
+                          id: '111111000000050755'
+                          name: Krishna Prakash
+                      - id: '111111000000075026'
+                        status: SCHEDULED
+                        created_time: '2023-07-31T01:05:50Z'
+                        created_by:
+                          id: '111111000000050755'
+                          name: Krishna Prakash
+                      - id: '111111000000072009'
+                        status: DATA_NOT_FOUND
+                        created_time: '2023-07-28T05:06:40Z'
+                        created_by:
+                          id: '111111000000050755'
+                          name: Krishna Prakash
+                    info:
+                      per_page: 200
+                      count: 15
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Demonstrates a response that lists scheduled organization
+                    enrichment jobs along with pagination metadata.
+                  summary: Enrichment jobs returned
+        '204':
+          description: >-
+            Returned when no organization enrichment jobs exist for the
+            authenticated CRM organization.
+        '400':
+          description: >-
+            Returned when the data enrichment feature is not enabled or
+            supported for the organization, or when a supplied query parameter
+            such as `status`, `sort_by`, or `sort_order` is invalid. Resolution:
+            review the returned `code` and `details` to identify the offending
+            input and resend the request after correcting it.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetOrgEnrichmentErrorResponses
+                description: >-
+                  Defines the set of bad-request error envelopes that the GET
+                  `/__zia_org_enrichment` endpoint can return. Exactly one
+                  variant matches the failure condition.
+                oneOf:
+                  - $ref: '#/components/schemas/FeatureNotEnableOrNotSupported'
+                  - $ref: '#/components/schemas/ZiaOrgEnrichmentInvalidParam'
+              examples:
+                Example1:
+                  value:
+                    code: FEATURE_NOT_SUPPORTED
+                    details: {}
+                    message: Your License does not support this feature
+                    status: error
+                  description: >-
+                    Demonstrates the response returned when the data enrichment
+                    feature is not supported by the CRM license of the
+                    organization.
+                  summary: Feature not supported
+                Example2:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      param: status
+                      supported_values:
+                        - COMPLETED
+                        - SCHEDULED
+                        - FAILED
+                        - RUNNING
+                        - DATA_NOT_FOUND
+                        - UPDATED
+                    message: status value invalid
+                    status: error
+                  description: >-
+                    Demonstrates the response returned when the supplied
+                    `status` query parameter does not match one of the supported
+                    values.
+                  summary: Invalid query parameter value
+        '403':
+          description: >-
+            Returned when the authenticated user does not have the required
+            permission to access the data enrichment feature. Resolution:
+            contact the system administrator to be granted the Manage or View
+            Data Enrichment profile permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoPermission'
+              examples:
+                Example:
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: No permission to access this feature
+                    status: error
+                  description: >-
+                    Demonstrates the response returned when the authenticated
+                    user does not have permission to access the data enrichment
+                    feature.
+                  summary: Permission denied
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.intelligence.READ
+  /__zia_org_enrichment/{id}:
+    get:
+      operationId: getOrgEnrichmentById
+      summary: Org Enrichment Details
+      description: >-
+        Fetches the enrichment status and enriched organization data for a
+        specific enrichment job using its unique ID. Returns completed,
+        scheduled, or failed enrichment information along with enriched fields
+        such as name, website, email, address, CEO, revenue, employees, social
+        media, and industries.
+      x-zs-llm-description: >-
+        Fetches enrichment status and enriched org data for a specific
+        enrichment job ID.
+      parameters:
+        - $ref: '#/components/parameters/ZiaOrgEnrichmentId'
+      responses:
+        '200':
+          description: >-
+            Returns the details and enriched data of the requested organization
+            enrichment job.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetSpecificOrgEnrichmentResponse
+                type: object
+                description: >-
+                  Defines the response body returned when the requested
+                  organization enrichment job is retrieved successfully.
+                additionalProperties: false
+                properties:
+                  __zia_org_enrichment:
+                    type: array
+                    description: >-
+                      Contains the details of the requested organization
+                      enrichment job.
+                    items:
+                      type: object
+                      description: >-
+                        Represents the full record of a single organization
+                        enrichment job, including its trigger fields and
+                        enriched output.
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 19
+                          description: >-
+                            Shows the unique identifier of the organization
+                            enrichment job.
+                          x-zs-$id: ZiaOrgEnrichmentByIdId
+                        status:
+                          type: string
+                          enum:
+                            - COMPLETED
+                            - SCHEDULED
+                            - FAILED
+                            - DATA_NOT_FOUND
+                            - RUNNING
+                          description: >-
+                            Indicates the current execution status of the
+                            enrichment job.
+
+
+                            Possible values:
+
+                            **COMPLETED** - The job has finished and enriched
+                            data is available.
+
+                            **SCHEDULED** - The job is queued and yet to run.
+
+                            **FAILED** - The job ended in a failure.
+
+                            **DATA_NOT_FOUND** - The job completed but Zia could
+                            not locate public data to enrich.
+                        enrich_based_on:
+                          type: object
+                          description: >-
+                            Shows the trigger values that were supplied when the
+                            enrichment job was scheduled.
+                          properties:
+                            name:
+                              type: string
+                              description: >-
+                                Shows the organization name that was used as a
+                                trigger value.
+                              maxLength: 255
+                            email:
+                              type: string
+                              format: email
+                              description: >-
+                                Shows the email address that was used as a
+                                trigger value.
+                              maxLength: 255
+                            website:
+                              type: string
+                              maxLength: 255
+                              description: >-
+                                Shows the website domain that was used as a
+                                trigger value.
+                          additionalProperties: false
+                        enriched_data:
+                          type:
+                            - object
+                            - 'null'
+                          additionalProperties: true
+                          description: >-
+                            Contains the data retrieved by Zia for the
+                            organization. The keys present in this object depend
+                            on the fields configured in the enrichment
+                            configuration of the organization. Returns `null`
+                            when the job has not yet completed or when no public
+                            data could be retrieved.
+                      required:
+                        - id
+                        - status
+                        - enrich_based_on
+                        - enriched_data
+                    maxItems: 1
+                required:
+                  - __zia_org_enrichment
+              examples:
+                Example1:
+                  value:
+                    __zia_org_enrichment:
+                      - enriched_data:
+                          website: https://www.zoho.com
+                          address:
+                            - country: India
+                              city: Chengalpattu District
+                              pin_code: '603202'
+                              state: Tamil Nadu
+                              fill_address: >-
+                                Estancia IT Park, Plot no. 140, 151, GST Road,
+                                Vallancheri
+                          org_status: Large Enterprise
+                          org_type: Private Limited Company
+                          head_quarters:
+                            - country: India
+                          description:
+                            - description: >-
+                                Zoho Corporation offers web-based business apps,
+                                network and IT infrastructure management
+                                applications. Run your entire business with
+                                Zoho's suite of online productivity tools and
+                                SaaS applications. Over 45 million users trust
+                                us worldwide.
+                              title: Meta_Description
+                            - description: >-
+                                Software is Zoho's passion. Zoho creates great
+                                software to solve business problems. We believe
+                                that software is the ultimate product created by
+                                human hearts and hands.
+                              title: Schema_Description
+                          no_of_employees: '12000'
+                          secondary_email: press@zohocorp.com
+                          ceo: Sridhar Vembu
+                          revenue: $1B
+                          years_in_industry: 27
+                          territory_list:
+                            - India
+                            - United States of America
+                            - South Africa
+                            - Canada
+                            - Nigeria
+                          industries:
+                            - name: Computer Programming Services
+                              description: >-
+                                Includes information and data processing
+                                services, computer programming, systems design,
+                                consultancy, hosting and other computer related
+                                services.
+                          name: ZOHO
+                          secondary_contact: 0800-085-6099
+                          logo: >-
+                            data:image/jpg;base64,/9j/4AAQSkZJRgABAgAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCABkAGQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKQkAEkgAdSaAForkZPiR4djvjbGadlBwZ1izH/ifyrprO/tNRtxPZ3EU8R/ijYEf/WpKSexlTr0qjtCSZYooopmoUUUUAFFFFABRRRQBw174p1/U9bvNN8M2EEiWbeXPcTngN045HcH16U3+xPHt9/x9+Iba1Q/w26cj8lH86PCX+hePvFGnnjzHFwB9ST/AO1BXd1zwjzq8mz18RXWFkqdKEbWTu1du6T6nCf8K3a651XxHqd2e+Gx/wChFq5m61fUfDq614TFxNdF2SK0Z+WVXHI/FSB9a9hrytLyx1X4xxvsDRo5jVs8M6IcH8xx9BROnGNnHQ4MVmFevRlhpe85qy0WltW9O0Uzu9H8O2en+HYNKmt4ZlCDzg6Bg7nqeffp+FYd58P47e4N54dv5tMuf7gYmNvb1A/Me1drRWzimcEsNSlFRa227/eeRz/EDxTZpcWzQ2kptJTDNdiJiu7JHUEDse3Nb0OneO9UgjnbxDZQQSqHQwIDkEZB+6P51y2oXr6dfeKdDijMk2o3qLCmOmWZj/NR+NetaRYnTNHs7EtuMEKxlvUgc11zqeynyQirJLW13scWH5qlRwlJtLz63f6HIP4E1GWNpNS8W6jKqgsVTIA/Nj/Kk8NahqEckujW1+17NCvmk3PLKpIAGfy4yetdte/8eFx/1yb+Rrznw7/oXxJi7fbbFvxwT/8AG64a06uKr+wc2kouWllqml282epCEKEPaRjdtpa3e9/M7Pd4g/uW1IX8QKC3l27Y5wO/61t0VzfUn/z9l9//AADo9v8A3F9xS0zUF1CzExXY4JVl9DRWb4f/AOPOf/ru38hRRg8ROpQjKWrsFamo1GlsYc3+gfGKBui39kQT6kA//GxXd1yHjLRdSuL3Tdb0eNZb2wY5hY48xT/k8e9U/wC2/Ht7xa+Hra1Xu078j82H8q3UuRtNPc7qlH61TpzjKKtGzu0tm/0sd0RkEZxnuK8NaG58J+ItLTULZovs160jXOCRNGSoJHrgA/8AfVdx/Y/j++/4+tetLND/AAwJkj8lH86saf8AD+NdQS91vU7jWJUBCJcD5Bn2JOfp0pT5qlklYxp4ejh6yryqpuKkrK7vdWteyR1VjqNnqduJ7K5injP8UbZx9fSrNcXffD63juDeaBezaXdDoEYlD7eo/Ue1VJdQ8e21vJp0mmQ3UzqUjvYmAAzxuPIGfqBWvM1ujw/rFSnpVg/Var/NGZpslhq/xguJ1G5E3GP0Z0ULn9CR9BXqVeY/8IZq3ho6Tq+kRR3d9bKwuoc/f3Z6euAxH4A1p/2349vP+PXw7a26nvO/I/Nh/KuqNDmipJrXe7/roZ4VypRftIvmbvou/wDkdpe/8eFx/wBcm/ka84uP9E8WeEbwdZTJB/48R/7PWk+mfELUEZJ9V0+0jcYZEUE4P/AT/Oqml+FNU0vWor/UTLqctuCIBu+RM9x+Z445rmmqeFrrEVJXXK42SbetuyO5Oden7KEbO6d3ZbfM9HorF/tTVP8AoEt/31SHU9WIIXSiGPQlq4/7Qo9pf+Ay/wAjq+rT8vvRH4f/AOPOf/ru38hRV3SNPezstkxzK7F2APTPb9KKnBUZxw8FJWdh15xdRtGlRRRXoHMFQ3T+VZzSZlG2Nm/cpufgfwjByfQYNTUUAYXhKe+udDWfUZ7yS5kkZit3beS8QPKpjYm7AxlgME5wcdM+K814+KFiY3fl/bXSSA2wFstr5ZKSCXbkuW2cbickjbgZHW0UAY+uz6vDNpP9kwpMXvCtykjFU8ryZT8zBWKjeE5A64HepfD0t/P4c06XVFZb97dDcBl2kPjnIwMc+wrTooA5Lwzea9cahEuom8ZTaM16lxbCJILncuEhYKN6YMnOW4VTnJOetoooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAz/t0v8AdT8jR9ul/up+RoooAPt0v91PyNH26X+6n5GiigA+3S/3U/I0fbpf7qfkaKKAD7dL/dT8jR9ul/up+RoooAPt0v8AdT8jR9ul/up+RoooAPt0v91PyNH26X+6n5GiigA+3S/3U/I0UUUAf//Z
+                          primary_email: sales@zohocorp.com
+                          id: jRsJ7grCwzJfs4B384k4zY3OFsLIE+EGt9AwDDtb4j4=
+                          business_model:
+                            - Business to Business
+                          primary_contact: 844-316-5544
+                          social_media:
+                            - media_type: LINKEDIN
+                              media_url:
+                                - linkedin.com/company/zohocorp
+                            - media_type: TWITTER
+                              media_url:
+                                - twitter.com
+                        enrich_based_on:
+                          website: www.zoho.com
+                          name: zoho
+                          email: sales@zoho.com
+                        id: '1941874000003442020'
+                        status: COMPLETED
+                  description: >-
+                    Demonstrates a response that returns the trigger fields and
+                    the full set of enriched data for a completed organization
+                    enrichment job.
+                  summary: Completed enrichment with enriched data
+        '204':
+          description: >-
+            Returned when no enrichment job exists for the supplied identifier
+            or when the identifier is invalid.
+        '400':
+          description: >-
+            Returned when the data enrichment feature is not enabled or
+            supported for the organization. Resolution: enable the data
+            enrichment feature or upgrade to a CRM edition that supports it.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetSpecificOrgEnrichmentErrorResponse
+                type: object
+                description: >-
+                  Defines the response body returned when the data enrichment
+                  feature is not enabled or not supported.
+                properties:
+                  __zia_org_enrichment:
+                    type: array
+                    description: >-
+                      Contains the list of error envelopes returned by the
+                      endpoint.
+                    items:
+                      $ref: '#/components/schemas/FeatureNotEnableOrNotSupported'
+                    maxItems: 1
+                additionalProperties: false
+              examples:
+                Example:
+                  value:
+                    __zia_org_enrichment:
+                      - code: FEATURE_NOT_ENABLED
+                        details: {}
+                        message: Data Enrichment feature not enabled
+                        status: error
+                  description: >-
+                    Demonstrates the response returned when the data enrichment
+                    feature is not enabled for the organization.
+                  summary: Data enrichment feature not enabled
+        '403':
+          description: >-
+            Returned when the authenticated user does not have the required
+            permission to access the data enrichment feature. Resolution:
+            contact the system administrator to be granted the Manage or View
+            Data Enrichment profile permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoPermission'
+              examples:
+                Example:
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: No permission to access this feature
+                    status: error
+                  description: >-
+                    Demonstrates the response returned when the authenticated
+                    user does not have permission to access the data enrichment
+                    feature.
+                  summary: Permission denied
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.intelligence.READ
+components:
+  parameters:
+    Page:
+      name: page
+      in: query
+      required: false
+      description: >-
+        Specify the page number to retrieve the list of records from the
+        paginated results. Default value is 1. Accepts only positive integer
+        values.
+      schema:
+        type: integer
+        format: int32
+        enum:
+          - 1
+          - 2
+    Perpage:
+      name: per_page
+      in: query
+      required: false
+      description: >-
+        Specify the number of records to retrieve per page. Default and maximum
+        value is 100.
+      schema:
+        type: integer
+        format: int32
+        enum:
+          - 100
+    Sortby:
+      name: sort_by
+      in: query
+      required: false
+      description: >-
+        Specify the field to use for sorting the response based on created time.
+        Accepts the literal value `created_time`.
+      schema:
+        type: string
+        enum:
+          - created_time
+    Sortorder:
+      name: sort_order
+      in: query
+      required: false
+      description: >-
+        Specify the direction(ascending or descending) in which to sort the
+        response.
+
+
+        Possible values:
+
+        **asc** - Sort results in ascending order.
+
+        **desc** - Sort results in descending order.
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+    Status:
+      name: status
+      in: query
+      required: false
+      description: >-
+        Filter the response by the status of the scheduled enrichment job, using
+        the create org enrichment API.
+
+
+        Possible values:
+
+        **COMPLETED** - Returns jobs that finished and produced enriched data.
+
+        **FAILED** - Returns jobs that ended with a failure.
+
+        **DATA_NOT_FOUND** - Returns jobs that completed but could not locate
+        any public data to enrich.
+
+        **SCHEDULED** - Returns jobs that are queued and yet to run.
+      schema:
+        type: string
+        enum:
+          - COMPLETED
+          - FAILED
+          - DATA_NOT_FOUND
+          - SCHEDULED
+    ZiaOrgEnrichmentId:
+      name: id
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the Zia organization enrichment job to
+        retrieve. Obtain this value from the response of POST
+        `/__zia_org_enrichment` or from the listing returned by GET
+        `/__zia_org_enrichment`.
+      schema:
+        type: string
+        maxLength: 255
+  schemas:
+    FeatureNotEnableOrNotSupported:
+      type: object
+      x-zs-$id: FeatureNotEnableOrNotSupported
+      properties:
+        code:
+          type: string
+          description: >-
+            Identifies the feature-availability failure that was raised.
+
+
+            Possible values:
+
+            **FEATURE_NOT_ENABLED** - The data enrichment feature has not been
+            enabled for the organization.
+
+            **FEATURE_NOT_SUPPORTED** - The current CRM edition does not support
+            the data enrichment feature.
+          enum:
+            - FEATURE_NOT_ENABLED
+            - FEATURE_NOT_SUPPORTED
+        details:
+          type: object
+          properties: {}
+          description: >-
+            Contains additional context about the feature-availability failure.
+            This object remains empty for this error.
+          additionalProperties: false
+        message:
+          type: string
+          description: Data enrichment is not available for your edition of CRM.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Indicates that the request ended in failure.
+
+
+            Possible values:
+
+            **error** - The request could not be processed because the data
+            enrichment feature is unavailable.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      description: >-
+        Error envelope returned when the data enrichment feature is either
+        disabled for the organization or not available under the current CRM
+        edition.
+      additionalProperties: false
+    NoPermission:
+      type: object
+      x-zs-$id: NoPermission
+      properties:
+        code:
+          type: string
+          description: >-
+            Identifies the permission failure that was raised.
+
+
+            Possible values:
+
+            **NO_PERMISSION** - The authenticated user lacks the profile
+            permission required to access the data enrichment feature.
+          enum:
+            - NO_PERMISSION
+        details:
+          type: object
+          properties: {}
+          description: >-
+            Contains additional context about the permission failure. This
+            object remains empty for this error.
+          additionalProperties: false
+        message:
+          type: string
+          description: >-
+            You do not have the Manage or View Data Enrichment permission to
+            access this feature.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Indicates that the request ended in failure.
+
+
+            Possible values:
+
+            **error** - The request could not be processed because the user
+            lacks the required permission.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      description: >-
+        Error envelope returned when the authenticated user does not have
+        permission to access the data enrichment feature.
+      additionalProperties: false
+    ZiaOrgEnrichmentInvalidParam:
+      type: object
+      x-zs-$id: ZiaOrgEnrichmentInvalidParam
+      description: >-
+        Error envelope returned when a supplied query parameter such as
+        `status`, `sort_by`, or `sort_order` does not match the allowed set of
+        values.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          enum:
+            - INVALID_DATA
+          description: >-
+            Identifies the parameter-validation failure that was raised.
+
+
+            Possible values:
+
+            **INVALID_DATA** - The supplied query parameter value is not among
+            the allowed values.
+        details:
+          type: object
+          description: >-
+            Contains additional context that identifies the offending query
+            parameter and lists the values that the parameter accepts.
+          additionalProperties: false
+          properties:
+            param:
+              type: string
+              enum:
+                - status
+                - sort_order
+                - sort_by
+              description: >-
+                Shows the name of the query parameter whose value failed
+                validation.
+            supported_values:
+              oneOf:
+                - type: array
+                  x-zs-$id: ZiaOrgEnrichmentStatusSupportedValues
+                  items:
+                    type: string
+                    description: >-
+                      Represents a single value accepted by the `status` query
+                      parameter.
+
+
+                      Possible values:
+
+                      **COMPLETED** - The job has finished and enriched data is
+                      available.
+
+                      **SCHEDULED** - The job is queued and yet to run.
+
+                      **FAILED** - The job ended in a failure.
+
+                      **RUNNING** - The job is currently running.
+
+                      **DATA_NOT_FOUND** - The job completed but Zia could not
+                      locate public data to enrich.
+                    enum:
+                      - COMPLETED
+                      - SCHEDULED
+                      - FAILED
+                      - RUNNING
+                      - DATA_NOT_FOUND
+                      - UPDATED
+                  maxItems: 5
+                  description: Lists the values accepted by the `status` query parameter.
+                - type: array
+                  x-zs-$id: ZiaOrgEnrichmentSortOrderSupportedValues
+                  items:
+                    type: string
+                    description: >-
+                      Represents a single value accepted by the `sort_order`
+                      query parameter.
+
+
+                      Possible values:
+
+                      **asc** - Sort results in ascending order.
+
+                      **desc** - Sort results in descending order.
+                    enum:
+                      - asc
+                      - desc
+                  maxItems: 2
+                  description: >-
+                    Lists the values accepted by the `sort_order` query
+                    parameter.
+                - type: array
+                  x-zs-$id: ZiaOrgEnrichmentSortBySupportedValues
+                  items:
+                    type: string
+                    description: >-
+                      Represents a single value accepted by the `sort_by` query
+                      parameter.
+
+
+                      Possible values:
+
+                      **created_time** - Sort results by the timestamp at which
+                      each enrichment job was scheduled.
+                    enum:
+                      - created_time
+                  maxItems: 1
+                  description: Lists the values accepted by the `sort_by` query parameter.
+              description: >-
+                Lists the values that the offending query parameter accepts. The
+                exact list depends on which parameter raised the failure.
+          required:
+            - param
+            - supported_values
+        message:
+          type: string
+          maxLength: 255
+          description: Provides a message that explains the parameter-validation failure.
+        status:
+          type: string
+          enum:
+            - error
+          description: >-
+            Indicates that the request ended in failure.
+
+
+            Possible values:
+
+            **error** - The request could not be processed because of a
+            parameter-validation failure.
+      required:
+        - code
+        - details
+        - message
+        - status
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.intelligence.ALL: >-
+              Grants full access to read, create, update, and delete Zia
+              organization enrichment jobs.
+            ZohoCRM.settings.intelligence.READ: >-
+              Grants permission to retrieve Zia organization enrichment jobs and
+              their enriched data.
+            ZohoCRM.settings.intelligence.CREATE: >-
+              Grants permission to schedule new Zia organization enrichment
+              jobs.
+            ZohoCRM.settings.intelligence.UPDATE: >-
+              Grants permission to update existing Zia organization enrichment
+              jobs.
+            ZohoCRM.settings.intelligence.DELETE: Grants permission to delete Zia organization enrichment jobs.

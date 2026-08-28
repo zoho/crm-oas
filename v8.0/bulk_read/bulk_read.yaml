@@ -1,0 +1,2917 @@
+openapi: 3.1.0
+info:
+  title: Bulk Read
+  description: >-
+    The Zoho CRM Bulk Read API allows you to export large volumes of CRM records
+    asynchronously. Create a bulk read job to specify the module and filter
+    criteria, then download the exported data as a CSV or ICS file once the job
+    is complete.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/bulk/{version}
+    description: >-
+      The base URL for the Zoho CRM Bulk Read API. The server URL varies by data
+      center and API version.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - jp
+          - ca
+        default: com
+        description: |-
+          Specify the domain extension for your Zoho CRM data center.
+          Possible values:
+          **com** - United States data center (default).
+          **eu** - European Union data center.
+          **in** - India data center.
+          **cn** - China data center.
+          **au** - Australia data center.
+          **jp** - Japan data center.
+          **ca** - Canada data center.
+      version:
+        description: Specify the API version to use. Defaults to v8.
+        default: v8
+paths:
+  /read:
+    post:
+      operationId: createBulkReadJob
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                callback:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                      format: uri
+                      description: >-
+                        Specify a valid URL that accepts HTTP POST requests to
+                        receive the bulk read job completion notification.
+                    method:
+                      type: string
+                      enum:
+                        - post
+                      description: >-
+                        Specify the HTTP method for the callback request.
+
+                        Possible values:
+
+                        **post** - Sends the callback notification as an HTTP
+                        POST request.
+                  required:
+                    - url
+                    - method
+                  description: >-
+                    Specify the callback configuration to receive a POST
+                    notification when the bulk read job completes or fails.
+                  additionalProperties: false
+                query:
+                  type: object
+                  properties:
+                    module:
+                      type: object
+                      properties:
+                        api_name:
+                          type: string
+                          description: >-
+                            Specify the API name of the CRM module to export
+                            records from.
+                          maxLength: 255
+                      required:
+                        - api_name
+                      description: >-
+                        Specify the CRM module from which to export records.
+                        Refer to the [Get
+                        Modules](modules.json#$.paths./settings/modules.get)
+                        resource for valid values.
+                      additionalProperties: false
+                    cvid:
+                      type:
+                        - string
+                        - 'null'
+                      description: >-
+                        Represents the unique ID of the Custom View to filter
+                        records for the bulk read job. Refer to the [Get Custom
+                        Views](custom_views.json#$.paths./settings/custom_views.get)
+                        resource for valid values.
+                      maxLength: 100
+                    fields:
+                      type: array
+                      items:
+                        type: string
+                        description: >-
+                          Specify the API name of a field to include in the
+                          exported records.
+                        maxLength: 500
+                      description: >-
+                        Specify the list of field API names to include in the
+                        exported records. Refer to the [Get
+                        Fields](fields.json#$.paths./settings/fields.get)
+                        resource for valid values. **Note:** If exporting Events
+                        as an **ICS file**, do not include this key.
+                      maxItems: 1000
+                    page:
+                      type:
+                        - integer
+                        - 'null'
+                      format: int32
+                      description: >-
+                        Specify the page number of records to export in the bulk
+                        read job. The default value is **1** and means that the
+                        first **200,000** records matching your query will get
+                        exported. If you want to fetch the records from the
+                        range **200,001 to 400,000**, then mention the value as
+                        **'2'.**
+                    criteria:
+                      type: object
+                      properties:
+                        group_operator:
+                          type: string
+                          enum:
+                            - or
+                            - and
+                          description: >-
+                            Specify the logical operator to combine the filter
+                            conditions in the **group** array.
+
+                            Possible values:
+
+                            **and** - All conditions must be satisfied.
+
+                            **or** - At least one condition must be satisfied.
+                        group:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              field:
+                                type: object
+                                properties:
+                                  api_name:
+                                    type: string
+                                    description: >-
+                                      Specify the API name of the field to use
+                                      in the filter condition.
+                                    maxLength: 255
+                                required:
+                                  - api_name
+                                description: >-
+                                  Specify the field to apply the filter
+                                  condition on. Refer to the [Get
+                                  Fields](fields.json#$.paths./settings/fields.get)
+                                  resource for valid values.
+                                additionalProperties: false
+                              value:
+                                type: string
+                                description: >-
+                                  Specify the value to compare the field against
+                                  in this filter condition.
+                                maxLength: 500
+                              type:
+                                type: string
+                                enum:
+                                  - value
+                                description: >-
+                                  Specify the type of the filter condition.
+
+                                  Possible values:
+
+                                  **value** - Compares the field against a
+                                  static value.
+                              comparator:
+                                type: string
+                                enum:
+                                  - equal
+                                  - contains
+                                  - ends_with
+                                  - not_contains
+                                  - not_equal
+                                  - starts_with
+                                description: >-
+                                  Specify the comparison operator to apply
+                                  between the field and value in this filter
+                                  condition.
+
+                                  Possible values:
+
+                                  **equal** - Records where the field value
+                                  exactly matches the specified value.
+
+                                  **not_equal** - Records where the field value
+                                  does not match the specified value.
+
+                                  **contains** - Records where the field value
+                                  contains the specified value.
+
+                                  **not_contains** - Records where the field
+                                  value does not contain the specified value.
+
+                                  **starts_with** - Records where the field
+                                  value starts with the specified value.
+
+                                  **ends_with** - Records where the field value
+                                  ends with the specified value.
+                            required:
+                              - field
+                              - value
+                              - comparator
+                            description: >-
+                              Specify a filter condition object that defines a
+                              single criterion for filtering records in the bulk
+                              read export.
+                            additionalProperties: false
+                          description: >-
+                            Specify the list of filter conditions to apply to
+                            the bulk read export. Each condition must include a
+                            **field**, **value**, and **comparator**.
+                          maxItems: 1000
+                      required:
+                        - group_operator
+                        - group
+                      description: >-
+                        Specify the filter criteria to narrow down the records
+                        exported in the bulk read job.
+                      additionalProperties: false
+                  required:
+                    - module
+                  description: >-
+                    Specify the query parameters for the bulk read job,
+                    including the target module, optional field selection,
+                    optional Custom View, and optional filter criteria.
+                  additionalProperties: false
+                file_type:
+                  type: string
+                  enum:
+                    - csv
+                    - ics
+                  description: >-
+                    Specify the file format for the exported records.
+
+                    Possible values:
+
+                    **csv** - Exports records in CSV format.
+
+                    **ics** - Exports records in ICS format, applicable only
+                    when exporting from the **Events** module.
+              required:
+                - query
+              description: >-
+                Represents the request payload used to configure and create a
+                bulk read job in Zoho CRM.
+              additionalProperties: false
+            examples:
+              Example1:
+                summary: Create bulk read job
+                value:
+                  query:
+                    module:
+                      api_name: string
+                description: >-
+                  A sample request to create a bulk read job for the Contacts
+                  module with filter criteria.
+        required: true
+        description: >-
+          The JSON request body used to configure and create a bulk read job in
+          Zoho CRM.
+      responses:
+        '201':
+          description: >-
+            The bulk read job was successfully created. The response includes
+            the job ID and initial state.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: CreatebulkreadjobResponse201
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: >-
+                            Represents the status of the job creation request. 
+
+                            Possible values:
+
+                            **success** - Zoho CRM created the bulk read job
+                            successfully.
+                        code:
+                          type: string
+                          enum:
+                            - ADDED_SUCCESSFULLY
+                          description: >-
+                            Represents the status code for the job creation
+                            result.
+
+                            Possible values:
+
+                            **ADDED_SUCCESSFULLY** - Zoho CRM created the bulk
+                            read job successfully. 
+                        message:
+                          type: string
+                          enum:
+                            - Added successfully.
+                          description: >-
+                            Represents the result message for the job creation. 
+
+                            Possible values:
+
+                            **Added successfully.** - Zoho CRM created the bulk
+                            read job successfully.
+                        details:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the created bulk
+                                read job. 
+                              maxLength: 100
+                              x-zs-$id: BulkReadJobId
+                            operation:
+                              type: string
+                              description: >-
+                                Represents the type of bulk operation
+                                performed. 
+
+                                Possible values:
+
+                                **read** - Indicates a bulk read (export)
+                                operation.
+                              maxLength: 500
+                              enum:
+                                - read
+                            state:
+                              type: string
+                              enum:
+                                - COMPLETED
+                                - ADDED
+                                - IN PROGRESS
+                                - FAILURE
+                              description: >-
+                                Represents the current state of the bulk read
+                                job. 
+
+                                Possible values:
+
+                                **ADDED** - The job has been accepted and is
+                                queued for processing.
+
+                                **IN PROGRESS** - The job is currently being
+                                processed.
+
+                                **COMPLETED** - The job has finished processing
+                                successfully.
+
+                                **FAILURE** - The job encountered an error
+                                during processing.
+                            created_by:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique ID of the user who
+                                    created the bulk read job. 
+                                  maxLength: 100
+                                name:
+                                  type: string
+                                  description: >-
+                                    Represents the name of the user who created
+                                    the bulk read job.
+                                  maxLength: 256
+                              required:
+                                - id
+                              description: >-
+                                Represents the user who created the bulk read
+                                job. Refer to the [Get
+                                Users](users.json#$.paths./users.get) endpoint
+                                for details. 
+                              additionalProperties: false
+                            created_time:
+                              type: string
+                              format: date-time
+                              description: >-
+                                Represents the date and time when Zoho CRM
+                                created the bulk read job. 
+                          required:
+                            - id
+                            - operation
+                            - state
+                            - created_by
+                            - created_time
+                          description: >-
+                            Represents the details of the newly created bulk
+                            read job. 
+                          additionalProperties: false
+                      required:
+                        - status
+                        - code
+                        - message
+                        - details
+                      description: Represents a single job creation result object.
+                      additionalProperties: false
+                    description: 'Represents the list of job creation result objects. '
+                    maxItems: 1000
+                  info:
+                    type: object
+                    description: >-
+                      Represents additional metadata about the bulk read job
+                      creation response. 
+                    additionalProperties: false
+                required:
+                  - data
+                  - info
+                description: >-
+                  Represents the response returned when a bulk read job is
+                  successfully created.
+                additionalProperties: false
+              examples:
+                Example1:
+                  summary: Bulk read job created
+                  value:
+                    data:
+                      - status: success
+                        code: ADDED_SUCCESSFULLY
+                        message: Added successfully.
+                        details:
+                          id: string
+                          operation: read
+                          state: COMPLETED
+                          created_by:
+                            id: string
+                          created_time: '2023-01-01T00:00:00Z'
+                    info: {}
+                  description: >-
+                    A sample response confirming that the bulk read job was
+                    successfully created, including the assigned job ID and
+                    initial state.
+        '400':
+          description: >-
+            The request to create the bulk read job failed due to client-side
+            validation errors.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreatebulkreadjobResponse400
+                description: >-
+                  Represents the error response returned when the bulk read job
+                  creation request fails due to client-side validation errors.
+                oneOf:
+                  - type: object
+                    x-zs-$id: CreatebulkreadjobResponse1
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - REQUEST_BODY_NOT_SUPPORTED
+                        description: >-
+                          Represents the error code indicating that the request
+                          body format is not supported. 
+
+                          Possible values:
+
+                          **REQUEST_BODY_NOT_SUPPORTED** - The request body
+                          structure does not conform to the expected format.
+                      details:
+                        type: object
+                        description: 'Represents additional details about the error. '
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: 'Represents the error message describing the issue. '
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request. 
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the request body format is
+                      not supported.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: CreatebulkreadjobResponse2
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - FIELD_COMPARATOR_IN_CRITERIA_NOT_SUPPORTED
+                          - COMPARATOR_AND_VALUE_IN_CRITERIA_NOT_COMPATIBLE
+                        description: >-
+                          Represents the error code indicating a criteria
+                          comparator incompatibility issue. 
+
+                          Possible values:
+
+                          **FIELD_COMPARATOR_IN_CRITERIA_NOT_SUPPORTED** - The
+                          comparator used for the specified field is not
+                          supported in the filter criteria.
+
+                          **COMPARATOR_AND_VALUE_IN_CRITERIA_NOT_COMPATIBLE** -
+                          The comparator and value combination used in the
+                          filter criteria is not compatible.
+                      details:
+                        oneOf:
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetails1
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the criteria error. 
+                                maxLength: 255
+                              comparator:
+                                type: string
+                                description: >-
+                                  Represents the comparator used in the criteria
+                                  filter where the incompatibility was
+                                  detected. 
+                                maxLength: 500
+                              type:
+                                type: string
+                                description: >-
+                                  Represents the data type of the field
+                                  associated with the criteria error. 
+                                maxLength: 500
+                              value:
+                                oneOf:
+                                  - type: object
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails1ObjectValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      object.
+                                    additionalProperties: false
+                                  - type: string
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails1StringValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      string.
+                                    maxLength: 500
+                                  - type: array
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails1ArrayValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      array.
+                                    items:
+                                      description: >-
+                                        Represents an individual value in the
+                                        criteria array.
+                                    maxItems: 1000
+                                  - type: boolean
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails2BooleanValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      Boolean.
+                                  - type: number
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails1NumberValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      number.
+                                description: >-
+                                  Represents the value used in the criteria
+                                  filter. 
+                            required:
+                              - api_name
+                              - comparator
+                              - type
+                              - value
+                            description: >-
+                              Error details including the field API name,
+                              comparator, type, and value involved in the
+                              incompatibility.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetails2
+                            properties:
+                              comparator:
+                                type: string
+                                description: >-
+                                  Represents the comparator used in the criteria
+                                  filter where the incompatibility was
+                                  detected. 
+                                maxLength: 500
+                              type:
+                                type: string
+                                description: >-
+                                  Represents the data type of the field
+                                  associated with the criteria error. 
+                                maxLength: 500
+                              value:
+                                oneOf:
+                                  - type: object
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails2ObjectValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      object.
+                                    additionalProperties: false
+                                    properties:
+                                      name:
+                                        type: string
+                                        description: >-
+                                          Represents the name of the lookup value
+                                          used in the criteria filter.
+                                        maxLength: 25
+                                  - type: string
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails2StringValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      string.
+                                    maxLength: 500
+                                  - type: array
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails2ArrayValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      array.
+                                    items:
+                                      description: >-
+                                        Represents an individual value in the
+                                        criteria array.
+                                    maxItems: 1000
+                                  - type: boolean
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails1BooleanValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      Boolean.
+                                  - type: number
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetails2NumberValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      number.
+                                description: >-
+                                  Represents the value used in the criteria
+                                  filter. 
+                            required:
+                              - comparator
+                              - type
+                              - value
+                            description: >-
+                              Error details including the comparator, type, and
+                              value involved in the incompatibility.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetails3
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the criteria error. 
+                                maxLength: 255
+                              comparator:
+                                type: string
+                                description: >-
+                                  Represents the comparator used in the criteria
+                                  filter where the incompatibility was detected.
+                                maxLength: 500
+                              type:
+                                type: string
+                                description: >-
+                                  Represents the data type of the field
+                                  associated with the criteria error.
+                                maxLength: 500
+                              value:
+                                type: object
+                                description: >-
+                                  Represents the value used in the criteria
+                                  filter.
+                                additionalProperties: false
+                              field:
+                                type: object
+                                properties:
+                                  api_name:
+                                    type: string
+                                    description: Represents the API name of the field.
+                                    maxLength: 255
+                                description: >-
+                                  Represents the field associated with the
+                                  criteria error. 
+                                additionalProperties: false
+                            required:
+                              - api_name
+                              - field
+                            description: >-
+                              Error details including the field API name,
+                              comparator, type, and value with a field
+                              reference.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetails4
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field for which
+                                  the comparator is not supported. 
+                                maxLength: 255
+                              supported:
+                                type: array
+                                items:
+                                  type: string
+                                  description: >-
+                                    Represents a supported option for the
+                                    specified field.
+                                  maxLength: 500
+                                description: >-
+                                  Represents the list of supported options for
+                                  the specified field. 
+                                maxItems: 1000
+                            required:
+                              - api_name
+                              - supported
+                            description: >-
+                              Error details including the field API name and
+                              list of supported options.
+                            additionalProperties: false
+                        description: >-
+                          Represents additional details about the criteria
+                          incompatibility error. 
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the criteria
+                          incompatibility issue. 
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request. 
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when a comparator used in the
+                      filter criteria is not supported or is incompatible with
+                      the field value.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: CreatebulkreadjobResponse3
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - AMBIGUOUS_CRITERIA
+                          - AMBIGUOUS_GROUP_IN_CRITERIA
+                        description: >-
+                          Represents the error code indicating ambiguity in the
+                          filter criteria.
+
+                          Possible values:
+
+                          **AMBIGUOUS_CRITERIA** - The filter criteria is
+                          ambiguous and cannot be processed.
+
+                          **AMBIGUOUS_GROUP_IN_CRITERIA** - A criteria group is
+                          ambiguous and cannot be processed.
+                      details:
+                        oneOf:
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetailsAPIName
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the ambiguous criteria.
+                                maxLength: 500
+                            description: >-
+                              Error details including the API name of the
+                              ambiguous field.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetails5
+                            properties:
+                              comparator:
+                                type: string
+                                description: >-
+                                  Represents the comparator used in the
+                                  ambiguous criteria filter.
+                                maxLength: 500
+                              type:
+                                type: string
+                                description: >-
+                                  Indicates the data type of the field
+                                  associated with the ambiguous criteria.
+                                maxLength: 500
+                              value:
+                                type: object
+                                description: >-
+                                  Specifies the value used in the ambiguous
+                                  criteria filter.
+                                additionalProperties: false
+                              field:
+                                type: object
+                                properties:
+                                  api_name:
+                                    type: string
+                                    description: Represents the API name of the field.
+                                    maxLength: 255
+                                description: >-
+                                  Indicates the field associated with the
+                                  ambiguous criteria.
+                                additionalProperties: false
+                            description: >-
+                              Error details including the comparator, type,
+                              value, and field associated with the ambiguous
+                              criteria.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetailsComp1
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field with
+                                  ambiguous criteria. 
+                                maxLength: 255
+                              type:
+                                type: string
+                                description: >-
+                                  The data type of the field with ambiguous
+                                  criteria. 
+                                maxLength: 500
+                              comparator:
+                                type: string
+                                description: >-
+                                  Represents the comparator used in the
+                                  ambiguous criteria filter. 
+                                maxLength: 25
+                            required:
+                              - api_name
+                              - type
+                              - comparator
+                            description: >-
+                              Error details including the field API name, type,
+                              and comparator.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetailsComp
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the ambiguous criteria. 
+                                maxLength: 255
+                              type:
+                                type: string
+                                description: >-
+                                  Specifies the data type of the field with
+                                  ambiguous criteria. 
+                                maxLength: 500
+                              value:
+                                oneOf:
+                                  - type: object
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetailsCompObjectValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      object.
+                                    additionalProperties: false
+                                  - type: string
+                                    x-zs-$id: >-
+                                      CreatebulkreadjobResponseDetailsCompStringValue
+                                    description: >-
+                                      Represents a criteria field value of type
+                                      string.
+                                    maxLength: 500
+                                description: >-
+                                  Represents the value associated with the
+                                  ambiguous criteria.
+                            required:
+                              - api_name
+                              - type
+                            description: >-
+                              Error details including the field API name, type,
+                              and value.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetails6
+                            properties:
+                              group:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the field in
+                                        the criterion. 
+                                      maxLength: 255
+                                    comparator:
+                                      type: string
+                                      description: >-
+                                        Represents the comparator used in the
+                                        criterion.
+                                      maxLength: 500
+                                    type:
+                                      type: string
+                                      description: >-
+                                        Represents the data type of the field in
+                                        the criterion. 
+                                      maxLength: 500
+                                    value:
+                                      oneOf:
+                                        - type: object
+                                          x-zs-$id: >-
+                                            CreatebulkreadjobResponseDetails6ObjectValue
+                                          description: >-
+                                            Represents a criteria field value of
+                                            type object.
+                                          additionalProperties: false
+                                        - type: string
+                                          x-zs-$id: >-
+                                            CreatebulkreadjobResponseDetails6StringValue
+                                          description: >-
+                                            Represents a criteria field value of
+                                            type string.
+                                          maxLength: 500
+                                      description: >-
+                                        Represents the value used in the
+                                        criterion.
+                                    field:
+                                      type: object
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: Represents the API name of the field.
+                                          maxLength: 255
+                                      description: >-
+                                        Represents the field associated with the
+                                        criterion.
+                                      additionalProperties: false
+                                  required:
+                                    - api_name
+                                    - comparator
+                                    - type
+                                    - value
+                                  description: >-
+                                    Represents a criterion within the ambiguous
+                                    group.
+                                  additionalProperties: false
+                                description: Represents the ambiguous criteria group.
+                                maxItems: 1000
+                              group_operator:
+                                type: string
+                                description: >-
+                                  Represents the logical operator used to
+                                  combine criteria within the group.
+                                maxLength: 500
+                            description: >-
+                              Error details including the ambiguous criteria
+                              group and group operator.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: CreatebulkreadjobResponseDetails7
+                            properties:
+                              group:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    comparator:
+                                      type: string
+                                      description: >-
+                                        Represents the comparator used in the
+                                        criterion.
+                                      maxLength: 500
+                                    type:
+                                      type: string
+                                      description: >-
+                                        Represents the data type of the field in
+                                        the criterion.
+                                      maxLength: 500
+                                    value:
+                                      type: string
+                                      description: >-
+                                        Represents the value used in the
+                                        criterion.
+                                      maxLength: 25
+                                    field:
+                                      type: object
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: Represents the API name of the field.
+                                          maxLength: 255
+                                      description: >-
+                                        Represents the field associated with the
+                                        criterion.
+                                      additionalProperties: false
+                                  description: >-
+                                    Represents a criterion within the ambiguous
+                                    group.
+                                  additionalProperties: false
+                                description: Represents the ambiguous criteria group.
+                                maxItems: 2
+                            description: >-
+                              Error details including the ambiguous criteria
+                              group without a group operator.
+                            additionalProperties: false
+                        description: >-
+                          Represents additional details about the ambiguous
+                          criteria error. 
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the ambiguous
+                          criteria issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the filter criteria or a
+                      criteria group is ambiguous.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: CreatebulkreadjobResponse4
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_CALLBACK_METHOD
+                          - INVALID_CALLBACK_URL
+                        description: >-
+                          Represents the error code indicating a callback
+                          configuration issue.
+
+                          Possible values:
+
+                          **INVALID_CALLBACK_METHOD** - The HTTP method
+                          specified for the callback URL is not valid.
+
+                          **INVALID_CALLBACK_URL** - The callback URL specified
+                          in the request is not valid.
+                      details:
+                        type: object
+                        properties:
+                          supported_callback_methods:
+                            type: array
+                            items:
+                              type: string
+                              description: >-
+                                Represents a supported HTTP method for the
+                                callback URL.
+                              maxLength: 500
+                            description: >-
+                              Represents the list of supported HTTP methods for
+                              callbacks.
+                            maxItems: 1000
+                        description: >-
+                          Represents additional details about the callback
+                          configuration error, including the list of supported
+                          callback methods.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the callback
+                          configuration issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the callback method or URL
+                      specified in the request is not valid.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: GroupOperatorNotSupportedError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - GROUP_OPERATOR_NOT_SUPPORTED
+                        description: >-
+                          Represents the error code indicating that the group
+                          operator used in the filter criteria is not
+                          supported. 
+
+                          Possible values:
+
+                          **GROUP_OPERATOR_NOT_SUPPORTED** - The logical
+                          operator used to combine criteria groups is not
+                          supported.
+                      details:
+                        type: object
+                        properties:
+                          supported:
+                            type: array
+                            items:
+                              type: string
+                              description: >-
+                                Represents a supported group operator for the
+                                filter criteria.
+                              maxLength: 500
+                            description: >-
+                              Represents the list of supported group operators
+                              for the filter criteria.
+                            maxItems: 1000
+                        required:
+                          - supported
+                        description: >-
+                          Represents additional details about the unsupported
+                          group operator error, including the  list of supported
+                          operators. 
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported group operator issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the group operator used in
+                      the filter criteria is not supported.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: PageRangeExceededError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - PAGE_RANGE_EXCEEDED
+                        description: >-
+                          Represents the error code indicating that the
+                          requested page number exceeds the allowed range.
+
+                          Possible values:
+
+                          **PAGE_RANGE_EXCEEDED** - The page number specified in
+                          the bulk read request exceeds the maximum allowed
+                          range.
+                      details:
+                        type: object
+                        properties:
+                          max_limit:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the maximum page number allowed for
+                              bulk read requests.
+                        required:
+                          - max_limit
+                        description: >-
+                          Represents additional details about the page range
+                          exceeded error, including the maximum allowed page
+                          limit.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the page range
+                          exceeded issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the requested page number
+                      exceeds the allowed range.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidRequestError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_REQUEST
+                        description: >-
+                          Represents the error code indicating that the request
+                          is invalid.
+
+                          Possible values:
+
+                          **INVALID_REQUEST** - The bulk read request is
+                          malformed or contains invalid parameters.
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the invalid
+                          request error. 
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          request issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request. 
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the bulk read request is
+                      malformed or contains invalid parameters.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: ModuleNotSupportedError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - MODULE_NOT_SUPPORTED
+                        description: >-
+                          Represents the error code indicating that the
+                          specified module is not supported for bulk read
+                          operations.
+
+                          Possible values:
+
+                          **MODULE_NOT_SUPPORTED** - The module specified in the
+                          bulk read request does not support bulk read
+                          operations.
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the unsupported
+                          module error.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported module issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the specified module does not
+                      support bulk read operations.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: CvidNotSupportedError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - CVID_NOT_SUPPORTED
+                        description: >-
+                          Represents the error code indicating that the
+                          specified Custom View ID is not supported.
+
+                          Possible values:
+
+                          **CVID_NOT_SUPPORTED** - The Custom View ID (cvid)
+                          specified in the bulk read request is not supported.
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the unsupported
+                          Custom View error. 
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported Custom View ID issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the specified Custom View ID
+                      is not supported.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidCriteriaError
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                      code:
+                        type: string
+                        enum:
+                          - REQUEST_BODY_IS_EMPTY
+                          - TOO_MANY_REQUESTS
+                          - >-
+                            COMPARATOR_AND_ENCRYPTED_VALUE_IN_CRITERIA_NOT_COMPATIBLE
+                          - PAGE_NOT_SUPPORTED
+                          - NOT_SUPPORTED_FEATURE
+                          - QUERY_NOT_SUPPORTED
+                          - JOB_NOT_SUPPORTED
+                          - REQUEST_BODY_NOT_READABLE
+                          - FIELD_AND_COMPARATOR_IN_CRITERIA_NOT_COMPATIBLE
+                          - INVALID_URL_PATTERN
+                          - NO_PERMISSION
+                          - FIELD_AND_VALUE_IN_CRITERIA_NOT_COMPATIBLE
+                          - FIELD_IN_CRITERIA_NOT_AVAILABLE
+                          - MEDIA_TYPE_NOT_SUPPORTED
+                          - INVALID_BULK_OPERATION
+                          - CALLBACK_FAILURE
+                          - INVALID_SERVICE_NAME
+                          - JOIN_LIMIT_EXCEEDED
+                          - CRITERIA_NOT_SUPPORTED
+                          - INVALID_REQUEST_METHOD
+                          - INVALID_TOKEN
+                        description: >-
+                          Represents the error code for the bulk read request
+                          failure.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the request
+                          failure. 
+                        maxLength: 1000
+                      details:
+                        oneOf:
+                          - type: object
+                            x-zs-$id: InvalidCriteriaErrorDetails1
+                            description: >-
+                              Empty error details object returned when no
+                              additional context is available.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: InvalidCriteriaErrorDetailsForCriteria
+                            description: >-
+                              Error details including the criteria object
+                              associated with the request failure.
+                            properties:
+                              criteria:
+                                type: object
+                                description: >-
+                                  Represents the criteria object associated with
+                                  the error. 
+                                additionalProperties: false
+                                properties:
+                                  field:
+                                    type: object
+                                    description: >-
+                                      Represents the field associated with the
+                                      invalid criteria.
+                                    additionalProperties: false
+                            required:
+                              - criteria
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: InvalidCriteriaErrorDetails
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the module or field
+                                  associated with the error.
+                                maxLength: 255
+                              module:
+                                type: string
+                                description: >-
+                                  Represents the name of the module associated
+                                  with the error.
+                                maxLength: 255
+                            required:
+                              - api_name
+                              - module
+                            description: >-
+                              Error details including the API name and module
+                              associated with the request failure.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: InvalidCriteriaErrorDetails2
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field or module
+                                  associated with the error.
+                                maxLength: 255
+                              reason:
+                                type: string
+                                description: Represents the reason for the error.
+                                maxLength: 500
+                              module:
+                                type: string
+                                description: >-
+                                  Represents the name of the module associated
+                                  with the error.
+                                maxLength: 500
+                            required:
+                              - api_name
+                              - reason
+                            description: >-
+                              Error details including the API name, reason, and
+                              module associated with the request failure.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: InvalidCriteriaErrorDetails3
+                            properties:
+                              comparator:
+                                type: string
+                                description: >-
+                                  Represents the comparator associated with the
+                                  error.
+                                maxLength: 500
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the error.
+                                maxLength: 255
+                              supported:
+                                type: array
+                                items:
+                                  type: string
+                                  description: >-
+                                    Represents a supported option for the
+                                    specified field.
+                                  maxLength: 500
+                                description: >-
+                                  Represents the list of supported options for
+                                  the specified field.
+                                maxItems: 1000
+                            required:
+                              - comparator
+                              - api_name
+                              - supported
+                            description: >-
+                              Error details including the field API name,
+                              comparator, and list of supported options.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: InvalidCriteriaErrorDetails4
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the error.
+                                maxLength: 255
+                            required:
+                              - api_name
+                            description: >-
+                              Error details including the API name of the field
+                              associated with the request failure.
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: InvalidCriteriaErrorDetails5
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the error.
+                                maxLength: 255
+                              field_label:
+                                type: string
+                                description: >-
+                                  Represents the display label of the field
+                                  associated with the error.
+                                maxLength: 255
+                            required:
+                              - api_name
+                              - field_label
+                            description: >-
+                              Error details including the field API name and
+                              display label associated with the request failure.
+                            additionalProperties: false
+                        description: 'Represents additional details about the error. '
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    description: >-
+                      Error response returned for various bulk read request
+                      failures, including permission issues, unsupported
+                      features, and invalid request formats.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidCriteriaError2
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_CRITERIA
+                        description: >-
+                          Represents the error code indicating that the filter
+                          criteria in the request is invalid.
+
+                          Possible values:
+
+                          **INVALID_CRITERIA** - The criteria provided in the
+                          bulk read job request is not valid.
+                      details:
+                        type: object
+                        properties:
+                          field:
+                            type: object
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the invalid criteria.
+                                maxLength: 255
+                              id:
+                                type: string
+                                description: >-
+                                  Represents the unique ID of the field
+                                  associated with the invalid criteria.
+                                maxLength: 100
+                            required:
+                              - api_name
+                              - id
+                            description: >-
+                              Represents the field object associated with the
+                              invalid criteria condition.
+                            additionalProperties: false
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field involved in
+                              the invalid criteria condition.
+                            maxLength: 255
+                          comparator:
+                            type: string
+                            description: >-
+                              Represents the comparator used in the invalid
+                              criteria condition.
+                            maxLength: 500
+                          type:
+                            type: string
+                            description: >-
+                              Represents the type of the criteria condition that
+                              caused the error.
+                            maxLength: 500
+                          value:
+                            oneOf:
+                              - type: object
+                                x-zs-$id: InvalidCriteriaError2ObjectValue
+                                description: >-
+                                  Represents a criteria field value of type
+                                  object.
+                                additionalProperties: false
+                                properties:
+                                  name:
+                                    type: string
+                                    description: >-
+                                      Represents the display name of the value
+                                      involved in the invalid criteria
+                                      condition.
+                                    maxLength: 25
+                              - type: string
+                                x-zs-$id: InvalidCriteriaError2StringValue
+                                description: >-
+                                  Represents a criteria field value of type
+                                  string.
+                                maxLength: 500
+                              - type: boolean
+                                x-zs-$id: InvalidCriteriaError2BooleanValue
+                                description: >-
+                                  Represents a criteria field value of type
+                                  Boolean.
+                              - type: array
+                                x-zs-$id: InvalidCriteriaError2ArrayValue
+                                description: >-
+                                  Represents a criteria field value of type
+                                  array.
+                                items:
+                                  type: string
+                                  maxLength: 500
+                                  description: >-
+                                    Represents a single item in the array value
+                                    associated with the invalid criteria
+                                    condition.
+                                maxItems: 1000
+                            description: >-
+                              Represents the value used in the invalid criteria
+                              condition.
+                        description: >-
+                          Represents additional details about the invalid
+                          criteria error, including the field and criteria
+                          values that caused the issue. 
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          criteria issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the filter criteria is
+                      invalid.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: ValueTypeNotSupportedError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - VALUE_TYPE_NOT_SUPPORTED
+                        description: >-
+                          Represents the error code indicating that the value
+                          type used in the filter criteria is not supported.
+
+                          Possible values:
+
+                          **VALUE_TYPE_NOT_SUPPORTED** - The data type of the
+                          value provided for a criteria field is not supported.
+                      details:
+                        type: object
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field for which the
+                              value type is not supported.
+                            maxLength: 255
+                          supported:
+                            type: array
+                            items:
+                              type: string
+                              description: >-
+                                Represents a supported value type for the
+                                criteria field.
+                              maxLength: 500
+                            description: >-
+                              Represents the list of supported value types for
+                              the specified field.
+                            maxItems: 1000
+                        required:
+                          - api_name
+                          - supported
+                        description: >-
+                          Represents additional details about the unsupported
+                          value type error, including the field API name and the
+                          list of supported value types.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported value type issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the value type used in the
+                      filter criteria is not supported.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: ExpiredValueError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - FIELD_NOT_SUPPORTED
+                        description: >-
+                          Represents the error code indicating that the
+                          specified field is not supported for use in the bulk
+                          read criteria.
+
+                          Possible values:
+
+                          **FIELD_NOT_SUPPORTED** - The field specified in the
+                          filter criteria is not supported for bulk read
+                          operations.
+                      details:
+                        type: object
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field that is not
+                              supported.
+                            maxLength: 255
+                        description: >-
+                          Represents additional details about the unsupported
+                          field error, including the API name of the field.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported field issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the specified field is not
+                      supported for use in the bulk read criteria.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidDataError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - MODULE_NOT_AVAILABLE
+                        description: >-
+                          Represents the error code indicating that the
+                          specified module is not available in the CRM
+                          organization.
+
+                          Possible values:
+
+                          **MODULE_NOT_AVAILABLE** - The module specified in the
+                          bulk read request is not available.
+                      details:
+                        type: object
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the module that is not
+                              available.
+                            maxLength: 255
+                          reason:
+                            type: string
+                            description: >-
+                              Represents the reason why the module is not
+                              available.
+                            maxLength: 500
+                          module:
+                            type: string
+                            description: >-
+                              Represents the name of the module associated with
+                              the error.
+                            maxLength: 500
+                        required:
+                          - api_name
+                        description: >-
+                          Represents additional details about the unavailable
+                          module error.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unavailable module issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the specified module is not
+                      available in the CRM organization.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidDataError2
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - FIELD_NOT_AVAILABLE
+                        description: >-
+                          Represents the error code indicating that the
+                          specified field is not available in the CRM
+                          organization.
+
+                          Possible values:
+
+                          **FIELD_NOT_AVAILABLE** - The field specified in the
+                          bulk read request is not available.
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the unavailable
+                          field error.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unavailable field issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the specified field is not
+                      available in the CRM organization.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: CriteriaLimitExceededError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - CRITERIA_LIMIT_EXCEEDED
+                        description: >-
+                          Represents the error code indicating that the number
+                          of filter criteria groups exceeds the maximum allowed
+                          limit.
+
+                          Possible values:
+
+                          **CRITERIA_LIMIT_EXCEEDED** - The number of criteria
+                          groups in the bulk read request exceeds the maximum
+                          limit.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the criteria
+                          limit exceeded issue.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        properties:
+                          max_limit:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the maximum number of filter criteria
+                              groups allowed in a bulk read request.
+
+                              Possible values:
+
+                              **25** - The maximum number of criteria groups
+                              permitted per request.
+                            enum:
+                              - 25
+                        description: >-
+                          Represents additional details about the criteria limit
+                          exceeded error.
+                        additionalProperties: false
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the number of filter criteria
+                      groups exceeds the maximum allowed limit.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: ValueLimitExceededInCriteriaError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - VALUE_LIMIT_EXCEEDED_IN_CRITERIA
+                        description: >-
+                          Represents the error code indicating that the number
+                          of values in the filter criteria exceeds the maximum
+                          allowed limit.
+
+                          Possible values:
+
+                          **VALUE_LIMIT_EXCEEDED_IN_CRITERIA** - The number of
+                          values provided in the bulk read criteria exceeds the
+                          maximum limit of 200.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the value
+                          limit exceeded issue.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        properties:
+                          max_limit:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the maximum number of values allowed in
+                              the filter criteria.
+
+                              Possible values:
+
+                              **200** - The maximum number of criteria values
+                              permitted per request.
+                            enum:
+                              - 200
+                        description: >-
+                          Represents additional details about the value limit
+                          exceeded error.
+                        additionalProperties: false
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the number of values in the
+                      filter criteria exceeds the maximum allowed limit.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: ValueTypeNotSupportedError1
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - VALUE_IN_CRITERIA_NOT_SUPPORTED
+                        description: >-
+                          Represents the error code indicating that a value used
+                          in the filter criteria is not supported.
+
+                          Possible values:
+
+                          **VALUE_IN_CRITERIA_NOT_SUPPORTED** - The value
+                          provided for the criteria field is not supported.
+                      details:
+                        type: object
+                        properties:
+                          field:
+                            type: object
+                            properties:
+                              api_name:
+                                type: string
+                                description: 'Represents the API name of the field. '
+                                maxLength: 255
+                              id:
+                                type: string
+                                description: >-
+                                  Represents the unique identifier of the
+                                  field. 
+                                maxLength: 100
+                            required:
+                              - api_name
+                              - id
+                            description: >-
+                              Represents the field associated with the
+                              unsupported criteria value.
+                            additionalProperties: false
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field associated
+                              with the unsupported criteria value.
+                            maxLength: 255
+                          comparator:
+                            type: string
+                            description: >-
+                              Represents the comparator used in the criteria
+                              filter where the unsupported value was detected.
+                            maxLength: 500
+                          type:
+                            type: string
+                            description: >-
+                              Represents the data type of the field associated
+                              with the unsupported criteria value.
+                            maxLength: 500
+                          value:
+                            type: object
+                            description: >-
+                              Represents the value that is not supported in the
+                              filter criteria.
+                            additionalProperties: false
+                        description: >-
+                          Represents additional details about the unsupported
+                          criteria value error, including the field information,
+                          comparator, and value used.
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported criteria value issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when a value used in the filter
+                      criteria is not supported.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidDataError3
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                        description: >-
+                          Represents the error code indicating that the criteria
+                          contains invalid data. 
+
+                          Possible values:
+
+                          **INVALID_DATA** - The data provided in the bulk read
+                          criteria is invalid.
+                      details:
+                        oneOf:
+                          - type: object
+                            x-zs-$id: InvalidDataErrorDetailsWithField
+                            description: >-
+                              Error details including the field reference
+                              associated with the invalid data error.
+                            additionalProperties: false
+                            properties:
+                              field:
+                                type: object
+                                properties:
+                                  api_name:
+                                    type: string
+                                    description: 'Represents the API name of the field. '
+                                    maxLength: 255
+                                  id:
+                                    type: string
+                                    description: >-
+                                      Represents the unique identifier of the
+                                      field. 
+                                    maxLength: 100
+                                required:
+                                  - api_name
+                                  - id
+                                description: >-
+                                  Represents the field associated with the
+                                  invalid data error.
+                                additionalProperties: false
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the invalid data error.
+                                maxLength: 255
+                              comparator:
+                                type: string
+                                description: >-
+                                  Represents the comparator used in the criteria
+                                  filter where the invalid data was detected.
+                                maxLength: 500
+                              type:
+                                type: string
+                                description: >-
+                                  Represents the data type of the field
+                                  associated with the invalid data error.
+                                maxLength: 500
+                              value:
+                                type: object
+                                description: >-
+                                  Represents the value that caused the invalid
+                                  data error.
+                                additionalProperties: false
+                          - type: object
+                            x-zs-$id: InvalidDataErrorDetailsWithSupportedValues
+                            description: >-
+                              Error details including the supported values for
+                              the specified field.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field
+                                  associated with the invalid data error.
+                                maxLength: 255
+                              supported_values:
+                                type: array
+                                description: >-
+                                  Represents the list of valid values accepted
+                                  for the specified field.
+                                items:
+                                  description: >-
+                                    Represents a valid value accepted for the
+                                    specified field.
+                                  type: string
+                                  maxLength: 25
+                                maxItems: 2
+                        description: >-
+                          Represents additional details about the invalid data
+                          error. 
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          data issue. 
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request. 
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when the criteria contains invalid
+                      data.
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: FieldInCriteriaNotSupportedError
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - FIELD_IN_CRITERIA_NOT_SUPPORTED
+                        description: >-
+                          Represents the error code indicating that a field used
+                          in the filter criteria is not supported. 
+
+                          Possible values:
+
+                          **FIELD_IN_CRITERIA_NOT_SUPPORTED** - The field
+                          specified in the filter criteria is not supported for
+                          bulk read operations.
+                      details:
+                        type: object
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field that is not
+                              supported in the filter criteria. 
+                            maxLength: 255
+                          comparator:
+                            type: string
+                            description: >-
+                              Represents the comparator used with the
+                              unsupported criteria field. 
+                            maxLength: 500
+                          value:
+                            type: string
+                            description: >-
+                              Represents the value used with the unsupported
+                              criteria field. 
+                            maxLength: 500
+                          type:
+                            type: string
+                            description: >-
+                              Represents the data type of the unsupported
+                              criteria field. 
+                            maxLength: 500
+                        required:
+                          - api_name
+                          - comparator
+                          - value
+                          - type
+                        description: >-
+                          Represents additional details about the unsupported
+                          criteria field error. 
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported criteria field issue. 
+                        maxLength: 1000
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the status of the API request. 
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    description: >-
+                      Error response returned when a field used in the filter
+                      criteria is not supported for bulk read operations.
+                    additionalProperties: false
+              examples:
+                Example1:
+                  summary: Invalid request error
+                  value:
+                    code: REQUEST_BODY_NOT_SUPPORTED
+                    details: {}
+                    message: string
+                    status: error
+                  description: >-
+                    A sample error response indicating that the bulk read job
+                    creation request failed due to an invalid request body.
+      summary: Create a bulk read job
+      description: >-
+        To create a bulk read job in Zoho CRM. A bulk read job exports records
+        from a specified CRM module to a CSV or ICS file. The job runs
+        asynchronously; use the Get Bulk Read Job Details API to monitor the job
+        status, and use the Download Bulk Read Result API to retrieve the
+        exported file once the job is complete.
+      security:
+        - OAuth2:
+            - ZohoCRM.bulk.READ
+            - ZohoCRM.modules.ALL
+  /read/{jobId}:
+    get:
+      operationId: getBulkReadJobDetails
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: The bulk read job details were successfully retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetbulkreadjobdetailsResponse200
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: >-
+                            Represents the unique identifier of the bulk read
+                            job. 
+                          maxLength: 100
+                          x-zs-$id: BulkReadId
+                        operation:
+                          type: string
+                          description: >-
+                            Specifies the type of action the API completed.
+                            Sample - "operation" : "read”.
+                          maxLength: 500
+                        state:
+                          type: string
+                          enum:
+                            - COMPLETED
+                            - ADDED
+                            - QUEUED
+                            - IN PROGRESS
+                          description: >-
+                            Represents the current processing state of the bulk
+                            read job. 
+
+                            Possible values:
+
+                            **ADDED** - The job has been created and is awaiting
+                            processing.
+
+                            **QUEUED** - The job is queued and scheduled for
+                            processing.
+
+                            **IN PROGRESS** - The job is currently being
+                            processed.
+
+                            **COMPLETED** - The job has finished processing and
+                            the result is available for download.
+                        query:
+                          type: object
+                          properties:
+                            module:
+                              type: object
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: 'Represents the API name of the CRM module. '
+                                  maxLength: 255
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the CRM
+                                    module. 
+                                  maxLength: 100
+                              required:
+                                - api_name
+                                - id
+                              description: >-
+                                Represents the CRM module from which records are
+                                exported. 
+                              additionalProperties: false
+                            cvid:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the Custom
+                                View used to pre-filter the records for the bulk
+                                read job.
+                              maxLength: 100
+                            fields:
+                              type: array
+                              items:
+                                type: string
+                                description: >-
+                                  Represents the API name of a field included in
+                                  the exported data.
+                                maxLength: 500
+                              description: >-
+                                Represents the list of field API names included
+                                in the exported data.
+                              maxItems: 1000
+                            page:
+                              type: integer
+                              format: int32
+                              description: 'Specifies the page number of records to export. '
+                            criteria:
+                              type: object
+                              properties:
+                                group_operator:
+                                  type: string
+                                  enum:
+                                    - or
+                                    - and
+                                  description: >-
+                                    Specifies the logical operator used to
+                                    combine conditions within the criteria
+                                    group. 
+
+                                    Possible values:
+
+                                    **and** - All filter conditions must be
+                                    satisfied.
+
+                                    **or** - At least one filter condition must
+                                    be satisfied.
+                                group:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      field:
+                                        type: object
+                                        properties:
+                                          api_name:
+                                            type: string
+                                            description: >-
+                                              Indicates the API name of the filter
+                                              field. 
+                                            maxLength: 255
+                                          id:
+                                            type:
+                                              - string
+                                              - 'null'
+                                            description: >-
+                                              Represents the unique identifier of the
+                                              filter field. 
+                                            maxLength: 100
+                                        required:
+                                          - api_name
+                                          - id
+                                        description: >-
+                                          Represents the field used in the filter
+                                          condition. 
+                                        additionalProperties: false
+                                      id:
+                                        type:
+                                          - string
+                                          - 'null'
+                                        description: >-
+                                          Represents the position identifier of
+                                          the filter condition within the criteria
+                                          group. 
+                                        maxLength: 100
+                                      value:
+                                        type: string
+                                        description: >-
+                                          Represents the value used in the filter
+                                          condition. 
+                                        maxLength: 500
+                                      type:
+                                        type: string
+                                        enum:
+                                          - value
+                                        description: >-
+                                          Specifies the data type of the filter
+                                          field. 
+                                      comparator:
+                                        type: string
+                                        enum:
+                                          - equal
+                                          - contains
+                                          - ends_with
+                                          - not_contains
+                                          - not_equal
+                                          - starts_with
+                                        description: >-
+                                          Indicates the comparison operator used
+                                          in the filter condition. 
+                                    required:
+                                      - field
+                                      - value
+                                      - type
+                                      - comparator
+                                    description: >-
+                                      Represents a single filter condition in
+                                      the criteria group.
+                                    additionalProperties: false
+                                  description: >-
+                                    Indicates the list of filter conditions
+                                    applied to the bulk read query. 
+                                  maxItems: 1000
+                              required:
+                                - group_operator
+                                - group
+                              description: >-
+                                Represents the filter criteria used to narrow
+                                the records exported in the bulk read job.
+                              additionalProperties: false
+                          required:
+                            - module
+                            - page
+                          description: >-
+                            Represents the query configuration used to create
+                            the bulk read job, including the module, filter
+                            criteria, and field selections. 
+                          additionalProperties: false
+                        created_by:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: >-
+                                Represents the display name of the user who
+                                created the job. 
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the user who
+                                created the job. 
+                              maxLength: 100
+                          required:
+                            - name
+                            - id
+                          description: 'Represents the user who created the bulk read job. '
+                          additionalProperties: false
+                        created_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Represents the date and time when Zoho CRM created
+                            the bulk read job, in ISO 8601 format. 
+                        result:
+                          type: object
+                          properties:
+                            page:
+                              type: integer
+                              format: int32
+                              description: >-
+                                Represents the page number of the exported
+                                result. 
+                            count:
+                              type: integer
+                              format: int32
+                              description: >-
+                                Specifies the total number of records exported
+                                in the bulk read job. 
+                            download_url:
+                              type: string
+                              description: >-
+                                Specifies the URL to download the exported
+                                file. 
+                              maxLength: 2048
+                            per_page:
+                              type: integer
+                              format: int32
+                              description: >-
+                                Represents the number of records per page in the
+                                exported result. 
+                            more_records:
+                              type: boolean
+                              description: >-
+                                Indicates whether additional records are
+                                available beyond the current page. 
+                            next_page_token:
+                              type: string
+                              description: >-
+                                Represents a token used to retrieve the next
+                                page of exported records in subsequent requests.
+                              maxLength: 500
+                          required:
+                            - page
+                            - count
+                            - download_url
+                            - per_page
+                            - more_records
+                          description: >-
+                            specifies the export result details of the bulk read
+                            job, including the download URL and pagination
+                            information. Present when the job has completed or
+                            partially completed.
+                          additionalProperties: false
+                        file_type:
+                          type: string
+                          enum:
+                            - csv
+                          description: |-
+                            Indicates the format of the exported file. 
+                            Possible values:
+                            **csv** - The records are exported in CSV format.
+                      required:
+                        - id
+                        - operation
+                        - state
+                        - query
+                        - created_by
+                        - created_time
+                        - file_type
+                      description: Represents the details of a bulk read job.
+                      additionalProperties: false
+                    description: >-
+                      Represents the list of bulk read job details returned in
+                      the response. 
+                    maxItems: 1000
+                required:
+                  - data
+                description: >-
+                  Represents the response returned when the bulk read job
+                  details are successfully retrieved.
+                additionalProperties: false
+              examples:
+                Example1:
+                  summary: Bulk read job details
+                  value:
+                    data:
+                      - id: string
+                        operation: string
+                        state: COMPLETED
+                        query:
+                          module:
+                            api_name: string
+                            id: string
+                          page: 0
+                        created_by:
+                          name: string
+                          id: string
+                        created_time: '2023-01-01T00:00:00Z'
+                        file_type: csv
+                  description: >-
+                    A sample response showing the details of a completed bulk
+                    read job, including the download URL and result summary.
+        '404':
+          description: The specified bulk read job was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetbulkreadjobdetailsResponse404
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - RESOURCE_NOT_FOUND
+                    description: >-
+                      Represents the error code indicating that the requested
+                      bulk read job was not found. 
+
+                      Possible values:
+
+                      **RESOURCE_NOT_FOUND** - The bulk read job with the
+                      specified ID does not exist.
+                  details:
+                    type: object
+                    properties:
+                      resource:
+                        type: string
+                        description: 'Represents the type of resource that was not found. '
+                        maxLength: 500
+                    required:
+                      - resource
+                    description: >-
+                      Specifies additional details about the resource not found
+                      error. 
+                    additionalProperties: false
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the resource not
+                      found issue. 
+                    maxLength: 1000
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: |-
+                      Specifies the status of the API request. 
+                      Possible values:
+                      **error** - Indicates that the request failed.
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                description: >-
+                  Indicates the error response returned when the specified bulk
+                  read job does not exist.
+                additionalProperties: false
+              examples:
+                Example1:
+                  summary: Job not found error
+                  value:
+                    code: RESOURCE_NOT_FOUND
+                    details:
+                      resource: string
+                    message: string
+                    status: error
+                  description: >-
+                    A sample error response indicating that the specified bulk
+                    read job was not found.
+      summary: Get bulk read job details
+      description: >-
+        To retrieve the details of a bulk read job in Zoho CRM. Use this API to
+        check the current state of a bulk read job and obtain the download URL
+        once the job is complete. Specify the unique job ID that Zoho CRM
+        returned when you created the job.
+      security:
+        - OAuth2:
+            - ZohoCRM.bulk.READ
+            - ZohoCRM.modules.ALL
+  /read/{jobId}/result:
+    get:
+      operationId: downloadBulkReadResult
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: >-
+            The bulk read result file was successfully downloaded as a ZIP
+            archive.
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+                x-zs-$id: DownloadresultResponse200
+                description: >-
+                  Represents the ZIP archive containing the exported bulk read
+                  records.
+        '404':
+          description: The specified bulk read job or its result was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: DownloadresultResponse404
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - RESOURCE_NOT_FOUND
+                    description: >-
+                      Represents the error code indicating that the bulk read
+                      job result was not found. 
+
+                      Possible values:
+
+                      **RESOURCE_NOT_FOUND** - The bulk read job with the
+                      specified ID does not exist or the result is not yet
+                      available.
+                  details:
+                    type: object
+                    properties:
+                      resource:
+                        type: string
+                        description: 'Represents the type of resource that was not found. '
+                        maxLength: 500
+                    required:
+                      - resource
+                    description: >-
+                      Represents additional details about the resource not found
+                      error. 
+                    additionalProperties: false
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the resource not
+                      found issue. 
+                    maxLength: 1000
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: |-
+                      Represents the status of the API request. 
+                      Possible values:
+                      **error** - Indicates that the request failed.
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                description: >-
+                  Represents the error response returned when the specified bulk
+                  read job result does not exist.
+                additionalProperties: false
+              examples:
+                Example1:
+                  summary: Job result not found error
+                  value:
+                    code: RESOURCE_NOT_FOUND
+                    details:
+                      resource: string
+                    message: string
+                    status: error
+                  description: >-
+                    A sample error response indicating that the specified bulk
+                    read job result was not found.
+      summary: Download bulk read result
+      description: >-
+        To download the exported records from a completed bulk read job in Zoho
+        CRM. This API returns a ZIP archive containing the CSV or ICS file with
+        the exported records. The bulk read job must have a COMPLETED state
+        before you can download the result.
+      security:
+        - OAuth2:
+            - ZohoCRM.bulk.READ
+            - ZohoCRM.modules.ALL
+components:
+  parameters:
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      description: Specify the unique identifier of the bulk read job.
+      schema:
+        type: string
+        maxLength: 100
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.bulk.READ: Grants read-only access to bulk read operations in Zoho CRM.
+            ZohoCRM.modules.ALL: >-
+              Grants full access to all CRM module data, including read, write,
+              and delete operations.

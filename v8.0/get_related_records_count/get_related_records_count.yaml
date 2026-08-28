@@ -1,0 +1,1745 @@
+openapi: 3.1.0
+info:
+  title: Related Records Count
+  description: >-
+    Related record counts represent the number of records in related lists
+    associated with a parent record in a CRM module, covering system-defined and
+    custom related lists. This API enables developers to retrieve count
+    summaries for up to 20 related lists in a single request, with optional
+    filtering by approval status, conversion status, category type, and
+    field-level equality criteria.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain (TLD) of the API server base URL, which
+          determines the regional data center.
+
+          Possible values:
+
+          **com** - United States.
+
+          **eu** - Europe.
+
+          **in** - India.
+
+          **cn** - China.
+
+          **au** - Australia.
+
+          Default: **com**.
+      version:
+        default: v8
+        description: 'The API version. Default: **v8**.'
+paths:
+  /{moduleApiName}/{recordId}/actions/get_related_records_count:
+    post:
+      summary: Get related records count
+      description: >-
+        To retrieve the count of related records for a specified parent record
+        in your Zoho CRM organization. Supports optional filtering by approval
+        status, conversion status, category type, and field-level equality
+        criteria. A single request can include up to 20 related list count
+        specifications. You can use this API to get the count of records in the
+        following types of related lists:
+
+
+        - **System-defined related lists**, such as:
+          - Survey
+          - Desk
+          - Projects
+          - Visits
+          - Expense
+          - Invoice
+          - Subscription
+        - **Custom related lists** created via Lookup fields.
+
+        - **Custom related lists** created via Multi-select Lookup fields.
+
+        - **Custom related lists** created via Multi-module Lookup fields.
+
+        - **Related lists** created when history tracking is enabled for a
+        picklist field.
+      operationId: getRelatedRecordsCount
+      parameters:
+        - $ref: '#/components/parameters/ModuleApiName'
+        - $ref: '#/components/parameters/RecordId'
+      requestBody:
+        description: >-
+          The request body must contain a **get_related_records_count** array.
+          You can include a maximum of 20 objects per request. Use the [Get
+          Related Records
+          API](related_records.yaml#$.paths./{parentRecordModule}/{parentRecord}/{relatedList}.get)
+          to get the ID of the related list in the key ID.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRelatedRecordsCountRequest'
+            examples:
+              BasicCount:
+                summary: Basic related list count without filters
+                description: >-
+                  Shows a minimal count request for a single related list
+                  identified by its API name and ID, with no optional filtering
+                  criteria.
+                value:
+                  get_related_records_count:
+                    - related_list:
+                        api_name: Contacts
+                        id: '4150868000001038001'
+              FilteredCount:
+                summary: Count request with field filter and approval status
+                description: >-
+                  Shows a count request for the Deals related list, filtered to
+                  include only approved records where the Stage field equals
+                  Closed Won.
+                value:
+                  get_related_records_count:
+                    - related_list:
+                        api_name: Deals
+                        id: '4150868000001038002'
+                      params:
+                        approved: true
+                        filters:
+                          comparator: equal
+                          field:
+                            api_name: Stage
+                          value: Closed Won
+              MultipleRelatedLists:
+                summary: Count multiple related lists in one request
+                description: >-
+                  Shows a single request that retrieves counts for three related
+                  lists — Contacts, Deals, and Tasks — in one API call.
+                value:
+                  get_related_records_count:
+                    - related_list:
+                        api_name: Contacts
+                        id: '4150868000001038001'
+                    - related_list:
+                        api_name: Deals
+                        id: '4150868000001038002'
+                    - related_list:
+                        api_name: Tasks
+                        id: '4150868000001038003'
+              ConvertedFilter:
+                summary: Count only converted leads in a related list
+                description: >-
+                  Shows a count request for the Leads related list, filtered to
+                  include only converted records where the Status field equals
+                  Qualified.
+                value:
+                  get_related_records_count:
+                    - related_list:
+                        api_name: Leads
+                        id: '4150868000001038004'
+                      params:
+                        converted: true
+                        filters:
+                          comparator: equal
+                          field:
+                            api_name: Status
+                          value: Qualified
+              CategoryFilter:
+                summary: Count related records filtered by category type
+                description: >-
+                  Shows a count request for the Attachments related list,
+                  filtered by category to include only file-type attachments
+                  where the File_Type field equals PDF.
+                value:
+                  get_related_records_count:
+                    - related_list:
+                        api_name: Attachments
+                        id: '4150868000001038005'
+                      params:
+                        category: files
+                        filters:
+                          comparator: equal
+                          field:
+                            api_name: File_Type
+                          value: PDF
+              ApprovalStateFilter:
+                summary: Count records filtered by approval state
+                description: >-
+                  Shows a count request for the Quotes related list, filtered to
+                  include only records in the approved approval state where the
+                  Quote_Stage field equals Accepted.
+                value:
+                  get_related_records_count:
+                    - related_list:
+                        api_name: Quotes
+                        id: '4150868000001038006'
+                      params:
+                        approval_state: approved
+                        filters:
+                          comparator: equal
+                          field:
+                            api_name: Quote_Stage
+                          value: Accepted
+        required: true
+      responses:
+        '200':
+          description: >-
+            Returns an array of count results for the requested related lists,
+            each containing the count of matching records and the related list
+            identifier.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRelatedRecordsCountResponse'
+              examples:
+                SuccessfulCount:
+                  summary: Successful count response for a single related list
+                  description: >-
+                    Shows a successful response with the count of 15 Contacts
+                    records associated with the specified parent record.
+                  value:
+                    get_related_records_count:
+                      - count: 15
+                        related_list:
+                          api_name: Contacts
+                          id: '4150868000001038001'
+                MultipleRelatedLists:
+                  summary: Successful count response for multiple related lists
+                  description: >-
+                    Shows a successful response with counts for two related
+                    lists: 15 Contacts and eight Deals records associated with
+                    the specified parent record.
+                  value:
+                    get_related_records_count:
+                      - count: 15
+                        related_list:
+                          api_name: Contacts
+                          id: '4150868000001038001'
+                      - count: 8
+                        related_list:
+                          api_name: Deals
+                          id: '4150868000001038002'
+                EmptyCount:
+                  summary: Count response with zero matching records
+                  description: >-
+                    Shows a successful response where no Tasks records match the
+                    specified criteria, returning a count of zero.
+                  value:
+                    get_related_records_count:
+                      - count: 0
+                        related_list:
+                          api_name: Tasks
+                          id: '4150868000001038003'
+                FilteredCountResult:
+                  summary: Count response after applying filter criteria
+                  description: >-
+                    Shows a successful response with the count of three Deals
+                    records that match the specified filter criteria.
+                  value:
+                    get_related_records_count:
+                      - count: 3
+                        related_list:
+                          api_name: Deals
+                          id: '4150868000001038002'
+        '207':
+          description: >-
+            Multi-Status. Returned when the request contains multiple related
+            list count items where some succeed and others fail (partial
+            success). Each item in the get_related_records_count array
+            independently reports either a successful count or an error.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetRelatedRecordsCount207Response
+                oneOf:
+                  - $ref: '#/components/schemas/PartialSuccessResponse'
+                  - $ref: >-
+                      #/components/schemas/PartialSuccessMandatoryNotFoundResponse
+              examples:
+                PartialSuccessInvalidData:
+                  summary: Partial success with INVALID_DATA error
+                  description: >-
+                    Response with a mix of successful counts and per-item
+                    errors. Index 0 returned a count successfully; index 1
+                    failed because the related_list id was invalid.
+                  value:
+                    get_related_records_count:
+                      - count: 0
+                        related_list:
+                          api_name: Notes
+                          id: '4987786000000002730'
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.get_related_records_count[1].related_list.id
+                        message: Given related_list is invalid
+                        status: error
+                PartialSuccessMandatoryNotFound:
+                  summary: Partial success with MANDATORY_NOT_FOUND error
+                  description: >-
+                    Response with a mix of successful counts and per-item
+                    errors. Index 0 returned a count successfully; index 1
+                    failed because the related_list field was missing.
+                  value:
+                    get_related_records_count:
+                      - count: 0
+                        related_list:
+                          api_name: Notes
+                          id: '4987786000000002730'
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: related_list
+                          json_path: $.get_related_records_count[1].related_list
+                        message: required field not found
+                        status: error
+        '400':
+          description: >-
+            The request contains invalid, missing, or unsupported data.
+
+            **Resolution:** The error code and details in the response body
+            identify the specific validation failure. The request must be
+            corrected before retrying.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetRelatedRecordsCount400Response
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidDataRecordIdError'
+                  - $ref: '#/components/schemas/MandatoryNotFoundError'
+                  - $ref: '#/components/schemas/InvalidModuleError'
+                  - $ref: '#/components/schemas/ExpectedFieldMissingError'
+                  - $ref: '#/components/schemas/AmbiguityDuringProcessingError'
+                  - $ref: '#/components/schemas/NotSupportedFiltersError'
+                  - $ref: '#/components/schemas/NotSupportedRelatedListError'
+                  - $ref: '#/components/schemas/AuthorizationFailedError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/InvalidRequestError'
+              examples:
+                InvalidRecordId:
+                  summary: Invalid record ID in URL path
+                  description: The related record ID given in the URL path is invalid
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                    message: the related id given seems to be invalid
+                    status: error
+                IdAlreadyConverted:
+                  summary: Record ID already converted
+                  description: >-
+                    The given record ID refers to an already converted record
+                    and cannot be processed again
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                    message: id already converted
+                    status: error
+                InvalidDataRelatedList:
+                  summary: Invalid related list ID or API name
+                  description: The given related_list is invalid
+                  value:
+                    get_related_records_count:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.get_related_records_count[0].related_list.id
+                        message: Given related_list is invalid
+                        status: error
+                MandatoryNotFound:
+                  summary: MANDATORY_NOT_FOUND error for a missing required field
+                  description: >-
+                    Shows a 400 error response when the required related_list
+                    field is absent from a request object in the
+                    get_related_records_count array.
+                  value:
+                    get_related_records_count:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: related_list
+                          json_path: $.get_related_records_count[0].related_list
+                        message: required field not found
+                        status: error
+                InvalidModule:
+                  summary: Invalid module API name
+                  description: The module name given seems to be invalid
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      resource_path_index: 0
+                    message: the module name given seems to be invalid
+                    status: error
+                ExpectedFieldMissing:
+                  summary: Missing ID or API name
+                  description: Specify at least one field
+                  value:
+                    get_related_records_count:
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_fields:
+                            - api_name: api_name
+                              json_path: >-
+                                $.get_related_records_count[0].related_list.api_name
+                            - api_name: id
+                              json_path: $.get_related_records_count[0].related_list.id
+                        message: Specify atleast one field
+                        status: error
+                AmbiguityDuringProcessing:
+                  summary: ID and API name mismatch
+                  description: >-
+                    The ID and API name of the related list do not match,
+                    causing ambiguity
+                  value:
+                    get_related_records_count:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.get_related_records_count[0].related_list.id
+                            - api_name: api_name
+                              json_path: >-
+                                $.get_related_records_count[0].related_list.api_name
+                        message: Ambiguity while processing the request
+                        status: error
+                NotSupportedFilters:
+                  summary: Filters not supported for module
+                  description: >-
+                    Filters are not supported for the specified module's related
+                    list
+                  value:
+                    get_related_records_count:
+                      - code: NOT_SUPPORTED
+                        details:
+                          expected_data_type: json_type
+                          api_name: filters
+                          json_path: $.get_related_records_count[0].params.filters
+                        message: Filters are not supported for this modules
+                        status: error
+                NotSupportedRelatedList:
+                  summary: Related list not supported in API
+                  description: The given related list ID is not supported in API
+                  value:
+                    get_related_records_count:
+                      - code: NOT_SUPPORTED
+                        details: {}
+                        message: The given related list id is not supported in api
+                        status: error
+                AuthorizationFailed:
+                  summary: Insufficient permissions
+                  description: >-
+                    You do not have sufficient permission to read the module
+                    records
+                  value:
+                    code: AUTHORIZATION_FAILED
+                    details: {}
+                    message: >-
+                      You do not have sufficient permission to read the module
+                      records
+                    status: error
+                InvalidRequestMethod:
+                  summary: Invalid HTTP request method
+                  description: The HTTP request method type is not valid
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The http request method type is not a valid one
+                    status: error
+                InvalidRequest:
+                  summary: Invalid request
+                  description: Unable to process your request
+                  value:
+                    code: INVALID_REQUEST
+                    details: {}
+                    message: >-
+                      unable to process your request. please verify whether you
+                      have entered proper method name, parameter and parameter
+                      values.
+                    status: error
+        '401':
+          description: >-
+            Unauthorized. Authentication failed due to invalid, expired, or
+            missing access token, or the token lacks required OAuth scopes.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetRelatedRecordsCount401Response
+                oneOf:
+                  - $ref: '#/components/schemas/AuthenticationFailureError'
+                  - $ref: '#/components/schemas/InvalidTokenError'
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+              examples:
+                AuthenticationFailure:
+                  summary: Authentication failure
+                  description: >-
+                    You have not authenticated the API call with valid access
+                    token
+                  value:
+                    code: AUTHENTICATION_FAILURE
+                    details: {}
+                    message: Authentication failed
+                    status: error
+                InvalidToken:
+                  summary: Invalid or expired token
+                  description: Your access token has expired or is invalid
+                  value:
+                    code: INVALID_TOKEN
+                    details: {}
+                    message: Invalid API token
+                    status: error
+                OAuthScopeMismatch:
+                  summary: OAuth scope mismatch
+                  description: >-
+                    The access token you have used to make this API call does
+                    not have the required scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: The access token does not have the required scope
+                    status: error
+        '403':
+          description: >-
+            Forbidden. You do not have permission to perform this operation,
+            either due to insufficient user privileges or organizational
+            restrictions.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetRelatedRecordsCount403Response
+                oneOf:
+                  - $ref: '#/components/schemas/NoPermissionError'
+                  - $ref: '#/components/schemas/NotAllowedError'
+              examples:
+                NoPermission:
+                  summary: No permission to read records
+                  description: You do not have permission to read records from the module
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: You do not have permission to read records from the module
+                    status: error
+                NotAllowed:
+                  summary: Not allowed to read related records
+                  description: >-
+                    You do not have permission to read related records from the
+                    module
+                  value:
+                    code: NOT_ALLOWED
+                    details: {}
+                    message: >-
+                      You do not have permission to read related records from
+                      the module
+                    status: error
+        '404':
+          description: >-
+            Not Found. The requested URL pattern is incorrect or the resource
+            does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidUrlPatternError'
+              examples:
+                InvalidUrlPattern:
+                  summary: Invalid URL pattern
+                  description: The request URL is incorrect
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: The request URL is incorrect. Please check the URL
+                    status: error
+        '500':
+          description: >-
+            Internal Server Error. Unexpected and unhandled exception in the
+            server. Contact support if the error persists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+              examples:
+                InternalError:
+                  summary: Internal server error
+                  description: Unexpected and unhandled exception in the server
+                  value:
+                    code: INTERNAL_ERROR
+                    details: {}
+                    message: Internal Server Error
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.READ
+components:
+  schemas:
+    RelatedListReference:
+      type: object
+      description: >-
+        Represents a related list identified by its API name and unique ID. Used
+        in both the request to specify the target related list and in the
+        response to echo the queried related list.
+      additionalProperties: false
+      properties:
+        api_name:
+          type: string
+          description: Represents the API name of the related list.
+          pattern: ^[A-Za-z0-9_]+$
+          minLength: 1
+          maxLength: 100
+          x-zs-$ref:
+            resource: related_lists
+            origins:
+              - operationId: getRelatedLists
+                propertyId: RelatedListsMultiselectApiName
+        id:
+          type: string
+          description: >-
+            Represents the unique ID of the related list.  Use the  [Get Related
+            Records
+            API](related_records.yaml#$.paths./{parentRecordModule}/{parentRecord}/{relatedList}.get)
+            to get the ID of the related list in the key ID.
+          pattern: ^[0-9]+$
+          minLength: 1
+          maxLength: 20
+          x-zs-$ref:
+            resource: related_lists
+            origins:
+              - operationId: getRelatedLists
+                propertyId: RelatedListsMultiselectId
+          format: int64
+      required:
+        - api_name
+        - id
+    FilterField:
+      type: object
+      description: >-
+        Represents the field to use when filtering related records before
+        counting.
+      additionalProperties: false
+      properties:
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the field to filter on when counting
+            related records.
+          pattern: ^[A-Za-z0-9_]+$
+          minLength: 1
+          maxLength: 100
+          x-zs-$ref:
+            resource: fields
+            origins:
+              - operationId: getFields
+                propertyId: FieldsApiName
+          example: api_name30
+      required:
+        - api_name
+    FilterCriteria:
+      type: object
+      description: >-
+        Represents the field-based filter criteria applied to related records
+        before counting. Contains the field to evaluate, the comparison
+        operator, and the value to compare against.
+      additionalProperties: false
+      properties:
+        comparator:
+          type: string
+          description: >-
+            Represents the comparison operator used to filter related records
+            before counting.
+
+            Possible values:
+
+            **equal** - Matches records where the specified field value equals
+            the given value.
+          enum:
+            - equal
+        field:
+          $ref: '#/components/schemas/FilterField'
+        value:
+          type: string
+          description: >-
+            Represents the value to compare the specified field against when
+            filtering related records before counting.
+          minLength: 1
+          maxLength: 255
+      required:
+        - comparator
+        - field
+        - value
+    CountParameters:
+      type: object
+      description: >-
+        Represents optional filtering and selection parameters applied to
+        related records before counting. Includes support for approval status,
+        conversion status, category type, and field-level equality filters.
+      additionalProperties: false
+      properties:
+        approved:
+          type: boolean
+          description: |-
+            Indicates whether to restrict the count to approved records only.
+            Possible values:
+            **true** - Count only approved records.
+            **false** - Count only records that are not approved.
+        filters:
+          $ref: '#/components/schemas/FilterCriteria'
+        converted:
+          type: boolean
+          description: >-
+            Indicates whether to restrict the count to converted records only.
+            Applicable to the Leads module.
+
+            Possible values:
+
+            **true** - Count only converted records.
+
+            **false** - Count only records that have not been converted.
+        category:
+          type: string
+          description: >-
+            Represents the category type used to filter related records before
+            counting.
+
+            Possible values:
+
+            **link** - Count only link-type related records.
+
+            **files** - Count only file-attachment related records.
+          enum:
+            - link
+            - files
+        approval_state:
+          type: string
+          description: >-
+            Represents the approval workflow state used to filter related
+            records before counting.
+
+            Possible values:
+
+            **approved** - Count only records in the approved workflow state.
+          enum:
+            - approved
+      required:
+        - filters
+    RelatedRecordCountItem:
+      type: object
+      description: >-
+        Represents a single related list count specification, including the
+        target related list and optional filtering criteria to apply before
+        counting.
+      additionalProperties: false
+      properties:
+        related_list:
+          $ref: '#/components/schemas/RelatedListReference'
+        params:
+          $ref: '#/components/schemas/CountParameters'
+      required:
+        - related_list
+    GetRelatedRecordsCountRequest:
+      type: object
+      description: >-
+        Represents the request payload for counting related records. Contains an
+        array of related list count specifications, each identifying a related
+        list and optional filtering criteria.
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: >-
+            Represents the array of related list count request objects. Each
+            object specifies a related list to query and optional filtering
+            criteria to apply before counting.
+          items:
+            $ref: '#/components/schemas/RelatedRecordCountItem'
+          minItems: 1
+          maxItems: 20
+      required:
+        - get_related_records_count
+    RelatedRecordCountResult:
+      type: object
+      x-zs-$id: RelatedRecordCountResult
+      description: >-
+        Represents the count result for a specific related list, including the
+        total number of matching records and the related list identifier.
+      additionalProperties: false
+      properties:
+        count:
+          type: integer
+          format: int32
+          description: >-
+            Represents the total number of related records matching the
+            specified criteria.
+          minimum: 0
+        related_list:
+          $ref: '#/components/schemas/RelatedListReference'
+      required:
+        - count
+        - related_list
+    GetRelatedRecordsCountResponse:
+      type: object
+      x-zs-$id: GetRelatedRecordsCountResponse
+      description: >-
+        Represents the response returned when the count operation succeeds.
+        Contains an array of count results, one entry for each related list
+        requested.
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: >-
+            Represents the array of count results, one entry for each related
+            list requested.
+          items:
+            $ref: '#/components/schemas/RelatedRecordCountResult'
+          maxItems: 20
+      required:
+        - get_related_records_count
+    PartialSuccessItemError:
+      type: object
+      x-zs-$id: PartialSuccessItemError
+      description: >-
+        Per-item error entry inside the get_related_records_count array of a
+        partial-success (HTTP 207) response. Indicates that this particular
+        related list count request failed while other items in the same array
+        may have succeeded.
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. 
+            Possible values:
+            **error** - The request was unsuccessful.
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code identifying the failure reason for this item
+          enum:
+            - INVALID_DATA
+            - EXPECTED_FIELD_MISSING
+            - AMBIGUITY_DURING_PROCESSING
+            - NOT_SUPPORTED
+        message:
+          type: string
+          description: Represents the error message describing the validation failure.
+          maxLength: 500
+        details:
+          description: >-
+            Additional context about the per-item error (field info, expected
+            fields, ambiguity info, or unsupported-filter info depending on the
+            error code)
+          oneOf:
+            - $ref: '#/components/schemas/ErrorDetailsFieldInfo'
+            - $ref: '#/components/schemas/ErrorDetailsExpectedFields'
+            - $ref: '#/components/schemas/ErrorDetailsAmbiguity'
+            - $ref: '#/components/schemas/ErrorDetailsNotSupportedFilters'
+            - $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    PartialSuccessResponseItem:
+      x-zs-$id: PartialSuccessResponseItem
+      description: >-
+        A single entry inside the get_related_records_count array of a
+        partial-success response. Each entry is independently either a
+        successful count result or a per-item error.
+      oneOf:
+        - $ref: '#/components/schemas/RelatedRecordCountResult'
+        - $ref: '#/components/schemas/PartialSuccessItemError'
+    PartialSuccessResponse:
+      type: object
+      x-zs-$id: PartialSuccessResponse
+      description: >-
+        Multi-Status (HTTP 207) response returned when a request containing
+        multiple related list count items has mixed results - some items succeed
+        with a count while others fail with a per-item error. Each entry in
+        get_related_records_count corresponds positionally to a requested item
+        and independently reports either success (count + related_list) or an
+        error (status, code, message, details).
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: >-
+            Array of per-item results, one entry per requested related list.
+            Each entry is either a RelatedRecordCountResult (success) or a
+            PartialSuccessItemError (failure).
+          items:
+            $ref: '#/components/schemas/PartialSuccessResponseItem'
+          minItems: 1
+          maxItems: 20
+      required:
+        - get_related_records_count
+    PartialSuccessMandatoryNotFoundItemError:
+      type: object
+      x-zs-$id: PartialSuccessMandatoryNotFoundItemError
+      description: >-
+        Per-item MANDATORY_NOT_FOUND error entry inside the
+        get_related_records_count array of a partial-success (HTTP 207)
+        response. Indicates that a required field (such as related_list) was
+        missing from this particular request item.
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of this item, always 'error' for failed items
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for missing mandatory field
+          enum:
+            - MANDATORY_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message describing the missing mandatory field
+          enum:
+            - required field not found
+        details:
+          $ref: '#/components/schemas/ErrorDetailsFieldInfo'
+      required:
+        - status
+        - code
+        - message
+        - details
+    PartialSuccessMandatoryNotFoundResponseItem:
+      x-zs-$id: PartialSuccessMandatoryNotFoundResponseItem
+      description: >-
+        A single entry inside the get_related_records_count array of a
+        partial-success MANDATORY_NOT_FOUND response. Each entry is
+        independently either a successful count result or a per-item
+        MANDATORY_NOT_FOUND error.
+      oneOf:
+        - $ref: '#/components/schemas/RelatedRecordCountResult'
+        - $ref: '#/components/schemas/PartialSuccessMandatoryNotFoundItemError'
+    PartialSuccessMandatoryNotFoundResponse:
+      type: object
+      x-zs-$id: PartialSuccessMandatoryNotFoundResponse
+      description: >-
+        Multi-Status (HTTP 207) response returned when a request contains
+        multiple related list count items where some succeed and others fail
+        because a required field (such as related_list) is missing. Each entry
+        in get_related_records_count corresponds positionally to a requested
+        item and independently reports either success (count + related_list) or
+        a MANDATORY_NOT_FOUND error (status, code, message, details).
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: >-
+            Array of per-item results, one entry per requested related list.
+            Each entry is either a RelatedRecordCountResult (success) or a
+            PartialSuccessMandatoryNotFoundItemError (failure).
+          items:
+            $ref: '#/components/schemas/PartialSuccessMandatoryNotFoundResponseItem'
+          minItems: 1
+          maxItems: 20
+      required:
+        - get_related_records_count
+    ErrorDetailsFieldInfo:
+      x-zs-$id: ErrorDetailsFieldInfo
+      type: object
+      description: >-
+        Error details with field information, used for field-level validation
+        errors
+      additionalProperties: false
+      properties:
+        api_name:
+          type: string
+          description: The API name of the field that caused the error
+          maxLength: 100
+        json_path:
+          type: string
+          description: JSON path indicating the location of the field in the request
+          maxLength: 500
+      required:
+        - api_name
+        - json_path
+    ErrorDetailsExpectedFields:
+      x-zs-$id: ErrorDetailsExpectedFields
+      type: object
+      description: Error details containing list of expected fields that are missing
+      additionalProperties: false
+      properties:
+        expected_fields:
+          type: array
+          description: List of field names that were expected but not provided
+          items:
+            type: object
+            description: Details of an expected field
+            additionalProperties: false
+            properties:
+              api_name:
+                type: string
+                description: API name of the expected field
+                maxLength: 100
+              json_path:
+                type: string
+                description: >-
+                  JSON path indicating where the field was expected in the
+                  request
+                maxLength: 500
+            required:
+              - api_name
+              - json_path
+          minItems: 1
+          maxItems: 20
+      required:
+        - expected_fields
+    ErrorDetailsAmbiguity:
+      x-zs-$id: ErrorDetailsAmbiguity
+      type: object
+      description: >-
+        Error details containing information about ambiguous fields that caused
+        processing conflict
+      additionalProperties: false
+      properties:
+        ambiguity_due_to:
+          type: array
+          description: >-
+            List of conflicting fields that caused the ambiguity (id and
+            api_name)
+          items:
+            type: object
+            description: Details of a field that contributed to the ambiguity
+            additionalProperties: false
+            properties:
+              api_name:
+                type: string
+                description: The API name of the ambiguous field
+                maxLength: 100
+              json_path:
+                type: string
+                description: >-
+                  JSON path indicating the location of the ambiguous field in
+                  the request
+                maxLength: 500
+            required:
+              - api_name
+              - json_path
+          minItems: 2
+          maxItems: 2
+      required:
+        - ambiguity_due_to
+    ErrorDetailsEmpty:
+      x-zs-$id: ErrorDetailsEmpty
+      type: object
+      description: >-
+        Empty error details object for errors that don't require additional
+        context
+      additionalProperties: false
+    ErrorDetailsResourcePathIndex:
+      x-zs-$id: ErrorDetailsResourcePathIndex
+      type: object
+      description: Error details containing resource path index information
+      additionalProperties: false
+      properties:
+        resource_path_index:
+          type: integer
+          format: int32
+          description: The index of the resource path segment that is invalid
+          minimum: 0
+      required:
+        - resource_path_index
+    InvalidRequestError:
+      type: object
+      x-zs-$id: InvalidRequestError
+      description: Error response for invalid request
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for invalid request
+          enum:
+            - INVALID_REQUEST
+        message:
+          type: string
+          description: Human-readable error message describing the invalid request error
+          enum:
+            - >-
+              unable to process your request. please verify whether you have
+              entered proper method name, parameter and parameter values.
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    InvalidDataError:
+      type: object
+      x-zs-$id: InvalidDataError
+      description: >-
+        Error response for invalid data in request (record ID, related list ID,
+        or field values). Response is wrapped in get_related_records_count
+        array.
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: Array containing the error details for invalid data
+          items:
+            type: object
+            description: Error details for invalid data
+            additionalProperties: false
+            properties:
+              status:
+                type: string
+                description: The status of the response, always 'error' for error responses
+                enum:
+                  - error
+              code:
+                type: string
+                description: Error code for invalid data
+                enum:
+                  - INVALID_DATA
+              message:
+                type: string
+                description: Human-readable error message describing the invalid data error
+                enum:
+                  - Given related_list is invalid
+              details:
+                $ref: '#/components/schemas/ErrorDetailsFieldInfo'
+            required:
+              - status
+              - code
+              - message
+              - details
+          minItems: 1
+          maxItems: 1
+      required:
+        - get_related_records_count
+    MandatoryNotFoundError:
+      type: object
+      x-zs-$id: MandatoryNotFoundError
+      description: >-
+        Error response for missing mandatory fields in request. Response is
+        wrapped in get_related_records_count array.
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: Array containing the error details for missing mandatory field
+          items:
+            type: object
+            description: Error details for missing mandatory field
+            additionalProperties: false
+            properties:
+              status:
+                type: string
+                description: The status of the response, always 'error' for error responses
+                enum:
+                  - error
+              code:
+                type: string
+                description: Error code for missing mandatory field
+                enum:
+                  - MANDATORY_NOT_FOUND
+              message:
+                type: string
+                description: >-
+                  Human-readable error message describing the missing mandatory
+                  field
+                enum:
+                  - required field not found
+              details:
+                $ref: '#/components/schemas/ErrorDetailsFieldInfo'
+            required:
+              - status
+              - code
+              - message
+              - details
+          minItems: 1
+          maxItems: 1
+      required:
+        - get_related_records_count
+    InvalidModuleError:
+      type: object
+      x-zs-$id: InvalidModuleError
+      description: Error response for invalid module API name in request URL
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for invalid module
+          enum:
+            - INVALID_MODULE
+        message:
+          type: string
+          description: Human-readable error message describing the invalid module error
+          enum:
+            - the module name given seems to be invalid
+        details:
+          $ref: '#/components/schemas/ErrorDetailsResourcePathIndex'
+      required:
+        - status
+        - code
+        - message
+        - details
+    ExpectedFieldMissingError:
+      type: object
+      x-zs-$id: ExpectedFieldMissingError
+      description: >-
+        Error response for missing expected fields (id or api_name). Response is
+        wrapped in get_related_records_count array.
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: Array containing the error details for missing expected fields
+          items:
+            type: object
+            description: Error details for missing expected fields
+            additionalProperties: false
+            properties:
+              status:
+                type: string
+                description: The status of the response, always 'error' for error responses
+                enum:
+                  - error
+              code:
+                type: string
+                description: Error code for missing expected field
+                enum:
+                  - EXPECTED_FIELD_MISSING
+              message:
+                type: string
+                description: >-
+                  Human-readable error message describing the missing expected
+                  fields
+                enum:
+                  - Specify atleast one field
+              details:
+                $ref: '#/components/schemas/ErrorDetailsExpectedFields'
+            required:
+              - status
+              - code
+              - message
+              - details
+          minItems: 1
+          maxItems: 1
+      required:
+        - get_related_records_count
+    AmbiguityDuringProcessingError:
+      type: object
+      x-zs-$id: AmbiguityDuringProcessingError
+      description: >-
+        Error response for ambiguous data (ID and API name mismatch). Response
+        is wrapped in get_related_records_count array.
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: Array containing the error details for ambiguous data
+          items:
+            type: object
+            description: Error details for ambiguous data
+            additionalProperties: false
+            properties:
+              status:
+                type: string
+                description: The status of the response, always 'error' for error responses
+                enum:
+                  - error
+              code:
+                type: string
+                description: Error code for ambiguous processing
+                enum:
+                  - AMBIGUITY_DURING_PROCESSING
+              message:
+                type: string
+                description: Human-readable error message describing the ambiguity error
+                enum:
+                  - Ambiguity while processing the request
+              details:
+                $ref: '#/components/schemas/ErrorDetailsAmbiguity'
+            required:
+              - status
+              - code
+              - message
+              - details
+          minItems: 1
+          maxItems: 1
+      required:
+        - get_related_records_count
+    InvalidDataRecordIdError:
+      type: object
+      x-zs-$id: InvalidDataRecordIdError
+      description: >-
+        Flat error response for invalid record ID in URL path. Unlike other
+        INVALID_DATA errors, this is not wrapped in the
+        get_related_records_count array because the error relates to the URL
+        path parameter rather than a request body field.
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for invalid data
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: >-
+            Human-readable error message describing the invalid record ID
+            validation failure.
+          maxLength: 500
+        details:
+          $ref: '#/components/schemas/ErrorDetailsResourcePathIndex'
+      required:
+        - status
+        - code
+        - message
+        - details
+    NotSupportedFiltersError:
+      type: object
+      x-zs-$id: NotSupportedFiltersError
+      description: >-
+        Error response when filters are not supported for the specified module's
+        related list. Response is wrapped in get_related_records_count array.
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: Array containing the error details for unsupported filters
+          items:
+            type: object
+            description: Error details for unsupported filters
+            additionalProperties: false
+            properties:
+              status:
+                type: string
+                description: The status of the response, always 'error' for error responses
+                enum:
+                  - error
+              code:
+                type: string
+                description: Error code for unsupported operation
+                enum:
+                  - NOT_SUPPORTED
+              message:
+                type: string
+                description: >-
+                  Human-readable error message describing the unsupported
+                  filters
+                enum:
+                  - Filters are not supported for this modules
+              details:
+                $ref: '#/components/schemas/ErrorDetailsNotSupportedFilters'
+            required:
+              - status
+              - code
+              - message
+              - details
+          minItems: 1
+          maxItems: 1
+      required:
+        - get_related_records_count
+    NotSupportedRelatedListError:
+      type: object
+      x-zs-$id: NotSupportedRelatedListError
+      description: >-
+        Error response when the given related list ID is not supported in API.
+        Response is wrapped in get_related_records_count array.
+      additionalProperties: false
+      properties:
+        get_related_records_count:
+          type: array
+          description: Array containing the error details for unsupported related list
+          items:
+            type: object
+            description: Error details for unsupported related list
+            additionalProperties: false
+            properties:
+              status:
+                type: string
+                description: The status of the response, always 'error' for error responses
+                enum:
+                  - error
+              code:
+                type: string
+                description: Error code for unsupported related list
+                enum:
+                  - NOT_SUPPORTED
+              message:
+                type: string
+                description: >-
+                  Human-readable error message describing the unsupported
+                  related list
+                enum:
+                  - The given related list id is not supported in api
+              details:
+                $ref: '#/components/schemas/ErrorDetailsEmpty'
+            required:
+              - status
+              - code
+              - message
+              - details
+          minItems: 1
+          maxItems: 1
+      required:
+        - get_related_records_count
+    ErrorDetailsNotSupportedFilters:
+      x-zs-$id: ErrorDetailsNotSupportedFilters
+      type: object
+      description: >-
+        Error details for unsupported filters, containing the expected data type
+        and field information
+      additionalProperties: false
+      properties:
+        expected_data_type:
+          type: string
+          description: The expected data type for the field
+          enum:
+            - json_type
+        api_name:
+          type: string
+          description: The API name of the field that is not supported
+          maxLength: 100
+        json_path:
+          type: string
+          description: >-
+            JSON path indicating the location of the unsupported field in the
+            request
+          maxLength: 500
+      required:
+        - expected_data_type
+        - api_name
+        - json_path
+    AuthorizationFailedError:
+      type: object
+      x-zs-$id: AuthorizationFailedError
+      description: Error response for insufficient permissions to perform the operation
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for authorization failure
+          enum:
+            - AUTHORIZATION_FAILED
+        message:
+          type: string
+          description: Human-readable error message describing the authorization failure
+          enum:
+            - You do not have sufficient permission to read the module records
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    InvalidRequestMethodError:
+      type: object
+      x-zs-$id: InvalidRequestMethodError
+      description: Error response for incorrect HTTP request method
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for invalid request method
+          enum:
+            - INVALID_REQUEST_METHOD
+        message:
+          type: string
+          description: >-
+            Human-readable error message describing the invalid request method
+            error
+          enum:
+            - The http request method type is not a valid one
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    AuthenticationFailureError:
+      type: object
+      x-zs-$id: AuthenticationFailureError
+      description: Error response for authentication failure
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for authentication failure
+          enum:
+            - AUTHENTICATION_FAILURE
+        message:
+          type: string
+          description: Human-readable error message describing the authentication failure
+          enum:
+            - Authentication failed
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    InvalidTokenError:
+      type: object
+      x-zs-$id: InvalidTokenError
+      description: Error response for invalid or expired access token
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for invalid token
+          enum:
+            - INVALID_TOKEN
+        message:
+          type: string
+          description: Human-readable error message describing the invalid token error
+          enum:
+            - Invalid API token
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    OAuthScopeMismatchError:
+      type: object
+      x-zs-$id: OAuthScopeMismatchError
+      description: Error response for OAuth scope mismatch
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for OAuth scope mismatch
+          enum:
+            - OAUTH_SCOPE_MISMATCH
+        message:
+          type: string
+          description: Human-readable error message describing the scope mismatch error
+          enum:
+            - The access token does not have the required scope
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    NoPermissionError:
+      type: object
+      x-zs-$id: NoPermissionError
+      description: Error response for no permission to read records from the module
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for no permission
+          enum:
+            - NO_PERMISSION
+        message:
+          type: string
+          description: Human-readable error message describing the permission error
+          enum:
+            - You do not have permission to read records from the module
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    NotAllowedError:
+      type: object
+      x-zs-$id: NotAllowedError
+      description: Error response for not allowed to read related records from the module
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for not allowed operation
+          enum:
+            - NOT_ALLOWED
+        message:
+          type: string
+          description: Human-readable error message describing the not allowed error
+          enum:
+            - You do not have permission to read related records from the module
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    InvalidUrlPatternError:
+      type: object
+      x-zs-$id: InvalidUrlPatternError
+      description: Error response for invalid URL pattern
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for invalid URL pattern
+          enum:
+            - INVALID_URL_PATTERN
+        message:
+          type: string
+          description: >-
+            Human-readable error message describing the invalid URL pattern
+            error
+          enum:
+            - The request URL is incorrect. Please check the URL
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+    InternalError:
+      type: object
+      x-zs-$id: InternalError
+      description: Error response for internal server error
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: The status of the response, always 'error' for error responses
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code for internal server error
+          enum:
+            - INTERNAL_ERROR
+        message:
+          type: string
+          description: Human-readable error message describing the internal error
+          enum:
+            - Internal Server Error
+        details:
+          $ref: '#/components/schemas/ErrorDetailsEmpty'
+      required:
+        - status
+        - code
+        - message
+        - details
+  parameters:
+    ModuleApiName:
+      name: moduleApiName
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the CRM module that contains the parent record.
+        Use the [Get Modules API](modules.yaml#$.paths./settings/modules.get) to
+        retrieve the module API name and its unique ID.
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9_]+$
+        minLength: 1
+        maxLength: 100
+      examples:
+        Contacts:
+          value: Contacts
+          summary: Contacts module
+        Deals:
+          value: Deals
+          summary: Deals module
+        Accounts:
+          value: Accounts
+          summary: Accounts module
+        CustomModule:
+          value: Services__s
+          summary: Custom module example
+    RecordId:
+      name: recordId
+      in: path
+      required: true
+      description: >-
+        Specify the unique ID of the parent record for which you want to count
+        related records. Use the [Get Records
+        API](record.yaml#$.paths./module.get) to retrieve the record ID.
+      schema:
+        type: string
+        pattern: ^[0-9a-fA-F-]+$
+        minLength: 1
+        maxLength: 50
+      examples:
+        Numeric:
+          value: '4150868000004381002'
+          summary: Numeric record ID
+        Uuid:
+          value: 550e8400-e29b-41d4-a716-446655440000
+          summary: UUID format record ID
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.READ: >-
+              Grants read-only access to CRM module records and related data.
+              This scope does not permit creating, modifying, or deleting
+              records.

@@ -1,0 +1,3084 @@
+openapi: 3.1.0
+info:
+  title: Wizards
+  description: |-
+    Wizards is a Zoho CRM feature that guides users through multi-step
+      data-entry processes using configurable screens and layouts associated with
+      specific modules. This API enables developers to retrieve, create, update,
+      and delete wizard configurations within a Zoho CRM organization.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        description: API Server URL TLD
+        default: com
+        enum:
+          - eu
+          - com
+          - au
+          - in
+          - jp
+          - cn
+          - ca
+      version:
+        description: API Version
+        default: v8
+paths:
+  /settings/wizards:
+    get:
+      operationId: getAllWizards
+      description: >-
+        To retrieve the wizard configurations available in your Zoho CRM
+        organization. The response can be filtered by module using the
+        `**module**` query parameter. When you set up conditional rules for a
+        wizard, the response contains the keys execute_on and type. execute_on
+        represents when the conditional rule is executed. The values are create,
+        edit, and create_edit. type represents the action you want to take when
+        the condition is met. The values are set_values, set_lock,
+        show_component, and show_widget. When type=set_lock, the response
+        contains the key exempted_profiles. This array contains the list of
+        profiles that allow edits even after locking specific fields. The
+        color_palette key is added that displays the colors available for a
+        button on a screen. Note that this key is available in the response only
+        if you have chosen at least one custom color for the button on a screen.
+        Changes made to this API from version 5 when you fetch a specific wizard
+        in a layout: - A new JSON array portal_user_types is added to the
+        response that displays the list of portal user types that have access to
+        the wizard. - A new JSON array exempted_portal_user_types is added to
+        the response that represents the list of portal user types that have
+        access to wizards that are blocked for other user types. - Under the
+        segments, for buttons, the Profiles JSON array is added. This indicates
+        the profiles that have access to that button in that screen. - In the
+        Screens JSON array, the "type" of segments JSON object is changed from
+        fields to composite. - In the segments JSON array, the fields JSON array
+        is renamed to elements. - Each object in the elements JSON array
+        contains the sequence number, resource, and type keys. Resource includes
+        the "name" and "id" of the field or the query component on the screen.
+        type indicates whether the resource is a field or query component. From
+        V6, you can get the list of available screens in Wizards. See the sample
+        response for reference.
+      summary: Get all wizard configurations
+      parameters:
+        - $ref: '#/components/parameters/Module'
+      responses:
+        '200':
+          description: >-
+            Returns the list of wizards configured in the Zoho CRM organization,
+            including their basic details such as associated module, assigned
+            profiles, and portal types.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: WizardsGetResponse
+                type: object
+                description: Contains a list of wizard objects returned for the account.
+                additionalProperties: false
+                properties:
+                  wizards:
+                    description: >-
+                      Contains the list of wizards configured in the Zoho CRM
+                      organization.
+                    type: array
+                    maxItems: 25
+                    items:
+                      description: Represents a wizard and its basic configuration details.
+                      additionalProperties: false
+                      type: object
+                      properties:
+                        created_time:
+                          format: date-time
+                          description: Represents the creation date and time of the wizard.
+                          type: string
+                        modified_time:
+                          format: date-time
+                          description: >-
+                            Represents the last modification date and time of
+                            the wizard.
+                          type: string
+                        display_label:
+                          maxLength: 255
+                          description: >-
+                            Represents the display label of the wizard,
+                            localized based on the active language setting in
+                            the user's CRM environment.
+                          type: string
+                        portal_user_types:
+                          description: >-
+                            Contains the client portal user types associated
+                            with the wizard. Returns null if no portal user
+                            types are configured.
+                          type:
+                            - array
+                            - 'null'
+                          maxItems: 50
+                          items:
+                            additionalProperties: false
+                            description: Client portal associated with the wizard.
+                            type: object
+                            properties:
+                              display_label:
+                                maxLength: 255
+                                description: >-
+                                  Represents the display label of the client
+                                  portal, translated into the user's language
+                                  where a translation is available.
+                                type: string
+                              name:
+                                maxLength: 255
+                                description: Internal name of the client portal.
+                                type: string
+                              id:
+                                type: string
+                                description: >-
+                                  Represents the unique numeric identifier of
+                                  the client portal user type.
+                                maxLength: 19
+                                format: int64
+                            required:
+                              - display_label
+                              - name
+                              - id
+                        module:
+                          additionalProperties: false
+                          description: >-
+                            Represents the CRM module associated with the
+                            wizard. Refer to the [Get
+                            Modules](modules.yaml#$.paths./settings/modules.get)
+                            resource for valid values.
+                          type: object
+                          properties:
+                            api_name:
+                              maxLength: 255
+                              description: >-
+                                API name of the module associated with the
+                                wizard.
+                              type: string
+                            id:
+                              type: string
+                              description: Numeric unique identifier of the module.
+                              maxLength: 19
+                              format: int64
+                          required:
+                            - api_name
+                            - id
+                        name:
+                          maxLength: 30
+                          description: >-
+                            Represents the unique name of the wizard used in API
+                            requests and responses.
+                          type: string
+                        modified_by:
+                          description: >-
+                            Represents the details of the user who last modified
+                            the wizard.
+                          type:
+                            - object
+                            - 'null'
+                          additionalProperties: false
+                          properties:
+                            name:
+                              maxLength: 255
+                              description: >-
+                                Represents the full name of the user who last
+                                modified the wizard, as it appears in Zoho CRM.
+                              type: string
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique numeric identifier of the
+                                user who last modified the wizard.
+                              maxLength: 19
+                              format: int64
+                          required:
+                            - name
+                            - id
+                        profiles:
+                          description: >-
+                            Contains the list of CRM profiles associated with
+                            the wizard. Returns null when no profiles are
+                            associated.
+                          type:
+                            - array
+                            - 'null'
+                          maxItems: 50
+                          items:
+                            additionalProperties: false
+                            description: >-
+                              Represents a CRM profile associated with the
+                              wizard.
+                            type: object
+                            properties:
+                              name:
+                                maxLength: 255
+                                description: Name of the profile.
+                                type: string
+                              id:
+                                type: string
+                                description: Numeric unique identifier of the profile.
+                                maxLength: 19
+                                format: int64
+                              display_label:
+                                maxLength: 255
+                                description: >-
+                                  Represents the display label of the profile,
+                                  translated into the user's language where a
+                                  translation is available.
+                                type: string
+                            required:
+                              - name
+                              - id
+                        active:
+                          description: >
+                            Indicates whether the wizard is currently enabled.
+
+
+                            Possible values:
+
+                            true - The wizard is active and available for use.
+
+                            false - The wizard is inactive and not available for
+                            use.
+                          type: boolean
+                        source:
+                          description: >
+                            Indicates the origin from which the wizard
+                            originates.
+
+
+                            Possible values:
+
+                            crm - Created natively within Zoho CRM.
+
+                            platform_plugin - Created via a Zoho platform
+                            plugin.
+
+                            marketplace_plugin - Created through a Zoho
+                            Marketplace plugin.
+                          type: string
+                          maxLength: 50
+                          enum:
+                            - crm
+                            - platform_plugin
+                            - marketplace_plugin
+                        containers:
+                          description: >-
+                            Contains the list of containers within the wizard,
+                            each defining a layout and the screens through which
+                            users progress.
+                          maxItems: 7
+                          type: array
+                          items:
+                            description: >-
+                              Represents a container that groups the layout and
+                              screens used within the wizard flow.
+                            additionalProperties: false
+                            type: object
+                            properties:
+                              layout:
+                                description: >-
+                                  Represents the layout associated with the
+                                  container, from which the wizard fields are
+                                  sourced.
+                                additionalProperties: false
+                                type: object
+                                properties:
+                                  name:
+                                    description: Name of the layout.
+                                    maxLength: 50
+                                    type: string
+                                  display_label:
+                                    description: >-
+                                      Represents the display label of the
+                                      layout, localized based on the active
+                                      language setting.
+                                    maxLength: 50
+                                    type: string
+                                  id:
+                                    type: string
+                                    description: >-
+                                      Represents the unique identifier of the
+                                      layout.
+                                    maxLength: 19
+                                    format: int64
+                                required:
+                                  - name
+                                  - display_label
+                                  - id
+                              screens:
+                                description: >-
+                                  Contains the list of screens that define the
+                                  step-by-step flow a user navigates within this
+                                  container.
+                                type: array
+                                maxItems: 75
+                                items:
+                                  description: >-
+                                    Represents a single screen within the
+                                    container, defining one step in the wizard's
+                                    guided data-entry flow.
+                                  type: object
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      maxLength: 255
+                                      description: >-
+                                        Represents the programmatic name used to
+                                        identify the screen in API requests and
+                                        responses.
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the unique identifier of the
+                                        screen.
+                                      maxLength: 19
+                                      format: int64
+                                    display_label:
+                                      type: string
+                                      maxLength: 255
+                                      description: >-
+                                        Represents the display label of the
+                                        screen, localized based on the active
+                                        language setting.
+                                  required:
+                                    - api_name
+                                    - id
+                                    - display_label
+                              id:
+                                type: string
+                                description: >-
+                                  Represents the unique identifier of the
+                                  container.
+                                maxLength: 19
+                                format: int64
+                            required:
+                              - layout
+                              - screens
+                              - id
+                        id:
+                          type: string
+                          description: Numeric unique identifier of the wizard.
+                          maxLength: 19
+                          format: int64
+                          x-zs-$id: WizardId
+                        created_by:
+                          type:
+                            - object
+                            - 'null'
+                          additionalProperties: false
+                          description: >-
+                            Represents the user who originally created the
+                            wizard, including their identifier and display name.
+                          properties:
+                            name:
+                              type: string
+                              maxLength: 255
+                              description: >-
+                                Represents the full name of the user who created
+                                the wizard, as it appears in Zoho CRM.
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique numeric identifier of the
+                                user who created the wizard.
+                              maxLength: 19
+                              format: int64
+                          required:
+                            - name
+                            - id
+                      required:
+                        - created_time
+                        - modified_time
+                        - display_label
+                        - portal_user_types
+                        - module
+                        - name
+                        - modified_by
+                        - profiles
+                        - active
+                        - containers
+                        - id
+                        - created_by
+                required:
+                  - wizards
+              examples:
+                Success:
+                  value:
+                    wizards:
+                      - created_time: '2025-11-26T08:59:44+05:30'
+                        modified_time: '2025-11-26T15:58:16+05:30'
+                        display_label: Example Wizard
+                        portal_user_types:
+                          - display_label: ClientPortal
+                            name: ClientPortal
+                            id: '3733145000000570124'
+                        module:
+                          api_name: Contacts
+                          id: '3733145000000570138'
+                        name: example_wizard
+                        modified_by:
+                          name: Alice
+                          id: '3733145000000556001'
+                        profiles:
+                          - name: Administrator
+                            id: '3733145000000570117'
+                            display_label: Administrator
+                        active: true
+                        source: crm
+                        containers:
+                          - layout:
+                              name: Standard
+                              display_label: Standard
+                              id: '3733145000000570510'
+                            screens:
+                              - api_name: screen1
+                                id: '3733145000001209037'
+                                display_label: Screen 1
+                            id: '3733145000000570510'
+                        id: '3733145000001209011'
+                        created_by:
+                          name: Bob
+                          id: '3733145000000556001'
+                  description: >-
+                    Represents a successful retrieval of all wizards configured
+                    in the CRM organization. Each wizard entry includes its
+                    associated module, assigned profiles, and applicable portal
+                    types.
+                  summary: >-
+                    Successful retrieval of all configured wizards in the
+                    organization
+        '204':
+          description: >-
+            Returns no content when no wizards match the specified criteria or
+            no wizards have been configured in the Zoho CRM organization.
+        '400':
+          description: >-
+            The module API name provided in the request is not recognized.
+
+            **Resolution:** The module API name in the request URL must be
+            valid.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: WizardsGetErrorResponses
+                oneOf:
+                  - type: object
+                    x-zs-$id: InvalidModuleResponse
+                    description: >-
+                      Represents the error returned when the specified module
+                      name is not recognized or is invalid.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the request status.
+                          Possible values:
+                          error - Indicates the request failed.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_MODULE
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values:
+
+                          INVALID_MODULE - Indicates the specified module is
+                          invalid.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing why the
+                          request failed.
+                        maxLength: 255
+                      details:
+                        additionalProperties: false
+                        type: object
+                        description: Additional information about the error.
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                description: >-
+                  Represents the error response returned when the request
+                  contains an invalid module name or query parameters.
+              examples:
+                InvalidModule:
+                  summary: >-
+                    400 error returned when an unrecognized module API name is
+                    provided
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: The module name seems to be invalid
+                    status: error
+                  description: >-
+                    Represents a 400 error response returned when the module API
+                    name supplied in the request is not recognized by Zoho CRM.
+                    The response body contains the INVALID_MODULE error code
+                    indicating the source of the failure.
+        '401':
+          description: >-
+            Authentication credentials are missing or invalid.
+
+            **Resolution:** A new access token must be generated with the
+            correct scope and valid credentials for this API.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetAllWizardsUnauthorizedErrorResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: GetAllWizardsOauthScopeMismatchError
+                    description: >-
+                      Represents the error returned when the provided OAuth
+                      token does not have the required scope to access this
+                      resource.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - OAUTH_SCOPE_MISMATCH
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values:
+
+                          OAUTH_SCOPE_MISMATCH - Indicates the OAuth token does
+                          not have the required scope to access this resource.
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Represents additional information about the error.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing why the
+                          request failed.
+                        maxLength: 255
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the request status.
+                          Possible values:
+                          error - Indicates the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: GetAllWizardsInvalidTokenError
+                    description: >-
+                      Represents the error returned when the provided OAuth
+                      token is invalid or has expired.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_TOKEN
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values:
+
+                          INVALID_TOKEN - Indicates the provided authentication
+                          token is invalid.
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Represents additional information about the error.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing why the
+                          request failed.
+                        maxLength: 255
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the request status.
+                          Possible values:
+                          error - Indicates the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: >-
+                  Represents the error response returned when the request cannot
+                  be authenticated due to missing, invalid, or insufficient
+                  credentials.
+              examples:
+                OauthScopeMismatch:
+                  summary: Access token lacks the required OAuth scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: invalid oauth scope to access this URL
+                    status: error
+                  description: >-
+                    Represents a 401 error response returned when the access
+                    token does not include the required OAuth scope for this
+                    operation. The token must be regenerated with the
+                    appropriate scope before retrying.
+                InvalidToken:
+                  summary: Access token is invalid or expired
+                  value:
+                    code: INVALID_TOKEN
+                    details: {}
+                    message: invalid oauth token
+                    status: error
+                  description: >-
+                    Represents a 401 error response returned when the access
+                    token provided is invalid or has expired. The request cannot
+                    be authenticated until a valid token is supplied.
+        '403':
+          description: >-
+            The authenticated user's profile does not have permission to
+            retrieve wizard configurations.
+
+            **Resolution:** The CRM administrator must grant the required
+            permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetAllWizardsForbiddenError
+                description: >-
+                  Represents the error response returned when the authenticated
+                  user does not have permission to retrieve wizards.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - NO_PERMISSION
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values:
+
+                      NO_PERMISSION - Indicates the user does not have the
+                      required permissions to access this resource.
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional information about the permission
+                      requirements that caused the request to be rejected.
+                    additionalProperties: false
+                    required:
+                      - permissions
+                    properties:
+                      permissions:
+                        type: array
+                        maxItems: 50
+                        items:
+                          type: string
+                          maxLength: 255
+                          description: >-
+                            Represents the name of a profile permission that is
+                            required to access this resource but was not granted
+                            to the authenticated user.
+                        description: >-
+                          Contains the list of permissions required to perform
+                          this operation.
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing why the request
+                      failed.
+                    maxLength: 255
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: |-
+                      Represents the request status.
+                      Possible values:
+                      error - Indicates the request failed.
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                NoPermission:
+                  summary: User profile lacks permission to read wizards
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - 'Zoho CRM: Settings Permission'
+                    message: Permission denied to read wizards
+                    status: error
+                  description: >-
+                    Represents a 403 error response returned when the
+                    authenticated user's profile does not have sufficient
+                    permission to read wizard configurations. An administrator
+                    must grant the required profile permission before the
+                    request can succeed.
+        '404':
+          description: >-
+            The request URL does not match a recognized API endpoint pattern.
+
+            **Resolution:** The request URL must match a valid API endpoint
+            pattern.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ErrorResponses404
+                oneOf:
+                  - type: object
+                    x-zs-$id: InvalidUrlPatternResponse
+                    description: >-
+                      Represents the error returned when the request URL does
+                      not conform to a valid URL pattern.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: |-
+                          Represents the request status.
+                          Possible values:
+                          error - Indicates the request failed.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_URL_PATTERN
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values:
+
+                          INVALID_URL_PATTERN - Indicates the requested URL does
+                          not match a recognized pattern.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing why the
+                          resource could not be found.
+                        maxLength: 255
+                      details:
+                        additionalProperties: false
+                        type: object
+                        description: >-
+                          Represents additional context about the error, if
+                          available.
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                description: >-
+                  Represents the error response returned when the requested URL
+                  does not match a recognized pattern.
+              examples:
+                InvalidUrlPattern:
+                  summary: Request URL does not match a valid endpoint pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                  description: >-
+                    Represents a 404 error response returned when the request
+                    URL does not match a recognized API endpoint pattern. Verify
+                    that the URL is correctly formed and resubmit the request.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.wizards.READ
+  /settings/wizards/{id}:
+    get:
+      operationId: getWizardDetails
+      summary: Get wizard details
+      description: >-
+        To retrieve the complete configuration of a single wizard in your Zoho
+        CRM organization, including its containers, screens, segments, buttons,
+        and conditional rules.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/LayoutId'
+      responses:
+        '200':
+          description: >-
+            Returns the detailed configuration of the specified wizard,
+            including its containers, screens, segments, buttons, conditional
+            rules, and associated metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetWizardDetailResponse
+                description: >-
+                  Represents the response body containing the wizard
+                  configuration for the requested identifier.
+                additionalProperties: false
+                properties:
+                  wizards:
+                    type: array
+                    description: >-
+                      Represents the list of wizards in the response. For this
+                      operation, the array contains exactly one wizard object
+                      corresponding to the requested identifier.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Represents a wizard object containing its complete
+                        configuration, including its associated module, active
+                        status, and the containers that define the multi-step
+                        screen flow.
+                      additionalProperties: false
+                      properties:
+                        created_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Represents the timestamp when Zoho CRM created the
+                            wizard.
+                        modified_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Represents the timestamp when Zoho CRM last modified
+                            the wizard.
+                        display_label:
+                          type: string
+                          maxLength: 255
+                          description: >-
+                            Represents the display label of the wizard,
+                            translated into the available locale where
+                            applicable.
+                        portal_user_types:
+                          description: >-
+                            Represents the client portal user types for which
+                            the wizard is available.
+                          type:
+                            - array
+                            - 'null'
+                          maxItems: 50
+                          items:
+                            type: object
+                            description: Portal user type associated with this wizard.
+                            additionalProperties: false
+                            properties:
+                              display_label:
+                                type: string
+                                maxLength: 255
+                                description: >-
+                                  Represents the display label of the portal
+                                  user type.
+                              name:
+                                type: string
+                                maxLength: 255
+                                description: Represents the name of the portal user type.
+                              id:
+                                type: string
+                                description: >-
+                                  Represents the unique identifier of the portal
+                                  user type.
+                                maxLength: 19
+                                format: int64
+                            required:
+                              - display_label
+                              - name
+                              - id
+                        module:
+                          type: object
+                          description: >-
+                            Represents the Zoho CRM module associated with the
+                            wizard.
+                          additionalProperties: false
+                          properties:
+                            api_name:
+                              type: string
+                              maxLength: 50
+                              description: >-
+                                Represents the API name of the Zoho CRM module
+                                associated with the wizard.
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the Zoho CRM
+                                module associated with the wizard.
+                              maxLength: 19
+                              format: int64
+                          required:
+                            - api_name
+                            - id
+                        name:
+                          type: string
+                          maxLength: 30
+                          description: Represents the API name of the wizard.
+                        modified_by:
+                          type:
+                            - object
+                            - 'null'
+                          description: Represents the user who last modified the wizard.
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              maxLength: 255
+                              description: Name of the user who last modified the wizard.
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the user who
+                                last modified the wizard.
+                              maxLength: 19
+                              format: int64
+                          required:
+                            - name
+                            - id
+                        profiles:
+                          type:
+                            - array
+                            - 'null'
+                          description: >-
+                            Represents the Zoho CRM profiles for which the
+                            wizard is available.
+                          maxItems: 50
+                          items:
+                            type: object
+                            additionalProperties: false
+                            description: >-
+                              Represents a CRM profile associated with the
+                              wizard.
+                            properties:
+                              display_label:
+                                type: string
+                                maxLength: 255
+                                description: >-
+                                  Represents the display label of the profile,
+                                  translated into the available locale where
+                                  applicable.
+                              name:
+                                type: string
+                                maxLength: 255
+                                description: Name of the profile.
+                              id:
+                                type: string
+                                description: >-
+                                  Represents the unique identifier of the
+                                  profile.
+                                maxLength: 19
+                                format: int64
+                            required:
+                              - display_label
+                              - name
+                              - id
+                        active:
+                          type: boolean
+                          description: >-
+                            Indicates whether the wizard is currently active.
+
+
+                            Possible values:
+
+                            true - The wizard is active and available for use in
+                            the CRM module.
+
+                            false - The wizard is inactive and not available for
+                            use.
+                        source:
+                          description: Indicates the source that originated the wizard.
+                          type: string
+                          maxLength: 50
+                          enum:
+                            - crm
+                            - platform_plugin
+                            - marketplace_plugin
+                        containers:
+                          type: array
+                          description: >-
+                            Represents the list of containers associated with
+                            the wizard. Each container links a specific layout
+                            to the screens and segments that define the wizard
+                            flow for that layout.
+                          maxItems: 7
+                          items:
+                            type: object
+                            additionalProperties: false
+                            description: >-
+                              Represents a container that associates a CRM
+                              layout with its corresponding screens and chart
+                              definition, establishing the navigation structure
+                              for one segment of the wizard flow.
+                            properties:
+                              layout:
+                                type: object
+                                description: >-
+                                  Represents the layout from which wizard fields
+                                  are sourced for this container.
+                                additionalProperties: false
+                                properties:
+                                  display_label:
+                                    type: string
+                                    maxLength: 255
+                                    description: >-
+                                      Represents the display label of the
+                                      layout, translated into the user's locale
+                                      where available.
+                                  name:
+                                    type: string
+                                    maxLength: 50
+                                    description: >-
+                                      Represents the name of the layout
+                                      associated with the wizard container.
+                                  id:
+                                    type: string
+                                    description: >-
+                                      Represents the unique identifier of the
+                                      layout. Refer to the [Get
+                                      Layouts](layouts.yaml#$.paths./settings/layouts.get)
+                                      endpoint for details.
+                                    maxLength: 19
+                                    format: int64
+                                required:
+                                  - display_label
+                                  - name
+                                  - id
+                              chart_data:
+                                type: object
+                                description: >-
+                                  Represents the metadata that describes the
+                                  visual flow between screens in the wizard
+                                  canvas, including the color palette applied to
+                                  the canvas and the connections between
+                                  screens.
+                                additionalProperties: false
+                                properties:
+                                  nodes:
+                                    type: array
+                                    description: >-
+                                      Represents the list of visual nodes on the
+                                      wizard canvas, where each node corresponds
+                                      to a screen in the wizard flow.
+                                    maxItems: 75
+                                    items:
+                                      type: object
+                                      description: >-
+                                        Represents a single visual node on the
+                                        wizard canvas, corresponding to a screen
+                                        in the wizard flow and capturing its
+                                        position and identity within the chart
+                                        layout.
+                                      additionalProperties: false
+                                      properties:
+                                        pos_x:
+                                          type: integer
+                                          format: int32
+                                          description: >-
+                                            Represents the X-coordinate position, in
+                                            pixels, of the node on the wizard
+                                            canvas.
+                                        pos_y:
+                                          type: integer
+                                          format: int32
+                                          description: >-
+                                            Represents the Y-coordinate position, in
+                                            pixels, of the node on the wizard
+                                            canvas.
+                                        start_node:
+                                          type: boolean
+                                          description: >-
+                                            Indicates whether this node is the
+                                            starting screen in the wizard flow.
+
+                                            Possible values:
+
+                                            true - The node is the starting screen
+                                            of the wizard flow.
+
+                                            false - The node is not the starting
+                                            screen of the wizard flow.
+                                        screen:
+                                          type: object
+                                          additionalProperties: false
+                                          description: >-
+                                            Represents the wizard screen associated
+                                            with this node in the flow chart.
+                                          properties:
+                                            display_label:
+                                              type: string
+                                              maxLength: 255
+                                              description: >-
+                                                Represents the display label of the
+                                                screen associated with the node.
+                                            id:
+                                              type: string
+                                              description: >-
+                                                Represents the unique identifier of the
+                                                screen associated with the node.
+                                              maxLength: 19
+                                              format: int64
+                                          required:
+                                            - display_label
+                                            - id
+                                      required:
+                                        - pos_x
+                                        - pos_y
+                                        - start_node
+                                        - screen
+                                  connections:
+                                    type:
+                                      - array
+                                      - 'null'
+                                    description: >-
+                                      Represents the list of connections between
+                                      source and target screens that define the
+                                      navigation flow within the wizard.
+                                    maxItems: 75
+                                    items:
+                                      type: object
+                                      description: >-
+                                        Represents a single directed connection
+                                        in the wizard flow, linking a source
+                                        screen to a target screen to define the
+                                        transition path between them.
+                                      additionalProperties: false
+                                      properties:
+                                        source_screen:
+                                          type: object
+                                          description: >-
+                                            Represents the screen from which the
+                                            connection originates in the wizard
+                                            flow, identifying the starting point of
+                                            the transition.
+                                          additionalProperties: false
+                                          properties:
+                                            display_label:
+                                              type: string
+                                              maxLength: 255
+                                              description: >-
+                                                Represents the display label of the
+                                                source screen as it appears in the
+                                                wizard canvas.
+                                            id:
+                                              type: string
+                                              description: >-
+                                                Represents the unique identifier of the
+                                                source screen from which the connection
+                                                originates.
+                                              maxLength: 19
+                                              format: int64
+                                          required:
+                                            - display_label
+                                            - id
+                                        target_screen:
+                                          type: object
+                                          description: >-
+                                            Represents the screen to which the
+                                            connection points in the wizard flow,
+                                            identifying the destination of the
+                                            transition.
+                                          additionalProperties: false
+                                          properties:
+                                            display_label:
+                                              type: string
+                                              maxLength: 255
+                                              description: >-
+                                                Represents the display label of the
+                                                target screen as it appears in the
+                                                wizard canvas.
+                                            id:
+                                              type: string
+                                              description: >-
+                                                Represents the unique identifier of the
+                                                target screen to which the connection
+                                                points.
+                                              maxLength: 19
+                                              format: int64
+                                          required:
+                                            - display_label
+                                            - id
+                                        id:
+                                          type: string
+                                          description: >-
+                                            Represents the unique identifier of the
+                                            connection between the source screen and
+                                            the target screen in the wizard flow.
+                                          maxLength: 19
+                                          format: int64
+                                      required:
+                                        - source_screen
+                                        - target_screen
+                                        - id
+                                  color_palette:
+                                    type: object
+                                    description: >-
+                                      Represents the color palette applied to
+                                      the wizard canvas, defining the colors
+                                      used for visual elements such as button
+                                      backgrounds.
+                                    additionalProperties: false
+                                    properties:
+                                      button_background:
+                                        type: array
+                                        description: >-
+                                          Represents the list of hex color values
+                                          applied to button backgrounds in the
+                                          wizard canvas.
+                                        maxItems: 10
+                                        items:
+                                          type: string
+                                          maxLength: 7
+                                          description: >-
+                                            Represents a hex color code that defines
+                                            a button background color in the wizard
+                                            canvas (for example, '#FFFFFF').
+                                required:
+                                  - nodes
+                                  - connections
+                              screens:
+                                type: array
+                                description: >-
+                                  Represents the list of screens included in the
+                                  wizard container. Each screen groups one or
+                                  more segments presented to the user during the
+                                  wizard flow.
+                                maxItems: 75
+                                items:
+                                  type: object
+                                  additionalProperties: false
+                                  description: >-
+                                    Represents a screen definition within the
+                                    wizard container that organizes segments and
+                                    governs the data-entry step presented to the
+                                    user.
+                                  properties:
+                                    display_label:
+                                      type: string
+                                      maxLength: 255
+                                      description: Display label of the screen.
+                                    api_name:
+                                      type: string
+                                      maxLength: 255
+                                      description: >-
+                                        Represents the API name of the screen
+                                        within the wizard container.
+                                    id:
+                                      type: string
+                                      description: Numeric unique identifier of the screen.
+                                      maxLength: 19
+                                      format: int64
+                                      x-zs-$id: ScreenId
+                                    conditional_rules:
+                                      type:
+                                        - array
+                                        - 'null'
+                                      description: >-
+                                        Represents the list of conditional rules
+                                        evaluated on the screen. Returns null
+                                        when no conditional rules are configured
+                                        for the screen.
+                                      maxItems: 50
+                                      items:
+                                        type: object
+                                        description: >-
+                                          Represents a conditional rule configured
+                                          for the screen, defining the criteria
+                                          and the corresponding actions to execute
+                                          when the criteria are satisfied.
+                                        additionalProperties: false
+                                        properties:
+                                          query_id:
+                                            type: string
+                                            description: >-
+                                              Represents the unique numeric identifier
+                                              of the conditional rule.
+                                            maxLength: 19
+                                            format: int64
+                                          execute_on:
+                                            type: string
+                                            maxLength: 50
+                                            enum:
+                                              - create_edit
+                                              - create
+                                              - edit
+                                            description: >-
+                                              Represents the event on which the
+                                              conditional rule executes, for example
+                                              'create_edit'.
+                                          criteria:
+                                            type:
+                                              - object
+                                              - 'null'
+                                            description: >-
+                                              Represents the criteria expression
+                                              evaluated to determine whether the
+                                              conditional rule actions are triggered.
+                                            additionalProperties: false
+                                            properties:
+                                              comparator:
+                                                type: string
+                                                maxLength: 50
+                                                description: >-
+                                                  Indicates the comparator used to
+                                                  evaluate the criteria expression.
+                                                  Possible values include not_equal,
+                                                  equal, is_empty, and is_not_empty.
+                                              field:
+                                                type: object
+                                                additionalProperties: false
+                                                description: >-
+                                                  Represents the field against which the
+                                                  criteria expression is evaluated.
+                                                properties:
+                                                  api_name:
+                                                    type: string
+                                                    maxLength: 255
+                                                    description: >-
+                                                      Represents the API name of the field
+                                                      used in the criteria expression.
+                                                  id:
+                                                    type: string
+                                                    description: >-
+                                                      Represents the unique identifier of the
+                                                      field used in the criteria expression.
+                                                    maxLength: 19
+                                                    format: int64
+                                                required:
+                                                  - api_name
+                                                  - id
+                                              type:
+                                                type: string
+                                                maxLength: 50
+                                                description: >-
+                                                  Represents the type of the criteria
+                                                  applied in the conditional rule
+                                                  evaluation, for example 'value'.
+                                              value:
+                                                type: string
+                                                maxLength: 255
+                                                description: >-
+                                                  Represents the value used in the
+                                                  criteria comparison during conditional
+                                                  rule evaluation, for example ''.
+                                            required:
+                                              - comparator
+                                              - field
+                                              - type
+                                              - value
+                                          actions:
+                                            type: array
+                                            description: >-
+                                              Represents the list of actions executed
+                                              when the conditional rule criteria are
+                                              satisfied on the screen.
+                                            maxItems: 50
+                                            items:
+                                              type: object
+                                              description: >-
+                                                Represents an action configuration that
+                                                is executed when the associated
+                                                conditional rule criteria are met on the
+                                                screen.
+                                              additionalProperties: false
+                                              properties:
+                                                id:
+                                                  type: string
+                                                  description: >-
+                                                    Represents the unique numeric identifier
+                                                    of the conditional rule action.
+                                                  maxLength: 19
+                                                  format: int64
+                                                type:
+                                                  type: string
+                                                  maxLength: 50
+                                                  description: >-
+                                                    Indicates the type of action to perform
+                                                    on the targeted field or segment.
+                                                    Possible values include set_mandatory,
+                                                    make_read_only, hide, and show.
+                                                field:
+                                                  type: object
+                                                  additionalProperties: false
+                                                  description: >-
+                                                    Represents the wizard screen field to
+                                                    which the conditional rule action is
+                                                    applied. This object is present only for
+                                                    field-targeting action types.
+                                                  properties:
+                                                    api_name:
+                                                      type: string
+                                                      maxLength: 255
+                                                      description: >-
+                                                        Represents the API name of the wizard
+                                                        screen field on which the conditional
+                                                        rule action is executed.
+                                                    id:
+                                                      type: string
+                                                      description: >-
+                                                        Represents the unique numeric identifier
+                                                        of the wizard screen field on which the
+                                                        conditional rule action is executed.
+                                                      maxLength: 19
+                                                      format: int64
+                                                  required:
+                                                    - api_name
+                                                    - id
+                                                segment:
+                                                  type: object
+                                                  additionalProperties: false
+                                                  description: >-
+                                                    Represents the segment on which the
+                                                    action is applied. Present only for
+                                                    segment-targeting actions.
+                                                  properties:
+                                                    id:
+                                                      type: string
+                                                      description: >-
+                                                        Represents the unique identifier of the
+                                                        segment on which the action is executed.
+                                                      maxLength: 19
+                                                      format: int64
+                                                    display_label:
+                                                      type: string
+                                                      maxLength: 255
+                                                      description: >-
+                                                        Represents the display label of the
+                                                        segment on which the action is executed.
+                                                  required:
+                                                    - id
+                                                value:
+                                                  type: string
+                                                  maxLength: 2000
+                                                  description: >-
+                                                    Represents the value applied to the
+                                                    field by the action. Present only for
+                                                    field-value actions.
+                                                exempted_profiles:
+                                                  type: array
+                                                  description: >-
+                                                    Represents the list of CRM profiles that
+                                                    are exempted from the conditional rule
+                                                    action and will not have the action
+                                                    applied to them.
+                                                  maxItems: 500
+                                                  items:
+                                                    type: object
+                                                    description: >-
+                                                      Represents a CRM profile that is
+                                                      exempted from the conditional rule
+                                                      action and will not have the action
+                                                      applied to it.
+                                                    additionalProperties: false
+                                                    properties:
+                                                      id:
+                                                        type: string
+                                                        description: >-
+                                                          Represents the unique numeric identifier
+                                                          of the CRM profile that is exempted from
+                                                          the conditional rule action.
+                                                        maxLength: 19
+                                                        format: int64
+                                                      name:
+                                                        type: string
+                                                        maxLength: 255
+                                                        description: >-
+                                                          Represents the display name of the CRM
+                                                          profile that is exempted from the
+                                                          conditional rule action.
+                                                exempted_portal_user_types:
+                                                  type: array
+                                                  description: >-
+                                                    Represents the list of client portal
+                                                    user types that are exempted from the
+                                                    conditional rule action on the screen.
+                                                  maxItems: 500
+                                                  items:
+                                                    type: object
+                                                    description: >-
+                                                      Represents a client portal user type
+                                                      that is exempted from the conditional
+                                                      rule action on the screen.
+                                                    additionalProperties: false
+                                                    properties:
+                                                      id:
+                                                        type: string
+                                                        description: >-
+                                                          Represents the unique numeric identifier
+                                                          of the portal user type that is exempted
+                                                          from the conditional rule action.
+                                                        maxLength: 19
+                                                        format: int64
+                                                      name:
+                                                        type: string
+                                                        maxLength: 255
+                                                        description: >-
+                                                          Represents the display name of the
+                                                          portal user type that is exempted from
+                                                          the conditional rule action.
+                                              required:
+                                                - id
+                                                - type
+                                        required:
+                                          - query_id
+                                          - execute_on
+                                          - actions
+                                    segments:
+                                      type: array
+                                      description: >-
+                                        Represents the segments that group
+                                        fields, buttons, and other elements
+                                        displayed on the screen.
+                                      maxItems: 75
+                                      items:
+                                        type: object
+                                        additionalProperties: false
+                                        description: >-
+                                          Represents a segment contained within a
+                                          screen, grouping related fields,
+                                          buttons, and other interface elements.
+                                        properties:
+                                          sequence_number:
+                                            type: integer
+                                            format: int32
+                                            description: >-
+                                              Represents the sequential position of
+                                              the segment within the screen,
+                                              determining its display order.
+                                          display_label:
+                                            type: string
+                                            maxLength: 255
+                                            description: Display label of the segment.
+                                          column_count:
+                                            type: integer
+                                            format: int32
+                                            description: >-
+                                              Represents the number of columns used to
+                                              arrange elements within the segment
+                                              layout.
+                                          id:
+                                            type: string
+                                            description: >-
+                                              Represents the unique identifier of the
+                                              segment.
+                                            maxLength: 19
+                                            format: int64
+                                            x-zs-$id: SegmentId
+                                          type:
+                                            type: string
+                                            maxLength: 50
+                                            description: >-
+                                              Represents the type of the segment, for
+                                              example 'composite', 'text_label', or
+                                              'buttons'.
+                                            enum:
+                                              - composite
+                                              - fields
+                                              - subforms
+                                              - text_label
+                                              - widget
+                                              - buttons
+                                          tab_traversal:
+                                            type: string
+                                            enum:
+                                              - left_to_right
+                                              - top_to_bottom
+                                            description: >-
+                                              Represents the traversal order for
+                                              elements within the segment, used for
+                                              keyboard navigation.
+                                          elements:
+                                            type: array
+                                            description: >-
+                                              Represents the collection of field
+                                              elements contained within the segment,
+                                              present when the segment is of a
+                                              composite type.
+                                            maxItems: 200
+                                            items:
+                                              type: object
+                                              description: >-
+                                                Represents an individual field element
+                                                contained within a segment.
+                                              additionalProperties: false
+                                              properties:
+                                                sequence_number:
+                                                  type: integer
+                                                  format: int32
+                                                  description: >-
+                                                    Represents the position of the element
+                                                    within the segment, determining the
+                                                    display order.
+                                                type:
+                                                  type: string
+                                                  maxLength: 50
+                                                  description: >-
+                                                    Represents the type of element within
+                                                    the segment, for example 'field'.
+                                                  enum:
+                                                    - field
+                                                    - query_component
+                                                resource:
+                                                  type: object
+                                                  additionalProperties: false
+                                                  description: >-
+                                                    Represents the field resource referenced
+                                                    by this element, linking the element to
+                                                    its associated data field definition.
+                                                  properties:
+                                                    name:
+                                                      type: string
+                                                      maxLength: 255
+                                                      description: >-
+                                                        Represents the API name of the field
+                                                        resource associated with this element.
+                                                    id:
+                                                      type: string
+                                                      description: >-
+                                                        Represents the unique identifier of the
+                                                        field resource associated with this
+                                                        element.
+                                                      maxLength: 19
+                                                      format: int64
+                                                  required:
+                                                    - name
+                                                    - id
+                                              required:
+                                                - sequence_number
+                                                - type
+                                                - resource
+                                          name:
+                                            type: string
+                                            maxLength: 255
+                                            description: >-
+                                              Represents the name of the segment.
+                                              Present for text_label and buttons
+                                              segments.
+                                          content:
+                                            type: string
+                                            maxLength: 2000
+                                            description: >-
+                                              Represents the static content of the
+                                              segment, applicable to segments of the
+                                              text_label type.
+                                          buttons:
+                                            type: array
+                                            description: >-
+                                              Represents the buttons displayed inside
+                                              this segment. Present for segments of
+                                              the buttons type.
+                                            minItems: 1
+                                            maxItems: 50
+                                            items:
+                                              type: object
+                                              additionalProperties: false
+                                              description: >-
+                                                Represents a button configuration entry
+                                                within the segment, defining the button
+                                                behavior and presentation.
+                                              properties:
+                                                color:
+                                                  type: string
+                                                  maxLength: 7
+                                                  description: >-
+                                                    Represents the text color of the button,
+                                                    typically expressed as a hexadecimal
+                                                    color value.
+                                                shape:
+                                                  type: string
+                                                  enum:
+                                                    - square
+                                                    - capsule
+                                                    - round
+                                                  description: >-
+                                                    Represents the visual shape of the
+                                                    button as rendered in the wizard
+                                                    interface.
+                                                visibility:
+                                                  type: string
+                                                  enum:
+                                                    - hide
+                                                    - disable
+                                                    - show
+                                                  description: >-
+                                                    Indicates the visibility behavior of the
+                                                    button, controlling whether the button
+                                                    is displayed or hidden within the wizard
+                                                    segment.
+                                                resource:
+                                                  type:
+                                                    - object
+                                                    - 'null'
+                                                  description: >-
+                                                    Resource associated with the button, if
+                                                    any.
+                                                  additionalProperties: false
+                                                  properties:
+                                                    id:
+                                                      type: string
+                                                      description: >-
+                                                        Represents the unique numeric identifier
+                                                        of the resource associated with the
+                                                        button.
+                                                      maxLength: 19
+                                                      format: int64
+                                                    name:
+                                                      type: string
+                                                      maxLength: 255
+                                                      description: >-
+                                                        Represents the name of the resource
+                                                        associated with the button.
+                                                criteria:
+                                                  type:
+                                                    - object
+                                                    - 'null'
+                                                  description: >-
+                                                    Represents the criteria controlling the
+                                                    visibility or behavior of the button,
+                                                    defining the conditions under which the
+                                                    button is active or displayed.
+                                                  additionalProperties: false
+                                                  properties:
+                                                    comparator:
+                                                      type: string
+                                                      maxLength: 50
+                                                      description: >-
+                                                        Represents the comparator used in the
+                                                        criteria to evaluate the relationship
+                                                        between the field and the value.
+                                                    field:
+                                                      type: object
+                                                      additionalProperties: true
+                                                      description: >-
+                                                        Represents the field against which the
+                                                        criteria is evaluated when determining
+                                                        the visibility or behavior of the
+                                                        button.
+                                                    type:
+                                                      type: string
+                                                      maxLength: 50
+                                                      description: >-
+                                                        Represents the type of criteria applied
+                                                        to the button, indicating the nature of
+                                                        the condition being evaluated.
+                                                    value:
+                                                      type: string
+                                                      maxLength: 255
+                                                      description: >-
+                                                        Represents the value used in the
+                                                        comparison when evaluating the criteria
+                                                        associated with the button.
+                                                profiles:
+                                                  type:
+                                                    - array
+                                                    - 'null'
+                                                  description: >-
+                                                    Represents the profiles for which this
+                                                    button is available.
+                                                  maxItems: 40
+                                                  items:
+                                                    description: Profile associated with this button
+                                                    type: object
+                                                    additionalProperties: false
+                                                    properties:
+                                                      id:
+                                                        type: string
+                                                        description: >-
+                                                          Represents the unique identifier of the
+                                                          profile.
+                                                        maxLength: 19
+                                                        format: int64
+                                                      name:
+                                                        type: string
+                                                        maxLength: 255
+                                                        description: Internal name of the profile.
+                                                      display_label:
+                                                        type: string
+                                                        maxLength: 255
+                                                        description: Display label of the profile.
+                                                target_screen:
+                                                  type:
+                                                    - object
+                                                    - 'null'
+                                                  description: >-
+                                                    Represents the screen to which the
+                                                    wizard navigates when this button is
+                                                    activated. Returns null for buttons that
+                                                    perform a save operation without
+                                                    navigation.
+                                                  additionalProperties: false
+                                                  properties:
+                                                    name:
+                                                      type: string
+                                                      maxLength: 255
+                                                      description: >-
+                                                        Represents the name of the target screen
+                                                        to which the button navigates.
+                                                    id:
+                                                      type: string
+                                                      description: >-
+                                                        Represents the unique numeric identifier
+                                                        of the target screen to which the button
+                                                        navigates.
+                                                      maxLength: 19
+                                                      format: int64
+                                                  required:
+                                                    - name
+                                                    - id
+                                                type:
+                                                  type:
+                                                    - string
+                                                    - 'null'
+                                                  enum:
+                                                    - save
+                                                    - transition
+                                                  description: >-
+                                                    Represents the type of action performed
+                                                    by the button within the wizard segment.
+                                                message:
+                                                  type:
+                                                    - object
+                                                    - 'null'
+                                                  description: >-
+                                                    Represents the message configuration
+                                                    used when this button performs a save or
+                                                    summary action.
+                                                  additionalProperties: false
+                                                  properties:
+                                                    title:
+                                                      type: string
+                                                      maxLength: 255
+                                                      description: Title of the acknowledgement message.
+                                                    content:
+                                                      type: string
+                                                      maxLength: 2000
+                                                      description: >-
+                                                        Body content of the acknowledgement
+                                                        message.
+                                                transition:
+                                                  type:
+                                                    - object
+                                                    - 'null'
+                                                  description: >-
+                                                    Represents the automation transition
+                                                    configuration applied when this button
+                                                    is activated. Returns null when no
+                                                    transition is configured.
+                                                  additionalProperties: false
+                                                  properties:
+                                                    id:
+                                                      type: string
+                                                      description: >-
+                                                        Represents the unique numeric identifier
+                                                        of the automation transition associated
+                                                        with the button.
+                                                      maxLength: 19
+                                                      format: int64
+                                                sequence_number:
+                                                  type: integer
+                                                  format: int32
+                                                  description: >-
+                                                    Represents the sequential position of
+                                                    the button within its parent segment,
+                                                    determining the display order.
+                                                display_label:
+                                                  type: string
+                                                  maxLength: 255
+                                                  description: >-
+                                                    Represents the display label of the
+                                                    button, shown to the user as the visible
+                                                    text or title of the button.
+                                                background_color:
+                                                  type: string
+                                                  maxLength: 7
+                                                  description: >-
+                                                    Represents the background color of the
+                                                    button, typically expressed as a
+                                                    hexadecimal color value.
+                                                name:
+                                                  type: string
+                                                  maxLength: 255
+                                                  description: Represents the name of the button.
+                                                id:
+                                                  type: string
+                                                  description: >-
+                                                    Represents the unique identifier of the
+                                                    button.
+                                                  maxLength: 19
+                                                  format: int64
+                                                  x-zs-$id: ButtonId
+                                                category:
+                                                  type: string
+                                                  enum:
+                                                    - wizard_button
+                                                    - custom_button
+                                                  description: >-
+                                                    Represents the category of the button,
+                                                    used to classify or group the button by
+                                                    its functional purpose.
+                                                show_summary_on:
+                                                  type:
+                                                    - string
+                                                    - 'null'
+                                                  maxLength: 50
+                                                  enum:
+                                                    - create
+                                                    - edit
+                                                    - create_and_edit
+                                                    - null
+                                                  description: >-
+                                                    Indicates the condition or event upon
+                                                    which a summary screen is displayed,
+                                                    when a summary screen is configured for
+                                                    the button.
+                                              required:
+                                                - color
+                                                - shape
+                                                - visibility
+                                                - type
+                                                - sequence_number
+                                                - display_label
+                                                - background_color
+                                                - name
+                                                - id
+                                                - category
+                                          widget:
+                                            description: >-
+                                              Represents the widget resource linked to
+                                              this segment. Required when the segment
+                                              type is 'widget'.
+                                            additionalProperties: false
+                                            type: object
+                                            properties:
+                                              id:
+                                                type: string
+                                                description: >-
+                                                  Represents the unique identifier of the
+                                                  widget linked to the segment.
+                                                maxLength: 19
+                                                format: int64
+                                              name:
+                                                type: string
+                                                maxLength: 255
+                                                description: >-
+                                                  Represents the name of the widget linked
+                                                  to the segment.
+                                            required:
+                                              - id
+                                        required:
+                                          - sequence_number
+                                          - display_label
+                                          - column_count
+                                          - id
+                                          - type
+                                        if:
+                                          description: >-
+                                            Applies when the segment type is
+                                            'composite'.
+                                          properties:
+                                            type:
+                                              description: The segment type discriminator.
+                                              const: composite
+                                        then:
+                                          description: >-
+                                            Required when segment type is
+                                            'composite'.
+                                          required:
+                                            - elements
+                                          properties:
+                                            elements:
+                                              description: >-
+                                                List of composite elements in this
+                                                segment.
+                                          additionalProperties: true
+                                        else:
+                                          description: >-
+                                            Applies when segment type is not
+                                            'composite'.
+                                          if:
+                                            description: >-
+                                              Applies when the segment type is
+                                              'fields'.
+                                            properties:
+                                              type:
+                                                description: The segment type discriminator.
+                                                const: fields
+                                          then:
+                                            description: Required when segment type is 'fields'.
+                                            required:
+                                              - fields
+                                            properties:
+                                              fields:
+                                                description: List of fields in this segment.
+                                            additionalProperties: true
+                                          else:
+                                            description: >-
+                                              Applies when segment type is not
+                                              'composite' or 'fields'.
+                                            if:
+                                              description: >-
+                                                Applies when the segment type is
+                                                'subforms'.
+                                              properties:
+                                                type:
+                                                  description: The segment type discriminator.
+                                                  const: subforms
+                                            then:
+                                              description: >-
+                                                Required when segment type is
+                                                'subforms'.
+                                              required:
+                                                - fields
+                                              properties:
+                                                fields:
+                                                  description: List of fields in this subform segment.
+                                              additionalProperties: true
+                                            else:
+                                              description: >-
+                                                Applies when segment type is not
+                                                'composite', 'fields', or 'subforms'.
+                                              if:
+                                                description: >-
+                                                  Applies when the segment type is
+                                                  'text_label'.
+                                                properties:
+                                                  type:
+                                                    description: The segment type discriminator.
+                                                    const: text_label
+                                              then:
+                                                description: >-
+                                                  Required when segment type is
+                                                  'text_label'.
+                                                required:
+                                                  - display_label
+                                                  - content
+                                                properties:
+                                                  display_label:
+                                                    description: >-
+                                                      Display label for the text label
+                                                      segment.
+                                                  content:
+                                                    description: Content of the text label segment.
+                                                additionalProperties: true
+                                              else:
+                                                description: >-
+                                                  Applies when segment type is not
+                                                  'composite', 'fields', 'subforms', or
+                                                  'text_label'.
+                                                if:
+                                                  description: >-
+                                                    Applies when the segment type is
+                                                    'widget'.
+                                                  properties:
+                                                    type:
+                                                      description: The segment type discriminator.
+                                                      const: widget
+                                                then:
+                                                  description: Required when segment type is 'widget'.
+                                                  required:
+                                                    - widget
+                                                  properties:
+                                                    widget:
+                                                      description: Widget configuration for this segment.
+                                                  additionalProperties: true
+                                                else:
+                                                  description: Applies when segment type is 'buttons'.
+                                                  if:
+                                                    description: >-
+                                                      Conditional check for segment type
+                                                      'buttons'.
+                                                    properties:
+                                                      type:
+                                                        description: The segment type discriminator.
+                                                        const: buttons
+                                                  then:
+                                                    description: Required when segment type is 'buttons'.
+                                                    required:
+                                                      - buttons
+                                                    properties:
+                                                      buttons:
+                                                        description: List of buttons in this segment.
+                                                    additionalProperties: true
+                                  required:
+                                    - display_label
+                                    - api_name
+                                    - id
+                                    - segments
+                              id:
+                                type: string
+                                description: >-
+                                  Represents the unique identifier of the
+                                  container layout.
+                                maxLength: 19
+                                format: int64
+                            required:
+                              - layout
+                              - chart_data
+                              - screens
+                              - id
+                        id:
+                          type: string
+                          description: Represents the unique identifier of the wizard.
+                          maxLength: 19
+                          format: int64
+                          x-zs-$id: WizardDetailId
+                        created_by:
+                          type:
+                            - object
+                            - 'null'
+                          description: Represents the user who created the wizard.
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              maxLength: 255
+                              description: Name of the user who created the wizard.
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the user who
+                                created the wizard.
+                              maxLength: 19
+                              format: int64
+                          required:
+                            - name
+                            - id
+                      required:
+                        - created_time
+                        - modified_time
+                        - display_label
+                        - portal_user_types
+                        - module
+                        - name
+                        - modified_by
+                        - profiles
+                        - active
+                        - containers
+                        - id
+                        - created_by
+                required:
+                  - wizards
+              examples:
+                WizardDetailsForLayout:
+                  summary: Detailed wizard definition for a specific layout.
+                  value:
+                    wizards:
+                      - display_label: Harry Potter
+                        created_time: '2025-11-28T12:15:16+05:30'
+                        modified_time: '2025-11-28T12:15:16+05:30'
+                        module:
+                          api_name: Contacts
+                          id: '111113000000002652'
+                        name: Harry Potter
+                        modified_by:
+                          name: Drogon Nine
+                          id: '111113000000057672'
+                        profiles:
+                          - display_label: Administrator
+                            name: Administrator
+                            id: '111113000000000501'
+                        active: true
+                        source: crm
+                        portal_user_types: null
+                        id: '111113000000106221'
+                        created_by:
+                          name: Drogon Nine
+                          id: '111113000000057672'
+                        containers:
+                          - layout:
+                              display_label: Standard
+                              name: Standard
+                              id: '111113000000003656'
+                            chart_data:
+                              nodes:
+                                - pos_y: 108
+                                  pos_x: 637
+                                  start_node: true
+                                  screen:
+                                    display_label: Screen 1
+                                    id: '111113000000106223'
+                                - pos_y: 218
+                                  pos_x: 957
+                                  start_node: false
+                                  screen:
+                                    display_label: Screen 2
+                                    id: '111113000000106225'
+                                - pos_y: 328
+                                  pos_x: 637
+                                  start_node: false
+                                  screen:
+                                    display_label: Screen 3
+                                    id: '111113000000106227'
+                              connections:
+                                - source_screen:
+                                    display_label: Screen 2
+                                    id: '111113000000106225'
+                                  target_screen:
+                                    display_label: Screen 3
+                                    id: '111113000000106227'
+                                  id: '111113000000106411'
+                                - source_screen:
+                                    display_label: Screen 1
+                                    id: '111113000000106223'
+                                  target_screen:
+                                    display_label: Screen 2
+                                    id: '111113000000106225'
+                                  id: '111113000000106413'
+                              color_palette:
+                                button_background:
+                                  - '#ADD9FF'
+                                  - '#C4F0B3'
+                                  - '#FFD6BC'
+                                  - '#F8E199'
+                                  - '#FFC6C6'
+                            screens:
+                              - display_label: Screen 1
+                                api_name: Screen_1
+                                id: '111113000000106223'
+                                conditional_rules:
+                                  - query_id: '111113000000106338'
+                                    criteria:
+                                      comparator: not_equal
+                                      field:
+                                        api_name: Skype_ID
+                                        id: '111113000000004606'
+                                      type: value
+                                      value: ${EMPTY}
+                                    actions:
+                                      - field:
+                                          api_name: Twitter
+                                          id: '111113000000004632'
+                                        id: '111113000000106351'
+                                        type: set_mandatory
+                                    execute_on: create_edit
+                                segments:
+                                  - sequence_number: 1
+                                    display_label: Title of Screen 1
+                                    column_count: 2
+                                    name: Text_1
+                                    id: '111113000000106234'
+                                    type: text_label
+                                    content: |-
+                                      Hi ${!Contacts.Last_Name} 
+                                      Welcome to Screen 1
+                                  - sequence_number: 2
+                                    display_label: Contact Information
+                                    column_count: 2
+                                    elements:
+                                      - sequence_number: 0
+                                        resource:
+                                          name: Salutation
+                                          id: '111113000000004622'
+                                        type: field
+                                      - sequence_number: 1
+                                        resource:
+                                          name: Owner
+                                          id: '111113000000004564'
+                                        type: field
+                                      - sequence_number: 2
+                                        resource:
+                                          name: Lead_Source
+                                          id: '111113000000004566'
+                                        type: field
+                                      - sequence_number: 3
+                                        resource:
+                                          name: First_Name
+                                          id: '111113000000004568'
+                                        type: field
+                                      - sequence_number: 4
+                                        resource:
+                                          name: Last_Name
+                                          id: '111113000000004570'
+                                        type: field
+                                      - sequence_number: 5
+                                        resource:
+                                          name: Account_Name
+                                          id: '111113000000004574'
+                                        type: field
+                                      - sequence_number: 6
+                                        resource:
+                                          name: Vendor_Name
+                                          id: '111113000000004576'
+                                        type: field
+                                      - sequence_number: 7
+                                        resource:
+                                          name: Email
+                                          id: '111113000000004578'
+                                        type: field
+                                      - sequence_number: 8
+                                        resource:
+                                          name: Title
+                                          id: '111113000000004582'
+                                        type: field
+                                      - sequence_number: 9
+                                        resource:
+                                          name: Department
+                                          id: '111113000000004584'
+                                        type: field
+                                      - sequence_number: 10
+                                        resource:
+                                          name: Phone
+                                          id: '111113000000004586'
+                                        type: field
+                                      - sequence_number: 11
+                                        resource:
+                                          name: Home_Phone
+                                          id: '111113000000004588'
+                                        type: field
+                                      - sequence_number: 12
+                                        resource:
+                                          name: Other_Phone
+                                          id: '111113000000004590'
+                                        type: field
+                                      - sequence_number: 13
+                                        resource:
+                                          name: Fax
+                                          id: '111113000000004592'
+                                        type: field
+                                      - sequence_number: 14
+                                        resource:
+                                          name: Mobile
+                                          id: '111113000000004594'
+                                        type: field
+                                      - sequence_number: 15
+                                        resource:
+                                          name: Date_of_Birth
+                                          id: '111113000000004596'
+                                        type: field
+                                      - sequence_number: 16
+                                        resource:
+                                          name: Assistant
+                                          id: '111113000000004598'
+                                        type: field
+                                      - sequence_number: 17
+                                        resource:
+                                          name: Asst_Phone
+                                          id: '111113000000004600'
+                                        type: field
+                                      - sequence_number: 18
+                                        resource:
+                                          name: Reporting_To
+                                          id: '111113000000004602'
+                                        type: field
+                                      - sequence_number: 19
+                                        resource:
+                                          name: Email_Opt_Out
+                                          id: '111113000000004604'
+                                        type: field
+                                      - sequence_number: 20
+                                        resource:
+                                          name: Skype_ID
+                                          id: '111113000000004606'
+                                        type: field
+                                      - sequence_number: 21
+                                        resource:
+                                          name: Secondary_Email
+                                          id: '111113000000004624'
+                                        type: field
+                                      - sequence_number: 22
+                                        resource:
+                                          name: Twitter
+                                          id: '111113000000004632'
+                                        type: field
+                                    id: '111113000000106232'
+                                    type: composite
+                                  - sequence_number: 3
+                                    display_label: Dummy
+                                    buttons:
+                                      - color: '#fff'
+                                        shape: capsule
+                                        visibility: show
+                                        target_screen:
+                                          name: Screen 2
+                                          id: '111113000000106225'
+                                        type: transition
+                                        sequence_number: 1
+                                        display_label: Next
+                                        background_color: '#00A3F3'
+                                        name: WB_Next
+                                        id: '111113000000106258'
+                                        category: wizard_button
+                                    column_count: 2
+                                    id: '111113000000106236'
+                                    type: buttons
+                              - display_label: Screen 3
+                                api_name: Screen_3
+                                id: '111113000000106227'
+                                segments:
+                                  - sequence_number: 1
+                                    display_label: Description Information
+                                    column_count: 2
+                                    elements:
+                                      - sequence_number: 1
+                                        resource:
+                                          name: Description
+                                          id: '111113000000004686'
+                                        type: field
+                                    id: '111113000000106242'
+                                    type: composite
+                                  - sequence_number: 2
+                                    display_label: Dummy
+                                    buttons:
+                                      - color: '#fff'
+                                        shape: capsule
+                                        visibility: show
+                                        type: save
+                                        sequence_number: 1
+                                        display_label: Save
+                                        background_color: '#00A3F3'
+                                        name: WB_Save
+                                        id: '111113000000106399'
+                                        category: wizard_button
+                                    column_count: 2
+                                    id: '111113000000106244'
+                                    type: buttons
+                              - display_label: Screen 2
+                                api_name: Screen_2
+                                id: '111113000000106225'
+                                segments:
+                                  - sequence_number: 1
+                                    display_label: Address Information
+                                    column_count: 2
+                                    elements:
+                                      - sequence_number: 1
+                                        resource:
+                                          name: Mailing_Street
+                                          id: '111113000000004666'
+                                        type: field
+                                      - sequence_number: 2
+                                        resource:
+                                          name: Other_Street
+                                          id: '111113000000004668'
+                                        type: field
+                                      - sequence_number: 3
+                                        resource:
+                                          name: Mailing_City
+                                          id: '111113000000004670'
+                                        type: field
+                                      - sequence_number: 4
+                                        resource:
+                                          name: Other_City
+                                          id: '111113000000004672'
+                                        type: field
+                                      - sequence_number: 5
+                                        resource:
+                                          name: Mailing_State
+                                          id: '111113000000004674'
+                                        type: field
+                                      - sequence_number: 6
+                                        resource:
+                                          name: Other_State
+                                          id: '111113000000004676'
+                                        type: field
+                                      - sequence_number: 7
+                                        resource:
+                                          name: Mailing_Zip
+                                          id: '111113000000004678'
+                                        type: field
+                                      - sequence_number: 8
+                                        resource:
+                                          name: Other_Zip
+                                          id: '111113000000004680'
+                                        type: field
+                                      - sequence_number: 9
+                                        resource:
+                                          name: Mailing_Country
+                                          id: '111113000000004682'
+                                        type: field
+                                      - sequence_number: 10
+                                        resource:
+                                          name: Other_Country
+                                          id: '111113000000004684'
+                                        type: field
+                                    id: '111113000000106238'
+                                    type: composite
+                                  - sequence_number: 2
+                                    display_label: Dummy
+                                    buttons:
+                                      - color: '#fff'
+                                        shape: capsule
+                                        visibility: show
+                                        target_screen:
+                                          name: Screen 3
+                                          id: '111113000000106227'
+                                        type: transition
+                                        sequence_number: 1
+                                        display_label: Next
+                                        background_color: '#00A3F3'
+                                        name: WB_Next_1
+                                        id: '111113000000106358'
+                                        category: wizard_button
+                                    column_count: 2
+                                    id: '111113000000106240'
+                                    type: buttons
+                            id: '111113000000003656'
+                  description: >-
+                    Shows the full wizard configuration including containers,
+                    screens, segments, buttons, and chart flow data for the
+                    specified layout.
+        '204':
+          description: The request succeeded. No content returns in the response body.
+        '400':
+          description: >-
+            The request was malformed or contained invalid parameters.
+
+            **Resolution:** The request URL and parameters must use valid
+            values. Refer to the API documentation for the required format.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response returned when the request
+                  contains invalid or missing parameters.
+                x-zs-$id: WizardsDetailGetErrorResponses
+                oneOf:
+                  - description: >-
+                      Represents the error response returned when a required
+                      parameter is missing in the request.
+                    type: object
+                    x-zs-$id: WizardsDetailRequiredParamMissingError
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the status of the request, indicating that
+                          the request failed.
+                      code:
+                        type: string
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                        description: >-
+                          Represents the error code returned when a required
+                          parameter is missing.
+                      message:
+                        type: string
+                        maxLength: 255
+                        description: >-
+                          Represents the error message returned when a required
+                          parameter is missing.
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Represents additional information about the missing
+                          parameter that caused the error.
+                        properties:
+                          api_name:
+                            type: string
+                            maxLength: 255
+                            description: >-
+                              Represents the API name of the missing parameter
+                              that caused the validation error.
+                        required:
+                          - api_name
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - description: >-
+                      Represents the error response returned when one of the
+                      expected layout parameters is missing from the request.
+                    type: object
+                    x-zs-$id: WizardsDetailExpectedParamMissingError
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the status of the request, indicating that
+                          the request failed.
+                      code:
+                        type: string
+                        enum:
+                          - EXPECTED_PARAM_MISSING
+                        description: >-
+                          Represents the error code returned when a required
+                          query parameter is missing.
+                      message:
+                        type: string
+                        maxLength: 255
+                        description: >-
+                          Represents the error message returned when expected
+                          parameters are missing from the request.
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Represents additional details about the missing
+                          expected parameters.
+                        properties:
+                          param_names:
+                            type: array
+                            description: >-
+                              Represents the list of expected parameter names
+                              that are missing from the request.
+                            maxItems: 50
+                            items:
+                              type: string
+                              maxLength: 255
+                              description: >-
+                                Represents the name of an expected query
+                                parameter that is missing from the request.
+                            minItems: 1
+                        required:
+                          - param_names
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - description: >-
+                      Represents the error response returned when the module
+                      name or query parameters are invalid.
+                    type: object
+                    x-zs-$id: WizardsDetailInvalidModuleError
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the status of the request, indicating that
+                          the request failed.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_MODULE
+                        description: >-
+                          Represents the error code returned when the module
+                          specified in the request is invalid.
+                      message:
+                        type: string
+                        maxLength: 255
+                        description: >-
+                          Represents the error message describing the validation
+                          failure.
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the error. Returns
+                          an empty object when no additional details are
+                          available.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - description: >-
+                      Represents the error response returned when the wizard
+                      identifier is invalid.
+                    type: object
+                    x-zs-$id: WizardsDetailInvalidDataError
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the status of the request, indicating that
+                          the request failed.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                        description: >-
+                          Represents the error code returned when the wizard
+                          identifier in the request is invalid.
+                      message:
+                        type: string
+                        maxLength: 255
+                        description: >-
+                          Represents the error message describing the validation
+                          failure.
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the invalid field
+                          that caused the validation error.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            maxLength: 255
+                            description: >-
+                              Represents the API name of the invalid field that
+                              caused the validation error.
+                          json_path:
+                            type: string
+                            maxLength: 255
+                            description: >-
+                              Represents the JSON path pointing to the invalid
+                              field in the request.
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+              examples:
+                MissingParameter:
+                  summary: The required module parameter was not found.
+                  description: >-
+                    Shows a 400 error response when the required module
+                    parameter is missing from the request.
+                  value:
+                    status: error
+                    code: REQUIRED_PARAM_MISSING
+                    message: The parameter 'module' is required.
+                    details:
+                      api_name: module
+                ExpectedParameterMissing:
+                  summary: One of the expected layout parameters is missing.
+                  description: >-
+                    Shows a 400 error response when one of the expected layout
+                    parameters is missing from the request.
+                  value:
+                    status: error
+                    code: EXPECTED_PARAM_MISSING
+                    message: One of the expected parameter is missing
+                    details:
+                      param_names:
+                        - layout_rid
+                        - layout_id
+                InvalidModule:
+                  summary: The module specified is invalid.
+                  value:
+                    status: error
+                    code: INVALID_MODULE
+                    message: The module name seems to be invalid
+                    details: {}
+                  description: >-
+                    Shows a 400 error response when the module name provided is
+                    not valid.
+        '401':
+          description: >-
+            Authentication credentials are missing or invalid.
+
+            **Resolution:** A new access token must be generated with the
+            required scope for this API.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetWizardUnauthorizedErrorResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: GetWizardOauthScopeMismatchError
+                    description: >-
+                      Represents the error response returned when the OAuth
+                      access token does not include the required scope.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - OAUTH_SCOPE_MISMATCH
+                        description: >-
+                          Represents the error code returned when the OAuth
+                          access token does not include the required scope.
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Represents additional details about the authentication
+                          error. Returns an empty object when no additional
+                          details are available.
+                      message:
+                        type: string
+                        description: Human-readable error message.
+                        maxLength: 255
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the status of the request, indicating that
+                          the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: GetWizardInvalidTokenError
+                    description: >-
+                      Represents the error response returned when the OAuth
+                      access token is invalid or has expired.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_TOKEN
+                        description: >-
+                          Represents the error code returned when the OAuth
+                          access token is invalid or has expired.
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Represents additional details about the authentication
+                          error. Returns an empty object when no additional
+                          details are available.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          authentication failure.
+                        maxLength: 255
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the status of the request, indicating that
+                          the request failed.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: >-
+                  Represents the error response returned when authentication
+                  credentials are missing or invalid.
+              examples:
+                OauthScopeMismatch:
+                  summary: OAuth token lacks ZohoCRM.settings.wizards.READ scope.
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: invalid oauth scope to access this URL
+                    status: error
+                  description: >-
+                    Shows a 401 error response when the access token does not
+                    include the ZohoCRM.settings.wizards.READ scope.
+                InvalidToken:
+                  summary: OAuth token is invalid or expired.
+                  value:
+                    code: INVALID_TOKEN
+                    details: {}
+                    message: invalid oauth token
+                    status: error
+                  description: >-
+                    Shows a 401 error response when the access token provided is
+                    invalid or has expired.
+        '403':
+          description: >-
+            Permission denied to retrieve wizard details.
+
+            **Resolution:** The Zoho CRM administrator must grant the required
+            permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetWizardForbiddenError
+                description: >-
+                  Represents the error response returned when the user lacks the
+                  required permission to perform the operation.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - NO_PERMISSION
+                    description: >-
+                      Represents the error code returned when the user does not
+                      have permission to perform the operation.
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional details about the permissions
+                      required to perform the operation.
+                    additionalProperties: false
+                    required:
+                      - permissions
+                    properties:
+                      permissions:
+                        type: array
+                        maxItems: 50
+                        items:
+                          type: string
+                          maxLength: 255
+                          description: >-
+                            Represents the name of a permission required to
+                            access this resource.
+                        description: >-
+                          Represents the list of permissions required to access
+                          this resource.
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the permission
+                      denial.
+                    maxLength: 255
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: >-
+                      Represents the status of the request, indicating that the
+                      request failed.
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                NoPermission:
+                  summary: User lacks permission to read wizards.
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - 'Zoho CRM: Settings Permission'
+                    message: Permission denied to read wizards
+                    status: error
+                  description: >-
+                    Shows a 403 error response when the user's profile does not
+                    have permission to read wizard details.
+        '404':
+          description: >-
+            The requested wizard resource was not found.
+
+            **Resolution:** The wizard ID and layout ID in the request must
+            correspond to existing resources in the Zoho CRM organization.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response returned when the requested
+                  wizard resource is not found.
+                x-zs-$id: GetWizardErrorResponses404
+                oneOf:
+                  - x-zs-$id: GetWizardErrorResponse404
+                    type: object
+                    description: >-
+                      Represents the error response returned when the URL
+                      pattern is invalid or the wizard identifier does not
+                      exist.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the status of the request, indicating that
+                          the request has failed.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_URL_PATTERN
+                        description: >-
+                          Represents the error code returned when the URL
+                          pattern is invalid or the requested resource does not
+                          exist.
+                      message:
+                        type: string
+                        maxLength: 255
+                        description: >-
+                          Represents the error message explaining why the
+                          requested resource was not found.
+                      details:
+                        type: object
+                        description: Additional information about the error, if available.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+              examples:
+                InvalidUrlPattern:
+                  summary: Invalid URL pattern or wizard identifier.
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                  description: >-
+                    Shows a 404 error response when the request URL does not
+                    match a valid endpoint pattern.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.wizards.READ
+components:
+  parameters:
+    Module:
+      name: module
+      in: query
+      required: false
+      description: >-
+        Specify the API name of the module for which you want to retrieve
+        wizards. Refer to the [Get
+        Modules](modules.yaml#$.paths./settings/modules.get) resource for valid
+        values.
+      schema:
+        type: string
+        maxLength: 50
+        description: API name of the module (e.g. Leads, Contacts, Deals).
+    Id:
+      name: id
+      in: path
+      required: true
+      description: Specify the unique ID of the wizard to retrieve or delete.
+      schema:
+        type: string
+        format: int64
+        description: Numeric unique identifier of the wizard.
+    LayoutId:
+      name: layout_id
+      in: query
+      required: true
+      description: >-
+        Specify the unique ID of the layout associated with the wizard. Refer to
+        the [Get Layouts](layouts.yaml#$.paths./settings/layouts.get) resource
+        for valid values.
+      schema:
+        type: string
+        format: int64
+        description: Numeric unique identifier of the layout.
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication scheme using Zoho Accounts.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.wizards.ALL: >-
+              Grants full access to wizard configurations in the CRM
+              organization, including read, create, update, and delete
+              operations.
+            ZohoCRM.settings.wizards.READ: >-
+              Grants read access to wizard configurations in the CRM
+              organization.
+            ZohoCRM.settings.wizards.CREATE: >-
+              Grants permission to create wizard configurations in the CRM
+              organization.
+            ZohoCRM.settings.wizards.UPDATE: >-
+              Grants permission to update wizard configurations in the CRM
+              organization.
+            ZohoCRM.settings.wizards.DELETE: >-
+              Grants permission to delete wizard configurations from the CRM
+              organization.

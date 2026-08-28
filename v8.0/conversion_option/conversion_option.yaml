@@ -1,0 +1,1021 @@
+openapi: 3.1.0
+info:
+  title: Zoho CRM Lead Conversion Options API
+  description: >-
+    API endpoint for retrieving lead conversion options, including matching
+    contacts, accounts, field mappings, and layout preferences. This helps
+    determine available conversion paths before performing the actual lead
+    conversion.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /Leads/{leadId}/__conversion_options:
+    get:
+      summary: Lead Conversion Options
+      description: >-
+        Retrieves available conversion options for a lead including matching
+        contacts, accounts, field mappings, and layout preferences. This
+        endpoint helps determine what conversion paths are available before
+        performing the actual lead conversion.
+      operationId: getLeadConversionOptions
+      parameters:
+        - $ref: '#/components/parameters/LeadId'
+        - $ref: '#/components/parameters/IncludeInnerDetails'
+      responses:
+        '200':
+          description: >-
+            Successfully retrieved lead conversion options. Returns available
+            contacts, accounts, field mappings, and layout preferences for the
+            specified lead.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ConversionOptionsResponse
+                type: object
+                description: >-
+                  Conversion options response containing available contacts,
+                  accounts, and field mappings for lead conversion
+                additionalProperties: false
+                properties:
+                  __conversion_options:
+                    type: object
+                    description: Container for all conversion option data
+                    additionalProperties: false
+                    properties:
+                      module_preference:
+                        description: >-
+                          Represents the preferred module selected for lead
+                          conversion. Returns the module API name and ID when a
+                          preference exists, or null when no preference is set.
+                        oneOf:
+                          - x-zs-$id: PreferredModule
+                            type: object
+                            description: >-
+                              Preferred module for conversion based on system
+                              configuration
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: API name of the preferred module
+                                maxLength: 100
+                                x-zs-$id: ConversionOptionApiName
+                              id:
+                                type: string
+                                description: >-
+                                  Unique identifier of the preferred module
+                                  (int64 as string)
+                                pattern: ^[0-9]+$
+                                maxLength: 50
+                                x-zs-$id: ConversionOptionId
+                            required:
+                              - api_name
+                              - id
+                          - type: 'null'
+                            x-zs-$id: NoPreferredModule
+                            description: No module preference set
+                      Contacts:
+                        description: >-
+                          Represents matching Contact records for the lead.
+                          Returns an array when matches exist, or null when no
+                          matching contacts are found.
+                        oneOf:
+                          - type: array
+                            x-zs-$id: MatchingContactsArray
+                            description: >-
+                              Array of existing Contact records that match the
+                              lead data
+                            maxItems: 100
+                            items:
+                              type: object
+                              description: Contact record with matching lead information
+                              additionalProperties: false
+                              properties:
+                                Full_Name:
+                                  type: string
+                                  description: Full name of the contact
+                                  maxLength: 200
+                                Email:
+                                  description: >-
+                                    Represents the contact email value. Returns
+                                    the email address when available, or null
+                                    when the contact has no email value.
+                                  oneOf:
+                                    - type: string
+                                      x-zs-$id: ContactEmail
+                                      description: Email address of the contact
+                                      format: email
+                                    - type: 'null'
+                                      x-zs-$id: NoContactEmail
+                                      description: No email address provided
+                                Layout:
+                                  type: object
+                                  description: Layout information for the contact record
+                                  additionalProperties: false
+                                  properties:
+                                    name:
+                                      type: string
+                                      description: Name of the layout
+                                      maxLength: 100
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Unique identifier of the layout (int64
+                                        as string)
+                                      pattern: ^[0-9]+$
+                                      maxLength: 50
+                                      x-zs-$id: ConversionOptionLayoutId
+                                  required:
+                                    - name
+                                    - id
+                                Locked__s:
+                                  type: boolean
+                                  description: Indicates if the contact record is locked
+                                Account_Name:
+                                  description: >-
+                                    Represents the account associated with the
+                                    matched contact. Returns account details
+                                    when an association exists, or null when no
+                                    account is linked.
+                                  oneOf:
+                                    - type: object
+                                      x-zs-$id: AssociatedAccount
+                                      description: Associated account information
+                                      additionalProperties: false
+                                      properties:
+                                        id:
+                                          type: string
+                                          description: >-
+                                            Unique identifier of the account (int64
+                                            as string)
+                                          pattern: ^[0-9]+$
+                                          maxLength: 50
+                                          x-zs-$id: ConversionOptionAccountNameId
+                                        name:
+                                          type: string
+                                          description: Name of the account
+                                          maxLength: 200
+                                        Locked__s:
+                                          type: boolean
+                                          description: >-
+                                            Indicates if the account record is
+                                            locked
+                                      required:
+                                        - id
+                                        - name
+                                        - Locked__s
+                                    - type: 'null'
+                                      x-zs-$id: NoAssociatedAccount
+                                      description: No account associated with this contact
+                                $editable:
+                                  type: boolean
+                                  description: >-
+                                    Indicates if the contact record can be
+                                    edited
+                                id:
+                                  type: string
+                                  description: >-
+                                    Unique identifier of the contact record
+                                    (int64 as string)
+                                  pattern: ^[0-9]+$
+                                  maxLength: 50
+                                  x-zs-$id: LeadConversionOptionsId
+                                $approval_state:
+                                  type: string
+                                  description: Current approval state of the contact record
+                                  enum:
+                                    - approved
+                                    - pending
+                                    - rejected
+                                    - approval_process_pending
+                                    - approval_process_rejected
+                                Data_Processing_Basis:
+                                  description: >-
+                                    Represents the GDPR data processing basis
+                                    for the matched contact. Returns a basis
+                                    value when configured, or null when it is
+                                    not specified.
+                                  oneOf:
+                                    - type: string
+                                      x-zs-$id: ContactGDPRBasis
+                                      description: >-
+                                        GDPR data processing basis for the
+                                        contact
+                                      maxLength: 100
+                                    - type: 'null'
+                                      x-zs-$id: NoContactGDPRBasis
+                                      description: No GDPR data processing basis specified
+                              required:
+                                - Full_Name
+                                - Email
+                                - Locked__s
+                                - $editable
+                                - id
+                                - $approval_state
+                                - Data_Processing_Basis
+                          - type: 'null'
+                            x-zs-$id: NoMatchingContacts
+                            description: No contacts found matching the lead data
+                      Accounts:
+                        description: >-
+                          Represents matching Account records for the lead.
+                          Returns an array when matches exist, or null when no
+                          matching accounts are found.
+                        oneOf:
+                          - type: array
+                            x-zs-$id: MatchingAccountsArray
+                            description: >-
+                              Array of existing Account records that match the
+                              lead data
+                            maxItems: 100
+                            items:
+                              type: object
+                              description: Account record with matching lead information
+                              additionalProperties: false
+                              properties:
+                                Phone:
+                                  description: >-
+                                    Represents the account phone value. Returns
+                                    a phone number when available, or null when
+                                    the account has no phone value.
+                                  oneOf:
+                                    - type: string
+                                      x-zs-$id: AccountPhone
+                                      description: Phone number of the account
+                                      maxLength: 50
+                                    - type: 'null'
+                                      x-zs-$id: NoAccountPhone
+                                      description: No phone number provided
+                                Account_Type:
+                                  description: >-
+                                    Represents the account type value. Returns
+                                    the account type when available, or null
+                                    when the account type is not specified.
+                                  oneOf:
+                                    - type: string
+                                      x-zs-$id: AccountType
+                                      description: Type of the account
+                                      maxLength: 100
+                                    - type: 'null'
+                                      x-zs-$id: NoAccountType
+                                      description: No account type specified
+                                Website:
+                                  description: >-
+                                    Represents the account website value.
+                                    Returns the website URL when available, or
+                                    null when the account has no website value.
+                                  oneOf:
+                                    - type: string
+                                      x-zs-$id: AccountWebsite
+                                      description: Website URL of the account
+                                      maxLength: 2000
+                                    - type: 'null'
+                                      x-zs-$id: NoAccountWebsite
+                                      description: No website URL provided
+                                Account_Name:
+                                  type: string
+                                  description: Name of the account
+                                  maxLength: 200
+                                $editable:
+                                  type: boolean
+                                  description: >-
+                                    Indicates if the account record can be
+                                    edited
+                                Locked__s:
+                                  type: boolean
+                                  description: Indicates if the account record is locked
+                                $approval_state:
+                                  type: string
+                                  description: Current approval state of the account record
+                                  enum:
+                                    - approved
+                                    - pending
+                                    - rejected
+                                    - approval_process_pending
+                                    - approval_process_rejected
+                                id:
+                                  type: string
+                                  description: >-
+                                    Unique identifier of the account record
+                                    (int64 as string)
+                                  pattern: ^[0-9]+$
+                                  maxLength: 50
+                                  x-zs-$id: ConversionOptionAccountsId
+                              required:
+                                - Phone
+                                - Account_Type
+                                - Website
+                                - Account_Name
+                                - $editable
+                                - Locked__s
+                                - $approval_state
+                                - id
+                          - type: 'null'
+                            x-zs-$id: NoMatchingAccounts
+                            description: No accounts found matching the lead data
+                      preference_field_matched_value:
+                        description: >-
+                          Represents field-level values from the lead that match
+                          existing Contact and Account fields. Returns mapped
+                          field details when matches exist, or null when no
+                          mappings are available.
+                        oneOf:
+                          - type: object
+                            x-zs-$id: FieldMappings
+                            description: >-
+                              Field mappings showing how lead values match to
+                              Contact and Account fields
+                            additionalProperties: false
+                            properties:
+                              Contacts:
+                                description: >-
+                                  Represents Contact field mappings for matched
+                                  lead values. Returns mapping entries when
+                                  Contact matches exist, or null when no Contact
+                                  mappings are available.
+                                oneOf:
+                                  - type: array
+                                    x-zs-$id: ContactFieldMappingsArray
+                                    description: Contact field mappings
+                                    maxItems: 50
+                                    items:
+                                      type: object
+                                      description: Field mapping for contact
+                                      additionalProperties: false
+                                      properties:
+                                        field:
+                                          type: object
+                                          description: >-
+                                            Details of the field being mapped,
+                                            including its API name, display label,
+                                            uniqueness constraint, and ID.
+                                          additionalProperties: false
+                                          properties:
+                                            api_name:
+                                              type: string
+                                              description: API name of the field
+                                              maxLength: 100
+                                              x-zs-$id: ConversionOptionFieldApiName
+                                            field_label:
+                                              type: string
+                                              description: Display label of the field
+                                              maxLength: 200
+                                            unique:
+                                              description: >-
+                                                Represents whether the matched Contact
+                                                field has a uniqueness constraint.
+                                                Returns a Boolean when uniqueness
+                                                metadata is available, or null when it
+                                                is not available.
+                                              oneOf:
+                                                - type: boolean
+                                                  x-zs-$id: IsFieldUnique
+                                                  description: >-
+                                                    Indicates if the field has unique
+                                                    constraint
+                                                - type: 'null'
+                                                  x-zs-$id: NoFieldUniqueInfo
+                                                  description: >-
+                                                    Field does not have unique constraint
+                                                    information
+                                            id:
+                                              type: string
+                                              description: >-
+                                                Unique identifier of the field (int64 as
+                                                string)
+                                              pattern: ^[0-9]+$
+                                              maxLength: 50
+                                              x-zs-$id: ConversionOptionFieldId
+                                          required:
+                                            - api_name
+                                            - id
+                                        matched_lead_value:
+                                          type: string
+                                          description: >-
+                                            Value from the lead that matches this
+                                            field
+                                          maxLength: 500
+                                      required:
+                                        - field
+                                        - matched_lead_value
+                                  - type: 'null'
+                                    x-zs-$id: NoContactFieldMappings
+                                    description: No contact field mappings available
+                              Accounts:
+                                description: >-
+                                  Represents Account field mappings for matched
+                                  lead values. Returns mapping entries when
+                                  Account matches exist, or null when no Account
+                                  mappings are available.
+                                oneOf:
+                                  - type: array
+                                    x-zs-$id: AccountFieldMappingsArray
+                                    description: Account field mappings
+                                    maxItems: 50
+                                    items:
+                                      type: object
+                                      description: Field mapping for account
+                                      additionalProperties: false
+                                      properties:
+                                        field:
+                                          type: object
+                                          description: >-
+                                            Details of the field being mapped,
+                                            including its API name, display label,
+                                            uniqueness constraint, and ID.
+                                          additionalProperties: false
+                                          properties:
+                                            api_name:
+                                              type: string
+                                              description: API name of the field
+                                              maxLength: 100
+                                              x-zs-$id: LeadConversionOptionsApiName2
+                                            field_label:
+                                              type: string
+                                              description: Display label of the field
+                                              maxLength: 200
+                                            unique:
+                                              description: >-
+                                                Indicates whether the matched Account
+                                                field has a uniqueness constraint.
+                                                Returns true if the field is unique,
+                                                false if it is not, or null if the
+                                                uniqueness metadata is unavailable.
+                                              oneOf:
+                                                - type: boolean
+                                                  x-zs-$id: IsAccountFieldUnique
+                                                  description: >-
+                                                    Indicates if the field has unique
+                                                    constraint
+                                                - type: 'null'
+                                                  x-zs-$id: NoAccountFieldUniqueInfo
+                                                  description: >-
+                                                    Field does not have unique constraint
+                                                    information
+                                            id:
+                                              type: string
+                                              description: >-
+                                                Unique identifier of the field (int64 as
+                                                string)
+                                              pattern: ^[0-9]+$
+                                              maxLength: 50
+                                              x-zs-$id: LeadConversionOptionsId2
+                                          required:
+                                            - api_name
+                                            - id
+                                        matched_lead_value:
+                                          type: string
+                                          description: >-
+                                            Value from the lead that matches this
+                                            field
+                                          maxLength: 500
+                                      required:
+                                        - field
+                                        - matched_lead_value
+                                  - type: 'null'
+                                    x-zs-$id: NoAccountFieldMappings
+                                    description: No account field mappings available
+                          - type: 'null'
+                            x-zs-$id: NoFieldMappings
+                            description: No field mappings available for conversion
+                      modules_with_multiple_layouts:
+                        description: >-
+                          Represents modules that provide multiple layout
+                          choices during conversion. Returns module details when
+                          available, or null when no module offers multiple
+                          layouts.
+                        oneOf:
+                          - type: array
+                            x-zs-$id: ModulesWithMultipleLayoutsArray
+                            description: >-
+                              Modules that have multiple layout options
+                              available
+                            maxItems: 20
+                            items:
+                              type: object
+                              description: Module with multiple layouts
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: API name of the module
+                                  maxLength: 100
+                                  x-zs-$id: LeadConversionOptionsApiName
+                                id:
+                                  type: string
+                                  description: >-
+                                    Unique identifier of the module (int64 as
+                                    string)
+                                  pattern: ^[0-9]+$
+                                  maxLength: 50
+                                  x-zs-$id: ConversionOptionModulesWithMultipleLayoutsId
+                              required:
+                                - api_name
+                                - id
+                          - type: 'null'
+                            x-zs-$id: MultipleMappingsArray
+                            description: No modules have multiple layout options
+                    required:
+                      - module_preference
+                      - Contacts
+                      - Accounts
+                      - preference_field_matched_value
+                      - modules_with_multiple_layouts
+              examples:
+                ConversionOptionsResponse:
+                  summary: Conversion options with matched contacts and accounts
+                  description: >-
+                    Shows a successful response with matched Contact and Account
+                    records, including preferred module details and field-level
+                    mapping values.
+                  value:
+                    __conversion_options:
+                      module_preference:
+                        api_name: Accounts
+                        id: '1041770000000002177'
+                      Contacts:
+                        - Full_Name: abc
+                          Email: null
+                          Layout:
+                            name: new
+                            id: '1041770000003952003'
+                          Locked__s: false
+                          Account_Name:
+                            name: xyz
+                            Locked__s: false
+                            id: '1041770000009242000'
+                          $editable: true
+                          id: '1041770000009231053'
+                          $approval_state: approved
+                          Data_Processing_Basis: 'null'
+                      preference_field_matched_value:
+                        Contacts:
+                          - field:
+                              api_name: Full_Name
+                              field_label: Full Name
+                              unique: null
+                              id: '1041770000000002529'
+                            matched_lead_value: abc
+                        Accounts:
+                          - field:
+                              api_name: Account_Name
+                              field_label: Account Name
+                              unique: null
+                              id: '1041770000000002425'
+                            matched_lead_value: xyz
+                      Accounts:
+                        - Phone: null
+                          Account_Type: null
+                          Locked__s: false
+                          Website: null
+                          Account_Name: xyz
+                          $editable: true
+                          id: '1041770000009242000'
+                          $approval_state: approved
+                      modules_with_multiple_layouts:
+                        - api_name: Contacts
+                          id: '1041770000000002179'
+                        - api_name: Deals
+                          id: '1041770000000002181'
+                NoMatchingRecordsResponse:
+                  summary: >-
+                    Conversion options when no matching contacts or accounts are
+                    found
+                  description: >-
+                    Shows a response where no matching Contact or Account
+                    records are available and only conversion layout context is
+                    returned.
+                  value:
+                    __conversion_options:
+                      module_preference: null
+                      Contacts: null
+                      preference_field_matched_value: null
+                      Accounts: null
+                      modules_with_multiple_layouts:
+                        - api_name: Contacts
+                          id: '1041770000000002179'
+                        - api_name: Deals
+                          id: '1041770000000002181'
+                MultipleContactsResponse:
+                  summary: >-
+                    Conversion options with multiple matching contacts but no
+                    accounts
+                  description: >-
+                    Shows a response with multiple matched Contact records, no
+                    matched Account records, and Contact-specific field mapping
+                    details.
+                  value:
+                    __conversion_options:
+                      module_preference:
+                        api_name: Contacts
+                        id: '1041770000000002179'
+                      Contacts:
+                        - Full_Name: abc
+                          Email: null
+                          Layout:
+                            name: new
+                            id: '1041770000003952003'
+                          Locked__s: false
+                          Account_Name:
+                            name: xyz
+                            Locked__s: false
+                            id: '1041770000009242000'
+                          $editable: true
+                          id: '1041770000009231053'
+                          $approval_state: approved
+                          Data_Processing_Basis: 'null'
+                        - Full_Name: abc
+                          Email: null
+                          Layout:
+                            name: new
+                            id: '1041770000003952003'
+                          Locked__s: false
+                          Account_Name: null
+                          $editable: true
+                          id: '1041770000009225124'
+                          $approval_state: approved
+                          Data_Processing_Basis: 'null'
+                      preference_field_matched_value:
+                        Contacts:
+                          - field:
+                              api_name: Full_Name
+                              field_label: Full Name
+                              unique: null
+                              id: '1041770000000002529'
+                            matched_lead_value: abc
+                        Accounts: null
+                      Accounts: null
+                      modules_with_multiple_layouts:
+                        - api_name: Contacts
+                          id: '1041770000000002179'
+                        - api_name: Deals
+                          id: '1041770000000002181'
+                MinimalOptionsResponse:
+                  summary: Conversion options with only layout information available
+                  description: >-
+                    Shows a minimal response where no module preference, matched
+                    records, or field mappings are available. Only
+                    layout-related module entries are returned.
+                  value:
+                    __conversion_options:
+                      module_preference: null
+                      Contacts: null
+                      preference_field_matched_value: null
+                      Accounts: null
+                      modules_with_multiple_layouts:
+                        - api_name: Contacts
+                          id: '1041770000000002179'
+                        - api_name: Deals
+                          id: '1041770000000002181'
+                ContactWithSpecialStatesResponse:
+                  summary: >-
+                    Contact with approval pending, data processing stopped, and
+                    record locked
+                  description: >-
+                    Shows a matched Contact record with a pending approval
+                    process, a GDPR stop-processing basis value, and an
+                    indicator that the record is locked.
+                  value:
+                    __conversion_options:
+                      module_preference:
+                        api_name: Contacts
+                        id: '111111000000000044'
+                      Contacts:
+                        - Full_Name: zoho
+                          Email: null
+                          Layout:
+                            name: standard
+                            id: '111111000000000001'
+                          Account_Name: null
+                          $editable: true
+                          $approval_state: approval_process_pending
+                          Data_Processing_Basis: Consent - Stop Processing
+                          Locked__s: true
+                          id: '111111000000055377'
+                      preference_field_matched_value:
+                        Contacts:
+                          - field:
+                              api_name: Full_Name
+                              field_label: Full Name
+                              unique: null
+                              id: '111111000000002478'
+                            matched_lead_value: zoho
+                        Accounts: null
+                      Accounts: null
+                      modules_with_multiple_layouts: null
+                ContactWithAccountSpecialStatesResponse:
+                  summary: >-
+                    Contact with associated account, approval pending, data
+                    processing stopped, and record locked
+                  description: >-
+                    Shows a matched Contact record linked to an Account, with an
+                    approval-process pending state, GDPR stop-processing basis
+                    value, and lock status details.
+                  value:
+                    __conversion_options:
+                      module_preference:
+                        api_name: Contacts
+                        id: '111111000000000044'
+                      Contacts:
+                        - Full_Name: zoho
+                          Email: null
+                          Layout:
+                            name: standard
+                            id: '111111000000000001'
+                          Account_Name:
+                            name: zoho
+                            id: '111111000000055373'
+                            Locked__s: false
+                          $editable: true
+                          $approval_state: approval_process_pending
+                          Data_Processing_Basis: Consent - Stop Processing
+                          Locked__s: true
+                          id: '111111000000055377'
+                      preference_field_matched_value:
+                        Contacts:
+                          - field:
+                              api_name: Full_Name
+                              field_label: Full Name
+                              unique: null
+                              id: '111111000000002478'
+                            matched_lead_value: zoho
+                        Accounts: null
+                      Accounts: null
+                      modules_with_multiple_layouts: null
+                ContactMinimalFieldsResponse:
+                  summary: Contact with minimal fields and approval pending state
+                  description: >-
+                    Shows a matched Contact response with a minimal field set,
+                    approval-process pending state, and no associated Account or
+                    Account field mappings.
+                  value:
+                    __conversion_options:
+                      module_preference:
+                        api_name: Contacts
+                        id: '1041770000000002179'
+                      Contacts:
+                        - Full_Name: abc
+                          Email: null
+                          Layout:
+                            name: standard
+                            id: '1041770000000000001'
+                          Account_Name: null
+                          Locked__s: false
+                          $editable: true
+                          id: '1041770000009231053'
+                          $approval_state: approval_process_pending
+                          Data_Processing_Basis: 'null'
+                      preference_field_matched_value:
+                        Contacts:
+                          - field:
+                              api_name: Full_Name
+                              field_label: Full Name
+                              unique: null
+                              id: '1041770000000002529'
+                            matched_lead_value: abc
+                      Accounts: null
+                      modules_with_multiple_layouts: null
+                MultipleContactsWithDifferentStatesResponse:
+                  summary: Multiple contacts with different approval states
+                  description: >-
+                    Shows multiple matched Contact records where approval states
+                    differ across entries, alongside shared field mapping data.
+                  value:
+                    __conversion_options:
+                      module_preference:
+                        api_name: Contacts
+                        id: '1041770000000002179'
+                      Contacts:
+                        - Full_Name: abc
+                          Email: null
+                          Layout:
+                            name: standard
+                            id: '1041770000000000001'
+                          Account_Name: null
+                          Locked__s: false
+                          $editable: true
+                          id: '1041770000009243193'
+                          $approval_state: approved
+                          Data_Processing_Basis: 'null'
+                        - Full_Name: abc
+                          Email: null
+                          Layout:
+                            name: standard
+                            id: '1041770000000000001'
+                          Account_Name: null
+                          Locked__s: false
+                          $editable: true
+                          id: '1041770000009231053'
+                          $approval_state: approval_process_pending
+                          Data_Processing_Basis: 'null'
+                      preference_field_matched_value:
+                        Contacts:
+                          - field:
+                              api_name: Full_Name
+                              field_label: Full Name
+                              unique: null
+                              id: '1041770000000002529'
+                            matched_lead_value: abc
+                        Accounts: null
+                      Accounts: null
+                      modules_with_multiple_layouts: null
+                MultipleContactsSimplifiedResponse:
+                  summary: >-
+                    Multiple contacts with different approval states -
+                    simplified structure
+                  description: >-
+                    Shows a simplified multiple-contact response where entries
+                    have different approval states and no matched Account
+                    records.
+                  value:
+                    __conversion_options:
+                      module_preference:
+                        api_name: Contacts
+                        id: '1041770000000002179'
+                      Contacts:
+                        - Full_Name: abc
+                          Email: null
+                          Layout:
+                            name: standard
+                            id: '1041770000000000001'
+                          Account_Name: null
+                          Locked__s: false
+                          $editable: true
+                          id: '1041770000009243193'
+                          $approval_state: approved
+                          Data_Processing_Basis: 'null'
+                        - Full_Name: abc
+                          Email: null
+                          Layout:
+                            name: standard
+                            id: '1041770000000000001'
+                          Account_Name: null
+                          Locked__s: false
+                          $editable: true
+                          id: '1041770000009231053'
+                          $approval_state: approval_process_pending
+                          Data_Processing_Basis: 'null'
+                      preference_field_matched_value:
+                        Contacts:
+                          - field:
+                              api_name: Full_Name
+                              field_label: Full Name
+                              unique: null
+                              id: '1041770000000002529'
+                            matched_lead_value: abc
+                        Accounts: null
+                      Accounts: null
+                      modules_with_multiple_layouts: null
+        '204':
+          description: >-
+            No conversion options available for this lead. The lead may not have
+            any matching records or predefined conversion paths.
+        '400':
+          description: >-
+            Bad request due to invalid lead ID, record approval issues, or
+            record locking conflicts.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ErrorResponseSchema
+                description: >-
+                  Represents the error response payload returned when the lead
+                  conversion options request fails validation or encounters
+                  record state restrictions.
+                oneOf:
+                  - type: object
+                    x-zs-$id: ErrorResponse
+                    description: Standard error response for invalid data or record issues
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: Error code indicating the type of failure
+                        enum:
+                          - INVALID_DATA
+                          - NOT_APPROVED
+                          - RECORD_LOCKED
+                      message:
+                        type: string
+                        description: Human-readable error message describing the issue
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: Status of the request
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Additional error details including resource path
+                          information
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Index of the resource path parameter that caused
+                              the error
+                        required:
+                          - resource_path_index
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+              examples:
+                InvalidLeadId:
+                  summary: Invalid lead ID provided
+                  description: >-
+                    Shows the error response returned when the provided Lead ID
+                    is invalid.
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                    message: the given id seems to be invalid
+                    status: error
+                NotApprovedLead:
+                  summary: Lead record is not approved
+                  description: >-
+                    Shows the error response returned when the Lead record is
+                    not approved.
+                  value:
+                    code: NOT_APPROVED
+                    details:
+                      resource_path_index: 1
+                    message: record not approved
+                    status: error
+                RecordLocked:
+                  summary: Lead record is locked for merging
+                  description: >-
+                    Shows the error response returned when the Lead record is
+                    locked because of an active merge operation.
+                  value:
+                    code: RECORD_LOCKED
+                    details:
+                      resource_path_index: 1
+                    message: record under merge is locked
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.leads.READ
+components:
+  parameters:
+    LeadId:
+      name: leadId
+      in: path
+      required: true
+      description: >
+        The unique identifier of the Lead record (int64 as string) for which you
+        want to retrieve conversion options. Use the [Get Records
+        API](record.yaml#$.paths./module.get) to retrieve the lead record ID.
+      schema:
+        type: string
+        format: int64
+    IncludeInnerDetails:
+      name: include_inner_details
+      in: query
+      required: false
+      description: >-
+        Fetches additional details of lookup or referenced inner resources
+        within the same API call, avoiding separate dependent requests. Accepts
+        a comma-separated list of inner resource paths starting from the root
+        key of the response (the root key itself must not be included). Supports
+        dot notation and JSONPath-style notation (e.g. $..key.sub_key). Invalid
+        or non-permitted paths are silently ignored.
+      style: form
+      explode: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 256
+        description: >-
+          Comma-separated list of inner resource paths to include additional
+          details for
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.leads.READ: Permission required to read records from the Leads module.

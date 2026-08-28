@@ -1,0 +1,21 @@
+# Users API
+
+- [OpenAPI specification](users.yaml)
+- [Get users](mds/getUsers.md)
+  - To retrieve all users in your Zoho CRM organization based on the specified filter parameters, including type, role, query criteria, and field selection.
+  - [Examples](mds/examples/getUsers.md)
+- [Create User](mds/createUser.md)
+  - To create a new user record in your Zoho CRM organization. The request body must contain a `users` array with one user object including the required fields such as email, role, profile, and first name.
+  - [Examples](mds/examples/createUser.md)
+- [Update users](mds/updateUser.md)
+  - To update the details of one or more users in your Zoho CRM organization. The request must include a users array with up to 10 user records, each identified by a unique user ID. You can update user profile settings, role assignments, locale preferences, and other account details.
+  - [Examples](mds/examples/updateUser.md)
+- [Get a specific user](mds/getSingleUser.md)
+  - To retrieve the details of a specific user in Zoho CRM, use the unique user ID as the path parameter.
+  - [Examples](mds/examples/getSingleUser.md)
+- [Update a single user by user ID](mds/updateSingleUser.md)
+  - To update the details of a specific user in your Zoho CRM organization by user ID.
+  - [Examples](mds/examples/updateSingleUser.md)
+- [Delete a user from the organization](mds/deleteUser.md)
+  - To delete a specific user from your Zoho CRM organization, submit a DELETE request with the target user ID. Only one user can be removed per request, and certain protected user types — including support, system, Digital Employee, and primary contact users — cannot be deleted.
+  - [Examples](mds/examples/deleteUser.md)

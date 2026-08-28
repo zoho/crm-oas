@@ -1,0 +1,142 @@
+openapi: 3.1.0
+info:
+  title: From Addresses
+  description: >-
+    From addresses are the email addresses that Zoho CRM users are authorized to
+    use as sender addresses when composing and sending emails from within CRM.
+    This API enables developers to retrieve the list of from-address entries
+    configured for a given user.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: The production API server for Zoho CRM.
+    variables:
+      dc:
+        description: >-
+          The top-level domain suffix of the API server URL, which determines
+          the regional endpoint.
+        default: com
+        enum:
+          - eu
+          - com
+          - au
+          - in
+          - jp
+          - cn
+          - ca
+      version:
+        description: The API version to use for requests. For example, **v8**.
+        default: v8
+paths:
+  /settings/emails/actions/from_addresses:
+    get:
+      summary: Get from addresses
+      description: >-
+        To retrieve the list of email addresses configured as sender addresses
+        for a user in your Zoho CRM organization.
+      operationId: getFromAddresses
+      responses:
+        '200':
+          description: >-
+            Returns the list of from-address entries configured for the
+            requested user.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetFromAddressesResponse
+                type: object
+                description: >-
+                  Represents the successful response body, containing the list
+                  of configured from-address entries.
+                additionalProperties: false
+                properties:
+                  from_addresses:
+                    type: array
+                    description: >-
+                      Represents the list of from-address entries configured for
+                      the user.
+                    maxItems: 200
+                    items:
+                      type: object
+                      description: >-
+                        Represents a single from-address entry, including the
+                        email address, type, display name, unique identifier,
+                        and default status.
+                      additionalProperties: false
+                      properties:
+                        email:
+                          type: string
+                          maxLength: 254
+                          pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+                          description: >-
+                            Represents the email address of the from-address
+                            entry.
+                          x-zs-$id: FromAddressEmail
+                        type:
+                          type: string
+                          maxLength: 32
+                          description: Represents the type of the from-address entry.
+                        user_name:
+                          type: string
+                          maxLength: 256
+                          description: >-
+                            Represents the display name of the user associated
+                            with the from-address entry.
+                        id:
+                          type:
+                            - string
+                            - 'null'
+                          format: int64
+                          description: >-
+                            Represents the unique identifier of the from-address
+                            entry.
+                          x-zs-$id: FromAddressId
+                        default:
+                          type: boolean
+                          description: >-
+                            Indicates whether this is the user's default from
+                            address.
+
+                            Possible values:
+
+                            **true** - This is the default sender address.
+
+                            **false** - This is not the default sender address.
+                      required:
+                        - email
+                        - type
+                        - user_name
+                required:
+                  - from_addresses
+              examples:
+                GetFromAddressesResponseExample:
+                  summary: Successful response with a single from-address entry
+                  value:
+                    from_addresses:
+                      - email: example@zoho.com
+                        type: user
+                        user_name: Example User
+                        default: true
+                  description: >-
+                    Shows a successful response with a single from-address
+                    entry, including the email address, display name, and
+                    **default** flag set to **true**.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.emails.READ
+security:
+  - OAuth2:
+      - ZohoCRM.settings.emails.READ
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.emails.READ: >-
+              Grants permission to retrieve the list of from addresses
+              configured in Zoho CRM.

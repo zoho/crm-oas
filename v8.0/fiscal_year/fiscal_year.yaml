@@ -1,0 +1,2769 @@
+openapi: 3.1.0
+info:
+  title: Fiscal Year
+  description: >-
+    The fiscal year setting in Zoho CRM defines the accounting period used for
+    financial reporting and forecasting. This API enables developers to retrieve
+    and update fiscal year settings, including the calendar type, start month,
+    display option, and surplus week configuration.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Production API server for Zoho CRM.
+    variables:
+      dc:
+        description: >-
+          The top-level domain (TLD) of the Zoho data center where your Zoho CRM
+          organization is hosted.
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: The API version to use for all requests.
+        default: v8
+paths:
+  /settings/fiscal_year:
+    get:
+      summary: Get Fiscal Year Settings
+      description: >-
+        To retrieve the fiscal year settings configured for your Zoho CRM
+        organization.
+      operationId: getFiscalYear
+      responses:
+        '200':
+          description: >-
+            Returns the fiscal year settings configured for the Zoho CRM
+            organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetfiscalyearResponse200'
+              examples:
+                Success200:
+                  summary: Get fiscal year settings - custom calendar with surplus week
+                  value:
+                    fiscal_year:
+                      id: '111111000000008761'
+                      calendar_type: custom
+                      start_month: MARCH
+                      display_based_on: start_month
+                      start_date: '2026-03-24'
+                      structure: 4-4-5
+                      interval_display_option: quarter
+                      surplus_week:
+                        quarter: 3
+                        period: 1
+                        year: 2027
+                      past_surplus_weeks: null
+        '401':
+          description: >-
+            The request failed because the OAuth access token is missing,
+            invalid, or does not include the required scope.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Contains one of the possible authentication error responses
+                  returned when the fiscal year settings cannot be retrieved.
+                oneOf:
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+                  - $ref: '#/components/schemas/AuthenticationFailureError'
+                x-zs-$id: FiscalYearGet401ErrorResponse
+              examples:
+                ScopeMismatch:
+                  summary: OAuth scope mismatch error
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: invalid oauth scope to access this URL
+                    status: error
+                AuthenticationFailed:
+                  summary: Authentication failure error
+                  value:
+                    code: AUTHENTICATION_FAILURE
+                    details: {}
+                    message: Authentication failed
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.fiscal_year.READ
+    put:
+      summary: Update Fiscal Year Settings
+      description: >-
+        Updates the fiscal year configuration for the organization. Only
+        administrators can update fiscal year settings.
+      x-zs-llm-description: >-
+        First call GET /settings/fiscal_year to check the current calendar_type.
+        To update only display_based_on (works for both gregorian and custom
+        orgs), use DisplayBasedOnFiscalYearUpdate. If calendar_type is
+        'gregorian', use StandardFiscalYearUpdate or
+        SwitchToCustomFiscalYearUpdate. If 'custom', use
+        CustomFiscalYearPartialUpdate or SwitchToStandardFiscalYearUpdate.
+      operationId: updateFiscalYear
+      requestBody:
+        description: >-
+          The request body must contain a `fiscal_year` object with the settings
+          to update. Specify a valid `start_month`, `display_based_on`, or both.
+          fiscal_year JSON Object, mandatory To update the fiscal year settings
+          you must specify a valid start_month or display_based_on value or both
+          inside this JSON object. start_month string, optional Represents the
+          start month of the year and the allowed values are valid month names
+          (eg: January, February) display_based_on string, optional This value
+          represents whether the name of the fiscal year is based on starting
+          month or ending month of the fiscal period. For example, assume your
+          fiscal year start in April 2023 and ends in March 2024. If you choose
+          to name the year based on the start month (April) the fiscal year will
+          be 2023; If you choose to name the year based on the end month (April)
+          the fiscal year will be 2024
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutfiscalyearRequest'
+            x-zs-llm-examples:
+              - SwitchToStandardFiscalYear
+            examples:
+              SwitchToStandardFiscalYear:
+                summary: Switch from a custom fiscal year to a standard fiscal year
+                value:
+                  fiscal_year:
+                    calendar_type: gregorian
+      responses:
+        '200':
+          description: Returns the status and details of the updated fiscal year settings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateFiscalYearResponse'
+              examples:
+                Success200:
+                  summary: Fiscal year settings updated successfully
+                  value:
+                    fiscal_year:
+                      code: SUCCESS
+                      details:
+                        id: '111111000000008761'
+                      message: >-
+                        The fiscal year configuration has been updated
+                        successfully
+                      status: success
+        '400':
+          description: >-
+            The fiscal year settings update request failed due to invalid field
+            values or an unsupported configuration.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents a wrapped fiscal year error response containing the
+                  validation error details.
+                type: object
+                additionalProperties: false
+                properties:
+                  fiscal_year:
+                    oneOf:
+                      - $ref: '#/components/schemas/FiscalInvalidStartDateError'
+                      - $ref: '#/components/schemas/FiscalInvalidCalendarTypeError'
+                      - $ref: '#/components/schemas/FiscalInvalidStructureError'
+                      - $ref: '#/components/schemas/FiscalInvalidStartDateMonthError'
+                      - $ref: '#/components/schemas/FiscalInvalidMonthError'
+                      - $ref: '#/components/schemas/FiscalInvalidDisplayBasedOnError'
+                      - $ref: >-
+                          #/components/schemas/FiscalInvalidIntervalDisplayOptionError
+                      - $ref: '#/components/schemas/FiscalInvalidEndMonthConfigError'
+                      - $ref: '#/components/schemas/FiscalInvalidStartYearError'
+                      - $ref: '#/components/schemas/FiscalInvalidSurpluYearError'
+                      - $ref: '#/components/schemas/FiscalCompletedSurplusError'
+                      - $ref: '#/components/schemas/AmbiguityError'
+                      - $ref: '#/components/schemas/FiscalSurplusWeekYearMissingError'
+                      - $ref: >-
+                          #/components/schemas/FiscalSurplusWeekQuarterMissingError
+                      - $ref: >-
+                          #/components/schemas/FiscalSurplusWeekPeriodMissingError
+                      - $ref: '#/components/schemas/DependentFieldMissingError'
+                      - $ref: >-
+                          #/components/schemas/FiscalStructureNotAllowedForGregorianError
+                      - $ref: >-
+                          #/components/schemas/FiscalIntervalDisplayOptionNotAllowedForGregorianError
+                      - $ref: >-
+                          #/components/schemas/FiscalSurplusWeekNotAllowedForGregorianError
+                      - $ref: >-
+                          #/components/schemas/FiscalStartDateNotAllowedForGregorianError
+                      - $ref: >-
+                          #/components/schemas/FiscalInvalidStartMonthForConfiguredDateError
+                      - $ref: '#/components/schemas/FiscalDeleteCompletedSurplusError'
+                      - $ref: >-
+                          #/components/schemas/FiscalInvalidSurplusWeekQuarterValueError
+                      - $ref: >-
+                          #/components/schemas/FiscalInvalidSurplusWeekPeriodValueError
+                      - $ref: '#/components/schemas/FiscalInvalidDataError'
+                required:
+                  - fiscal_year
+                x-zs-$id: UpdateFiscalYearErrorResponse
+              examples:
+                Error400Response1:
+                  summary: Invalid start_date error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: start_date
+                        json_path: $.fiscal_year.start_date
+                      message: Please give a valid start_date
+                      status: error
+                Error400Response2:
+                  summary: Invalid structure error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: structure
+                        json_path: $.fiscal_year.structure
+                        supported_values:
+                          - 4-4-5
+                          - 4-5-4
+                          - 5-4-4
+                          - 3-3-3-4
+                          - 3-3-4-3
+                          - 3-4-3-3
+                          - 4-3-3-3
+                      message: Please give a valid structure
+                      status: error
+                Error400Response3:
+                  summary: Invalid interval_display_option error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: interval_display_option
+                        json_path: $.fiscal_year.interval_display_option
+                        supported_values:
+                          - year
+                          - quarter
+                      message: Please give a valid number_by display option
+                      status: error
+                Error400Response4:
+                  summary: Mismatched start_date and start_month error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: start_date
+                        json_path: $.fiscal_year.start_date
+                      message: start_date does not match with start_month
+                      status: error
+                Error400Response5:
+                  summary: >-
+                    Surplus week cannot be configured for gregorian calendar
+                    error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: surplus_week
+                        json_path: $.fiscal_year.surplus_week
+                      message: cannot configure surplus week for gregorian calendar
+                      status: error
+                Error400Response6:
+                  summary: Invalid start_month error
+                  value:
+                    fiscal_year:
+                      status: error
+                      code: INVALID_DATA
+                      message: Please give a valid month
+                      details:
+                        supported_values:
+                          - JANUARY
+                          - FEBRUARY
+                          - MARCH
+                          - APRIL
+                          - MAY
+                          - JUNE
+                          - JULY
+                          - AUGUST
+                          - SEPTEMBER
+                          - OCTOBER
+                          - NOVEMBER
+                          - DECEMBER
+                        api_name: start_month
+                        json_path: $.fiscal_year.start_month
+                Error400Response7:
+                  summary: Invalid display_based_on error
+                  value:
+                    fiscal_year:
+                      status: error
+                      code: INVALID_DATA
+                      message: Please give a valid display based on
+                      details:
+                        supported_values:
+                          - start_month
+                          - end_month
+                        api_name: display_based_on
+                        json_path: $.fiscal_year.display_based_on
+                Error400Response8:
+                  summary: Invalid calendar_type value error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: calendar_type
+                        json_path: $.fiscal_year.calendar_type
+                        supported_values:
+                          - gregorian
+                          - custom
+                      message: Please give a valid calendar type
+                      status: error
+                Error400Response8b:
+                  summary: >-
+                    Invalid calendar_type format error (non-alphabetic
+                    characters)
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: calendar_type
+                        json_path: $.fiscal_year.calendar_type
+                        expected_data_type: text
+                      message: Please give a valid calendar type
+                      status: error
+                Error400Response9:
+                  summary: End month display restriction error for January or February
+                  value:
+                    fiscal_year:
+                      status: error
+                      code: INVALID_DATA
+                      message: >-
+                        Cannot configure end month as display based option for
+                        January and February for custom calendar type
+                      details:
+                        api_name: display_based_on
+                        json_path: $.fiscal_year.display_based_on
+                Error400Response10:
+                  summary: Custom fiscal year start year restriction error
+                  value:
+                    fiscal_year:
+                      status: error
+                      code: INVALID_DATA
+                      message: >-
+                        custom fiscal year can be configured only with current
+                        year
+                      details:
+                        api_name: start_date
+                        json_path: $.fiscal_year.start_date
+                Error400Response11:
+                  summary: Surplus week year out-of-range error
+                  value:
+                    fiscal_year:
+                      status: error
+                      code: NOT_ALLOWED
+                      message: >-
+                        Surplus week can be updated only for current year and
+                        next year
+                      details:
+                        api_name: year
+                        json_path: $.fiscal_year.surplus_week.year
+                        supported_values:
+                          - 2025
+                          - 2026
+                Error400Response12:
+                  summary: Completed fiscal year surplus week edit error
+                  value:
+                    fiscal_year:
+                      status: error
+                      code: NOT_ALLOWED
+                      message: Cannot edit surplus week for completed fiscal year
+                      details:
+                        api_name: year
+                        json_path: $.fiscal_year.surplus_week.year
+                AmbiguityStructure:
+                  summary: >-
+                    Ambiguity error — calendar_type gregorian sent with
+                    structure
+                  value:
+                    fiscal_year:
+                      code: AMBIGUITY_DURING_PROCESSING
+                      details:
+                        ambiguity_due_to:
+                          - api_name: calendar_type
+                            json_path: $.fiscal_year.calendar_type
+                          - api_name: structure
+                            json_path: $.fiscal_year.structure
+                      message: Ambiguity while processing
+                      status: error
+                AmbiguityStartDate:
+                  summary: >-
+                    Ambiguity error — calendar_type gregorian sent with
+                    start_date
+                  value:
+                    fiscal_year:
+                      code: AMBIGUITY_DURING_PROCESSING
+                      details:
+                        ambiguity_due_to:
+                          - api_name: calendar_type
+                            json_path: $.fiscal_year.calendar_type
+                          - api_name: start_date
+                            json_path: $.fiscal_year.start_date
+                      message: Ambiguity while processing
+                      status: error
+                AmbiguityIntervalDisplayOption:
+                  summary: >-
+                    Ambiguity error — calendar_type gregorian sent with
+                    interval_display_option
+                  value:
+                    fiscal_year:
+                      code: AMBIGUITY_DURING_PROCESSING
+                      details:
+                        ambiguity_due_to:
+                          - api_name: calendar_type
+                            json_path: $.fiscal_year.calendar_type
+                          - api_name: interval_display_option
+                            json_path: $.fiscal_year.interval_display_option
+                      message: Ambiguity while processing
+                      status: error
+                AmbiguitySurplusWeek:
+                  summary: >-
+                    Ambiguity error — calendar_type gregorian sent with
+                    surplus_week
+                  value:
+                    fiscal_year:
+                      code: AMBIGUITY_DURING_PROCESSING
+                      details:
+                        ambiguity_due_to:
+                          - api_name: calendar_type
+                            json_path: $.fiscal_year.calendar_type
+                          - api_name: surplus_week
+                            json_path: $.fiscal_year.surplus_week
+                      message: Ambiguity while processing
+                      status: error
+                Error400Response13:
+                  summary: Structure not allowed for gregorian calendar error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: structure
+                        json_path: $.fiscal_year.structure
+                      message: cannot configure structure for gregorian calendar
+                      status: error
+                Error400Response14:
+                  summary: >-
+                    interval_display_option not allowed for gregorian calendar
+                    error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: interval_display_option
+                        json_path: $.fiscal_year.interval_display_option
+                      message: >-
+                        cannot configure interval_display_option for gregorian
+                        calendar
+                      status: error
+                Error400Response15:
+                  summary: surplus_week not allowed for gregorian calendar error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: surplus_week
+                        json_path: $.fiscal_year.surplus_week
+                      message: cannot configure surplus week for gregorian calendar
+                      status: error
+                Error400Response16:
+                  summary: start_date not allowed for gregorian calendar error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: start_date
+                        json_path: $.fiscal_year.start_date
+                      message: cannot configure start_date for gregorian calendar
+                      status: error
+                Error400Response17:
+                  summary: Invalid start_month for the configured start_date error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        api_name: start_month
+                        json_path: $.fiscal_year.start_month
+                      message: Invalid start_month for the start_date configured
+                      status: error
+                Error400Response18:
+                  summary: Delete surplus week for completed fiscal year error
+                  value:
+                    fiscal_year:
+                      code: NOT_ALLOWED
+                      details:
+                        api_name: year
+                        json_path: $.fiscal_year.surplus_week.year
+                      message: Cannot delete surplus week for completed fiscal year
+                      status: error
+                Error400Response19:
+                  summary: Missing year in surplus_week error
+                  value:
+                    fiscal_year:
+                      code: DEPENDENT_FIELD_MISSING
+                      details:
+                        dependee:
+                          api_name: surplus_week
+                          json_path: $.fiscal_year.surplus_week
+                        api_name: year
+                        json_path: $.fiscal_year.surplus_week.year
+                      message: Provide valid year for surplus week
+                      status: error
+                Error400Response20:
+                  summary: Missing quarter in surplus_week error
+                  value:
+                    fiscal_year:
+                      code: DEPENDENT_FIELD_MISSING
+                      details:
+                        dependee:
+                          api_name: surplus_week
+                          json_path: $.fiscal_year.surplus_week
+                        api_name: quarter
+                        json_path: $.fiscal_year.surplus_week.quarter
+                      message: Provide valid quarter for surplus week
+                      status: error
+                Error400Response21:
+                  summary: Missing period in surplus_week error
+                  value:
+                    fiscal_year:
+                      code: DEPENDENT_FIELD_MISSING
+                      details:
+                        dependee:
+                          api_name: surplus_week
+                          json_path: $.fiscal_year.surplus_week
+                        api_name: period
+                        json_path: $.fiscal_year.surplus_week.period
+                      message: Provide valid period for surplus week
+                      status: error
+                Error400Response22:
+                  summary: Invalid quarter value in surplus_week error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        json_path: $.fiscal_year.surplus_week.quarter
+                        supported_values:
+                          - 1
+                          - 2
+                          - 3
+                          - 4
+                      message: Provide valid quarter for surplus week
+                      status: error
+                Error400Response23:
+                  summary: Invalid period value in surplus_week error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details:
+                        json_path: $.fiscal_year.surplus_week.period
+                        supported_values:
+                          - 1
+                          - 2
+                          - 3
+                      message: Provide valid period for surplus week
+                      status: error
+                Error400Response24:
+                  summary: All fiscal year fields missing error
+                  value:
+                    fiscal_year:
+                      code: INVALID_DATA
+                      details: {}
+                      message: Please give a valid data
+                      status: error
+        '401':
+          description: >-
+            The request failed because the OAuth access token is missing,
+            invalid, or does not include the required scope.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Contains one of the possible authentication error responses
+                  returned when the fiscal year settings cannot be updated.
+                oneOf:
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+                  - $ref: '#/components/schemas/AuthenticationFailureError'
+                x-zs-$id: FiscalYearPut401ErrorResponse
+              examples:
+                ScopeMismatch:
+                  summary: OAuth scope mismatch error
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: invalid oauth scope to access this URL
+                    status: error
+                AuthenticationFailed:
+                  summary: Authentication failure error
+                  value:
+                    code: AUTHENTICATION_FAILURE
+                    details: {}
+                    message: Authentication failed
+                    status: error
+        '403':
+          description: >-
+            The request failed because the authenticated user does not have
+            administrator privileges to update the fiscal year settings
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Contains the forbidden error response returned when the fiscal
+                  year settings cannot be updated due to insufficient
+                  permissions.
+                allOf:
+                  - $ref: '#/components/schemas/FiscalNoPermissionError'
+                x-zs-$id: UpdateFiscalYear403ErrorResponse
+              examples:
+                NoPermission:
+                  summary: Non-admin user attempted to update fiscal year settings
+                  value:
+                    fiscal_year:
+                      code: NO_PERMISSION
+                      details: {}
+                      message: Only Admin Users can modify the fiscal year settings
+                      status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.fiscal_year.UPDATE
+components:
+  schemas:
+    GETFiscalYearNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the fiscal year settings configured for the organization,
+        including the calendar type, start month, structure, and surplus week
+        information.
+      properties:
+        calendar_type:
+          type: string
+          description: Represents the calendar type configured for the fiscal year.
+          maxLength: 255
+        display_based_on:
+          type: string
+          description: >-
+            Represents whether the fiscal year label is based on the start month
+            or end month of the fiscal period.
+          maxLength: 255
+        surplus_week:
+          $ref: '#/components/schemas/GETSurplusWeekNested'
+        start_month:
+          type: string
+          description: Represents the start month of the fiscal year.
+          maxLength: 255
+        interval_display_option:
+          type:
+            - string
+            - 'null'
+          description: Represents the display format configured for fiscal periods.
+          maxLength: 255
+        id:
+          type: string
+          format: int64
+          description: Represents the unique identifier of the fiscal year configuration.
+          maxLength: 255
+          x-zs-$id: FiscalYearId
+        structure:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the week distribution structure configured for the custom
+            fiscal year.
+          maxLength: 255
+        past_surplus_weeks:
+          type: 'null'
+          description: Represents the surplus week configurations from past fiscal years.
+        start_date:
+          type:
+            - string
+            - 'null'
+          description: Represents the start date of the custom fiscal year.
+          maxLength: 255
+      required:
+        - calendar_type
+        - display_based_on
+        - id
+        - interval_display_option
+        - past_surplus_weeks
+        - start_date
+        - start_month
+        - structure
+        - surplus_week
+    SurplusWeekNested:
+      description: >-
+        Represents the surplus week configuration to apply for a custom fiscal
+        year. Send `null` to clear the configured surplus week, or send a
+        complete object with the quarter, period, and year to set a new surplus
+        week.
+      oneOf:
+        - type: 'null'
+          description: >-
+            Clears any existing surplus week configuration for the custom fiscal
+            year.
+          x-zs-$id: SurplusWeekNullValue
+        - $ref: '#/components/schemas/SurplusWeekValue'
+    SurplusWeekValue:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the surplus week configuration values, including the quarter,
+        period, and year in which the surplus week is placed.
+      properties:
+        period:
+          type: integer
+          format: int32
+          description: >-
+            Specify the fiscal period within the quarter that contains the
+            surplus week.
+        year:
+          type: integer
+          format: int32
+          description: >-
+            Specify the year in which the surplus week is configured. You can
+            configure this only for the current year and the following year.
+        quarter:
+          type: integer
+          format: int32
+          description: Specify the fiscal quarter that contains the surplus week.
+      required:
+        - period
+        - quarter
+        - year
+      x-zs-$id: SurplusWeekValue
+    FiscalInvalidMonthError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the start_month value is not a valid
+        month name.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: Represents the list of supported values for the invalid field.
+              items:
+                type: string
+                description: Represents a supported value for the invalid field.
+                maxLength: 255
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Please give a valid
+            month`.
+          enum:
+            - Please give a valid month
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidMonthError
+    FiscalInvalidStartYearError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the start_date is set to a year other
+        than the current year for a custom fiscal year.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `custom fiscal year
+            can be configured only with current year`.
+          enum:
+            - custom fiscal year can be configured only with current year
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidStartYearError
+    GetfiscalyearResponse200:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response body containing the fiscal year settings
+        configured for the organization.
+      properties:
+        fiscal_year:
+          $ref: '#/components/schemas/GETFiscalYearNested'
+      required:
+        - fiscal_year
+      x-zs-$id: GetfiscalyearResponse200
+    FiscalInvalidDisplayBasedOnError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the display_based_on field value is
+        invalid.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: Represents the list of supported values for the invalid field.
+              items:
+                type: string
+                description: Represents a supported value for the invalid field.
+                maxLength: 255
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Please give a valid
+            display based on`.
+          enum:
+            - Please give a valid display based on
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidDisplayBasedOnError
+    FiscalInvalidIntervalDisplayOptionError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the interval_display_option field
+        value is invalid.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: Represents the list of supported values for the invalid field.
+              items:
+                type: string
+                description: Represents a supported value for the invalid field.
+                maxLength: 255
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Please give a valid
+            number_by display option`.
+          enum:
+            - Please give a valid number_by display option
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidIntervalDisplayOptionError
+    UpdateFiscalYearResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response body for a successful fiscal year settings
+        update.
+      properties:
+        fiscal_year:
+          $ref: '#/components/schemas/FiscalYearNested1'
+      required:
+        - fiscal_year
+      x-zs-$id: UpdateFiscalYearResponse
+    FiscalInvalidStartDateMonthError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the start_date value does not match
+        the month component of the configured start_month.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `start_date does not
+            match with start_month`.
+          enum:
+            - start_date does not match with start_month
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidStartDateMonthError
+    FiscalYearNested:
+      description: >-
+        Represents the fiscal year settings to update. Use one of the supported
+        request structures based on the type of fiscal year update being
+        performed.
+      oneOf:
+        - $ref: '#/components/schemas/DisplayBasedOnFiscalYearUpdate'
+        - $ref: '#/components/schemas/StandardFiscalYearUpdate'
+        - $ref: '#/components/schemas/SwitchToStandardFiscalYearUpdate'
+        - $ref: '#/components/schemas/SwitchToCustomFiscalYearUpdate'
+        - $ref: '#/components/schemas/CustomFiscalYearPartialUpdate'
+    DisplayBasedOnFiscalYearUpdate:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a request to update only the fiscal year display option for
+        an existing standard or custom fiscal year.
+      x-zs-$id: DisplayBasedOnFiscalYearUpdate
+      properties:
+        display_based_on:
+          type: string
+          description: >-
+            Specify whether the fiscal year label is based on the start month or
+            the end month of the fiscal period. Possible values: `start_month`,
+            `end_month`.
+          enum:
+            - start_month
+            - end_month
+          maxLength: 20
+      required:
+        - display_based_on
+    StandardFiscalYearUpdate:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload to update standard fiscal year settings.
+        When `display_based_on` is set to `end_month`, the `start_month` cannot
+        be `JANUARY`.
+      x-zs-$id: StandardFiscalYearUpdate
+      properties:
+        start_month:
+          $ref: '#/components/schemas/FiscalYearStartMonth'
+        display_based_on:
+          $ref: '#/components/schemas/FiscalYearDisplayBasedOn'
+      required:
+        - start_month
+      if:
+        description: >-
+          Applies additional constraints when the display_based_on field is set
+          to end_month.
+        properties:
+          display_based_on:
+            const: end_month
+        required:
+          - display_based_on
+      then:
+        description: >-
+          Disallows JANUARY as the start_month when display_based_on is set to
+          end_month.
+        properties:
+          start_month:
+            description: >-
+              Represents the constrained value for start_month when
+              display_based_on is set to end_month.
+            not:
+              description: >-
+                JANUARY is not allowed as the start_month when display_based_on
+                is set to end_month.
+              const: JANUARY
+    SwitchToStandardFiscalYearUpdate:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload to switch the organization from a custom
+        fiscal year to a standard fiscal year.
+      x-zs-$id: SwitchToStandardFiscalYearUpdate
+      properties:
+        calendar_type:
+          type: string
+          description: >-
+            Specify the calendar type used to switch to a standard fiscal year.
+            Possible values: `gregorian`.
+          enum:
+            - gregorian
+          maxLength: 10
+        start_month:
+          $ref: '#/components/schemas/FiscalYearStartMonth'
+        display_based_on:
+          $ref: '#/components/schemas/FiscalYearDisplayBasedOn'
+      required:
+        - calendar_type
+      if:
+        description: >-
+          Applies additional constraints when the display_based_on field is set
+          to end_month.
+        properties:
+          display_based_on:
+            const: end_month
+        required:
+          - display_based_on
+      then:
+        description: >-
+          Disallows JANUARY as the start_month when display_based_on is set to
+          end_month.
+        properties:
+          start_month:
+            description: >-
+              Represents the constrained value for start_month when
+              display_based_on is set to end_month.
+            not:
+              description: >-
+                JANUARY is not allowed as the start_month when display_based_on
+                is set to end_month.
+              const: JANUARY
+    SwitchToCustomFiscalYearUpdate:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload to switch the organization from a
+        standard fiscal year to a custom fiscal year. When `start_month` is
+        provided alongside `start_date`, its value must match the month
+        component of `start_date`.
+      x-zs-$id: SwitchToCustomFiscalYearUpdate
+      properties:
+        calendar_type:
+          type: string
+          description: >-
+            Specify the calendar type used to switch to a custom fiscal year.
+            Possible values: `custom`.
+          enum:
+            - custom
+          maxLength: 10
+        display_based_on:
+          $ref: '#/components/schemas/FiscalYearDisplayBasedOnForCustom'
+        surplus_week:
+          $ref: '#/components/schemas/SurplusWeekNested'
+          description: >-
+            Specify the surplus week configuration for the custom fiscal year.
+            Send `null` to clear the configured surplus week.
+        interval_display_option:
+          $ref: '#/components/schemas/FiscalYearIntervalDisplayOption'
+        structure:
+          $ref: '#/components/schemas/FiscalYearStructure'
+        start_date:
+          $ref: '#/components/schemas/FiscalYearStartDate'
+        start_month:
+          $ref: '#/components/schemas/FiscalYearStartMonth'
+          description: >-
+            Specify the start month of the fiscal year. This field is optional.
+            When provided, its value must match the month component of the
+            configured start_date.
+      required:
+        - calendar_type
+        - interval_display_option
+        - start_date
+        - structure
+      if:
+        description: >-
+          Applies additional date restrictions when the display_based_on field
+          is set to end_month.
+        properties:
+          display_based_on:
+            const: end_month
+        required:
+          - display_based_on
+      then:
+        description: >-
+          Restricts the start_date to months other than January and February
+          when display_based_on is set to end_month.
+        properties:
+          start_date:
+            description: >-
+              Represents the constrained start_date value when display_based_on
+              is set to end_month.
+            not:
+              description: >-
+                Start dates in January or February are not allowed when
+                display_based_on is set to end_month.
+              pattern: ^\d{4}-0[12]-
+    CustomFiscalYearPartialUpdate:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload to update selected settings of an
+        existing custom fiscal year. When `start_month` is provided alongside
+        `start_date`, its value must match the month component of `start_date`.
+      x-zs-$id: CustomFiscalYearPartialUpdate
+      properties:
+        display_based_on:
+          $ref: '#/components/schemas/FiscalYearDisplayBasedOnForCustom'
+        surplus_week:
+          $ref: '#/components/schemas/SurplusWeekNested'
+          description: >-
+            Specify the surplus week configuration for the custom fiscal year.
+            Send `null` to clear the configured surplus week.
+        interval_display_option:
+          $ref: '#/components/schemas/FiscalYearIntervalDisplayOption'
+        structure:
+          $ref: '#/components/schemas/FiscalYearStructure'
+        start_date:
+          $ref: '#/components/schemas/FiscalYearStartDate'
+        start_month:
+          $ref: '#/components/schemas/FiscalYearStartMonth'
+          description: >-
+            Specify the start month of the fiscal year. This field is optional.
+            When provided, its value must match the month component of the
+            configured start_date.
+      minProperties: 1
+      anyOf:
+        - required:
+            - surplus_week
+        - required:
+            - interval_display_option
+        - required:
+            - structure
+        - required:
+            - start_date
+      if:
+        description: >-
+          Applies additional date restrictions when the display_based_on field
+          is set to end_month.
+        properties:
+          display_based_on:
+            const: end_month
+        required:
+          - display_based_on
+      then:
+        description: >-
+          Restricts the start_date to months other than January and February
+          when display_based_on is set to end_month.
+        properties:
+          start_date:
+            description: >-
+              Represents the constrained start_date value when display_based_on
+              is set to end_month.
+            not:
+              description: >-
+                Start dates in January or February are not allowed when
+                display_based_on is set to end_month.
+              pattern: ^\d{4}-0[12]-
+    FiscalYearStartMonth:
+      type: string
+      description: >-
+        Specify the start month of the fiscal year. Possible values: `JANUARY`,
+        `FEBRUARY`, `MARCH`, `APRIL`, `MAY`, `JUNE`, `JULY`, `AUGUST`,
+        `SEPTEMBER`, `OCTOBER`, `NOVEMBER`, `DECEMBER`.
+      enum:
+        - JANUARY
+        - FEBRUARY
+        - MARCH
+        - APRIL
+        - MAY
+        - JUNE
+        - JULY
+        - AUGUST
+        - SEPTEMBER
+        - OCTOBER
+        - NOVEMBER
+        - DECEMBER
+      maxLength: 20
+    FiscalYearDisplayBasedOn:
+      type: string
+      description: >-
+        Specify whether the fiscal year label is based on the start month or the
+        end month of the fiscal period. When set to `end_month`, the
+        `start_month` cannot be `JANUARY`. Possible values: `start_month`,
+        `end_month`.
+      enum:
+        - start_month
+        - end_month
+      maxLength: 20
+    FiscalYearDisplayBasedOnForCustom:
+      type: string
+      description: >-
+        Specify whether the custom fiscal year label is based on the start month
+        or the end month of the fiscal period. When set to `end_month`, the
+        `start_date` cannot fall in January or February. Possible values:
+        `start_month`, `end_month`.
+      enum:
+        - start_month
+        - end_month
+      maxLength: 20
+    FiscalYearIntervalDisplayOption:
+      type: string
+      description: >-
+        Specify the display format for the custom fiscal year intervals.
+        Possible values: `year`, `quarter`.
+      enum:
+        - year
+        - quarter
+      maxLength: 7
+    FiscalYearStructure:
+      type: string
+      description: >-
+        Specify the week distribution structure for the custom fiscal year.
+        Possible values: `4-4-5`, `4-5-4`, `5-4-4`, `3-3-3-4`, `3-3-4-3`,
+        `3-4-3-3`, `4-3-3-3`.
+      enum:
+        - 4-4-5
+        - 4-5-4
+        - 5-4-4
+        - 3-3-3-4
+        - 3-3-4-3
+        - 3-4-3-3
+        - 4-3-3-3
+      maxLength: 10
+    FiscalYearStartDate:
+      type: string
+      format: date
+      description: >-
+        Specify the start date of the custom fiscal year. This field can be
+        configured only for the current year.
+      maxLength: 10
+    FiscalInvalidStructureError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the structure field value is not one
+        of the supported patterns.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: Represents the list of supported values for the invalid field.
+              items:
+                type: string
+                description: Represents a supported value for the invalid field.
+                maxLength: 255
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Please give a valid
+            structure`.
+          enum:
+            - Please give a valid structure
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidStructureError
+    FiscalInvalidCalendarTypeError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the calendar_type value is invalid —
+        either because it contains non-alphabetic characters (returns
+        expected_data_type) or because it is not one of the supported values
+        (returns supported_values).
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details. Contains either `expected_data_type`
+            when the value has non-alphabetic characters, or `supported_values`
+            when the value is not one of the allowed calendar types.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: >-
+                Represents the list of supported calendar type values. Present
+                when the value is alphabetic but not a recognized calendar type.
+              items:
+                type: string
+                description: Represents a supported value for the calendar_type field.
+                maxLength: 255
+              maxItems: 25
+            expected_data_type:
+              type: string
+              description: >-
+                Represents the expected data type for the field. Present when
+                the value contains non-alphabetic characters. Possible values:
+                `text`.
+              enum:
+                - text
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Please give a valid
+            calendar type`.
+          enum:
+            - Please give a valid calendar type
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: 'Fiscal Year: Invalid Calendar Type Error'
+      x-zs-$id: FiscalInvalidCalendarTypeError
+    PutfiscalyearRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request body for updating the fiscal year settings of the
+        Zoho CRM organization.
+      properties:
+        fiscal_year:
+          $ref: '#/components/schemas/FiscalYearNested'
+          description: Root key of the API (Required)
+      required:
+        - fiscal_year
+    DetailsNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the details of the updated fiscal year configuration,
+        including its unique identifier.
+      properties:
+        id:
+          type: string
+          format: int64
+          description: >-
+            Represents the unique identifier of the updated fiscal year
+            configuration.
+          maxLength: 255
+      required:
+        - id
+    FiscalInvalidStartDateError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the start_date field value is
+        invalid.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Please give a valid
+            start_date`.
+          enum:
+            - Please give a valid start_date
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidStartDateError
+    FiscalInvalidSurpluYearError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the surplus week is configured for a
+        year outside the current year or the following year.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `NOT_ALLOWED`.'
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: Represents the list of supported values for the invalid field.
+              items:
+                type: integer
+                format: int32
+                description: Represents a supported value for the invalid field.
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Surplus week can be
+            updated only for current year and next year`.
+          enum:
+            - Surplus week can be updated only for current year and next year
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidSurpluYearError
+    FiscalInvalidEndMonthConfigError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when end_month is configured as the
+        display option for a custom calendar type with a start date in January
+        or February.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Cannot configure end
+            month as display based option for January and February for custom
+            calendar type`.
+          enum:
+            - >-
+              Cannot configure end month as display based option for January and
+              February for custom calendar type
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidEndMonthConfigError
+    FiscalYearNested1:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response body for a successful fiscal year settings
+        update, including the status code, message, and updated record details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the status code of the operation. Possible values:
+            `SUCCESS`.
+          enum:
+            - SUCCESS
+        details:
+          $ref: '#/components/schemas/DetailsNested'
+        message:
+          type: string
+          description: Represents the status message of the operation.
+          maxLength: 255
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `success`.'
+          enum:
+            - success
+      required:
+        - code
+        - details
+        - message
+        - status
+    FiscalCompletedSurplusError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when attempting to update the surplus week
+        for a fiscal year that has already been completed.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `NOT_ALLOWED`.'
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Cannot edit surplus
+            week for completed fiscal year`.
+          enum:
+            - Cannot edit surplus week for completed fiscal year
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalCompletedSurplusError
+    AmbiguityError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when conflicting fields are sent in the
+        same request — specifically when calendar_type is set to gregorian while
+        also providing fields that are only valid for a custom calendar, such as
+        structure, start_date, interval_display_option, or surplus_week.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code. Possible values:
+            `AMBIGUITY_DURING_PROCESSING`.
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details containing the fields that caused the
+            ambiguity.
+          properties:
+            ambiguity_due_to:
+              type: array
+              description: >-
+                Represents the list of fields that caused the ambiguity during
+                processing.
+              items:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents a field that caused the ambiguity during
+                  processing.
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the field that caused the
+                      ambiguity.
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path of the field that caused the
+                      ambiguity.
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 2
+          required:
+            - ambiguity_due_to
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Ambiguity while
+            processing`.
+          enum:
+            - Ambiguity while processing
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: AmbiguityError
+    DependentFieldMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when a required dependent field is missing
+        from the request.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code. Possible values:
+            `DEPENDENT_FIELD_MISSING`.
+          enum:
+            - DEPENDENT_FIELD_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the missing field and the
+            field it depends on.
+          properties:
+            dependee:
+              type: object
+              additionalProperties: false
+              description: >-
+                Represents the dependent field that is required to be present in
+                the request.
+              properties:
+                api_name:
+                  type: string
+                  description: Represents the API name of the required dependent field.
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: Represents the JSON path of the required dependent field.
+                  maxLength: 1000
+              required:
+                - api_name
+                - json_path
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that requires a dependent
+                field.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that requires a dependent
+                field.
+              maxLength: 1024
+          required:
+            - dependee
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Dependent field
+            missing`.
+          enum:
+            - Dependent field missing
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: DependentFieldMissingError
+    FiscalStructureNotAllowedForGregorianError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when structure is provided in the request
+        while the calendar type is gregorian.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1024
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `cannot configure
+            structure for gregorian calendar`.
+          enum:
+            - cannot configure structure for gregorian calendar
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalStructureNotAllowedForGregorianError
+    FiscalIntervalDisplayOptionNotAllowedForGregorianError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when interval_display_option is provided
+        in the request while the calendar type is gregorian.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1024
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `cannot configure
+            interval_display_option for gregorian calendar`.
+          enum:
+            - cannot configure interval_display_option for gregorian calendar
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalIntervalDisplayOptionNotAllowedForGregorianError
+    FiscalSurplusWeekNotAllowedForGregorianError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when surplus_week is provided in the
+        request while the calendar type is gregorian.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1024
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `cannot configure
+            surplus week for gregorian calendar`.
+          enum:
+            - cannot configure surplus week for gregorian calendar
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalSurplusWeekNotAllowedForGregorianError
+    FiscalStartDateNotAllowedForGregorianError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when start_date is provided in the request
+        while the calendar type is gregorian.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1024
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `cannot configure
+            start_date for gregorian calendar`.
+          enum:
+            - cannot configure start_date for gregorian calendar
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalStartDateNotAllowedForGregorianError
+    FiscalInvalidStartMonthForConfiguredDateError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the start_month value does not match
+        the month of the existing start_date configured for the custom fiscal
+        year.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Invalid start_month
+            for the start_date configured`.
+          enum:
+            - Invalid start_month for the start_date configured
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidStartMonthForConfiguredDateError
+    FiscalDeleteCompletedSurplusError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when attempting to delete the surplus week
+        for a fiscal year that has already been completed.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `NOT_ALLOWED`.'
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with information about the field that
+            caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                failure.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Cannot delete
+            surplus week for completed fiscal year`.
+          enum:
+            - Cannot delete surplus week for completed fiscal year
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalDeleteCompletedSurplusError
+    FiscalSurplusWeekYearMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the year field is missing from the
+        surplus_week object.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code. Possible values:
+            `DEPENDENT_FIELD_MISSING`.
+          enum:
+            - DEPENDENT_FIELD_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the missing year field and
+            the surplus_week object it belongs to.
+          properties:
+            dependee:
+              type: object
+              additionalProperties: false
+              description: >-
+                Represents the parent surplus_week field that requires the year
+                to be present.
+              properties:
+                api_name:
+                  type: string
+                  description: Represents the API name of the parent field.
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: Represents the JSON path of the parent field.
+                  maxLength: 1000
+              required:
+                - api_name
+                - json_path
+            api_name:
+              type: string
+              description: Represents the API name of the missing year field.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the missing year field.
+              maxLength: 1000
+          required:
+            - dependee
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Provide valid year
+            for surplus week`.
+          enum:
+            - Provide valid year for surplus week
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalSurplusWeekYearMissingError
+    FiscalSurplusWeekQuarterMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the quarter field is missing from the
+        surplus_week object.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code. Possible values:
+            `DEPENDENT_FIELD_MISSING`.
+          enum:
+            - DEPENDENT_FIELD_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the missing quarter field
+            and the surplus_week object it belongs to.
+          properties:
+            dependee:
+              type: object
+              additionalProperties: false
+              description: >-
+                Represents the parent surplus_week field that requires the
+                quarter to be present.
+              properties:
+                api_name:
+                  type: string
+                  description: Represents the API name of the parent field.
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: Represents the JSON path of the parent field.
+                  maxLength: 1000
+              required:
+                - api_name
+                - json_path
+            api_name:
+              type: string
+              description: Represents the API name of the missing quarter field.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the missing quarter field.
+              maxLength: 1000
+          required:
+            - dependee
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Provide valid
+            quarter for surplus week`.
+          enum:
+            - Provide valid quarter for surplus week
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalSurplusWeekQuarterMissingError
+    FiscalSurplusWeekPeriodMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the period field is missing from the
+        surplus_week object.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code. Possible values:
+            `DEPENDENT_FIELD_MISSING`.
+          enum:
+            - DEPENDENT_FIELD_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the missing period field
+            and the surplus_week object it belongs to.
+          properties:
+            dependee:
+              type: object
+              additionalProperties: false
+              description: >-
+                Represents the parent surplus_week field that requires the
+                period to be present.
+              properties:
+                api_name:
+                  type: string
+                  description: Represents the API name of the parent field.
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: Represents the JSON path of the parent field.
+                  maxLength: 1000
+              required:
+                - api_name
+                - json_path
+            api_name:
+              type: string
+              description: Represents the API name of the missing period field.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the missing period field.
+              maxLength: 1000
+          required:
+            - dependee
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Provide valid period
+            for surplus week`.
+          enum:
+            - Provide valid period for surplus week
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalSurplusWeekPeriodMissingError
+    FiscalInvalidSurplusWeekQuarterValueError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the quarter value in the surplus_week
+        object is not in the allowed range of 1 to 4.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with the JSON path and the list of
+            supported quarter values.
+          properties:
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: Represents the list of supported values for the quarter field.
+              items:
+                type: integer
+                format: int32
+                description: Represents a supported quarter value.
+              maxItems: 4
+          required:
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Provide valid
+            quarter for surplus week`.
+          enum:
+            - Provide valid quarter for surplus week
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidSurplusWeekQuarterValueError
+    FiscalInvalidSurplusWeekPeriodValueError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the period value in the surplus_week
+        object exceeds the maximum allowed period for the configured quarter.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details with the JSON path and the list of
+            supported period values for the configured quarter.
+          properties:
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                failure.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: >-
+                Represents the list of supported period values for the
+                configured quarter.
+              items:
+                type: integer
+                format: int32
+                description: Represents a supported period value.
+              maxItems: 4
+          required:
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Provide valid period
+            for surplus week`.
+          enum:
+            - Provide valid period for surplus week
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidSurplusWeekPeriodValueError
+    FiscalInvalidDataError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the request body does not contain any
+        valid fiscal year field to update.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `INVALID_DATA`.'
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents an empty details object returned with the error.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Please give a valid
+            data`.
+          enum:
+            - Please give a valid data
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: FiscalInvalidDataError
+    GETSurplusWeekNested:
+      type:
+        - object
+        - 'null'
+      additionalProperties: false
+      description: >-
+        Represents the surplus week configuration, including the quarter,
+        period, and year in which the surplus week is placed.
+      properties:
+        period:
+          type: integer
+          format: int32
+          description: >-
+            Represents the period within the quarter in which the surplus week
+            falls.
+        year:
+          type: integer
+          format: int32
+          description: Represents the year for which the surplus week is configured.
+        quarter:
+          type: integer
+          format: int32
+          description: Represents the quarter in which the surplus week falls.
+      required:
+        - period
+        - quarter
+        - year
+    OAuthScopeMismatchError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the OAuth access token does not
+        include the required scope to access this endpoint.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code. Possible values: `OAUTH_SCOPE_MISMATCH`.'
+          enum:
+            - OAUTH_SCOPE_MISMATCH
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents an empty details object returned with the error.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `invalid oauth scope
+            to access this URL`.
+          enum:
+            - invalid oauth scope to access this URL
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: OAuth Scope Mismatch Error
+      x-zs-$id: OAuthScopeMismatchError
+    AuthenticationFailureError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the OAuth access token is missing or
+        invalid.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code. Possible values:
+            `AUTHENTICATION_FAILURE`.
+          enum:
+            - AUTHENTICATION_FAILURE
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents an empty details object returned with the error.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message. Possible values: `Authentication
+            failed`.
+          enum:
+            - Authentication failed
+        status:
+          type: string
+          description: 'Represents the status of the response. Possible values: `error`.'
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Authentication Failure Error
+      x-zs-$id: AuthenticationFailureError
+    FiscalNoPermissionError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when a non-administrator user attempts to
+        update the fiscal year settings.
+      properties:
+        fiscal_year:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the wrapped error response returned when the user does
+            not have permission to update the fiscal year settings.
+          properties:
+            code:
+              type: string
+              description: 'Represents the error code. Possible values: `NO_PERMISSION`.'
+              enum:
+                - NO_PERMISSION
+            details:
+              type: object
+              additionalProperties: false
+              description: Represents an empty details object returned with the error.
+              properties: {}
+            message:
+              type: string
+              description: >-
+                Represents the error message. Possible values: `Only Admin Users
+                can modify the fiscal year settings`.
+              enum:
+                - Only Admin Users can modify the fiscal year settings
+            status:
+              type: string
+              description: 'Represents the status of the response. Possible values: `error`.'
+              enum:
+                - error
+          required:
+            - code
+            - details
+            - message
+            - status
+      required:
+        - fiscal_year
+      x-zs-$id: FiscalNoPermissionError
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.fiscal_year.UPDATE: Access to ZohoCRM.settings.fiscal_year.UPDATE scope
+            ZohoCRM.settings.fiscal_year.READ: Access to ZohoCRM.settings.fiscal_year.READ scope

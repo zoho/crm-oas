@@ -1,0 +1,3629 @@
+openapi: 3.1.0
+info:
+  title: Email Drafts
+  description: >-
+    Email drafts are saved email messages that can be created, updated,
+    retrieved, and deleted for CRM records. This API enables developers to
+    manage email drafts associated with records such as Leads, Contacts, Deals,
+    and other modules in Zoho CRM.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Production API server for Zoho CRM.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - ca
+          - au
+          - sa
+          - ae
+        default: com
+        description: >
+          The top-level domain for the Zoho CRM API server based on the data
+          center region.
+
+
+          **Possible values:**
+
+          - **com** - US.
+
+          - **eu** - EU.
+
+          - **in** - India.
+
+          - **ca** - Canada.
+
+          - **au** - Australia.
+
+          - **sa** - Saudi Arabia.
+
+          - **ae** - UAE.
+
+
+          Default: **com**.
+      version:
+        description: The API version identifier. Default:v8.
+        default: v8
+paths:
+  /{module}/{record}/__email_drafts:
+    get:
+      summary: List Email Drafts for a Record
+      description: >-
+        Retrieves the list of email drafts associated with the specified record
+        in the given module.
+      x-zs-llm-description: >-
+        Use this API to list all saved email drafts for a specific CRM record
+        (e.g., a Lead or Contact). The draft `id` values returned in the
+        response can be used as input to the update or delete draft APIs.
+        Supports pagination via `page` and `per_page` query parameters.
+      operationId: getEmailDrafts
+      parameters:
+        - name: module
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 100
+          description: >
+            Specifies the module of the record. Use the [Get Modules
+            API](modules.yaml#$.paths./settings/modules.get) to retrieve the API
+            names of modules.
+        - $ref: '#/components/parameters/Record'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: sort_by
+          in: query
+          required: false
+          description: Field to sort the email drafts by. Default:created_time.
+          schema:
+            type: string
+            enum:
+              - created_time
+              - modified_time
+            default: created_time
+        - name: sort_order
+          in: query
+          required: false
+          description: Sort direction. Default:asc.
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+      responses:
+        '200':
+          description: >-
+            Returns the list of email drafts associated with the specified
+            record.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: EmailDraftsResponse
+                type: object
+                description: >-
+                  Response containing the list of email drafts and pagination
+                  info.
+                additionalProperties: false
+                properties:
+                  __email_drafts:
+                    type: array
+                    description: List of email draft objects.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Email draft object with metadata, recipients, and
+                        attachments.
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                          x-zs-$id: EmailDraftId
+                          description: >
+                            Represents the unique encrypted draft identifier.
+                            Use this ID to update or delete the draft.
+                          maxLength: 256
+                        modified_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Timestamp when the draft was last modified (ISO 8601
+                            format).
+                        created_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Timestamp when the draft was created (ISO 8601
+                            format).
+                        from:
+                          type: string
+                          description: Sender email address.
+                          maxLength: 256
+                        to:
+                          type:
+                            - array
+                            - 'null'
+                          description: Primary recipients for the draft; null if none.
+                          maxItems: 100
+                          items:
+                            type: object
+                            description: Recipient object.
+                            additionalProperties: false
+                            properties:
+                              user_name:
+                                type:
+                                  - string
+                                  - 'null'
+                                description: Recipient display name; null if not available.
+                                maxLength: 256
+                              email:
+                                type: string
+                                description: Recipient email address.
+                                maxLength: 256
+                            required:
+                              - user_name
+                              - email
+                        reply_to:
+                          type:
+                            - string
+                            - 'null'
+                          description: Reply-to email address; null if not set.
+                          maxLength: 256
+                        cc:
+                          type:
+                            - array
+                            - 'null'
+                          description: CC recipients for the draft; null if none.
+                          maxItems: 100
+                          items:
+                            type: object
+                            description: CC recipient object.
+                            additionalProperties: false
+                            properties:
+                              user_name:
+                                type:
+                                  - string
+                                  - 'null'
+                                description: >-
+                                  CC recipient display name; null if not
+                                  available.
+                                maxLength: 256
+                              email:
+                                type: string
+                                description: CC recipient email address.
+                                maxLength: 256
+                            required:
+                              - user_name
+                              - email
+                        bcc:
+                          type:
+                            - array
+                            - 'null'
+                          description: BCC recipients for the draft; null if none.
+                          maxItems: 100
+                          items:
+                            type: object
+                            description: BCC recipient object.
+                            additionalProperties: false
+                            properties:
+                              user_name:
+                                type:
+                                  - string
+                                  - 'null'
+                                description: >-
+                                  BCC recipient display name; null if not
+                                  available.
+                                maxLength: 256
+                              email:
+                                type: string
+                                description: BCC recipient email address.
+                                maxLength: 256
+                            required:
+                              - user_name
+                              - email
+                        schedule_details:
+                          type:
+                            - object
+                            - 'null'
+                          description: Scheduling information; null if not scheduled.
+                          additionalProperties: false
+                          properties:
+                            time:
+                              type: string
+                              format: date-time
+                              description: >-
+                                Scheduled send time in the requesting user's
+                                timezone (ISO 8601 format).
+                            timezone:
+                              type:
+                                - string
+                                - 'null'
+                              description: Timezone identifier (Java TimeZone ID) or null.
+                              maxLength: 100
+                            source:
+                              type: string
+                              enum:
+                                - ecOneHourAhead
+                                - upTime
+                                - ecSchduleBestTime
+                                - ecUpComing
+                                - ecSchduleTime
+                              description: Source of the schedule decision.
+                          required:
+                            - time
+                        subject:
+                          type:
+                            - string
+                            - 'null'
+                          description: Email subject; null if not set.
+                          maxLength: 512
+                        summary:
+                          type:
+                            - string
+                            - 'null'
+                          description: >-
+                            Plain text preview of the draft body (up to 250
+                            characters); null if empty.
+                          maxLength: 500
+                        $sharing_permission:
+                          type: string
+                          description: Sharing permission level for the requesting user.
+                          maxLength: 64
+                        rich_text:
+                          type: boolean
+                          description: >-
+                            true when HTML editor was used; false for plain
+                            text.
+                        source:
+                          type: string
+                          description: >-
+                            Source identifier string stored at draft creation
+                            time.
+                          maxLength: 256
+                        inventory_details:
+                          type:
+                            - object
+                            - 'null'
+                          description: >-
+                            Inventory email details; null if not an inventory
+                            draft.
+                          additionalProperties: false
+                          properties:
+                            inventory_template:
+                              type: object
+                              description: Inventory template details.
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  type: string
+                                  description: Inventory template name.
+                                  maxLength: 256
+                                id:
+                                  type: string
+                                  description: Inventory template identifier.
+                                  maxLength: 64
+                              required:
+                                - name
+                                - id
+                            paper_type:
+                              type: string
+                              enum:
+                                - A4
+                                - USLetter
+                              description: Paper type for rendered inventory.
+                            view_type:
+                              type: string
+                              enum:
+                                - portrait
+                                - landscape
+                              description: Layout/view type for the inventory.
+                            record:
+                              type: object
+                              description: CRM record associated with this inventory draft.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: CRM record identifier.
+                                  maxLength: 64
+                                name:
+                                  type: string
+                                  description: CRM record display name.
+                                  maxLength: 256
+                              required:
+                                - id
+                                - name
+                          required:
+                            - inventory_template
+                            - paper_type
+                            - view_type
+                        attachments:
+                          type:
+                            - array
+                            - 'null'
+                          description: Attachments included with the draft; null if none.
+                          maxItems: 50
+                          items:
+                            type: object
+                            description: Attachment metadata.
+                            additionalProperties: false
+                            properties:
+                              id:
+                                type: string
+                                description: Encrypted attachment/file identifier.
+                                maxLength: 256
+                              file_name:
+                                type: string
+                                description: Original file name.
+                                maxLength: 512
+                              file_size:
+                                type: string
+                                description: File size in bytes as a numeric string.
+                                maxLength: 20
+                              service_name:
+                                type: string
+                                description: Storage service name.
+                                maxLength: 100
+                            required:
+                              - id
+                              - file_name
+                              - file_size
+                              - service_name
+                        content:
+                          type:
+                            - string
+                            - 'null'
+                          description: Email HTML body content; null if not set.
+                          maxLength: 200000
+                        linked_record:
+                          type:
+                            - object
+                            - 'null'
+                          description: CRM record linked to this draft; null if not linked.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Linked CRM record identifier.
+                              maxLength: 64
+                            module:
+                              type: object
+                              description: Module of the linked record.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: Module API name.
+                                  maxLength: 100
+                                id:
+                                  type: string
+                                  description: Module tab identifier.
+                                  maxLength: 64
+                              required:
+                                - api_name
+                          required:
+                            - id
+                            - module
+                        owner:
+                          type: object
+                          description: Owner who created the draft.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >
+                                Owner user identifier. Use the [Users
+                                API](users.yaml#$.paths./users/bulk.get) to
+                                retrieve user IDs.
+                              maxLength: 64
+                            name:
+                              type: string
+                              description: Owner display name.
+                              maxLength: 256
+                          required:
+                            - id
+                            - name
+                      required:
+                        - id
+                        - modified_time
+                        - created_time
+                        - from
+                        - to
+                        - reply_to
+                        - cc
+                        - bcc
+                        - subject
+                        - summary
+                        - owner
+                  info:
+                    type: object
+                    description: Pagination info for the list response.
+                    additionalProperties: false
+                    properties:
+                      page:
+                        type: integer
+                        format: int32
+                        description: Current page number.
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: Number of records per page.
+                      count:
+                        type: integer
+                        format: int32
+                        description: Number of records returned in this page.
+                      more_records:
+                        type: boolean
+                        description: true if additional pages exist.
+                    required:
+                      - page
+                      - per_page
+                      - count
+                      - more_records
+                required:
+                  - __email_drafts
+                  - info
+              examples:
+                Default:
+                  summary: Example response with one draft
+                  value:
+                    __email_drafts:
+                      - id: >-
+                          4f8efdcbaf23fd33c939217d4e14222d6d1cb21e4a45914fb9ba0c31c3c47330
+                        modified_time: '2023-11-09T14:45:25+05:30'
+                        created_time: '2023-11-09T12:30:00+05:30'
+                        from: patricia.boyle@zylker.com
+                        to:
+                          - user_name: user1
+                            email: user1@zylker.com
+                        reply_to: pat.boyle@zylker.com
+                        cc:
+                          - user_name: user2
+                            email: user2@zylker.com
+                        bcc:
+                          - user_name: user3
+                            email: user3@zylker.com
+                        schedule_details:
+                          time: '2023-11-30T18:40:00+05:30'
+                          timezone: Asia/Calcutta
+                          source: upTime
+                        subject: Test Draft Subject
+                        summary: This is the email content.
+                        $sharing_permission: full_access
+                        rich_text: true
+                        source: ''
+                        inventory_details: null
+                        attachments:
+                          - id: >-
+                              0b9e5596cdd8cafe6a5c09f78f095bd6434c863110a6d1e094285c6ebf9dd0d5
+                            file_name: attachment.txt
+                            file_size: '8990'
+                            service_name: ZFSAttached
+                        content: This is the email content.
+                        linked_record: null
+                        owner:
+                          id: '2309216000000012345'
+                          name: Patricia Boyle
+                    info:
+                      page: 1
+                      per_page: 10
+                      count: 1
+                      more_records: false
+        '204':
+          description: Indicates that no email drafts exist for the specified record.
+        '400':
+          description: >
+            Bad Request - The request could not be processed due to invalid
+            input.
+
+
+            **Resolution:** Verify that the module name is valid and the record
+            ID exists in the CRM organization.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetEmailDraftsErrorResponses
+                type: object
+                description: Error response for invalid module or record path parameters.
+                additionalProperties: true
+                properties:
+                  code:
+                    type: string
+                    maxLength: 100
+                    description: >
+                      Machine-readable error code.
+
+
+                      **Possible values:**
+
+                      - **INVALID_MODULE** - The specified module is invalid.
+
+                      - **INVALID_DATA** - The specified record ID is invalid.
+
+                      - **PATTERN_NOT_MATCHED** - A query parameter's value does
+                      not match its required pattern (e.g. `sort_by`,
+                      `sort_order`).
+                    enum:
+                      - INVALID_MODULE
+                      - INVALID_DATA
+                      - PATTERN_NOT_MATCHED
+                  message:
+                    type: string
+                    maxLength: 512
+                    description: Human-readable error message.
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: Always "error".
+                  details:
+                    type: object
+                    description: Additional context about the error.
+                    additionalProperties: true
+                    properties:
+                      resource_path_index:
+                        type: integer
+                        format: int32
+                        description: Index of the invalid path parameter.
+                      param_name:
+                        type: string
+                        maxLength: 255
+                        description: >-
+                          Name of the query parameter whose value failed pattern
+                          validation.
+              examples:
+                InvalidModule:
+                  summary: Invalid module name
+                  value:
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 0
+                InvalidRecord:
+                  summary: Invalid record ID
+                  value:
+                    code: INVALID_DATA
+                    message: the related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+                InvalidSortBy:
+                  summary: sort_by value does not match the allowed pattern
+                  value:
+                    code: PATTERN_NOT_MATCHED
+                    message: Please check whether the input values are correct
+                    status: error
+                    details:
+                      param_name: sort_by
+                InvalidSortOrder:
+                  summary: sort_order value does not match the allowed pattern
+                  value:
+                    code: PATTERN_NOT_MATCHED
+                    message: Please check whether the input values are correct
+                    status: error
+                    details:
+                      param_name: sort_order
+        '403':
+          $ref: '#/components/responses/NoPermissionForbidden'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.leads.READ
+        - OAuth2:
+            - ZohoCRM.modules.accounts.READ
+        - OAuth2:
+            - ZohoCRM.modules.contacts.READ
+        - OAuth2:
+            - ZohoCRM.modules.deals.READ
+        - OAuth2:
+            - ZohoCRM.modules.quotes.READ
+        - OAuth2:
+            - ZohoCRM.modules.salesorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.purchaseorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.invoices.READ
+        - OAuth2:
+            - ZohoCRM.modules.vendors.READ
+        - OAuth2:
+            - ZohoCRM.modules.custom.READ
+        - OAuth2:
+            - ZohoCRM.modules.cases.READ
+    post:
+      summary: Create Email Drafts for a Record
+      description: >-
+        Creates one or more email drafts associated with the specified record in
+        the given module.
+      x-zs-llm-description: >-
+        Use this API to create one or more email drafts for a CRM record. The
+        `from` address must be a configured outgoing email address for the user.
+        Set `rich_text: true` for HTML body (`content`) or `rich_text: false`
+        for plain text body (`plainTextContent`). The `id` returned in the
+        response `details` can be used to update or delete the draft later.
+      operationId: createEmailDrafts
+      parameters:
+        - name: module
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 100
+          description: >
+            Specifies the module of the record. Use the [Get Modules
+            API](modules.yaml#$.paths./settings/modules.get) to retrieve the API
+            names of modules.
+        - $ref: '#/components/parameters/Record'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for creating email drafts.
+              additionalProperties: false
+              properties:
+                __email_drafts:
+                  type: array
+                  description: List of email drafts to create.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: Email draft object.
+                    additionalProperties: false
+                    properties:
+                      from:
+                        description: >
+                          Specifies the sender email address. Must be a
+                          configured outgoing address for the user. Use the
+                          [From Addresses
+                          API](from_addresses.yaml#$.paths./settings/emails/actions/from_addresses.get)
+                          to retrieve valid from addresses.
+                        x-zs-$ref:
+                          resource: from_addresses
+                          origins:
+                            - operationId: getFromAddresses
+                              propertyId: FromAddressEmail
+                        type: string
+                        maxLength: 254
+                        pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+                      to:
+                        type: array
+                        description: List of primary recipients.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: Recipient object.
+                          additionalProperties: false
+                          properties:
+                            user_name:
+                              type:
+                                - string
+                                - 'null'
+                              description: Recipient display name; null if not available.
+                              maxLength: 256
+                            email:
+                              type: string
+                              description: Recipient email address.
+                              maxLength: 256
+                          required:
+                            - email
+                      reply_to:
+                        type:
+                          - string
+                          - 'null'
+                        description: Reply-to email address; null to clear.
+                        maxLength: 256
+                      cc:
+                        type: array
+                        description: List of CC recipients.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: CC recipient object.
+                          additionalProperties: false
+                          properties:
+                            user_name:
+                              type:
+                                - string
+                                - 'null'
+                              description: >-
+                                CC recipient display name; null if not
+                                available.
+                              maxLength: 256
+                            email:
+                              type: string
+                              description: CC recipient email address.
+                              maxLength: 256
+                          required:
+                            - email
+                      bcc:
+                        type: array
+                        description: List of BCC recipients.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: BCC recipient object.
+                          additionalProperties: false
+                          properties:
+                            user_name:
+                              type:
+                                - string
+                                - 'null'
+                              description: >-
+                                BCC recipient display name; null if not
+                                available.
+                              maxLength: 256
+                            email:
+                              type: string
+                              description: BCC recipient email address.
+                              maxLength: 256
+                          required:
+                            - email
+                      inventory_details:
+                        type:
+                          - object
+                          - 'null'
+                        description: >-
+                          Inventory email details; null if not an inventory
+                          draft.
+                        additionalProperties: false
+                        properties:
+                          inventory_template:
+                            type: object
+                            description: Inventory template to use.
+                            additionalProperties: false
+                            properties:
+                              id:
+                                type: string
+                                description: Inventory template identifier.
+                                maxLength: 64
+                            required:
+                              - id
+                          paper_type:
+                            type: string
+                            description: Paper type.
+                            enum:
+                              - A4
+                              - USLetter
+                          view_type:
+                            type: string
+                            description: View type.
+                            enum:
+                              - portrait
+                              - landscape
+                        required:
+                          - inventory_template
+                          - paper_type
+                          - view_type
+                      schedule_details:
+                        type:
+                          - object
+                          - 'null'
+                        description: Scheduling details; null to remove schedule.
+                        additionalProperties: false
+                        properties:
+                          time:
+                            type: string
+                            description: Scheduled send time (ISO 8601 format).
+                            format: date-time
+                          timezone:
+                            type:
+                              - string
+                              - 'null'
+                            description: >-
+                              Java TimeZone ID string; null uses organization
+                              default.
+                            maxLength: 100
+                          source:
+                            type: string
+                            description: Source of the schedule decision.
+                            enum:
+                              - ecOneHourAhead
+                              - upTime
+                              - ecSchduleBestTime
+                              - ecUpComing
+                              - ecSchduleTime
+                        required:
+                          - time
+                      rich_text:
+                        type: boolean
+                        description: true for HTML editor mode; false for plain text mode.
+                      subject:
+                        type:
+                          - string
+                          - 'null'
+                        description: Email subject; null to clear.
+                        maxLength: 512
+                      content:
+                        type:
+                          - string
+                          - 'null'
+                        description: HTML body when rich_text is true; null to clear.
+                        maxLength: 200000
+                      plainTextContent:
+                        type:
+                          - string
+                          - 'null'
+                        description: >-
+                          Plain text body when rich_text is false; null to
+                          clear.
+                        maxLength: 200000
+                      source:
+                        type: string
+                        description: >-
+                          Source identifier string stored at draft creation time
+                          (e.g., campaign name or integration identifier).
+                        maxLength: 256
+                      linked_record:
+                        type:
+                          - object
+                          - 'null'
+                        description: >-
+                          CRM record to link this draft to (Contacts module
+                          only); null to clear.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: CRM record identifier to link.
+                            maxLength: 64
+                          module:
+                            type: object
+                            description: >-
+                              Module to which the record belongs. Specify at
+                              least one of api_name" or "id". If both are
+                              specified, they must refer to the same module.
+                            additionalProperties: false
+                            minProperties: 1
+                            properties:
+                              api_name:
+                                type: string
+                                description: API name of the module.
+                                maxLength: 100
+                              id:
+                                type: string
+                                description: Tab identifier of the module.
+                                maxLength: 20
+                        required:
+                          - id
+                          - module
+                      attachments:
+                        type: array
+                        description: Attachments to add to the draft.
+                        maxItems: 50
+                        items:
+                          type: object
+                          description: Attachment reference.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >
+                                Attachment/file identifier. Use the [Files
+                                API](files.yaml#$.paths./files.get) to retrieve
+                                file IDs.
+                              maxLength: 256
+                            file_name:
+                              type: string
+                              description: File name.
+                              maxLength: 512
+                            file_size:
+                              type: string
+                              description: File size in bytes as a numeric string.
+                              maxLength: 20
+                            service_name:
+                              type: string
+                              description: >-
+                                Storage service name (e.g., Desktop,
+                                ZFSAttached).
+                              maxLength: 100
+                          required:
+                            - id
+                            - service_name
+                    required:
+                      - from
+                      - rich_text
+              required:
+                - __email_drafts
+            x-zs-llm-examples:
+              - CreateDraft
+            examples:
+              CreateDraft:
+                summary: Example request to create email drafts
+                value:
+                  __email_drafts:
+                    - from: john@example.com
+                      to:
+                        - user_name: John Doe
+                          email: john.doe@example.com
+                      reply_to: null
+                      cc: []
+                      bcc: []
+                      inventory_details: null
+                      schedule_details: null
+                      rich_text: true
+                      subject: Test Subject
+                      content: <p>Hello!</p>
+        required: true
+      responses:
+        '201':
+          description: >-
+            Returns the creation results when all email drafts in the request
+            are created successfully.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PostEmailDraftsResponse
+                type: object
+                description: Response object containing the result of created email drafts.
+                additionalProperties: false
+                properties:
+                  __email_drafts:
+                    type: array
+                    description: List of created email draft results.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: Result of a single created email draft.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: Status code for the operation.
+                        message:
+                          type: string
+                          description: Operation message.
+                          maxLength: 512
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: Status of the operation.
+                        details:
+                          type: object
+                          description: Details of the created draft.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Encrypted identifier of the created draft. Use
+                                this ID to update or delete the draft.
+                              maxLength: 256
+                          required:
+                            - id
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - __email_drafts
+              examples:
+                Success:
+                  summary: Successful Creation
+                  value:
+                    __email_drafts:
+                      - code: SUCCESS
+                        message: Draft created Successfully
+                        status: success
+                        details:
+                          id: >-
+                            4f8efdcbaf23fd33c939217d4e14222d6d1cb21e4a45914fb9ba0c31c3c47330
+        '207':
+          $ref: '#/components/responses/EmailDraftsMultiStatus'
+        '400':
+          description: >
+            Bad Request - The request could not be processed due to invalid
+            input.
+
+
+            **Resolution:** Review the error details, correct any invalid
+            fields, and retry the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PostEmailDraftsErrorResponses
+                type: object
+                description: >-
+                  Error response - either a generic request-level error (has
+                  top-level code/message/status/details) or a batch validation
+                  error (has __email_drafts array with per-draft errors).
+                additionalProperties: true
+                properties:
+                  code:
+                    type: string
+                    maxLength: 100
+                    description: |
+                      Machine-readable error code for generic errors.
+
+                      **Possible values:**
+                      - **INVALID_MODULE** - The specified module is invalid.
+                      - **INVALID_DATA** - The specified record ID is invalid.
+                    enum:
+                      - INVALID_MODULE
+                      - INVALID_DATA
+                  message:
+                    type: string
+                    maxLength: 512
+                    description: Human-readable error message for generic errors.
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: Always "error".
+                  details:
+                    type: object
+                    description: Additional context for generic errors.
+                    additionalProperties: true
+                    properties:
+                      resource_path_index:
+                        type: integer
+                        format: int32
+                        description: Index of the invalid path parameter.
+                  __email_drafts:
+                    type: array
+                    description: >-
+                      Per-draft validation error array (present for batch
+                      validation errors).
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: Per-draft error detail.
+                      additionalProperties: true
+                      properties:
+                        code:
+                          type: string
+                          maxLength: 100
+                          description: >
+                            Error code.
+
+
+                            **Possible values:**
+
+                            - **MANDATORY_NOT_FOUND** - A required field is
+                            missing.
+
+                            - **INVALID_DATA** - The field contains invalid
+                            data.
+
+                            - **NOT_ALLOWED** - The field is not allowed in this
+                            operation.
+
+                            - **DUPLICATE_DATA** - A duplicate value was found
+                            (e.g. a duplicate attachment).
+
+                            - **EXPECTED_FIELD_MISSING** - At least one of a set
+                            of expected fields must be specified.
+
+                            - **AMBIGUITY_DURING_PROCESSING** - The given field
+                            values are ambiguous or conflicting.
+
+                            - **NOT_SUPPORTED** - The given field or value is
+                            not supported for this module.
+
+                            - **DEPENDENT_MISMATCH** - A field value does not
+                            match its dependent field.
+                          enum:
+                            - MANDATORY_NOT_FOUND
+                            - INVALID_DATA
+                            - NOT_ALLOWED
+                            - DUPLICATE_DATA
+                            - EXPECTED_FIELD_MISSING
+                            - AMBIGUITY_DURING_PROCESSING
+                            - NOT_SUPPORTED
+                            - DEPENDENT_MISMATCH
+                        message:
+                          type: string
+                          maxLength: 512
+                          description: Human-readable error message for this draft.
+                        status:
+                          type: string
+                          enum:
+                            - error
+                          description: Always "error".
+                        details:
+                          type: object
+                          description: Additional context for this draft's error.
+                          additionalProperties: true
+                          properties:
+                            api_name:
+                              type: string
+                              maxLength: 100
+                              description: API field name that caused the error.
+                            json_path:
+                              type: string
+                              maxLength: 256
+                              description: JSON path to the offending field.
+              examples:
+                MandatoryNotFoundFrom:
+                  summary: Batch - from is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: from
+                          json_path: $.__email_drafts[0].from
+                MandatoryNotFoundRichText:
+                  summary: Batch - rich_text is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: rich_text
+                          json_path: $.__email_drafts[0].rich_text
+                MandatoryNotFoundToEmail:
+                  summary: Batch - to[].email is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: email
+                          json_path: $.__email_drafts[0].to[0].email
+                MandatoryNotFoundCcEmail:
+                  summary: Batch - cc[].email is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: email
+                          json_path: $.__email_drafts[0].cc[0].email
+                MandatoryNotFoundBccEmail:
+                  summary: Batch - bcc[].email is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: email
+                          json_path: $.__email_drafts[0].bcc[0].email
+                MandatoryNotFoundAttachmentId:
+                  summary: Batch - attachments[].id is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: id
+                          json_path: $.__email_drafts[0].attachments[0].id
+                MandatoryNotFoundAttachmentFileName:
+                  summary: Batch - attachments[].file_name is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: file_name
+                          json_path: $.__email_drafts[0].attachments[0].file_name
+                MandatoryNotFoundScheduleTime:
+                  summary: Batch - schedule_details.time is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: time
+                          json_path: $.__email_drafts[0].schedule_details.time
+                MandatoryNotFoundInventoryTemplate:
+                  summary: Batch - inventory_details.inventory_template is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: inventory_template
+                          json_path: >-
+                            $.__email_drafts[0].inventory_details.inventory_template
+                InvalidDataFromEmail:
+                  summary: Batch - from is not a valid email
+                  value:
+                    __email_drafts:
+                      - code: INVALID_DATA
+                        message: invalid email
+                        status: error
+                        details:
+                          api_name: from
+                          json_path: $.__email_drafts[0].from
+                InvalidDataReplyToEmail:
+                  summary: Batch - reply_to is not a valid email
+                  value:
+                    __email_drafts:
+                      - code: INVALID_DATA
+                        message: invalid email
+                        status: error
+                        details:
+                          api_name: reply_to
+                          json_path: $.__email_drafts[0].reply_to
+                InvalidDataToEmail:
+                  summary: Batch - to[].email is not a valid email
+                  value:
+                    __email_drafts:
+                      - code: INVALID_DATA
+                        message: invalid email
+                        status: error
+                        details:
+                          api_name: email
+                          json_path: $.__email_drafts[0].to[0].email
+                InvalidDataPaperType:
+                  summary: Batch - inventory_details.paper_type value is invalid
+                  value:
+                    __email_drafts:
+                      - code: INVALID_DATA
+                        message: invalid data
+                        status: error
+                        details:
+                          api_name: paper_type
+                          json_path: $.__email_drafts[0].inventory_details.paper_type
+                InvalidFrom:
+                  summary: Batch - from not in allowed address list (API layer)
+                  value:
+                    __email_drafts:
+                      - code: INVALID_DATA
+                        message: >-
+                          Email can't be saved as draft using this from
+                          address.Kindly check the allowed from address list
+                        status: error
+                        details:
+                          api_name: from
+                InvalidModule:
+                  summary: Generic - invalid module name
+                  value:
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 0
+                InvalidRecord:
+                  summary: Generic - invalid record ID
+                  value:
+                    code: INVALID_DATA
+                    message: the related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+        '403':
+          $ref: '#/components/responses/NoPermissionForbidden'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.leads.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.accounts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.contacts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.deals.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.quotes.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.salesorders.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.purchaseorders.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.invoices.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.vendors.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.custom.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.cases.CREATE
+    put:
+      summary: Update Email Drafts for a Record
+      description: >-
+        Updates one or more email drafts associated with the specified record in
+        the given module.
+      x-zs-llm-description: >-
+        Use this API to update multiple email drafts in a single batch request
+        for a CRM record. Each draft entry in the request must include the `id`
+        of the draft to update (obtained from getEmailDrafts or
+        createEmailDrafts response), along with the `from` address and
+        `rich_text` flag. Fields not provided in the request will be cleared or
+        reset.
+      operationId: updateEmailDraftsForRecord
+      parameters:
+        - name: module
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 100
+          description: >
+            Specifies the module of the record. Use the [Get Modules
+            API](modules.yaml#$.paths./settings/modules.get) to retrieve the API
+            names of modules.
+        - $ref: '#/components/parameters/Record'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for updating email drafts.
+              additionalProperties: false
+              properties:
+                __email_drafts:
+                  type: array
+                  description: List of email drafts to update.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: Email draft object for update.
+                    additionalProperties: false
+                    properties:
+                      id:
+                        description: >
+                          Encrypted draft identifier. Required to identify which
+                          draft to update. Use the [Get Email
+                          Drafts](email_drafts.yaml#$.paths./{module}/{record}/__email_drafts.get)
+                          resource to retrieve draft IDs.
+                        x-zs-$ref:
+                          resource: email_drafts
+                          origins:
+                            - operationId: getEmailDrafts
+                              propertyId: EmailDraftId
+                        type: string
+                        maxLength: 256
+                      from:
+                        description: >
+                          Specifies the sender email address. Must be a
+                          configured outgoing address for the user. Use the
+                          [From Addresses
+                          API](from_addresses.yaml#$.paths./settings/emails/actions/from_addresses.get)
+                          to retrieve valid from addresses.
+                        x-zs-$ref:
+                          resource: from_addresses
+                          origins:
+                            - operationId: getFromAddresses
+                              propertyId: FromAddressEmail
+                        type: string
+                        maxLength: 254
+                        pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+                      to:
+                        type: array
+                        description: Primary recipients. Replaces the existing list.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: Recipient object.
+                          additionalProperties: false
+                          properties:
+                            user_name:
+                              type:
+                                - string
+                                - 'null'
+                              description: Recipient display name; null if not available.
+                              maxLength: 256
+                            email:
+                              type: string
+                              description: Recipient email address.
+                              maxLength: 256
+                          required:
+                            - email
+                      reply_to:
+                        type:
+                          - string
+                          - 'null'
+                        description: Reply-to email address; null to clear.
+                        maxLength: 256
+                      cc:
+                        type: array
+                        description: CC recipients. Replaces the existing list.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: CC recipient object.
+                          additionalProperties: false
+                          properties:
+                            user_name:
+                              type:
+                                - string
+                                - 'null'
+                              description: >-
+                                CC recipient display name; null if not
+                                available.
+                              maxLength: 256
+                            email:
+                              type: string
+                              description: CC recipient email address.
+                              maxLength: 256
+                          required:
+                            - email
+                      bcc:
+                        type: array
+                        description: BCC recipients. Replaces the existing list.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: BCC recipient object.
+                          additionalProperties: false
+                          properties:
+                            user_name:
+                              type:
+                                - string
+                                - 'null'
+                              description: >-
+                                BCC recipient display name; null if not
+                                available.
+                              maxLength: 256
+                            email:
+                              type: string
+                              description: BCC recipient email address.
+                              maxLength: 256
+                          required:
+                            - email
+                      inventory_details:
+                        type:
+                          - object
+                          - 'null'
+                        description: Inventory email details; null to remove.
+                        additionalProperties: false
+                        properties:
+                          inventory_template:
+                            type: object
+                            description: Inventory template to use.
+                            additionalProperties: false
+                            properties:
+                              id:
+                                type: string
+                                description: Inventory template identifier.
+                                maxLength: 64
+                            required:
+                              - id
+                          paper_type:
+                            type: string
+                            description: Paper type.
+                            enum:
+                              - A4
+                              - USLetter
+                          view_type:
+                            type: string
+                            description: View type.
+                            enum:
+                              - portrait
+                              - landscape
+                        required:
+                          - inventory_template
+                          - paper_type
+                          - view_type
+                      schedule_details:
+                        type:
+                          - object
+                          - 'null'
+                        description: Scheduling details; null to remove schedule.
+                        additionalProperties: false
+                        properties:
+                          time:
+                            type: string
+                            description: Scheduled send time (ISO 8601 format).
+                            format: date-time
+                          timezone:
+                            type:
+                              - string
+                              - 'null'
+                            description: >-
+                              Java TimeZone ID string; null uses organization
+                              default.
+                            maxLength: 100
+                          source:
+                            type: string
+                            description: Source of the schedule decision.
+                            enum:
+                              - ecOneHourAhead
+                              - upTime
+                              - ecSchduleBestTime
+                              - ecUpComing
+                              - ecSchduleTime
+                        required:
+                          - time
+                      rich_text:
+                        type: boolean
+                        description: true for HTML editor; false for plain text.
+                      subject:
+                        type:
+                          - string
+                          - 'null'
+                        description: Email subject; null to clear.
+                        maxLength: 512
+                      content:
+                        type:
+                          - string
+                          - 'null'
+                        description: HTML body when rich_text is true; null to clear.
+                        maxLength: 200000
+                      plainTextContent:
+                        type:
+                          - string
+                          - 'null'
+                        description: >-
+                          Plain text body when rich_text is false; null to
+                          clear.
+                        maxLength: 200000
+                      source:
+                        type: string
+                        description: >-
+                          Source identifier string stored at draft creation time
+                          (e.g., campaign name or integration identifier).
+                        maxLength: 256
+                      linked_record:
+                        type:
+                          - object
+                          - 'null'
+                        description: CRM record to link this draft to; null to clear.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: CRM record identifier to link.
+                            maxLength: 64
+                          module:
+                            type: object
+                            description: >-
+                              Module to which the record belongs. Specify at
+                              least one of "api_name" or "id". If both are
+                              specified, they must refer to the same module.
+                            additionalProperties: false
+                            minProperties: 1
+                            properties:
+                              api_name:
+                                type: string
+                                description: API name of the module.
+                                maxLength: 100
+                              id:
+                                type: string
+                                description: Tab identifier of the module.
+                                maxLength: 20
+                        required:
+                          - id
+                          - module
+                      attachments:
+                        type: array
+                        description: Attachments list; replaces existing.
+                        maxItems: 50
+                        items:
+                          type: object
+                          description: Attachment reference.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >
+                                Attachment/file identifier. Use the [Files
+                                API](files.yaml#$.paths./files.get) to retrieve
+                                file IDs.
+                              maxLength: 256
+                            file_name:
+                              type: string
+                              description: File name.
+                              maxLength: 512
+                            file_size:
+                              type: string
+                              description: File size in bytes as a numeric string.
+                              maxLength: 20
+                            service_name:
+                              type: string
+                              description: Storage service name.
+                              maxLength: 100
+                            _delete:
+                              type: boolean
+                              description: true to remove this attachment.
+                          required:
+                            - id
+                            - service_name
+                    required:
+                      - id
+                      - from
+                      - rich_text
+              required:
+                - __email_drafts
+            x-zs-llm-examples:
+              - UpdateDraft
+            examples:
+              UpdateDraft:
+                summary: Example request to update email drafts
+                value:
+                  __email_drafts:
+                    - id: >-
+                        4f8efdcbaf23fd33c939217d4e14222d6d1cb21e4a45914fb9ba0c31c3c47330
+                      from: john@example.com
+                      to:
+                        - user_name: John Doe
+                          email: john.doe@example.com
+                      reply_to: null
+                      cc: []
+                      bcc: []
+                      inventory_details: null
+                      schedule_details: null
+                      rich_text: true
+                      subject: Test Subject
+                      content: <p>Hello!</p>
+              LeadsUpdateDraft:
+                summary: Example request to update a Leads email draft
+                value:
+                  __email_drafts:
+                    - id: >-
+                        4f8efdcbaf23fd33c939217d4e14222d6d1cb21e4a45914fb9ba0c31c3c47330
+                      from: user1@example.com
+                      to:
+                        - user_name: user1
+                          email: user1@example.com
+                      reply_to: reply@example.com
+                      cc:
+                        - user_name: user2
+                          email: user2@example.com
+                      bcc:
+                        - user_name: user3
+                          email: user3@example.com
+                      schedule_details:
+                        time: '2023-03-25T14:00:54+05:30'
+                        timezone: null
+                        source: upTime
+                      rich_text: true
+                      subject: Test Draft update
+                      content: this is the updated content
+              LeadsUpdateDraftWithId:
+                summary: Sample request body for updating a Leads email draft
+                value:
+                  __email_drafts:
+                    - id: >-
+                        4f8efdcbaf23fd33c939217d4e14222d6d1cb21e4a45914fb9ba0c31c3c47330
+                      reply_to: pat.boyle@zylker.com
+                      from: patricia.boyle@zylker.com
+                      to:
+                        - user_name: user1
+                          email: user1@zylker.com
+                      cc:
+                        - user_name: user2
+                          email: user2@zylker.com
+                      bcc:
+                        - user_name: user3
+                          email: user3@zylker.com
+                      subject: Test Draft update
+                      content: this is the updated content
+                      rich_text: true
+                      schedule_details:
+                        time: '2023-03-25T14:00:54+05:30'
+                        timezone: null
+        required: true
+      responses:
+        '200':
+          description: >-
+            Returns the update results when all email drafts in the request are
+            updated successfully.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PutEmailDraftsResponse
+                type: object
+                description: >-
+                  Response object containing the result of updating email
+                  drafts.
+                additionalProperties: false
+                properties:
+                  __email_drafts:
+                    type: array
+                    description: List of updated email draft results.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: Result of a single updated email draft.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: Status code for the operation.
+                        message:
+                          type: string
+                          description: Operation message.
+                          maxLength: 512
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: Status of the operation.
+                        details:
+                          type: object
+                          description: Details of the updated draft.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Encrypted identifier of the updated draft.
+                              maxLength: 256
+                          required:
+                            - id
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - __email_drafts
+              examples:
+                Success:
+                  summary: Successful update
+                  value:
+                    __email_drafts:
+                      - code: SUCCESS
+                        message: Draft updated Successfully
+                        status: success
+                        details:
+                          id: >-
+                            4f8efdcbaf23fd33c939217d4e14222d6d1cb21e4a45914fb9ba0c31c3c47330
+        '207':
+          $ref: '#/components/responses/EmailDraftsMultiStatus'
+        '400':
+          description: >
+            Bad Request - The request could not be processed due to invalid
+            input.
+
+
+            **Resolution:** Review the error details, correct any invalid
+            fields, and retry the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PutEmailDraftsErrorResponses
+                type: object
+                description: >-
+                  Error response - either a generic request-level error or a
+                  batch validation error with per-draft details.
+                additionalProperties: true
+                properties:
+                  code:
+                    type: string
+                    maxLength: 100
+                    description: >
+                      Machine-readable error code for generic errors.
+
+
+                      **Possible values:**
+
+                      - **INVALID_MODULE** - The specified module is invalid.
+
+                      - **INVALID_DATA** - The specified record ID or draft ID
+                      is invalid.
+                    enum:
+                      - INVALID_MODULE
+                      - INVALID_DATA
+                  message:
+                    type: string
+                    maxLength: 512
+                    description: Human-readable error message for generic errors.
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: Always "error".
+                  details:
+                    type: object
+                    description: Additional context for generic errors.
+                    additionalProperties: true
+                    properties:
+                      resource_path_index:
+                        type: integer
+                        format: int32
+                        description: Index of the invalid path parameter.
+                  __email_drafts:
+                    type: array
+                    description: >-
+                      Per-draft validation error array (present for batch
+                      validation errors).
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: Per-draft error detail.
+                      additionalProperties: true
+                      properties:
+                        code:
+                          type: string
+                          maxLength: 100
+                          description: >
+                            Error code.
+
+
+                            **Possible values:**
+
+                            - **MANDATORY_NOT_FOUND** - A required field is
+                            missing.
+
+                            - **INVALID_DATA** - The field contains invalid
+                            data.
+
+                            - **NOT_ALLOWED** - The field is not allowed in this
+                            operation.
+
+                            - **DUPLICATE_DATA** - A duplicate value was found
+                            (e.g. a duplicate attachment).
+
+                            - **EXPECTED_FIELD_MISSING** - At least one of a set
+                            of expected fields must be specified.
+
+                            - **AMBIGUITY_DURING_PROCESSING** - The given field
+                            values are ambiguous or conflicting.
+
+                            - **NOT_SUPPORTED** - The given field or value is
+                            not supported for this module.
+
+                            - **DEPENDENT_MISMATCH** - A field value does not
+                            match its dependent field.
+                          enum:
+                            - MANDATORY_NOT_FOUND
+                            - INVALID_DATA
+                            - NOT_ALLOWED
+                            - DUPLICATE_DATA
+                            - EXPECTED_FIELD_MISSING
+                            - AMBIGUITY_DURING_PROCESSING
+                            - NOT_SUPPORTED
+                            - DEPENDENT_MISMATCH
+                        message:
+                          type: string
+                          maxLength: 512
+                          description: Human-readable error message for this draft.
+                        status:
+                          type: string
+                          enum:
+                            - error
+                          description: Always "error".
+                        details:
+                          type: object
+                          description: Additional context for this draft's error.
+                          additionalProperties: true
+                          properties:
+                            api_name:
+                              type: string
+                              maxLength: 100
+                              description: API field name that caused the error.
+                            json_path:
+                              type: string
+                              maxLength: 256
+                              description: JSON path to the offending field.
+              examples:
+                MandatoryNotFoundId:
+                  summary: Batch - id is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: id
+                          json_path: $.__email_drafts[0].id
+                MandatoryNotFoundFrom:
+                  summary: Batch - from is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: from
+                          json_path: $.__email_drafts[0].from
+                MandatoryNotFoundRichText:
+                  summary: Batch - rich_text is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: rich_text
+                          json_path: $.__email_drafts[0].rich_text
+                MandatoryNotFoundToEmail:
+                  summary: Batch - to[].email is required on edit
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: email
+                          json_path: $.__email_drafts[0].to[0].email
+                MandatoryNotFoundBccEmail:
+                  summary: Batch - bcc[].email is required on edit
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: email
+                          json_path: $.__email_drafts[0].bcc[0].email
+                MandatoryNotFoundCcEmail:
+                  summary: Batch - cc[].email is required on edit
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: email
+                          json_path: $.__email_drafts[0].cc[0].email
+                MandatoryNotFoundAttachmentId:
+                  summary: Batch - attachments[].id is required on edit
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: id
+                          json_path: $.__email_drafts[0].attachments[0].id
+                MandatoryNotFoundAttachmentFileName:
+                  summary: Batch - attachments[].file_name is required on edit
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: file_name
+                          json_path: $.__email_drafts[0].attachments[0].file_name
+                MandatoryNotFoundScheduleTime:
+                  summary: Batch - schedule_details.time is required
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: time
+                          json_path: $.__email_drafts[0].schedule_details.time
+                InvalidDataFromEmail:
+                  summary: Batch - from is not a valid email
+                  value:
+                    __email_drafts:
+                      - code: INVALID_DATA
+                        message: invalid email
+                        status: error
+                        details:
+                          api_name: from
+                          json_path: $.__email_drafts[0].from
+                InvalidDataReplyToEmail:
+                  summary: Batch - reply_to is not a valid email
+                  value:
+                    __email_drafts:
+                      - code: INVALID_DATA
+                        message: invalid email
+                        status: error
+                        details:
+                          api_name: reply_to
+                          json_path: $.__email_drafts[0].reply_to
+                InvalidFrom:
+                  summary: Batch - from not in allowed address list (API layer)
+                  value:
+                    __email_drafts:
+                      - code: INVALID_DATA
+                        message: >-
+                          Email can't be saved as draft using this from
+                          address.Kindly check the allowed from address list
+                        status: error
+                        details:
+                          api_name: from
+                InventoryNotAllowed:
+                  summary: Batch - inventory_details not allowed in update (API layer)
+                  value:
+                    __email_drafts:
+                      - code: NOT_ALLOWED
+                        message: >-
+                          The inventory_details field is not allowed in update
+                          draft request.
+                        status: error
+                        details:
+                          api_name: inventory_details
+                          json_path: $.__email_drafts[0].inventory_details
+                InvalidData:
+                  summary: Generic - invalid path parameter
+                  value:
+                    code: INVALID_DATA
+                    message: the related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+                InvalidModule:
+                  summary: Generic - invalid module name
+                  value:
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 0
+        '403':
+          $ref: '#/components/responses/NoPermissionForbidden'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.leads.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.accounts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.contacts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.deals.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.quotes.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.salesorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.purchaseorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.invoices.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.vendors.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.custom.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.cases.UPDATE
+  /{module}/{record}/__email_drafts/{draft}:
+    get:
+      summary: Get an Email Draft
+      description: Retrieves the specified email draft for the given record in the module.
+      x-zs-llm-description: >-
+        Use this API to retrieve a single email draft by its `id` (the `draft`
+        path parameter). The `id` can be obtained from the getEmailDrafts (list)
+        response. Returns the full draft detail including recipients, content,
+        attachments, schedule details, and owner.
+      operationId: getEmailDraft
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/Record'
+        - $ref: '#/components/parameters/Draft'
+      responses:
+        '200':
+          description: Returns the details of the specified email draft.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetDetailEmailDraftsResponse
+                type: object
+                description: Response containing a single email draft.
+                additionalProperties: false
+                properties:
+                  __email_drafts:
+                    type: array
+                    description: Array containing exactly one email draft object.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Email draft object with metadata, recipients, and
+                        attachments.
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                          description: Unique encrypted draft identifier.
+                          maxLength: 256
+                        modified_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Timestamp when the draft was last modified (ISO 8601
+                            format).
+                        created_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Timestamp when the draft was created (ISO 8601
+                            format).
+                        from:
+                          type: string
+                          description: Sender email address.
+                          maxLength: 256
+                        to:
+                          type:
+                            - array
+                            - 'null'
+                          description: Primary recipients; null if none.
+                          maxItems: 100
+                          items:
+                            type: object
+                            description: Recipient object.
+                            additionalProperties: false
+                            properties:
+                              user_name:
+                                type:
+                                  - string
+                                  - 'null'
+                                description: Recipient display name; null if not available.
+                                maxLength: 256
+                              email:
+                                type: string
+                                description: Recipient email address.
+                                maxLength: 256
+                            required:
+                              - user_name
+                              - email
+                        reply_to:
+                          type:
+                            - string
+                            - 'null'
+                          description: Reply-to email address; null if not set.
+                          maxLength: 256
+                        cc:
+                          type:
+                            - array
+                            - 'null'
+                          description: CC recipients; null if none.
+                          maxItems: 100
+                          items:
+                            type: object
+                            description: CC recipient object.
+                            additionalProperties: false
+                            properties:
+                              user_name:
+                                type:
+                                  - string
+                                  - 'null'
+                                description: >-
+                                  CC recipient display name; null if not
+                                  available.
+                                maxLength: 256
+                              email:
+                                type: string
+                                description: CC recipient email address.
+                                maxLength: 256
+                            required:
+                              - user_name
+                              - email
+                        bcc:
+                          type:
+                            - array
+                            - 'null'
+                          description: BCC recipients; null if none.
+                          maxItems: 100
+                          items:
+                            type: object
+                            description: BCC recipient object.
+                            additionalProperties: false
+                            properties:
+                              user_name:
+                                type:
+                                  - string
+                                  - 'null'
+                                description: >-
+                                  BCC recipient display name; null if not
+                                  available.
+                                maxLength: 256
+                              email:
+                                type: string
+                                description: BCC recipient email address.
+                                maxLength: 256
+                            required:
+                              - user_name
+                              - email
+                        $sharing_permission:
+                          type: string
+                          description: Sharing permission level for the requesting user.
+                          maxLength: 64
+                        inventory_details:
+                          type:
+                            - object
+                            - 'null'
+                          description: >-
+                            Inventory email details; null if not an inventory
+                            draft.
+                          additionalProperties: false
+                          properties:
+                            inventory_template:
+                              type: object
+                              description: Inventory template details.
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  type: string
+                                  description: Inventory template name.
+                                  maxLength: 256
+                                id:
+                                  type: string
+                                  description: Inventory template identifier.
+                                  maxLength: 64
+                              required:
+                                - name
+                                - id
+                            paper_type:
+                              type: string
+                              enum:
+                                - A4
+                                - USLetter
+                              description: Paper type for rendered inventory.
+                            view_type:
+                              type: string
+                              enum:
+                                - portrait
+                                - landscape
+                              description: Layout/view type for the inventory.
+                            record:
+                              type: object
+                              description: CRM record associated with this inventory draft.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: CRM record identifier.
+                                  maxLength: 64
+                                name:
+                                  type: string
+                                  description: CRM record display name.
+                                  maxLength: 256
+                              required:
+                                - id
+                                - name
+                          required:
+                            - inventory_template
+                            - paper_type
+                            - view_type
+                        attachments:
+                          type:
+                            - array
+                            - 'null'
+                          description: Attachments included with the draft; null if none.
+                          maxItems: 50
+                          items:
+                            type: object
+                            description: Attachment metadata.
+                            additionalProperties: false
+                            properties:
+                              id:
+                                type: string
+                                description: Encrypted attachment/file identifier.
+                                maxLength: 256
+                              file_name:
+                                type: string
+                                description: Original file name.
+                                maxLength: 512
+                              file_size:
+                                type: string
+                                description: File size in bytes as a numeric string.
+                                maxLength: 20
+                              service_name:
+                                type: string
+                                description: Storage service name.
+                                maxLength: 100
+                            required:
+                              - id
+                              - file_name
+                              - file_size
+                              - service_name
+                        schedule_details:
+                          type:
+                            - object
+                            - 'null'
+                          description: Scheduling information; null if not scheduled.
+                          additionalProperties: false
+                          properties:
+                            time:
+                              type: string
+                              format: date-time
+                              description: Scheduled send time (ISO 8601 format).
+                            timezone:
+                              type:
+                                - string
+                                - 'null'
+                              description: Timezone identifier or null.
+                              maxLength: 100
+                            source:
+                              type: string
+                              enum:
+                                - ecOneHourAhead
+                                - upTime
+                                - ecSchduleBestTime
+                                - ecUpComing
+                                - ecSchduleTime
+                              description: Source of the schedule decision.
+                          required:
+                            - time
+                        rich_text:
+                          type: boolean
+                          description: >-
+                            true when HTML editor was used; false for plain
+                            text.
+                        subject:
+                          type:
+                            - string
+                            - 'null'
+                          description: Email subject; null if not set.
+                          maxLength: 512
+                        content:
+                          type:
+                            - string
+                            - 'null'
+                          description: Email HTML body content; null if not set.
+                          maxLength: 200000
+                        summary:
+                          type:
+                            - string
+                            - 'null'
+                          description: Plain text preview of the draft body; null if empty.
+                          maxLength: 500
+                        owner:
+                          type: object
+                          description: Owner who created the draft.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >
+                                Owner user identifier. Use the [Users
+                                API](users.yaml#$.paths./users/bulk.get) to
+                                retrieve user IDs.
+                              maxLength: 64
+                            name:
+                              type: string
+                              description: Owner display name.
+                              maxLength: 256
+                          required:
+                            - id
+                            - name
+                        source:
+                          type: string
+                          description: >-
+                            Source identifier string stored at draft creation
+                            time.
+                          maxLength: 256
+                        linked_record:
+                          type:
+                            - object
+                            - 'null'
+                          description: CRM record linked to this draft; null if not linked.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Linked CRM record identifier.
+                              maxLength: 64
+                            module:
+                              type: object
+                              description: Module of the linked record.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: Module API name.
+                                  maxLength: 100
+                                id:
+                                  type: string
+                                  description: Module tab identifier.
+                                  maxLength: 64
+                              required:
+                                - api_name
+                          required:
+                            - id
+                            - module
+                      required:
+                        - id
+                        - modified_time
+                        - created_time
+                        - from
+                        - to
+                        - reply_to
+                        - cc
+                        - bcc
+                        - rich_text
+                        - subject
+                        - content
+                        - summary
+                        - owner
+                required:
+                  - __email_drafts
+              examples:
+                Default:
+                  summary: Example response for a single email draft
+                  value:
+                    __email_drafts:
+                      - id: >-
+                          4f8efdcbaf23fd33c939217d4e14222d6d1cb21e4a45914fb9ba0c31c3c47330
+                        modified_time: '2023-11-09T14:45:25+05:30'
+                        created_time: '2023-11-09T14:45:25+05:30'
+                        from: patricia.boyle@zylker.com
+                        to:
+                          - user_name: user1
+                            email: user1@zylker.com
+                        reply_to: pat.boyle@zylker.com
+                        cc:
+                          - user_name: user2
+                            email: user2@zylker.com
+                        bcc:
+                          - user_name: user4
+                            email: user4email@zoho.com
+                        $sharing_permission: full_access
+                        inventory_details: null
+                        attachments:
+                          - file_name: attachment.txt
+                            service_name: ZFSAttached
+                            id: >-
+                              0b9e5596cdd8cafe6a5c09f78f095bd6434c863110a6d1e094285c6ebf9dd0d5
+                            file_size: '8990'
+                        schedule_details:
+                          time: '2023-11-30T18:40:00+05:30'
+                        rich_text: true
+                        subject: Test Draft
+                        content: This is the email content.
+                        summary: This is the email content.
+                        owner:
+                          id: '4567890123'
+                          name: Owner Name
+                        source: ''
+                        linked_record: null
+        '204':
+          description: >-
+            Indicates that the specified email draft does not exist, or that the
+            draft ID could not be resolved (e.g. malformed or undecryptable).
+        '400':
+          description: >
+            Bad Request - The request could not be processed due to invalid
+            input.
+
+
+            **Resolution:** Verify that the module name is valid and the record
+            ID exists. A malformed or non-existent draft ID does not return this
+            error — see the `204` response instead.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetDetailEmailDraftsErrorResponses
+                type: object
+                description: >-
+                  Generic error response for an invalid GET single-draft
+                  request.
+                additionalProperties: true
+                properties:
+                  code:
+                    type: string
+                    maxLength: 100
+                    description: |
+                      Machine-readable error code.
+
+                      **Possible values:**
+                      - **INVALID_MODULE** - The specified module is invalid.
+                      - **INVALID_DATA** - The specified record ID is invalid.
+                    enum:
+                      - INVALID_MODULE
+                      - INVALID_DATA
+                  message:
+                    type: string
+                    maxLength: 512
+                    description: Human-readable error message.
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: Always "error".
+                  details:
+                    type: object
+                    description: Additional context (varies by code).
+                    additionalProperties: true
+                    properties:
+                      resource_path_index:
+                        type: integer
+                        format: int32
+                        description: Index of the invalid path parameter.
+              examples:
+                InvalidModule:
+                  summary: Invalid module name
+                  value:
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 0
+                InvalidRelatedID:
+                  summary: Invalid record ID
+                  value:
+                    code: INVALID_DATA
+                    message: the related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+        '403':
+          $ref: '#/components/responses/NoPermissionForbidden'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.leads.READ
+        - OAuth2:
+            - ZohoCRM.modules.accounts.READ
+        - OAuth2:
+            - ZohoCRM.modules.contacts.READ
+        - OAuth2:
+            - ZohoCRM.modules.deals.READ
+        - OAuth2:
+            - ZohoCRM.modules.quotes.READ
+        - OAuth2:
+            - ZohoCRM.modules.salesorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.purchaseorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.invoices.READ
+        - OAuth2:
+            - ZohoCRM.modules.vendors.READ
+        - OAuth2:
+            - ZohoCRM.modules.custom.READ
+        - OAuth2:
+            - ZohoCRM.modules.cases.READ
+    put:
+      summary: Update an Email Draft
+      description: Updates the specified email draft for the given record in the module.
+      x-zs-llm-description: >-
+        Use this API to update a single specific email draft identified by the
+        `draft` path parameter. The draft `id` is passed in the URL (not in the
+        request body). The request body must contain `from` and `rich_text`.
+        Pass `content` for HTML drafts (`rich_text: true`) or `plainTextContent`
+        for plain-text drafts (`rich_text: false`).
+      operationId: updateEmailDrafts
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/Record'
+        - $ref: '#/components/parameters/Draft'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for updating a single email draft.
+              additionalProperties: false
+              properties:
+                __email_drafts:
+                  type: array
+                  description: List containing the single draft to update.
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: Email draft object for update.
+                    additionalProperties: false
+                    properties:
+                      from:
+                        description: >
+                          Specifies the sender email address. Must be a
+                          configured outgoing address for the user. Use the
+                          [From Addresses
+                          API](from_addresses.yaml#$.paths./settings/emails/actions/from_addresses.get)
+                          to retrieve valid from addresses.
+                        x-zs-$ref:
+                          resource: from_addresses
+                          origins:
+                            - operationId: getFromAddresses
+                              propertyId: FromAddressEmail
+                        type: string
+                        maxLength: 254
+                        pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+                      to:
+                        type: array
+                        description: Primary recipients. Replaces the existing list.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: Recipient object.
+                          additionalProperties: false
+                          properties:
+                            user_name:
+                              type:
+                                - string
+                                - 'null'
+                              description: Recipient display name; null if not available.
+                              maxLength: 256
+                            email:
+                              type: string
+                              description: Recipient email address.
+                              maxLength: 256
+                          required:
+                            - email
+                      reply_to:
+                        type:
+                          - string
+                          - 'null'
+                        description: Reply-to email address; null to clear.
+                        maxLength: 256
+                      cc:
+                        type: array
+                        description: CC recipients. Replaces the existing list.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: CC recipient object.
+                          additionalProperties: false
+                          properties:
+                            user_name:
+                              type:
+                                - string
+                                - 'null'
+                              description: >-
+                                CC recipient display name; null if not
+                                available.
+                              maxLength: 256
+                            email:
+                              type: string
+                              description: CC recipient email address.
+                              maxLength: 256
+                          required:
+                            - email
+                      bcc:
+                        type: array
+                        description: BCC recipients. Replaces the existing list.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: BCC recipient object.
+                          additionalProperties: false
+                          properties:
+                            user_name:
+                              type:
+                                - string
+                                - 'null'
+                              description: >-
+                                BCC recipient display name; null if not
+                                available.
+                              maxLength: 256
+                            email:
+                              type: string
+                              description: BCC recipient email address.
+                              maxLength: 256
+                          required:
+                            - email
+                      inventory_details:
+                        type:
+                          - object
+                          - 'null'
+                        description: Inventory email details; null to remove.
+                        additionalProperties: false
+                        properties:
+                          inventory_template:
+                            type: object
+                            description: Inventory template to use.
+                            additionalProperties: false
+                            properties:
+                              id:
+                                type: string
+                                description: Inventory template identifier.
+                                maxLength: 64
+                            required:
+                              - id
+                          paper_type:
+                            type: string
+                            description: Paper type.
+                            enum:
+                              - A4
+                              - USLetter
+                          view_type:
+                            type: string
+                            description: View type.
+                            enum:
+                              - portrait
+                              - landscape
+                        required:
+                          - inventory_template
+                          - paper_type
+                          - view_type
+                      schedule_details:
+                        type:
+                          - object
+                          - 'null'
+                        description: Scheduling details; null to remove schedule.
+                        additionalProperties: false
+                        properties:
+                          time:
+                            type: string
+                            description: Scheduled send time (ISO 8601 format).
+                            format: date-time
+                          timezone:
+                            type:
+                              - string
+                              - 'null'
+                            description: >-
+                              Java TimeZone ID string; null uses organization
+                              default.
+                            maxLength: 100
+                          source:
+                            type: string
+                            description: Source of the schedule decision.
+                            enum:
+                              - ecOneHourAhead
+                              - upTime
+                              - ecSchduleBestTime
+                              - ecUpComing
+                              - ecSchduleTime
+                        required:
+                          - time
+                      rich_text:
+                        type: boolean
+                        description: true for HTML editor; false for plain text.
+                      subject:
+                        type:
+                          - string
+                          - 'null'
+                        description: Email subject; null to clear.
+                        maxLength: 512
+                      content:
+                        type:
+                          - string
+                          - 'null'
+                        description: HTML body when rich_text is true; null to clear.
+                        maxLength: 200000
+                      plainTextContent:
+                        type:
+                          - string
+                          - 'null'
+                        description: >-
+                          Plain text body when rich_text is false; null to
+                          clear.
+                        maxLength: 200000
+                      source:
+                        type: string
+                        description: >-
+                          Source identifier string stored at draft creation time
+                          (e.g., campaign name or integration identifier).
+                        maxLength: 256
+                      linked_record:
+                        type:
+                          - object
+                          - 'null'
+                        description: CRM record to link this draft to; null to clear.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: CRM record identifier to link.
+                            maxLength: 64
+                          module:
+                            type: object
+                            description: >-
+                              Module to which the record belongs. Specify at
+                              least one of "api_name" or "id". If both are
+                              specified, they must refer to the same module.
+                            additionalProperties: false
+                            minProperties: 1
+                            properties:
+                              api_name:
+                                type: string
+                                description: API name of the module.
+                                maxLength: 100
+                              id:
+                                type: string
+                                description: Tab identifier of the module.
+                                maxLength: 20
+                        required:
+                          - id
+                          - module
+                      attachments:
+                        type: array
+                        description: Attachments list; replaces existing.
+                        maxItems: 50
+                        items:
+                          type: object
+                          description: Attachment reference.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >
+                                Attachment/file identifier. Use the [Files
+                                API](files.yaml#$.paths./files.get) to retrieve
+                                file IDs.
+                              maxLength: 256
+                            file_name:
+                              type: string
+                              description: File name.
+                              maxLength: 512
+                            file_size:
+                              type: string
+                              description: File size in bytes as a numeric string.
+                              maxLength: 20
+                            service_name:
+                              type: string
+                              description: Storage service name.
+                              maxLength: 100
+                            _delete:
+                              type: boolean
+                              description: true to remove this attachment.
+                          required:
+                            - id
+                            - service_name
+                    required:
+                      - from
+                      - rich_text
+              required:
+                - __email_drafts
+            examples:
+              UpdateDraft:
+                summary: Example request to update a single email draft
+                value:
+                  __email_drafts:
+                    - from: john@example.com
+                      to:
+                        - user_name: John Doe
+                          email: john.doe@example.com
+                      reply_to: null
+                      cc: []
+                      bcc: []
+                      inventory_details: null
+                      schedule_details: null
+                      rich_text: true
+                      subject: Test Subject
+                      content: <p>Hello!</p>
+        required: true
+      responses:
+        '200':
+          description: >-
+            Returns the update result when the email draft is updated
+            successfully.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetDetailEmailDraftsForbiddenResponse
+                type: object
+                description: >-
+                  Response object containing the result of updating email
+                  drafts.
+                additionalProperties: false
+                properties:
+                  __email_drafts:
+                    type: array
+                    description: List of updated email draft results.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: Result of a single updated email draft.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: Status code for the operation.
+                        message:
+                          type: string
+                          description: Operation message.
+                          maxLength: 512
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: Status of the operation.
+                        details:
+                          type: object
+                          description: Details of the updated draft.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Encrypted identifier of the updated draft.
+                              maxLength: 256
+                          required:
+                            - id
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - __email_drafts
+              examples:
+                Success:
+                  summary: Successful update
+                  value:
+                    __email_drafts:
+                      - code: SUCCESS
+                        message: Draft updated Successfully
+                        status: success
+                        details:
+                          id: >-
+                            4f8efdcbaf23fd33c939217d4e14222d6d1cb21e4a45914fb9ba0c31c3c47330
+        '400':
+          description: >
+            Bad Request - The request could not be processed due to invalid
+            input.
+
+
+            **Resolution:** Review the error details, correct any invalid
+            fields, and retry the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateDetailEmailDraftsErrorResponses
+                type: object
+                description: >-
+                  Error response - either a generic request-level error or a
+                  batch validation error with per-draft details.
+                additionalProperties: true
+                properties:
+                  code:
+                    type: string
+                    maxLength: 100
+                    description: >
+                      Machine-readable error code for generic errors.
+
+
+                      **Possible values:**
+
+                      - **INVALID_DATA** - The specified record ID or draft ID
+                      is invalid.
+
+                      - **INVALID_MODULE** - The specified module is invalid.
+                    enum:
+                      - INVALID_DATA
+                      - INVALID_MODULE
+                  message:
+                    type: string
+                    maxLength: 512
+                    description: Human-readable error message for generic errors.
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: Always "error".
+                  details:
+                    type: object
+                    description: Additional context for generic errors.
+                    additionalProperties: true
+                    properties:
+                      resource_path_index:
+                        type: integer
+                        format: int32
+                        description: Index of the invalid path parameter.
+                  __email_drafts:
+                    type: array
+                    description: >-
+                      Per-draft validation error array (present for batch
+                      validation errors).
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: Per-draft error detail.
+                      additionalProperties: true
+                      properties:
+                        code:
+                          type: string
+                          maxLength: 100
+                          description: >
+                            Error code.
+
+
+                            **Possible values:**
+
+                            - **MANDATORY_NOT_FOUND** - A required field is
+                            missing.
+
+                            - **INVALID_DATA** - The field contains invalid
+                            data.
+
+                            - **NOT_ALLOWED** - The field is not allowed in this
+                            operation.
+
+                            - **DUPLICATE_DATA** - A duplicate value was found
+                            (e.g. a duplicate attachment).
+
+                            - **EXPECTED_FIELD_MISSING** - At least one of a set
+                            of expected fields must be specified.
+
+                            - **AMBIGUITY_DURING_PROCESSING** - The given field
+                            values are ambiguous or conflicting.
+
+                            - **NOT_SUPPORTED** - The given field or value is
+                            not supported for this module.
+
+                            - **DEPENDENT_MISMATCH** - A field value does not
+                            match its dependent field.
+                          enum:
+                            - MANDATORY_NOT_FOUND
+                            - INVALID_DATA
+                            - NOT_ALLOWED
+                            - DUPLICATE_DATA
+                            - EXPECTED_FIELD_MISSING
+                            - AMBIGUITY_DURING_PROCESSING
+                            - NOT_SUPPORTED
+                            - DEPENDENT_MISMATCH
+                        message:
+                          type: string
+                          maxLength: 512
+                          description: Human-readable error message for this draft.
+                        status:
+                          type: string
+                          enum:
+                            - error
+                          description: Always "error".
+                        details:
+                          type: object
+                          description: Additional context for this draft's error.
+                          additionalProperties: true
+                          properties:
+                            api_name:
+                              type: string
+                              maxLength: 100
+                              description: API field name that caused the error.
+                            json_path:
+                              type: string
+                              maxLength: 256
+                              description: JSON path to the offending field.
+              examples:
+                MandatoryNotFound:
+                  summary: Batch error - required field missing
+                  value:
+                    __email_drafts:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+                        details:
+                          api_name: from
+                          json_path: $.__email_drafts[0].from
+                InvalidFrom:
+                  summary: Batch error - invalid from address
+                  value:
+                    __email_drafts:
+                      - code: INVALID_DATA
+                        message: >-
+                          Email can't be saved as draft using this from
+                          address.Kindly check the allowed from address list
+                        status: error
+                        details:
+                          api_name: from
+                InventoryNotAllowed:
+                  summary: >-
+                    Batch error - inventory_details not allowed in update (API
+                    layer)
+                  value:
+                    __email_drafts:
+                      - code: NOT_ALLOWED
+                        message: >-
+                          The inventory_details field is not allowed in update
+                          draft request.
+                        status: error
+                        details:
+                          api_name: inventory_details
+                          json_path: $.__email_drafts[0].inventory_details
+                InvalidDraftId:
+                  summary: Generic error - invalid draft ID in URL
+                  value:
+                    code: INVALID_DATA
+                    message: invalid draft id in the url
+                    status: error
+                    details:
+                      resource_path_index: 3
+                InvalidData:
+                  summary: Generic error - invalid path parameter
+                  value:
+                    code: INVALID_DATA
+                    message: the related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+        '403':
+          $ref: '#/components/responses/NoPermissionForbidden'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.leads.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.accounts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.contacts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.deals.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.quotes.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.salesorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.purchaseorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.invoices.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.vendors.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.custom.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.cases.UPDATE
+    delete:
+      summary: Delete an Email Draft
+      description: Deletes the specified email draft for the given record.
+      x-zs-llm-description: >-
+        Use this API to permanently delete a specific email draft identified by
+        the `draft` path parameter. The draft `id` is passed in the URL. Call
+        getEmailDrafts or getEmailDraft first to get the `id` of the draft to
+        delete.
+      operationId: deleteEmailDrafts
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/Record'
+        - $ref: '#/components/parameters/Draft'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.leads.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.accounts.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.contacts.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.deals.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.quotes.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.salesorders.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.purchaseorders.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.invoices.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.vendors.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.custom.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.cases.DELETE
+      responses:
+        '200':
+          description: >-
+            Returns the deletion result when the email draft is deleted
+            successfully.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeleteDetailEmailDraftsErrorResponses
+                type: object
+                description: >-
+                  Response object containing the result of deleting email
+                  drafts.
+                additionalProperties: false
+                properties:
+                  __email_drafts:
+                    type: array
+                    description: List of deleted email draft results.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: Result of a single deleted email draft.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: Status code for the operation.
+                        message:
+                          type: string
+                          maxLength: 512
+                          description: Operation message.
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: Status of the operation.
+                        details:
+                          type: object
+                          description: Details of the deleted draft.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              maxLength: 256
+                              description: Encrypted identifier of the deleted draft.
+                          required:
+                            - id
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - __email_drafts
+              examples:
+                Success:
+                  summary: Successful deletion
+                  value:
+                    __email_drafts:
+                      - code: SUCCESS
+                        message: Draft deleted Successfully
+                        status: success
+                        details:
+                          id: >-
+                            4f8efdcbaf23fd33c939217d4e14222d6d1cb21e4a45914fb9ba0c31c3c47330
+        '400':
+          description: >
+            Bad Request - The request could not be processed due to invalid
+            input.
+
+
+            **Resolution:** Verify that the module name is valid, the record ID
+            exists, and the draft ID is correct.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeleteDetailEmailDraftsErrorResponse
+                type: object
+                description: Generic error response for an invalid DELETE request.
+                additionalProperties: true
+                properties:
+                  code:
+                    type: string
+                    maxLength: 100
+                    description: >
+                      Machine-readable error code.
+
+
+                      **Possible values:**
+
+                      - **INVALID_MODULE** - The specified module is invalid.
+
+                      - **INVALID_DATA** - The specified record ID or draft ID
+                      is invalid.
+                    enum:
+                      - INVALID_MODULE
+                      - INVALID_DATA
+                  message:
+                    type: string
+                    maxLength: 512
+                    description: Human-readable error message.
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: Always "error".
+                  details:
+                    type: object
+                    description: Additional context (varies by code).
+                    additionalProperties: true
+                    properties:
+                      resource_path_index:
+                        type: integer
+                        format: int32
+                        description: Index of the invalid path parameter.
+                      id:
+                        type: string
+                        description: >-
+                          Encrypted identifier of the draft that could not be
+                          deleted.
+                        maxLength: 256
+              examples:
+                InvalidModule:
+                  summary: Invalid module name
+                  value:
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 0
+                InvalidRelatedID:
+                  summary: Invalid record ID
+                  value:
+                    code: INVALID_DATA
+                    message: the related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+                InvalidDraftId:
+                  summary: Invalid draft ID
+                  value:
+                    code: INVALID_DATA
+                    message: Invalid draft Id
+                    status: error
+                    details:
+                      resource_path_index: 3
+                DraftNotDeleted:
+                  summary: Draft could not be deleted
+                  value:
+                    code: INVALID_DATA
+                    message: draft not deleted
+                    status: error
+                    details:
+                      id: '473895000000583029'
+        '403':
+          $ref: '#/components/responses/NoPermissionForbidden'
+components:
+  parameters:
+    Module:
+      name: module
+      in: path
+      required: true
+      description: >
+        Specifies the module of the record. Use the [Get Modules
+        API](modules.yaml#$.paths./settings/modules.get) to retrieve the API
+        names of modules.
+      schema:
+        type: string
+        maxLength: 100
+    Record:
+      name: record
+      in: path
+      required: true
+      description: >
+        Specifies the unique identifier of the record. Use the [Get Records
+        API](record.yaml#$.paths./module.get) to retrieve record IDs.
+      schema:
+        type: string
+        pattern: ^[0-9]+$
+        maxLength: 100
+    Draft:
+      name: draft
+      in: path
+      required: true
+      description: >
+        Specifies the unique encrypted draft identifier. Use the [Get Email
+        Drafts](email_drafts.yaml#$.paths./{module}/{record}/__email_drafts.get)
+        resource to retrieve draft IDs.
+      schema:
+        type: string
+        maxLength: 256
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Specifies the page number for pagination. Default:1.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      description: Specifies the number of records per page. Default:200.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 200
+        default: 200
+  responses:
+    EmailDraftsMultiStatus:
+      description: >-
+        Multi-status response for batch operations with mixed success and error
+        outcomes.
+      content:
+        application/json:
+          schema:
+            x-zs-$id: EmailDraftsMultiStatusResponse
+            type: object
+            description: >-
+              Response containing per-draft status for mixed batch processing
+              results.
+            additionalProperties: false
+            properties:
+              __email_drafts:
+                type: array
+                description: Per-draft status results for the submitted batch.
+                maxItems: 100
+                items:
+                  oneOf:
+                    - x-zs-$id: EmailDraftsMultiStatusSuccessItem
+                      type: object
+                      description: Per-item success result.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: Operation result code.
+                        details:
+                          type: object
+                          description: Details for successful draft operation.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: Updated or created draft identifier.
+                              maxLength: 64
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: Human-readable result message.
+                          maxLength: 512
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: Per-item outcome status.
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                    - x-zs-$id: EmailDraftsMultiStatusErrorItem
+                      type: object
+                      description: Per-item validation or processing error result.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >
+                            Operation error code.
+
+
+                            **Possible values:**
+
+                            - **MANDATORY_NOT_FOUND** - A required field is
+                            missing.
+
+                            - **INVALID_DATA** - The field contains invalid
+                            data.
+
+                            - **NOT_ALLOWED** - The field is not allowed in this
+                            operation.
+
+                            - **DUPLICATE_DATA** - A duplicate value was found
+                            (e.g. a duplicate attachment).
+
+                            - **EXPECTED_FIELD_MISSING** - At least one of a set
+                            of expected fields must be specified.
+
+                            - **AMBIGUITY_DURING_PROCESSING** - The given field
+                            values are ambiguous or conflicting.
+
+                            - **NOT_SUPPORTED** - The given field or value is
+                            not supported for this module.
+
+                            - **DEPENDENT_MISMATCH** - A field value does not
+                            match its dependent field.
+                          maxLength: 128
+                          enum:
+                            - MANDATORY_NOT_FOUND
+                            - INVALID_DATA
+                            - NOT_ALLOWED
+                            - DUPLICATE_DATA
+                            - EXPECTED_FIELD_MISSING
+                            - AMBIGUITY_DURING_PROCESSING
+                            - NOT_SUPPORTED
+                            - DEPENDENT_MISMATCH
+                        details:
+                          type: object
+                          description: Details for failed draft operation.
+                          additionalProperties: true
+                          properties:
+                            api_name:
+                              type: string
+                              description: Field or API name that caused the error.
+                              maxLength: 128
+                            json_path:
+                              type: string
+                              description: JSON path for the invalid or missing field.
+                              maxLength: 256
+                        message:
+                          type: string
+                          description: Human-readable error message.
+                          maxLength: 512
+                        status:
+                          type: string
+                          enum:
+                            - error
+                          description: Per-item outcome status.
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+            required:
+              - __email_drafts
+          examples:
+            MixedResults:
+              summary: Batch response with both successful and failed draft updates
+              value:
+                __email_drafts:
+                  - code: SUCCESS
+                    details:
+                      id: >-
+                        bb08599ae908a3fc514349239ebd0dbf82a1fd0b60a7902244cf0ee6b52a88d1
+                    message: Draft updated Successfully
+                    status: success
+                  - code: MANDATORY_NOT_FOUND
+                    details:
+                      api_name: from
+                      json_path: $.__email_drafts[1].from
+                    message: required field not found
+                    status: error
+                  - code: SUCCESS
+                    details:
+                      id: >-
+                        bb08599ae908a3fc514349239ebd0dbf82a1fd0b60a7902244cf0ee6b52a88d1
+                    message: Draft updated Successfully
+                    status: success
+    NoPermissionForbidden:
+      description: Forbidden - the user does not have permission to perform the operation.
+      content:
+        application/json:
+          schema:
+            x-zs-$id: NoPermissionForbiddenResponse
+            type: object
+            description: >-
+              Permission error response returned when the caller lacks required
+              permissions.
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                  - NO_PERMISSION
+                description: Error code identifying the permission error.
+              message:
+                type: string
+                maxLength: 512
+                description: Human-readable message describing the permission error.
+              status:
+                type: string
+                enum:
+                  - error
+                description: High-level status of the response.
+              details:
+                type: object
+                additionalProperties: true
+                description: Optional object containing additional details about the error.
+            required:
+              - code
+              - message
+              - status
+              - details
+          examples:
+            NoPermission:
+              summary: No permission to access resource
+              value:
+                code: NO_PERMISSION
+                message: Please contact your admin
+                status: error
+                details: {}
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.leads.CREATE: Create access to Leads module
+            ZohoCRM.modules.contacts.CREATE: Create access to Contacts module
+            ZohoCRM.modules.accounts.CREATE: Create access to Accounts module
+            ZohoCRM.modules.deals.CREATE: Create access to Deals module
+            ZohoCRM.modules.quotes.CREATE: Create access to Quotes module
+            ZohoCRM.modules.salesorders.CREATE: Create access to Sales Orders module
+            ZohoCRM.modules.purchaseorders.CREATE: Create access to Purchase Orders module
+            ZohoCRM.modules.invoices.CREATE: Create access to Invoices module
+            ZohoCRM.modules.vendors.CREATE: Create access to Vendors module
+            ZohoCRM.modules.custom.CREATE: Create access to Custom modules
+            ZohoCRM.modules.cases.CREATE: Create access to Cases module
+            ZohoCRM.modules.leads.UPDATE: Update access to Leads module
+            ZohoCRM.modules.contacts.UPDATE: Update access to Contacts module
+            ZohoCRM.modules.accounts.UPDATE: Update access to Accounts module
+            ZohoCRM.modules.deals.UPDATE: Update access to Deals module
+            ZohoCRM.modules.quotes.UPDATE: Update access to Quotes module
+            ZohoCRM.modules.salesorders.UPDATE: Update access to Sales Orders module
+            ZohoCRM.modules.purchaseorders.UPDATE: Update access to Purchase Orders module
+            ZohoCRM.modules.invoices.UPDATE: Update access to Invoices module
+            ZohoCRM.modules.vendors.UPDATE: Update access to Vendors module
+            ZohoCRM.modules.custom.UPDATE: Update access to Custom modules
+            ZohoCRM.modules.cases.UPDATE: Update access to Cases module
+            ZohoCRM.modules.leads.READ: Read access to Leads module
+            ZohoCRM.modules.contacts.READ: Read access to Contacts module
+            ZohoCRM.modules.accounts.READ: Read access to Accounts module
+            ZohoCRM.modules.deals.READ: Read access to Deals module
+            ZohoCRM.modules.quotes.READ: Read access to Quotes module
+            ZohoCRM.modules.salesorders.READ: Read access to Sales Orders module
+            ZohoCRM.modules.purchaseorders.READ: Read access to Purchase Orders module
+            ZohoCRM.modules.invoices.READ: Read access to Invoices module
+            ZohoCRM.modules.vendors.READ: Read access to Vendors module
+            ZohoCRM.modules.custom.READ: Read access to Custom modules
+            ZohoCRM.modules.cases.READ: Read access to Cases module
+            ZohoCRM.modules.leads.DELETE: Delete access to Leads module
+            ZohoCRM.modules.contacts.DELETE: Delete access to Contacts module
+            ZohoCRM.modules.accounts.DELETE: Delete access to Accounts module
+            ZohoCRM.modules.deals.DELETE: Delete access to Deals module
+            ZohoCRM.modules.quotes.DELETE: Delete access to Quotes module
+            ZohoCRM.modules.salesorders.DELETE: Delete access to Sales Orders module
+            ZohoCRM.modules.purchaseorders.DELETE: Delete access to Purchase Orders module
+            ZohoCRM.modules.invoices.DELETE: Delete access to Invoices module
+            ZohoCRM.modules.vendors.DELETE: Delete access to Vendors module
+            ZohoCRM.modules.custom.DELETE: Delete access to Custom modules
+            ZohoCRM.modules.cases.DELETE: Delete access to Cases module

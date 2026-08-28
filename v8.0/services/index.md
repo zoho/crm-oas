@@ -1,0 +1,24 @@
+# Services Apis
+
+- [OpenAPI specification](services.yaml)
+- [Get services](mds/getServicesS.md)
+  - To retrieve the list of service records in your Zoho CRM organization that match the specified filter criteria. Supports pagination using either the **page** or **page_token** parameter and can return up to 100,000 services across paginated requests.
+  - [Examples](mds/examples/getServicesS.md)
+- [Update service records](mds/updateServicesS.md)
+  - To update one or more existing service records in your Zoho CRM organization. Each request can include up to 100 service objects identified by their record IDs; only the fields supplied in the payload are modified.
+  - [Examples](mds/examples/updateServicesS.md)
+- [Create service records in Zoho CRM](mds/createServicesS.md)
+  - To create one or more service records in your Zoho CRM organization, submitting up to 100 service objects per request, each configurable with a name, duration, price, location, members, availability type, and availability window.
+  - [Examples](mds/examples/createServicesS.md)
+- [Delete one or more service records](mds/deleteServicesS.md)
+  - To delete one or more service records from your Zoho CRM organization. All appointments associated with the deleted services are also deleted; however, deals created upon completion of those appointments are not deleted.
+  - [Examples](mds/examples/deleteServicesS.md)
+- [Retrieve a specific service record by ID ](mds/getServiceById.md)
+  - To retrieve the full details of a single service record from your Zoho CRM organization using its unique ID, including its availability configuration, members, pricing, tax details, and subform data.
+  - [Examples](mds/examples/getServiceById.md)
+- [Update a specific service record by ID](mds/updateServiceSById.md)
+  - To update a single service record in your Zoho CRM organization, identified by its unique ID. Only the fields supplied in the request payload are modified on the targeted service.
+  - [Examples](mds/examples/updateServiceSById.md)
+- [Delete a service record by ID](mds/deleteServiceById.md)
+  - To delete a service record from your Zoho CRM organization by its unique ID. When a service record is removed, all appointments associated with that service are also removed; however, deals created upon completion of an appointment under the service are not affected.
+  - [Examples](mds/examples/deleteServiceById.md)

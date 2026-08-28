@@ -1,0 +1,1522 @@
+openapi: 3.1.0
+info:
+  title: Composite Request
+  description: >-
+    This API enables developers to execute up to five sub-requests in one call,
+    with support for sequential or parallel execution and optional rollback on
+    failure.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Represents the API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: Represents the API Server URL TLD
+      version:
+        default: v8
+        description: Represents the API Version
+paths:
+  /__composite_requests:
+    post:
+      summary: Process multiple API requests in a single call
+      description: >
+        To bundle multiple Zoho CRM API requests into a single HTTP call,
+        reducing network round-trips and enabling request chaining. You can
+        reference the output of one sub-request in another using the format
+        **@{sub_request_id:JSONPath}** to build dependent workflows. When
+        **rollback_on_fail** is enabled, all successful sub-requests are rolled
+        back if any subsequent sub-request fails.
+      operationId: createCompositeRequest
+      security:
+        - OAuth2:
+            - ZohoCRM.composite_requests.CUSTOM
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Specify the composite request configuration, including execution
+                options and the array of sub-requests to process.
+              additionalProperties: false
+              properties:
+                rollback_on_fail:
+                  type: boolean
+                  description: >
+                    Specify whether to rollback the composite API request if any
+                    of the sub-requests fail. The default value is false.
+
+                    Possible values:
+
+                    **true** - Rollback all operations if any sub-request fails.
+                    Workflow automation actions execute only after all
+                    sub-requests succeed.
+
+                    **false** - Process each sub-request independently without
+                    rollback.
+
+                    This key cannot be **true** when **parallel_execution** is
+                    **true**.
+                  default: false
+                parallel_execution:
+                  type: boolean
+                  description: >
+                    Specify whether  to process all independent sub-requests
+                    (sub-requests with no dependencies/references) in parallel.
+                    The default value is true. If "rollback_on_fail" is true,
+                    then the default value of this key is false.
+
+                    Possible values:
+
+                    **true** - Execute independent sub-requests in parallel.
+
+                    **false** - Execute sub-requests sequentially.
+
+                    This key cannot be **true** when **rollback_on_fail** is
+                    **true**.
+                  default: true
+                __composite_requests:
+                  type: array
+                  description: >-
+                    Specify the API requests to execute as sub-requests within
+                    the composite call.
+                  maxItems: 5
+                  items:
+                    type: object
+                    description: >-
+                      Each object represents an individual API sub-request,
+                      including the HTTP method, URI, and optional headers,
+                      parameters, and body.
+                    additionalProperties: false
+                    properties:
+                      method:
+                        type: string
+                        description: >
+                          Specify the HTTP method for the corresponding
+                          sub-request.
+
+                          Possible values:
+
+                          **GET** - Retrieve data from the API.
+
+                          **POST** - Create a new resource.
+
+                          **PUT** - Update an existing resource.
+
+                          **DELETE** - Remove a resource.
+
+                          **PATCH** - Partially update a resource.
+                        enum:
+                          - GET
+                          - POST
+                          - PUT
+                          - DELETE
+                          - PATCH
+                      uri:
+                        type: string
+                        description: >-
+                          Specify the URI path of the corresponding sub-request.
+                          The URI must follow the pattern
+                          **/crm/{version}/{endpoint}** with the regex
+                          `/crm(/.*)?/v[0-9]+([.][0-9]+)?/.*`.
+                        pattern: /crm(/.*)?/v[0-9]+([.][0-9]+)?/.*
+                        maxLength: 2048
+                      sub_request_id:
+                        type: string
+                        description: >-
+                          Specify a unique identifier for the sub-request. Use
+                          this ID to reference the output of this sub-request.
+                          The accepted regex is `[a-zA-Z0-9][a-zA-Z0-9_]*`.
+                        pattern: '[a-zA-Z0-9][a-zA-Z0-9_]*'
+                        maxLength: 100
+                      headers:
+                        type: object
+                        description: >-
+                          Specify the HTTP headers for the sub-request. The
+                          **authorization** and **x-crm-org** headers are
+                          restricted and cannot be used.
+                        additionalProperties: true
+                      params:
+                        type: object
+                        description: Specify the parameters for the sub-request.
+                        additionalProperties: true
+                      body:
+                        type: object
+                        description: >
+                          Specify the request body for the sub-request.
+
+
+                          > **Note**
+
+                          > - **Using References in Composite API Requests**:
+                          You can reference the output of one sub-request in
+                          another within the same API call.
+
+                          > - **Reference Structure**:
+                          `@{sub_request_id:JSONPath}`
+
+                          >   Where,
+
+                          >   - `sub_request_id` is the ID of the sub-request
+                          whose response you want to reference.
+
+                          >   - `JSONPath` is the path to the specific field in
+                          that response.
+
+                          >   For example, if you create a Lead in one
+                          sub-request (sub_request_id : 1) and need to update it
+                          in another, you can use `@{1:$.data[0].details.id}` to
+                          dynamically fetch the Lead ID from sub-request 1 and
+                          use it in sub-request 2 to modify the same record. 
+
+                          > - The `rollback_on_fail` and `parallel_execution`
+                          keys cannot both be set to `true`. If both are
+                          enabled, the API returns the
+                          `AMBIGUITY_DURING_PROCESSING` error.
+
+                          > - All Delete APIs (except Notification APIs) support
+                          only record IDs in the URL. Bulk delete operations are
+                          not supported.
+
+                          > - When `rollback_on_fail` is `false`:
+
+                          >   - Workflows, approvals, and other automation
+                          actions are triggered as intended.
+
+                          >   - The Composite API consumes one API credit.
+
+                          > - When `rollback_on_fail` is `true`:
+
+                          >    - **Workflows**
+
+                          >      - Automation actions execute only after all
+                          sub-requests complete successfully and no rollback
+                          occurs. If one or more sub-requests fail and a
+                          rollback happens, the automation actions are not
+                          triggered.
+
+                          >      - For example, consider the case where a
+                          workflow is triggered every time a lead is created
+                          with the company name starting with 'S'. In
+                          sub-request 1, a lead is created, whose Company name
+                          starts with 'S', and sub-request 2 edits the newly
+                          created record's company name so that it does not
+                          start with 'S'. Only after executing both the
+                          sub-requests the workflow will be executed. But in
+                          this case, the workflow will not be triggered because
+                          the newly created Lead's company name is already
+                          updated in sub-request 2, and the criterion for the
+                          workflow is not met. Consider another case, where in
+                          sub-request 1, a lead is created, whose Company name
+                          is 'Silicon Solutions', and sub-request 2 edits this
+                          newly created record's website. If none of the other
+                          sub-requests change the company name of this newly
+                          created record, after executing all the sub-requests
+                          successfully, the workflow will be triggered.
+
+                          >    - When a rollback occurs, the Composite API
+                          consumes one API credit.
+
+                          >    - When all sub-requests succeed, the Composite
+                          API consumes two API credits.
+
+                          > - Each Composite API request consumes **five
+                          concurrency credits**, regardless of the number of
+                          sub-requests.
+
+                          > - Each composite API reduces the sub-concurrency by
+                          one, while the sub-requests consume their respective
+                          sub-concurrencies.
+
+
+                          ### Allowed APIs
+
+                          The following table gives the list of APIs allowed in
+                          a composite request. For these APIs, there are
+                          restrictions on the number of records that you can
+                          create, update, or delete in a composite request.
+
+
+                          |  API | No. of records allowed |
+
+                          | --- | --- |
+
+                          | Get Org, Get Metadata, Convert a Lead, Get Layout
+                          Rules, Get Validation Rules, Get Custom Links,
+                          Get/Add/Update Roles, Get Profiles, Get Records'
+                          Count, Get/Update Blueprint, Get Variables/Variable
+                          Groups, Get Tags, Add/Remove Tags for a record, Get
+                          List of Attachments, Delete Photo, Get Currencies, Get
+                          Shared Record Details, Get Assignment Rules,
+                          Get/Add/Update Pipeline, Get Wizards, Get List of From
+                          Addresses, Delete Notifications | No Restriction | 
+
+                          | Add/Update/Delete Users, Update/Delink Related
+                          Records, Add/Delete Variables, Create/Update/Delete
+                          Notes, Create/Update/Merge Tags, Add/Update Currency,
+                          Add/Update/PATCH Notifications,
+                          Create/Update/Upsert/Delete Records | 1 |
+
+                          | Get Territories, Get Notes, Get Email/Inventory
+                          Templates, Get Notifications, Get/Search Records, Get
+                          Related Records, Get records through a COQL query, Get
+                          Deleted Records, Get Users | 25 |
+                        additionalProperties: true
+                    required:
+                      - method
+                      - uri
+              required:
+                - __composite_requests
+            examples:
+              LeadRecordOperations:
+                summary: Create and update Leads using chained sub-requests
+                value:
+                  rollback_on_fail: false
+                  parallel_execution: false
+                  __composite_requests:
+                    - sub_request_id: '1'
+                      method: POST
+                      uri: /crm/v3/Leads
+                      headers: {}
+                      body:
+                        data:
+                          - Last_Name: Boyle
+                    - sub_request_id: '2'
+                      method: PUT
+                      uri: /crm/v3/Leads/@{1:$.data[0].details.id}
+                      headers: {}
+                      body:
+                        data:
+                          - Company: Zylker
+                description: >
+                  Demonstrates a composite request that performs multiple Lead
+                  record operations in sequence. The example creates a lead and
+                  then updates it using the record ID returned in the first
+                  sub-request response, accessed via @{sub_request_id:JSONPath}
+                  chaining.
+        required: true
+        description: Specify the data that the API requires to process the request.
+      responses:
+        '200':
+          description: >-
+            Returns the response when all sub-requests in the composite call are
+            executed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Contains the successful response for a composite request where
+                  all sub-requests were executed successfully.
+                x-zs-$id: CompositeSuccessResponse
+                additionalProperties: false
+                properties:
+                  __composite_requests:
+                    type: array
+                    description: >-
+                      Contains the response for each sub-request in the
+                      composite call. 
+                    maxItems: 5
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents the response details for an
+                        individual sub-request, including the status code,
+                        headers, and body from the wrapped API call.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >
+                            Represents the response code for the sub-request. 
+
+                            Possible values:
+
+                            **SUCCESS** - The sub-request was executed
+                            successfully.
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: >-
+                            Represents the response message for the
+                            sub-request. 
+                          maxLength: 1000
+                        status:
+                          type: string
+                          description: >
+                            Represents the status of the sub-request execution. 
+
+                            Possible values:
+
+                            **success** - The sub-request was processed
+                            successfully.
+                          enum:
+                            - success
+                        details:
+                          type: object
+                          description: >-
+                            Contains the detailed response information for the
+                            sub-request, including the HTTP response from the
+                            wrapped API call. 
+                          additionalProperties: false
+                          properties:
+                            response:
+                              type: object
+                              description: >-
+                                Contains the response details from the wrapped
+                                API call, including the status code, headers,
+                                and body. 
+                              additionalProperties: false
+                              properties:
+                                headers:
+                                  type: object
+                                  description: >-
+                                    Contains the response headers from the
+                                    wrapped API call. 
+                                  additionalProperties: true
+                                body:
+                                  type: object
+                                  description: >-
+                                    Contains the response body from the wrapped
+                                    API call. 
+                                  additionalProperties: true
+                                status_code:
+                                  type: integer
+                                  format: int32
+                                  description: >-
+                                    Represents the status code from the wrapped
+                                    API call. 
+                              required:
+                                - headers
+                                - body
+                                - status_code
+                          required:
+                            - response
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - __composite_requests
+              examples:
+                SuccessResponse:
+                  summary: Response of a successful Composite Request.
+                  value:
+                    __composite_requests:
+                      - code: SUCCESS
+                        message: composite sub request executed successfully
+                        status: success
+                        details:
+                          response:
+                            headers:
+                              content-type: application/json;charset=UTF-8
+                              server: ZGS
+                              date: Tue, 25 Nov 2025 10:55:31 GMT
+                            body:
+                              data:
+                                - code: SUCCESS
+                                  details:
+                                    Modified_Time: '2025-11-24T22:55:30-12:00'
+                                    Modified_By:
+                                      name: User
+                                      id: '2284048000000471001'
+                                    Created_Time: '2025-11-24T22:55:30-12:00'
+                                    id: '2284048000005238359'
+                                    Created_By:
+                                      name: User
+                                      id: '2284048000000471001'
+                                  message: record added
+                                  status: success
+                            status_code: 201
+                  description: >-
+                    Shows the response when all sub-requests in the composite
+                    batch execute successfully. Each element in the
+                    **__composite_requests** array contains the HTTP status code
+                    and response body from its corresponding sub-request.
+        '207':
+          description: >-
+            Returns a multi-status response when some sub-requests succeed and
+            others fail. Each item in the response array independently indicates
+            success or failure for the corresponding sub-request.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Contains the partial success response when some sub-requests
+                  succeed and others fail in the composite call.
+                x-zs-$id: CompositePartialSuccessResponse
+                additionalProperties: false
+                properties:
+                  __composite_requests:
+                    type: array
+                    description: >-
+                      Contains the mixed success and error responses for
+                      individual sub-requests. Each item corresponds to a
+                      sub-request and indicates whether it succeeded or failed. 
+                    maxItems: 5
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents the response for an individual
+                        sub-request, which may indicate either success or error
+                        based on the execution result.
+                      additionalProperties: true
+                required:
+                  - __composite_requests
+              examples:
+                PartialSuccessResponse:
+                  summary: |+
+                    Response of a partial success composite request.
+
+                  value:
+                    __composite_requests:
+                      - code: SUCCESS
+                        message: Request processed successfully
+                        status: success
+                        details:
+                          response:
+                            headers:
+                              Content-Type: application/json
+                            body:
+                              data: response data
+                            status_code: 200
+                      - code: INVALID_DATA
+                        message: Invalid input data
+                        status: error
+                        details:
+                          api_name: sub_request_2
+                          json_path: $.body.data[0].field
+                          expected_data_type: string
+                  description: >-
+                    Shows the response when some sub-requests succeed and others
+                    fail. Each element in the sub_requests array contains the
+                    status, error code, and details for its corresponding
+                    sub-request. This response occurs when rollback_on_fail is
+                    false or unset.
+        '400':
+          description: >
+            The request failed due to invalid input.
+
+            **Resolution:** Validate the request body structure, ensure all the
+            field values  are valid, and verify that **rollback_on_fail** and
+            **parallel_execution** are not both set to **true**.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Contains the error response for composite request failures due
+                  to invalid input data or configuration.
+                x-zs-$id: CompositeErrorResponse
+                oneOf:
+                  - x-zs-$id: RootLevelError
+                    type: object
+                    description: Error response object with detailed error information.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >
+                          Represents the error code for the failed request. 
+
+                          Possible values:
+
+                          **DUPLICATE_DATA** - Duplicate data detected.
+
+                          **NOT_SUPPORTED** - The requested operation is not
+                          supported.
+
+                          **REQUEST_TIMEOUT** - The request timed out.
+
+                          **LOOPING_FOUND** - Circular dependency detected among
+                          sub-requests.
+
+                          **INVALID_DATA** - The input data is invalid.
+
+                          **PROCESSING_STOPPED** - Processing was stopped due to
+                          an error.
+
+                          **INVALID_REFERENCE** - An invalid reference was used.
+
+                          **ROLLBACK_PERFORMED** - A rollback was performed due
+                          to a sub-request failure.
+
+                          **MANDATORY_NOT_FOUND** - A required field is missing.
+
+                          **AMBIGUITY_DURING_PROCESSING** - Ambiguous
+                          configuration detected.
+                        enum:
+                          - DUPLICATE_DATA
+                          - NOT_SUPPORTED
+                          - REQUEST_TIMEOUT
+                          - LOOPING_FOUND
+                          - INVALID_DATA
+                          - PROCESSING_STOPPED
+                          - INVALID_REFERENCE
+                          - ROLLBACK_PERFORMED
+                          - MANDATORY_NOT_FOUND
+                          - AMBIGUITY_DURING_PROCESSING
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the request.
+                          Possible values:
+                          **error** - The request failed.
+                        enum:
+                          - error
+                      details:
+                        oneOf:
+                          - x-zs-$id: InvalidDataTypeErrorDetails
+                            type: object
+                            description: Error details for invalid data type.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name or key that caused the
+                                  validation error. 
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the key that
+                                  caused the error within the request body. 
+                                maxLength: 500
+                              expected_data_type:
+                                type: string
+                                description: >-
+                                  Represents the expected data type for the
+                                  field that failed validation. 
+                                maxLength: 50
+                            required:
+                              - api_name
+                              - json_path
+                              - expected_data_type
+                          - x-zs-$id: MissingMandatoryFieldsErrorDetails
+                            type: object
+                            description: Error details for missing mandatory fields.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name or key for the missing
+                                  mandatory field. 
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the missing
+                                  mandatory key within the request body. 
+                                maxLength: 500
+                            required:
+                              - api_name
+                              - json_path
+                          - x-zs-$id: AmbiguousReferencesErrorDetails
+                            type: object
+                            description: |+
+                              Error details for ambiguous references.
+
+                            additionalProperties: false
+                            properties:
+                              ambiguity_due_to:
+                                type: array
+                                description: >-
+                                  Contains the list of ambiguous references that
+                                  caused the processing error. 
+                                maxItems: 10
+                                items:
+                                  type: object
+                                  description: >-
+                                    Each object represents a single ambiguous
+                                    reference that contributed to the processing
+                                    error.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name or key that has
+                                        the ambiguous reference.
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path to the
+                                        ambiguous reference within the request
+                                        body. 
+                                      maxLength: 500
+                                  required:
+                                    - api_name
+                                    - json_path
+                            required:
+                              - ambiguity_due_to
+                          - x-zs-$id: ExceedingMaximumLengthErrorDetails
+                            type: object
+                            description: |+
+                              Error details for exceeding maximum length.
+
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name or key that exceeded
+                                  the maximum allowed length. 
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field that
+                                  exceeded the maximum allowed length. 
+                                maxLength: 500
+                              maximum_length:
+                                type: integer
+                                format: int32
+                                description: >-
+                                  Represents the maximum allowed length for the
+                                  field. For the composite requests array, this
+                                  value is **five**. 
+                                enum:
+                                  - 5
+                            required:
+                              - api_name
+                              - json_path
+                              - maximum_length
+                          - x-zs-$id: UnsupportedServicesErrorDetails
+                            type: object
+                            description: |+
+                              Error details for unsupported services.
+
+                            additionalProperties: false
+                            properties:
+                              allowed_services:
+                                type: array
+                                description: >-
+                                  Contains the list of allowed API services that
+                                  can be invoked in composite sub-requests. 
+                                maxItems: 50
+                                items:
+                                  type: string
+                                  description: >-
+                                    Each string represents an allowed API
+                                    service name that can be used in composite
+                                    sub-requests.
+                                  maxLength: 100
+                            required:
+                              - allowed_services
+                          - x-zs-$id: RegexValidationFailureErrorDetails
+                            type: object
+                            description: Error details for regex validation failure.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name or key that failed the
+                                  regular expression validation. 
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field that
+                                  failed the regular expression validation. 
+                                maxLength: 500
+                              regex:
+                                type: string
+                                description: >-
+                                  Represents the regular expression pattern that
+                                  the field value failed to match. 
+                                maxLength: 200
+                            required:
+                              - api_name
+                              - json_path
+                              - regex
+                          - x-zs-$id: RestrictedParametersErrorDetails
+                            type: object
+                            description: |
+                              Error details for restricted parameters.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name or key that contains
+                                  restricted parameters. 
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the sub-request
+                                  containing restricted parameters.
+                                maxLength: 500
+                              restricted_params:
+                                type: array
+                                description: >-
+                                  Contains the list of query parameters that are
+                                  restricted and cannot be used in composite
+                                  sub-requests. 
+                                maxItems: 50
+                                items:
+                                  type: string
+                                  description: >-
+                                    Each string represents a restricted query
+                                    parameter name that cannot be used in
+                                    composite sub-requests.
+                                  maxLength: 100
+                            required:
+                              - api_name
+                              - json_path
+                              - restricted_params
+                          - x-zs-$id: RestrictedHeadersErrorDetails
+                            type: object
+                            description: Error details for restricted headers.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name or key that contains
+                                  restricted headers.
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the sub-request
+                                  containing restricted headers. 
+                                maxLength: 500
+                              restricted_headers:
+                                type: array
+                                description: >-
+                                  Contains the list of HTTP headers that are
+                                  restricted and cannot be used in composite
+                                  sub-requests. 
+                                maxItems: 50
+                                items:
+                                  type: string
+                                  description: >-
+                                    Each string represents a restricted HTTP
+                                    header name that cannot be used in composite
+                                    sub-requests.
+                                  maxLength: 100
+                            required:
+                              - api_name
+                              - json_path
+                              - restricted_headers
+                          - x-zs-$id: InvalidReferencesErrorDetails
+                            type: object
+                            description: Error details for invalid references.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name or key that contains
+                                  an invalid reference expression.
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field
+                                  containing the invalid reference expression. 
+                                maxLength: 500
+                              reference:
+                                type: string
+                                description: >
+                                  Contains the invalid reference expression.
+                                  Reference expressions use the format
+                                  **@{sub_request_id:$.JSONPath}** to chain data
+                                  between sub-requests. 
+                                maxLength: 200
+                            required:
+                              - api_name
+                              - json_path
+                              - reference
+                          - x-zs-$id: LoopingDependenciesErrorDetails
+                            type: object
+                            description: Error details for looping dependencies.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name or key that is part of
+                                  a circular dependency. 
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the sub-request
+                                  involved in the circular dependency. 
+                                maxLength: 500
+                              sub_request_indexes:
+                                type: array
+                                description: >-
+                                  Contains the array indexes of sub-requests
+                                  that form a circular dependency chain. 
+                                maxItems: 10
+                                items:
+                                  type: integer
+                                  format: int32
+                                  description: >-
+                                    Each integer represents a zero-based index
+                                    of a sub-request involved in the circular
+                                    dependency.
+                            required:
+                              - api_name
+                              - json_path
+                              - sub_request_indexes
+                          - x-zs-$id: RegexAndDataTypeValidationErrorDetails
+                            type: object
+                            description: Error details for regex and data type validation.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name or key that caused the
+                                  validation error. 
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field that
+                                  caused the error within the request body. 
+                                maxLength: 500
+                              regex:
+                                type: string
+                                description: >-
+                                  Represents the regular expression pattern that
+                                  the field value failed to match. 
+                                maxLength: 200
+                              expected_data_type:
+                                type: string
+                                description: >-
+                                  Represents the expected data type for the
+                                  field that failed validation. 
+                                maxLength: 50
+                            required:
+                              - api_name
+                              - json_path
+                              - regex
+                              - expected_data_type
+                          - x-zs-$id: RollbackErrorDetails
+                            type: object
+                            description: Error details for rollback operations.
+                            additionalProperties: false
+                            properties:
+                              rollbacked_by_sub_request_index:
+                                type: integer
+                                format: int32
+                                description: >-
+                                  Represents the index of the sub-request that
+                                  triggered the rollback operation. 
+                            required:
+                              - rollbacked_by_sub_request_index
+                          - x-zs-$id: VersionMismatchErrorDetails
+                            type: object
+                            description: Error details for version mismatches.
+                            additionalProperties: false
+                            properties:
+                              sub_request_version:
+                                type: integer
+                                format: int32
+                                description: >-
+                                  Represents the API version used in the
+                                  sub-request that caused the version mismatch. 
+                              composite_request_version:
+                                type: integer
+                                format: int32
+                                description: >-
+                                  Represents the API version used for the
+                                  composite request. 
+                            required:
+                              - sub_request_version
+                              - composite_request_version
+                          - x-zs-$id: DependencyIssuesErrorDetails
+                            type: object
+                            description: Error details for dependency issues.
+                            additionalProperties: false
+                            properties:
+                              dependent_data:
+                                type: array
+                                description: >-
+                                  Contains information about sub-request
+                                  dependencies when parallel execution is
+                                  requested but sub-requests have
+                                  interdependencies. 
+                                maxItems: 10
+                                items:
+                                  type: object
+                                  description: >-
+                                    Each object represents the dependency
+                                    information for a single sub-request,
+                                    including its ID and the IDs of sub-requests
+                                    it depends on.
+                                  additionalProperties: false
+                                  properties:
+                                    sub_request_id:
+                                      type: string
+                                      description: >-
+                                        Represents the ID of the sub-request
+                                        that has dependencies on other
+                                        sub-requests. 
+                                      maxLength: 100
+                                    referred_sub_request_ids:
+                                      type: array
+                                      description: >-
+                                        Contains the IDs of sub-requests that
+                                        this sub-request depends on through
+                                        references. 
+                                      maxItems: 5
+                                      items:
+                                        type: string
+                                        description: >-
+                                          Each object represents the ID of a
+                                          sub-request that is referenced by the
+                                          dependent sub-request.
+                                        maxLength: 100
+                                  required:
+                                    - sub_request_id
+                                    - referred_sub_request_ids
+                            required:
+                              - dependent_data
+                          - x-zs-$id: GenericErrorDetails
+                            type: object
+                            description: 'Contains details of the generic errors. '
+                            additionalProperties: false
+                            maxProperties: 0
+                            properties: {}
+                        description: >-
+                          Contains contextual information about the error,
+                          including the JSON path to the problematic field and
+                          the specific validation failure details. 
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - x-zs-$id: CompositeRequestMultipleErrorsResponse
+                    type: object
+                    description: >-
+                      Response object for composite request with multiple
+                      sub-request errors.
+                    additionalProperties: false
+                    properties:
+                      __composite_requests:
+                        type: array
+                        description: >-
+                          Provides an array of error responses for individual
+                          sub-requests.
+                        maxItems: 5
+                        items:
+                          type: object
+                          description: Contains the individual sub-request error response.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the error code indicating the type of
+                                error. 
+                              enum:
+                                - DUPLICATE_DATA
+                                - NOT_SUPPORTED
+                                - REQUEST_TIMEOUT
+                                - LOOPING_FOUND
+                                - INVALID_DATA
+                                - PROCESSING_STOPPED
+                                - INVALID_REFERENCE
+                                - ROLLBACK_PERFORMED
+                                - MANDATORY_NOT_FOUND
+                                - AMBIGUITY_DURING_PROCESSING
+                                - NOT_ALLOWED
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message describing the
+                                issue.
+                              maxLength: 1000
+                            status:
+                              type: string
+                              description: |
+                                Represents the status of the request.
+                                Possible values:
+                                **error** - The request failed.
+                              enum:
+                                - error
+                            details:
+                              oneOf:
+                                - x-zs-$id: SubRequesInvalidDataTypeErrorDetails
+                                  type: object
+                                  description: Error details for invalid data type.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the key that
+                                        has invalid data type.
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path to the field
+                                        that has invalid data type.
+                                      maxLength: 500
+                                    expected_data_type:
+                                      type: string
+                                      description: >-
+                                        Provides the expected data type for the
+                                        field. 
+                                      maxLength: 50
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - expected_data_type
+                                - x-zs-$id: MandatoryFieldMissingErrorDetails
+                                  type: object
+                                  description: >-
+                                    Provides the error details for missing
+                                    mandatory fields.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the mandatory
+                                        key that is missing.
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path to the
+                                        mandatory key that is missing.
+                                      maxLength: 500
+                                  required:
+                                    - api_name
+                                    - json_path
+                                - x-zs-$id: SubRequestAmbiguousReferencesErrorDetails
+                                  type: object
+                                  description: Error details for ambiguous references.
+                                  additionalProperties: false
+                                  properties:
+                                    ambiguity_due_to:
+                                      type: array
+                                      description: >-
+                                        List of ambiguous references causing the
+                                        error.
+                                      maxItems: 10
+                                      items:
+                                        type: object
+                                        description: >-
+                                          Each object represents the individual
+                                          ambiguous reference.
+                                        additionalProperties: false
+                                        properties:
+                                          api_name:
+                                            type: string
+                                            description: >-
+                                              Represents the API name of the key that
+                                              caused ambiguity.
+                                            maxLength: 100
+                                          json_path:
+                                            type: string
+                                            description: >-
+                                              Represents the JSON path of the key that
+                                              caused ambiguity.
+                                            maxLength: 500
+                                        required:
+                                          - api_name
+                                          - json_path
+                                  required:
+                                    - ambiguity_due_to
+                                - x-zs-$id: SubRequestMaximumLengthExceededErrorDetails
+                                  type: object
+                                  description: Error details for exceeding maximum length.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the key that
+                                        exceeds the maximum length.
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path of the key that
+                                        exceeds the maximum length.
+                                      maxLength: 500
+                                    maximum_length:
+                                      type: integer
+                                      format: int32
+                                      description: 'The allowed maximum length is **five**. '
+                                      enum:
+                                        - 5
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - maximum_length
+                                - x-zs-$id: SubRequestUnsupportedServicesErrorDetails
+                                  type: object
+                                  description: Error details for unsupported services.
+                                  additionalProperties: false
+                                  properties:
+                                    allowed_services:
+                                      type: array
+                                      description: Provides the list of allowed services.
+                                      maxItems: 50
+                                      items:
+                                        type: string
+                                        description: Each string represents a service.
+                                        maxLength: 100
+                                  required:
+                                    - allowed_services
+                                - x-zs-$id: RegexValidationErrorDetails
+                                  type: object
+                                  description: Error details for regex validation failure.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the key that
+                                        has invalid regex.
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path of the key that
+                                        has invalid regex.
+                                      maxLength: 500
+                                    regex:
+                                      type: string
+                                      description: >-
+                                        Represents the regular expression
+                                        pattern that the field value failed to
+                                        match.
+                                      maxLength: 200
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - regex
+                                - x-zs-$id: SubRequestRestrictedParametersErrorDetails
+                                  type: object
+                                  description: >-
+                                    Provides the error details for restricted
+                                    parameters. 
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the
+                                        restricted parameter. 
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON Path of the
+                                        restricted parameter. 
+                                      maxLength: 500
+                                    restricted_params:
+                                      type: array
+                                      description: >+
+                                        Provides the list of restricted
+                                        parameters. 
+
+                                      maxItems: 50
+                                      items:
+                                        type: string
+                                        description: >-
+                                          Each string provides the details of a
+                                          restricted parameter. 
+                                        maxLength: 100
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - restricted_params
+                                - x-zs-$id: SubRequestRestrictedHeadersErrorDetails
+                                  type: object
+                                  description: >-
+                                    Provides the error details for restricted
+                                    headers.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Provides the API name of the restricted
+                                        header.
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Provides the JSON path of the restricted
+                                        header.
+                                      maxLength: 500
+                                    restricted_headers:
+                                      type: array
+                                      description: Provides the list of restricted headers.
+                                      maxItems: 50
+                                      items:
+                                        type: string
+                                        description: >-
+                                          Each object provides a restricted header
+                                          name.
+                                        maxLength: 100
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - restricted_headers
+                                - x-zs-$id: SubRequestInvalidReferencesErrorDetails
+                                  type: object
+                                  description: >-
+                                    Provides the error details for invalid
+                                    references.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Provides the API name of the key with
+                                        invalid reference. 
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Provides the JSON path of the key with
+                                        invalid reference. 
+                                      maxLength: 500
+                                    reference:
+                                      type: string
+                                      description: >
+                                        Contains the invalid reference
+                                        expression. Reference expressions use
+                                        the format @{sub_request_id:$.JSONPath}
+                                        to chain data between sub-requests.
+                                      maxLength: 200
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - reference
+                                - x-zs-$id: SubRequestLoopingDependenciesErrorDetails
+                                  type: object
+                                  description: >-
+                                    Provides the error details for looping
+                                    dependencies. 
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Provides the API name of the keys that
+                                        involved in dependencies.
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Provides the JSON path of the keys that
+                                        involved in dependencies.
+                                      maxLength: 500
+                                    sub_request_indexes:
+                                      type: array
+                                      description: >-
+                                        Represents the indexes of sub-requests
+                                        involved in the loop.
+                                      maxItems: 10
+                                      items:
+                                        type: integer
+                                        format: int32
+                                        description: >-
+                                          Each object represents a sub-request
+                                          index. 
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - sub_request_indexes
+                                - x-zs-$id: >-
+                                    SubRequestRegexAndDataTypeValidationErrorDetails
+                                  type: object
+                                  description: >-
+                                    Provides error details for regex and data
+                                    type validation.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the key with
+                                        invalid data.
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path of the key with
+                                        invalid data.
+                                      maxLength: 500
+                                    regex:
+                                      type: string
+                                      description: >-
+                                        Represents the regular expression
+                                        pattern that the field value failed to
+                                        match.
+                                      maxLength: 200
+                                    expected_data_type:
+                                      type: string
+                                      description: >-
+                                        Provides the expected data type for the
+                                        key. 
+                                      maxLength: 50
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - regex
+                                    - expected_data_type
+                                - x-zs-$id: SubRequestRollbackErrorDetails
+                                  type: object
+                                  description: >-
+                                    Provides the error details for rollback
+                                    operations.
+                                  additionalProperties: false
+                                  properties:
+                                    rollbacked_by_sub_request_index:
+                                      type: integer
+                                      format: int32
+                                      description: >-
+                                        Represents the index of the sub-request
+                                        that triggered the rollback.
+                                  required:
+                                    - rollbacked_by_sub_request_index
+                                - x-zs-$id: SubRequestVersionMismatchErrorDetails
+                                  type: object
+                                  description: >-
+                                    Contains the error details for version
+                                    mismatches.
+                                  additionalProperties: false
+                                  properties:
+                                    sub_request_version:
+                                      type: integer
+                                      format: int32
+                                      description: >-
+                                        Represents the version of the
+                                        sub-request.
+                                    composite_request_version:
+                                      type: integer
+                                      format: int32
+                                      description: >-
+                                        Provides the version of the composite
+                                        request.
+                                  required:
+                                    - sub_request_version
+                                    - composite_request_version
+                                - x-zs-$id: SubRequestDependencyErrorDetails
+                                  type: object
+                                  description: >-
+                                    Provides the error details for dependency
+                                    issues.
+                                  additionalProperties: false
+                                  properties:
+                                    dependent_data:
+                                      type: array
+                                      description: >-
+                                        Contains the information about dependent
+                                        sub-requests.
+                                      maxItems: 10
+                                      items:
+                                        type: object
+                                        description: >+
+                                          Provides the dependency information
+                                          about dependent sub-requests.
+
+
+                                        additionalProperties: false
+                                        properties:
+                                          sub_request_id:
+                                            type: string
+                                            description: >-
+                                              Provides the ID of the dependent
+                                              sub-request.
+                                            maxLength: 100
+                                          referred_sub_request_ids:
+                                            type: array
+                                            description: >-
+                                              Provides the IDs of sub-requests the
+                                              error depends on.
+                                            maxItems: 5
+                                            items:
+                                              type: string
+                                              description: >-
+                                                Each item represents the referenced
+                                                sub-request ID.
+                                              maxLength: 100
+                                        required:
+                                          - sub_request_id
+                                          - referred_sub_request_ids
+                                  required:
+                                    - dependent_data
+                              description: >-
+                                Contains the detailed response information for
+                                the sub-request, including the HTTP response
+                                from the wrapped API call. 
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                    required:
+                      - __composite_requests
+              examples:
+                CompositeRequestError:
+                  summary: Error response for composite request with invalid data.
+                  value:
+                    __composite_requests:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: text
+                          regex: /crm(/.*)?/v[0-9]+([.][0-9]+)?/.*
+                          api_name: uri
+                          json_path: $.__composite_requests[0].uri
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows the error response when the composite request itself
+                    is invalid. Common errors include exceeding the maximum of 5
+                    sub-requests, invalid reference expressions, circular
+                    dependencies between sub-requests, or restricted headers and
+                    parameters.
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.composite_requests.CUSTOM: Grants permission to execute composite requests in Zoho CRM.
+            ZohoCRM.{sub_request_scope}: >-
+              Grants permission to execute the wrapped API endpoints included in
+              each sub-request. The required scopes depend on the APIs invoked
+              within the composite request.
+
+
+              > **Note**
+
+              > You must include both scopes to access the Composite API.

@@ -1,0 +1,655 @@
+openapi: 3.1.0
+info:
+  title: Zoho CRM Lead Conversion API
+  description: >-
+    API endpoint for converting Leads into Contacts, Accounts, and Deals within
+    Zoho CRM. 
+
+    This helps prevent duplicate records by allowing you to associate the lead
+    with existing records instead of creating new ones with the same data.
+
+
+    Supports configurable conversion options including owner assignment,
+    notification preferences, and tag carryover.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /Leads/{leadId}/actions/convert:
+    post:
+      summary: Convert a Lead
+      description: >-
+        Converts a Lead record into Contact, Account, and/or Deal records.
+        Allows configuration of conversion behavior including overwrite
+        settings, notifications, owner assignment, and tag carryover.
+      operationId: convertLead
+      parameters:
+        - $ref: '#/components/parameters/LeadId'
+      requestBody:
+        description: >-
+          Lead conversion configuration including optional Deal creation, owner
+          assignment, notification preferences, and tag carryover settings.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversionRequestWrapper'
+            examples:
+              BasicConversion:
+                summary: Basic lead conversion to Contact only
+                value:
+                  data:
+                    - overwrite: false
+                      notify_lead_owner: true
+                      notify_new_entity_owner: false
+                description: >-
+                  Shows a request payload that converts a lead to a contact
+                  without creating a deal.
+              ConversionWithDeal:
+                summary: Lead conversion with Deal creation
+                value:
+                  data:
+                    - overwrite: false
+                      notify_lead_owner: true
+                      notify_new_entity_owner: true
+                      Deals:
+                        Deal_Name: Enterprise Package Deal
+                        Pipeline: Standard (Standard)
+                        Stage: Qualification
+                        Closing_Date: '2025-12-31'
+                        Amount: 50000
+                        Probability: 60
+                description: >-
+                  Shows a request payload that converts a lead and creates a
+                  deal with pipeline details.
+            x-zs-llm-examples:
+              - BasicConversion
+              - ConversionWithDeal
+      responses:
+        '200':
+          description: >-
+            Lead successfully converted. Returns details of created Contact,
+            Account, and Deal records with their IDs and names.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionSuccessWrapper'
+              examples:
+                SuccessfulConversion:
+                  summary: Successful lead conversion with Contact only
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Contacts:
+                            name: John Doe
+                            id: '1643514000006142991'
+                          Deals: null
+                          Accounts: null
+                        message: The record has been converted successfully
+                        status: success
+                  description: >-
+                    Shows a successful conversion response that returns only the
+                    converted contact reference.
+                FullConversion:
+                  summary: Complete lead conversion with Contact, Deal, and Account
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Contacts:
+                            name: John Doe
+                            id: '1643514000006145045'
+                          Deals:
+                            name: Enterprise Deal
+                            id: '1643514000006145051'
+                          Accounts:
+                            name: Acme Corp
+                            id: '1643514000006145040'
+                        message: The record has been converted successfully
+                        status: success
+                  description: >-
+                    Shows a successful conversion response that returns contact,
+                    account, and deal references.
+        '202':
+          description: >-
+            Lead conversion request accepted and scheduled for processing, or
+            contains validation errors.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: Convert202Response
+                oneOf:
+                  - $ref: '#/components/schemas/ConversionScheduledWrapper'
+                  - $ref: '#/components/schemas/ValidationErrorWrapper'
+                description: >-
+                  Represents the response payload for scheduled conversion
+                  processing or validation-level errors.
+              examples:
+                ScheduledConversion:
+                  summary: Lead conversion scheduled successfully
+                  value:
+                    data:
+                      - code: SCHEDULED
+                        details:
+                          job_id: '1643514000006145007'
+                        message: Convert lead scheduled successfully
+                        status: success
+                  description: >-
+                    Shows a scheduled conversion response with a job ID for
+                    asynchronous processing.
+        '400':
+          description: >-
+            Bad request due to invalid input data, malformed request, or
+            attempting to convert an already converted Lead.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: Convert400Response
+                oneOf:
+                  - $ref: '#/components/schemas/ValidationErrorWrapper'
+                  - $ref: '#/components/schemas/ErrorResponse'
+                description: >-
+                  Represents the response payload for invalid input or
+                  request-level conversion errors.
+              examples:
+                AlreadyConverted:
+                  summary: Lead already converted
+                  value:
+                    code: ID_ALREADY_CONVERTED
+                    details:
+                      resource_path_index: 1
+                    message: id already converted
+                    status: error
+                  description: >-
+                    Shows an error response returned when the specified lead has
+                    already been converted.
+                PipelineStageMismatch:
+                  summary: Pipeline doesn't contain the specified Stage
+                  value:
+                    data:
+                      - code: MAPPING_MISMATCH
+                        details:
+                          mapped_field: Pipeline
+                          api_name: Stage
+                          json_path: $.data[0].Stage
+                        message: Pipeline doesn't contain the Stage
+                        status: error
+                  description: >-
+                    Shows an error response returned when the specified stage
+                    does not belong to the selected pipeline.
+                NonSubordinateUser:
+                  summary: Non subordinate user assigned as record owner
+                  description: >-
+                    Returned when a user tries to convert a Lead and assign the
+                    resulting records to a non-subordinate user. This error is
+                    triggered under two permission settings: 1) 'List
+                    subordinates only' (role hierarchy) - For example, if User2
+                    (Manager role) has this permission enabled, they can only
+                    assign ownership to their subordinates (e.g., User3, User4)
+                    based on the role hierarchy, not to users above them (e.g.,
+                    User1 with CEO role). 2) 'Territories and Sub-Territory
+                    Users Only' (territory hierarchy) - For example, given a
+                    territory structure: Root Territory → Territory A (User1,
+                    User2) → Territory B (User3, User4), and Root Territory →
+                    Territory C (User5, User6), if the current user (User1)
+                    belongs to Territory A, only users from Territory A (User1,
+                    User2) and its sub-territory Territory B (User3, User4) can
+                    be assigned as the new owner. Assigning a user from a
+                    non-subordinate territory such as Territory C (User5, User6)
+                    will trigger this error.
+                  value:
+                    data:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: Owner
+                          json_path: $.data[0].Owner
+                        message: Non Subordinate User Found
+                        status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.CREATE
+components:
+  parameters:
+    LeadId:
+      name: leadId
+      in: path
+      required: true
+      description: >-
+        Unique identifier of the Lead record to convert. Must be a valid Lead ID
+        that exists in the CRM and has not been previously converted. Use the
+        [Get Records API](record.yaml#$.paths./module.get) to retrieve the lead
+        ID.
+      schema:
+        type: string
+        format: int64
+  schemas:
+    ConversionRequestWrapper:
+      type: object
+      description: Wrapper object containing array of conversion requests
+      required:
+        - data
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of lead conversion configurations
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ConversionRequest'
+    ConversionRequest:
+      type: object
+      description: Configuration for converting a single lead
+      additionalProperties: false
+      properties:
+        overwrite:
+          type: boolean
+          description: >-
+            Determines whether to overwrite the Account Name in a Contact when
+            converting a Lead.
+
+            For example, If a Contact is already linked to an Account but the
+            Lead’s Company name is different, enabling this option will update
+            the Contact’s Account to match the Lead’s Company.
+
+            **Possible values:**
+
+            false (default) : Keeps the existing Account Name in the Contact
+            unchanged.
+
+            true : Updates the Contact’s associated Account Name if it differs
+            from the Company name in the Lead.
+        default: false
+        notify_lead_owner:
+          type: boolean
+          description: >-
+            If true, sends email notification to the Lead owner about the
+            conversion. Default is false.
+          default: false
+        notify_new_entity_owner:
+          type: boolean
+          description: >-
+            If true, notifies the owner(s) of newly created Contact, Account, or
+            Deal records. Default is false.
+          default: false
+        add_to_existing_record:
+          type: boolean
+          description: >-
+            When true, associates the Lead with an existing Account or Contact
+            instead of creating duplicates.
+        assign_to:
+          type: object
+          description: >-
+            Assigns a record owner for the new Contact and Account after lead
+            conversion. It ensures that the converted lead is assigned to a
+            specific user in Zoho CRM. Use the [Users
+            API](users.yaml#$.paths./users/bulk.get) to retrieve valid User IDs.
+          required:
+            - id
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              description: Zoho CRM user ID (int64 as string)
+              maxLength: 20
+        Deals:
+          $ref: '#/components/schemas/DealConversion'
+        carry_over_tags:
+          type: object
+          description: >-
+            Configuration for carrying over tags from the Lead to converted
+            records
+          additionalProperties: false
+          properties:
+            Contacts:
+              type: object
+              description: Tag carryover settings for Contact records.
+              additionalProperties: true
+            Accounts:
+              type: object
+              description: Tag carryover settings for Account records
+              additionalProperties: true
+            Deals:
+              type: object
+              description: Tag carryover settings for Deal records
+              additionalProperties: true
+    DealConversion:
+      type: object
+      description: Deal record configuration for lead conversion
+      required:
+        - Deal_Name
+        - Pipeline
+        - Stage
+        - Closing_Date
+      additionalProperties: false
+      properties:
+        Deal_Name:
+          type: string
+          description: Specify the name of the Deal
+          maxLength: 120
+        Campaign_Source:
+          type: string
+          description: Campaign source associated with this Deal
+          maxLength: 100
+        Amount:
+          type: number
+          format: double
+          description: Expected revenue amount for the Deal
+        Contact_Role:
+          type: string
+          description: Represents the **role** of the Contact in this Deal
+          maxLength: 50
+        Pipeline:
+          type: string
+          description: >-
+            Indicates the **sales pipeline** for the Deal. Must match an
+            existing pipeline in the CRM.
+          maxLength: 100
+        $move_attachments:
+          type: boolean
+          description: If true, moves attachments from the Lead to the Deal
+        Stage:
+          type: string
+          description: >-
+            Current stage of the Deal within the specified Pipeline. Must be
+            valid for the chosen Pipeline.
+          maxLength: 100
+        Closing_Date:
+          type: string
+          format: date
+          description: >-
+            Expected closing date for the Deal (ISO 8601 date format:
+            YYYY-MM-DD)
+        Type:
+          type: string
+          description: Type of Deal (e.g., New Business, Existing Business)
+          maxLength: 50
+        Probability:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: Win probability percentage (0-100)
+        Lead_Source:
+          type: string
+          description: Source from which the Lead originated
+          maxLength: 100
+        Next_Step:
+          type: string
+          description: Next action or milestone for the Deal
+          maxLength: 200
+        Description:
+          type: string
+          description: Detailed description of the Deal
+          maxLength: 32000
+    ConversionSuccessWrapper:
+      type: object
+      x-zs-$id: ConversionSuccessWrapper
+      description: Wrapper for successful conversion response
+      required:
+        - data
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of conversion results
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ConversionSuccess'
+    ConversionSuccess:
+      type: object
+      description: Successful lead conversion result
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+          description: Status code indicating successful conversion
+        message:
+          type: string
+          description: Message that summarizes the outcome of the lead conversion request.
+          maxLength: 500
+        status:
+          type: string
+          enum:
+            - success
+          description: Overall status of the conversion operation
+        details:
+          type: object
+          description: Details of created records including their IDs and names.
+          required:
+            - Contacts
+            - Deals
+            - Accounts
+          additionalProperties: false
+          properties:
+            Contacts:
+              $ref: '#/components/schemas/EntityReference'
+            Deals:
+              oneOf:
+                - $ref: '#/components/schemas/EntityReference'
+                - type: 'null'
+                  x-zs-$id: NoDealCreated
+                  description: No Deal was created during conversion
+              description: Deal record information, or null if no Deal was created
+            Accounts:
+              oneOf:
+                - $ref: '#/components/schemas/EntityReference'
+                - type: 'null'
+                  x-zs-$id: NoAccountCreatedConversion
+                  description: No Account was created during conversion
+              description: Account record information, or null if no Account was created
+    ConversionScheduledWrapper:
+      x-zs-$id: ConversionScheduledWrapper
+      type: object
+      description: Wrapper for scheduled conversion response
+      required:
+        - data
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array containing the scheduled job information
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/ConversionScheduled'
+    ConversionScheduled:
+      type: object
+      description: Lead conversion scheduled for background processing
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          enum:
+            - SCHEDULED
+          description: Status code indicating conversion was scheduled
+        message:
+          type: string
+          description: >-
+            Message that summarizes the scheduling result for the lead
+            conversion request.
+          maxLength: 500
+        status:
+          type: string
+          enum:
+            - success
+          description: Overall status
+        details:
+          type: object
+          description: Job details
+          required:
+            - job_id
+          additionalProperties: false
+          properties:
+            job_id:
+              type: string
+              description: Unique job identifier
+              maxLength: 20
+    EntityReference:
+      x-zs-$id: EntityReference
+      type: object
+      description: Reference to a CRM entity with ID and name
+      required:
+        - name
+        - id
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Represents the name of the entity.
+          maxLength: 200
+        id:
+          type: string
+          description: Unique identifier of the entity record (int64 as string)
+          maxLength: 20
+          x-zs-$id: ConvertId
+    ValidationErrorWrapper:
+      x-zs-$id: ValidationErrorWrapper
+      type: object
+      description: Wrapper for validation error responses
+      required:
+        - data
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: Array of validation errors
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ValidationError'
+    ValidationError:
+      type: object
+      description: Validation error details
+      required:
+        - status
+        - code
+        - message
+        - details
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+          description: Error status indicator
+        code:
+          type: string
+          enum:
+            - MANDATORY_NOT_FOUND
+            - MAPPING_MISMATCH
+            - INVALID_DATA
+            - DUPLICATE_DATA
+            - CANNOT_PERFORM_ACTION
+            - NOT_ALLOWED
+            - NOT_REVIEWED
+          description: Error code identifying the type of validation failure
+        message:
+          type: string
+          description: >-
+            Message that explains why the lead conversion request failed
+            validation.
+          maxLength: 500
+        details:
+          type: object
+          description: Additional error context and affected field information
+          additionalProperties: true
+          properties:
+            api_name:
+              type: string
+              description: API name of the affected field
+              maxLength: 100
+            json_path:
+              type: string
+              description: JSONPath to the affected field in the request
+              maxLength: 200
+            mapped_field:
+              type: string
+              description: Name of the field that has a mapping relationship
+              maxLength: 100
+            expected_data_type:
+              type: string
+              description: Expected data type for the field
+              maxLength: 50
+            maximum_length:
+              type: integer
+              format: int32
+              description: Maximum allowed length for the field
+    ErrorResponse:
+      x-zs-$id: ErrorResponse
+      type: object
+      description: Root-level error response without data wrapper
+      required:
+        - status
+        - code
+        - message
+        - details
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+          description: Represents the error status.
+        code:
+          type: string
+          enum:
+            - INVALID_DATA
+            - ID_ALREADY_CONVERTED
+            - CANNOT_PERFORM_ACTION
+            - NOT_ALLOWED
+            - REQUIRED_PARAM_MISSING
+            - NOT_REVIEWED
+          description: Indicates the error code.
+        message:
+          type: string
+          description: Error message
+          maxLength: 500
+        details:
+          type: object
+          description: Error details
+          additionalProperties: true
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: Index of the resource path that caused the error.
+            param_name:
+              type: string
+              description: 'Name of the missing or invalid parameter. '
+              maxLength: 100
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.READ: Read Records in all modules
+            ZohoCRM.modules.CREATE: Create Records in all modules

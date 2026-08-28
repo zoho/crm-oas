@@ -1,0 +1,1738 @@
+openapi: 3.1.0
+info:
+  title: Layout Activate and Deactivate API
+  description: >-
+    Layouts define the arrangement of fields, sections, and related lists that
+    users see when creating or viewing records in a Zoho CRM module. This API
+    enables developers to activate deactivated custom layouts and deactivate
+    active custom layouts, with support for transferring profile associations
+    during these operations.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Production API server for Zoho CRM.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: The top-level domain for the Zoho CRM data center region.
+      version:
+        description: The API version.
+        default: v8
+paths:
+  /settings/layouts/{id}/actions/activate:
+    post:
+      summary: Activate Layout
+      description: >-
+        Activates a single deactivated layout, making it available for use
+        within the specified module. Optionally allows adding or removing
+        profile associations during activation. Only one layout can be activated
+        per request. This operation is idempotent - attempting to activate an
+        already active layout returns an error (ALREADY_ACTIVATED).  The status
+        key in the response from the [Get Layouts
+        API](layouts.yaml#$.paths./settings/layouts.get) indicates whether the
+        layout is active or inactive.
+      operationId: activateLayout
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Module'
+      requestBody:
+        required: true
+        description: >-
+          Request body for activating a single layout with optional profile
+          association modifications. The layout can specify profile associations
+          to add (default) or remove (using _delete flag). Profile modifications
+          are optional - layout can be activated without any profile changes. At
+          least one profile must remain associated with the layout after all
+          operations are applied.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LayoutActivateRequest'
+            examples:
+              SingleLayoutMixedProfiles:
+                summary: Activate layout with profile additions and removals
+                description: >-
+                  Shows a layout activation request that adds two profiles and
+                  removes one existing profile association using the **_delete**
+                  flag.
+                value:
+                  layouts:
+                    - id: '4831139000000673152'
+                      profiles:
+                        - id: '4831139000000650385'
+                        - id: '4831139000000653716'
+                        - id: '4831139000000015972'
+                          _delete: true
+              SingleLayoutAddProfilesOnly:
+                summary: Activate layout with profile additions only
+                description: >-
+                  Shows a layout activation request that adds multiple profiles
+                  without removing any existing associations.
+                value:
+                  layouts:
+                    - id: '4831139000000673152'
+                      profiles:
+                        - id: '4831139000000650385'
+                        - id: '4831139000000653716'
+                        - id: '4831139000001234567'
+              SingleLayoutRemoveProfilesOnly:
+                summary: Activate layout with profile removals only
+                description: >-
+                  Shows a layout activation request that removes specific
+                  profile associations using the **_delete** flag.
+                value:
+                  layouts:
+                    - id: '4831139000000673152'
+                      profiles:
+                        - id: '4831139000000015972'
+                          _delete: true
+                        - id: '4831139000000015973'
+                          _delete: true
+              SingleLayoutNoProfiles:
+                summary: Activate layout without profile modifications
+                description: >-
+                  Shows a layout activation request with an empty profiles
+                  array, preserving all existing profile associations.
+                value:
+                  layouts:
+                    - id: '4831139000000673152'
+                      profiles: []
+              SingleLayoutWithoutProfilesKey:
+                summary: Activate layout omitting the profiles key
+                description: >-
+                  Shows a layout activation request that omits the profiles key
+                  entirely, preserving all existing profile associations.
+                value:
+                  layouts:
+                    - id: '4831139000000673152'
+            x-zs-llm-examples:
+              - SingleLayoutMixedProfiles
+              - SingleLayoutWithoutProfilesKey
+      responses:
+        '200':
+          description: >-
+            Returns the activation confirmation for the layout, including the
+            result code and the activated layout ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: LayoutActivateResponse
+                description: >-
+                  Represents the success response returned when a layout is
+                  successfully activated.
+                properties:
+                  layouts:
+                    type: array
+                    description: >-
+                      Array containing the result of the layout activation
+                      operation. Always returned in the response.
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: Represents the result details for the activated layout.
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: >-
+                            Represents the operation result code. Possible
+                            values: **SUCCESS** - Indicates the layout was
+                            activated successfully. Always returned in the
+                            response.
+                        details:
+                          type: object
+                          description: >-
+                            Contains the details of the activated layout. Always
+                            returned in the response.
+                          properties:
+                            id:
+                              type: string
+                              pattern: ^[0-9]+$
+                              minLength: 1
+                              maxLength: 20
+                              description: >-
+                                Represents the unique identifier of the
+                                activated layout. Always returned in the
+                                response.
+                          required:
+                            - id
+                          additionalProperties: false
+                        message:
+                          type: string
+                          maxLength: 200
+                          description: >-
+                            Represents the confirmation message for the
+                            activation operation. Always returned in the
+                            response.
+                          examples:
+                            - layout activated
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: >-
+                            Represents the overall operation status. Possible
+                            values: **success** - Indicates the activation
+                            completed without errors. Always returned in the
+                            response.
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                      additionalProperties: false
+                required:
+                  - layouts
+                additionalProperties: false
+              examples:
+                SuccessfulActivation:
+                  summary: Layout activated successfully
+                  description: >-
+                    Shows the success response returned when a deactivated
+                    layout is successfully activated.
+                  value:
+                    layouts:
+                      - code: SUCCESS
+                        details:
+                          id: '4831139000000673152'
+                        message: layout activated
+                        status: success
+        '400':
+          description: >-
+            The request could not be processed due to invalid parameters, layout
+            constraints, or business rule violations. Resolution: Inspect the
+            **code** field in the response body to identify the specific cause,
+            and verify the layout ID, module name, and profile IDs in the
+            request.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: LayoutActivateErrorResponse
+                description: >-
+                  Represents the error response for bad request scenarios during
+                  layout activation, covering invalid layout IDs, layout state
+                  violations, and profile association errors.
+                oneOf:
+                  - type: object
+                    x-zs-$id: InvalidLayoutIdError
+                    description: >-
+                      Represents the error response returned when the layout ID
+                      in the request path is invalid or does not exist in the
+                      specified module.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the error status indicator. Possible
+                          values: **error** - Indicates the request did not
+                          complete successfully. Always returned in the
+                          response.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                          - INVALID_MODULE
+                        description: >-
+                          Represents the error code for the request failure.
+                          Possible values: **INVALID_DATA** - Indicates the
+                          layout ID provided in the request is invalid.
+                          **INVALID_MODULE** - Indicates the specified module is
+                          invalid. Always returned in the response.
+                      message:
+                        type: string
+                        maxLength: 500
+                        description: >-
+                          Represents the error message describing the invalid
+                          data. Always returned in the response.
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context about the invalid data
+                          error. Always returned in the response.
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the index in the resource path where
+                              the error occurred.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: AlreadyActivatedError
+                    description: >-
+                      Represents the error response returned when the specified
+                      layout is already in active state.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the error status indicator. Possible
+                          values: **error** - Indicates the request did not
+                          complete successfully. Always returned in the
+                          response.
+                      code:
+                        type: string
+                        enum:
+                          - ALREADY_ACTIVATED
+                        description: >-
+                          Represents the error code for the request failure.
+                          Possible values: **ALREADY_ACTIVATED** - Indicates the
+                          layout is already in active state. Always returned in
+                          the response.
+                      message:
+                        type: string
+                        maxLength: 500
+                        description: >-
+                          Represents the error message indicating the layout is
+                          already in active state. Always returned in the
+                          response.
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context about the
+                          already-activated layout error. Always returned in the
+                          response.
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the index in the resource path where
+                              the error occurred.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: LayoutProfileAssociationErrors
+                    description: >-
+                      Represents the error response returned when profile
+                      association operations are not permitted or violate layout
+                      constraints during activation.
+                    properties:
+                      layouts:
+                        type: array
+                        description: >-
+                          Array of error details for each layout that
+                          encountered a profile association or permission error.
+                          Always returned in the response.
+                        minItems: 1
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: >-
+                            Represents the error details for an individual
+                            layout operation failure.
+                          properties:
+                            code:
+                              type: string
+                              enum:
+                                - NOT_ALLOWED
+                                - INVALID_DATA
+                                - MANDATORY_NOT_FOUND
+                              description: Error code indicating operation is not permitted
+                            details:
+                              type: object
+                              description: Additional context about the error
+                              oneOf:
+                                - type: object
+                                  x-zs-$id: PermissionUpdateRestrictionDetails
+                                  description: >-
+                                    Represents the error details returned when
+                                    profile permission updates are not allowed
+                                    on the layout.
+                                  properties:
+                                    action:
+                                      type: string
+                                      enum:
+                                        - set_layout_permissions
+                                      description: >-
+                                        Represents the action that is not
+                                        permitted on the layout. Possible
+                                        values: **set_layout_permissions** -
+                                        Indicates that profile permission
+                                        modification is not allowed on this
+                                        layout. Always returned in the response.
+                                    id:
+                                      type: string
+                                      pattern: ^[0-9]+$
+                                      minLength: 1
+                                      maxLength: 20
+                                      description: >-
+                                        Represents the unique identifier of the
+                                        layout on which the action is
+                                        restricted. Always returned in the
+                                        response.
+                                  required:
+                                    - action
+                                    - id
+                                  additionalProperties: false
+                                - type: object
+                                  x-zs-$id: ProfileAssociationValidationDetails
+                                  description: >-
+                                    Represents the error details returned when a
+                                    profile association request fails
+                                    validation, including the field name and its
+                                    location in the request.
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      maxLength: 100
+                                      description: >-
+                                        Represents the API name of the field
+                                        that caused the profile association
+                                        validation error. Always returned in the
+                                        response.
+                                    json_path:
+                                      type: string
+                                      maxLength: 200
+                                      description: >-
+                                        Represents the JSONPath location in the
+                                        request body where the profile
+                                        association validation error occurred.
+                                        Always returned in the response.
+                                  required:
+                                    - api_name
+                                    - json_path
+                                  additionalProperties: false
+                              additionalProperties: true
+                            message:
+                              type: string
+                              maxLength: 500
+                              description: >-
+                                Represents the error message explaining the
+                                profile association or permission violation.
+                                Always returned in the response.
+                            status:
+                              type: string
+                              enum:
+                                - error
+                              description: >-
+                                Represents the error status indicator. Possible
+                                values: **error** - Indicates the layout
+                                operation did not complete successfully. Always
+                                returned in the response.
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                          additionalProperties: false
+                    required:
+                      - layouts
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidDataError
+                    description: >-
+                      Represents the error response returned when the request
+                      body contains invalid data, such as a layouts array that
+                      exceeds the maximum allowed length.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the error status indicator. Possible
+                          values: **error** - Indicates the request did not
+                          complete successfully. Always returned in the
+                          response.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                        description: >-
+                          Represents the error code for the request failure.
+                          Possible values: **INVALID_DATA** - Indicates the
+                          request body contains invalid data, such as an array
+                          that exceeds the maximum length. Always returned in
+                          the response.
+                      message:
+                        type: string
+                        maxLength: 500
+                        description: >-
+                          Represents the error message describing the validation
+                          failure. Always returned in the response.
+                      details:
+                        type: object
+                        description: >-
+                          Contains validation error details, including the field
+                          name and its constraint violation. Always returned in
+                          the response.
+                        properties:
+                          maximum_length:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the maximum allowed length for the
+                              array field that was exceeded. Always returned in
+                              the response.
+                          api_name:
+                            type: string
+                            maxLength: 100
+                            description: >-
+                              Represents the API name of the field that violated
+                              the constraint. Always returned in the response.
+                          json_path:
+                            type: string
+                            maxLength: 200
+                            description: >-
+                              Represents the JSONPath location of the invalid
+                              data in the request body. Always returned in the
+                              response.
+                        required:
+                          - maximum_length
+                          - api_name
+                          - json_path
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: CannotProcessError
+                    description: >-
+                      Layout activation cannot be processed due to a
+                      module-level constraint (e.g., maximum active layout limit
+                      reached)
+                    properties:
+                      layouts:
+                        type: array
+                        description: Array of layout-specific error details
+                        minItems: 1
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: Individual layout error information
+                          properties:
+                            code:
+                              type: string
+                              enum:
+                                - CANNOT_PROCESS
+                              description: >-
+                                Error code indicating the operation cannot be
+                                processed
+                            details:
+                              type: object
+                              description: >-
+                                Additional context about the error (may be
+                                empty)
+                              additionalProperties: true
+                            message:
+                              type: string
+                              maxLength: 500
+                              description: >-
+                                Human-readable error message explaining why the
+                                layout cannot be activated
+                            status:
+                              type: string
+                              enum:
+                                - error
+                              description: Error status indicator
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                          additionalProperties: false
+                    required:
+                      - layouts
+                    additionalProperties: false
+                additionalProperties: true
+              examples:
+                InvalidLayoutId:
+                  summary: Invalid layout ID provided
+                  description: >-
+                    Shows the INVALID_DATA error returned when the layout ID in
+                    the request path does not exist in the specified module.
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No layout found with given id
+                    status: error
+                AlreadyActivated:
+                  summary: Layout is already activated
+                  description: >-
+                    Shows the ALREADY_ACTIVATED error returned when the
+                    specified layout is already in active state.
+                  value:
+                    code: ALREADY_ACTIVATED
+                    details:
+                      resource_path_index: 2
+                    message: Cannot activate already active layout
+                    status: error
+                PermissionUpdateNotAllowed:
+                  summary: Permission updates not allowed on layout
+                  description: >-
+                    Shows the NOT_ALLOWED error returned when profile permission
+                    modifications are not supported during activation of the
+                    specified layout.
+                  value:
+                    layouts:
+                      - code: NOT_ALLOWED
+                        details:
+                          action: set_layout_permissions
+                          id: '4831139000000673152'
+                        message: >-
+                          Cannot perform permission updates as it is not allowed
+                          on the layout.
+                        status: error
+                LastProfileRemoval:
+                  summary: Cannot remove the only associated profile
+                  description: >-
+                    Shows the NOT_ALLOWED error returned when attempting to
+                    remove the only remaining profile association from the
+                    layout.
+                  value:
+                    layouts:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: profiles
+                          json_path: $.layouts[0].profiles
+                        message: >-
+                          Cannot remove association with profile as it is the
+                          only profile associated with layout.
+                        status: error
+                ProfileNotAssociatedWithModule:
+                  summary: Profile not associated with the module
+                  description: >-
+                    Shows the NOT_ALLOWED error returned when a profile ID in
+                    the request is not associated with the specified module.
+                  value:
+                    layouts:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.layouts[0].profiles[0].id
+                        message: >-
+                          Only profiles associated with the module can be
+                          assigned for the layout.
+                        status: error
+                LiteProfileOnIntegrationLayout:
+                  summary: Lite profile cannot be assigned to integration layout
+                  description: >-
+                    Shows the NOT_ALLOWED error returned when a lite profile is
+                    assigned to an integration layout.
+                  value:
+                    layouts:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.layouts[0].profiles[0].id
+                        message: Integration layout cannot be assigned a lite profile.
+                        status: error
+                ProfileRequiresActiveLayout:
+                  summary: Profile must have at least one active layout
+                  description: >-
+                    Shows the NOT_ALLOWED error returned when removing a profile
+                    would leave it with no active layout association.
+                  value:
+                    layouts:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.layouts[0].profiles[0].id
+                        message: >-
+                          Profile must have at least one active layout
+                          associated to it.
+                        status: error
+                MaximumLayoutsExceeded:
+                  summary: Maximum layouts array length exceeded
+                  description: >-
+                    Shows the INVALID_DATA error returned when the layouts array
+                    in the request body contains more than one object.
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: layouts
+                      json_path: $.layouts
+                    message: invalid data
+                    status: error
+                MaxLayoutLimitReached:
+                  summary: Maximum active layout limit reached for the module
+                  description: >-
+                    Cannot activate the layout because the module has already
+                    reached the maximum limit of 4 active layouts
+                  value:
+                    layouts:
+                      - code: CANNOT_PROCESS
+                        details: {}
+                        message: >-
+                          Sorry, but you can't activate this layout, as you have
+                          already reached the maximum limit of 4 layouts per
+                          module.
+                        status: error
+        '403':
+          description: User does not have permission to perform this operation
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: NoPermissionErrorResponse
+                description: >-
+                  Error response when the user lacks required permissions to
+                  activate layouts
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - NO_PERMISSION
+                    description: Error code indicating insufficient permissions
+                  details:
+                    type: object
+                    description: Details about the required permissions
+                    properties:
+                      permissions:
+                        type: array
+                        description: List of permissions required to perform this operation
+                        maxItems: 10
+                        items:
+                          type: string
+                          maxLength: 100
+                          description: Permission identifier
+                    required:
+                      - permissions
+                    additionalProperties: false
+                  message:
+                    type: string
+                    maxLength: 200
+                    description: Human-readable error message
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: Error status indicator
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                additionalProperties: false
+              examples:
+                NoPermission:
+                  summary: User lacks required permissions
+                  description: >-
+                    The authenticated user does not have the necessary CRM
+                    customization permissions
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Customize_Zoho_CRM
+                    message: permission denied
+                    status: error
+        '500':
+          description: >-
+            An unexpected error occurred while processing the layout activation
+            request. Resolution: Retry the request. If the issue persists,
+            contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: InternalErrorResponse
+                description: >-
+                  Represents the error response returned when an unexpected
+                  internal server error occurs during layout activation.
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INTERNAL_ERROR
+                    description: >-
+                      Represents the error code for the internal server error.
+                      Possible values: **INTERNAL_ERROR** - Indicates an
+                      unexpected error occurred while processing the request.
+                      Always returned in the response.
+                  message:
+                    type: string
+                    maxLength: 500
+                    description: >-
+                      Represents the error message describing the internal
+                      server error. Always returned in the response.
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: >-
+                      Represents the error status indicator. Possible values:
+                      **error** - Indicates the request failed due to an
+                      internal server error. Always returned in the response.
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                additionalProperties: false
+              examples:
+                InternalError:
+                  summary: Internal server error during activation
+                  description: >-
+                    Shows the INTERNAL_ERROR response returned when an
+                    unexpected error occurs during layout activation.
+                  value:
+                    code: INTERNAL_ERROR
+                    details: {}
+                    message: Internal Server Error
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.layouts.CREATE
+    delete:
+      summary: Deactivate Layout
+      description: >-
+        Deactivates an active layout and transfers its configuration (profile
+        associations, permissions, field mappings) to another active layout
+        within the same module. At least one active layout must remain in the
+        module. This operation is idempotent - attempting to deactivate an
+        already deactivated layout returns an error (ALREADY_DEACTIVATED).
+      operationId: layoutDeactivate
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Module'
+        - name: transfer_to
+          in: query
+          required: true
+          description: >-
+            Specify the unique identifier of an active layout within the same
+            module to which the deactivated layout's profile associations and
+            configuration will be transferred. The target layout must be
+            different from the layout being deactivated. Refer to the [Get
+            Layouts](layouts.yaml#$.paths./settings/layouts.get) resource for
+            valid values.
+          schema:
+            type: string
+            format: int64
+            description: Target layout ID for configuration transfer
+          examples:
+            TransferLayoutId:
+              value: '4831139000000655703'
+              summary: Target layout ID for configuration transfer
+            DifferentModuleLayout:
+              value: '4831139000000655999'
+              summary: Another target layout in the same module
+      responses:
+        '200':
+          description: >-
+            Returns the deactivation confirmation for the layout, including the
+            result code and the deactivated layout ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: LayoutDeactivateResponse
+                description: >-
+                  Represents the success response returned when a layout is
+                  successfully deactivated.
+                properties:
+                  layouts:
+                    type: array
+                    description: >-
+                      Array containing the result of the layout deactivation
+                      operation. Always returned in the response.
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Represents the result details for the deactivated
+                        layout.
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: >-
+                            Represents the operation result code. Possible
+                            values: **SUCCESS** - Indicates the layout was
+                            deactivated successfully. Always returned in the
+                            response.
+                        details:
+                          type: object
+                          description: >-
+                            Contains the details of the deactivated layout.
+                            Always returned in the response.
+                          properties:
+                            id:
+                              type: string
+                              format: int64
+                              description: >-
+                                Represents the unique identifier of the
+                                deactivated layout. Always returned in the
+                                response.
+                          required:
+                            - id
+                          additionalProperties: false
+                        message:
+                          type: string
+                          maxLength: 200
+                          description: >-
+                            Represents the confirmation message for the
+                            deactivation operation. Always returned in the
+                            response.
+                          examples:
+                            - layout deactivated
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: >-
+                            Represents the overall operation status. Possible
+                            values: **success** - Indicates the deactivation
+                            completed without errors. Always returned in the
+                            response.
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                      additionalProperties: false
+                required:
+                  - layouts
+                additionalProperties: false
+              examples:
+                SuccessfulDeactivation:
+                  summary: Layout deactivated successfully
+                  description: >-
+                    Shows the success response returned when an active layout is
+                    successfully deactivated with its configuration transferred
+                    to the target layout.
+                  value:
+                    layouts:
+                      - code: SUCCESS
+                        details:
+                          id: '4831139000000653980'
+                        message: layout deactivated
+                        status: success
+        '400':
+          description: >-
+            The request could not be processed due to invalid parameters,
+            missing required parameters, layout state violations, or association
+            constraints. Resolution: Inspect the **code** field in the response
+            body to identify the specific cause, and verify the layout ID,
+            module name, and the **transfer_to** parameter value.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: LayoutDeactivateErrorResponse
+                description: >-
+                  Represents the error response for bad request scenarios during
+                  layout deactivation, covering invalid module names, invalid
+                  layout IDs, missing parameters, association constraints, and
+                  layout state violations.
+                oneOf:
+                  - type: object
+                    x-zs-$id: InvalidModuleError
+                    description: >-
+                      Represents the error response returned when the module
+                      name provided in the request is invalid.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the error status indicator. Possible
+                          values: **error** - Indicates the request did not
+                          complete successfully. Always returned in the
+                          response.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_MODULE
+                        description: >-
+                          Represents the error code for the request failure.
+                          Possible values: **INVALID_MODULE** - Indicates the
+                          module name provided in the request is invalid. Always
+                          returned in the response.
+                      message:
+                        type: string
+                        maxLength: 500
+                        description: >-
+                          Represents the error message indicating the module
+                          name is invalid. Always returned in the response.
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context about the invalid module
+                          error. Always returned in the response.
+                        additionalProperties: true
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidDataIdErrorResponse
+                    description: >-
+                      Represents the error response returned when the provided
+                      layout ID or parameter value is invalid.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the error status indicator. Possible
+                          values: **error** - Indicates the request did not
+                          complete successfully. Always returned in the
+                          response.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                        description: >-
+                          Represents the error code for the request failure.
+                          Possible values: **INVALID_DATA** - Indicates the
+                          provided layout ID or parameter value is invalid.
+                          Always returned in the response.
+                      message:
+                        type: string
+                        maxLength: 500
+                        description: >-
+                          Represents the error message describing the invalid
+                          data. Always returned in the response.
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context about the invalid data
+                          error. Always returned in the response.
+                        oneOf:
+                          - type: object
+                            x-zs-$id: InvalidParameterErrorDetails
+                            description: >-
+                              Represents the error details returned when an
+                              invalid parameter value causes the request to
+                              fail.
+                            properties:
+                              param_name:
+                                type: string
+                                maxLength: 100
+                                description: >-
+                                  Represents the name of the parameter that
+                                  contains the invalid value. Always returned in
+                                  the response.
+                            required:
+                              - param_name
+                            additionalProperties: false
+                          - type: object
+                            x-zs-$id: ResourcePathErrorDetails
+                            description: >-
+                              Represents the error details returned when an
+                              invalid resource path index is encountered in the
+                              request.
+                            properties:
+                              resource_path_index:
+                                type: integer
+                                format: int32
+                                description: >-
+                                  Represents the index in the resource path
+                                  where the error occurred.
+                            additionalProperties: false
+                        additionalProperties: true
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: RequiredParamMissingError
+                    description: >-
+                      Represents the error response returned when a required
+                      parameter is missing from the request.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the error status indicator. Possible
+                          values: **error** - Indicates the request did not
+                          complete successfully. Always returned in the
+                          response.
+                      code:
+                        type: string
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                        description: >-
+                          Represents the error code for the request failure.
+                          Possible values: **REQUIRED_PARAM_MISSING** -
+                          Indicates a required parameter is missing from the
+                          request. Always returned in the response.
+                      message:
+                        type: string
+                        maxLength: 500
+                        description: >-
+                          Represents the error message indicating the missing
+                          required parameter. Always returned in the response.
+                      details:
+                        type: object
+                        description: >-
+                          Contains the name of the missing required parameter.
+                          Always returned in the response.
+                        properties:
+                          param_name:
+                            type: string
+                            maxLength: 100
+                            description: >-
+                              Represents the name of the missing required
+                              parameter. Always returned in the response.
+                        required:
+                          - param_name
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: LayoutHasAssociationsError
+                    description: >-
+                      Represents the error response returned when the layout
+                      cannot be deactivated because it has existing
+                      dependencies.
+                    properties:
+                      layouts:
+                        type: array
+                        description: >-
+                          Array of error details for each layout that cannot be
+                          deactivated due to existing associations. Always
+                          returned in the response.
+                        minItems: 1
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: >-
+                            Represents the error details for a layout that has
+                            existing associations preventing deactivation.
+                          properties:
+                            code:
+                              type: string
+                              enum:
+                                - ASSOCIATIONS_EXIST
+                              description: >-
+                                Represents the error code for the layout
+                                deactivation failure. Possible values:
+                                **ASSOCIATIONS_EXIST** - Indicates the layout
+                                has existing dependencies that must be resolved
+                                before deactivation. Always returned in the
+                                response.
+                            details:
+                              type: object
+                              description: >-
+                                Contains the identifier of the layout that has
+                                existing associations. Always returned in the
+                                response.
+                              properties:
+                                id:
+                                  type: string
+                                  pattern: ^[0-9]+$
+                                  minLength: 1
+                                  maxLength: 20
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    layout that has existing associations
+                                    preventing deactivation. Always returned in
+                                    the response.
+                              required:
+                                - id
+                              additionalProperties: false
+                            message:
+                              type: string
+                              maxLength: 500
+                              description: >-
+                                Represents the error message describing the
+                                association constraint that prevents
+                                deactivation. Always returned in the response.
+                            status:
+                              type: string
+                              enum:
+                                - error
+                              description: >-
+                                Represents the error status indicator. Possible
+                                values: **error** - Indicates the layout
+                                deactivation did not complete successfully.
+                                Always returned in the response.
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                          additionalProperties: false
+                    required:
+                      - layouts
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: TransferToSameLayoutError
+                    description: >-
+                      Represents the error response returned when the transfer
+                      target layout is the same as the layout being deactivated.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the error status indicator. Possible
+                          values: **error** - Indicates the request did not
+                          complete successfully. Always returned in the
+                          response.
+                      code:
+                        type: string
+                        enum:
+                          - NOT_ALLOWED
+                        description: >-
+                          Represents the error code for the request failure.
+                          Possible values: **NOT_ALLOWED** - Indicates the
+                          transfer target layout is the same as the layout being
+                          deactivated. Always returned in the response.
+                      message:
+                        type: string
+                        maxLength: 500
+                        description: >-
+                          Represents the error message explaining why the
+                          operation is not allowed. Always returned in the
+                          response.
+                      details:
+                        type: object
+                        description: >-
+                          Contains the name of the parameter that caused the
+                          restriction. Always returned in the response.
+                        properties:
+                          param_name:
+                            type: string
+                            maxLength: 100
+                            description: >-
+                              Represents the name of the parameter that caused
+                              the NOT_ALLOWED error. Always returned in the
+                              response.
+                        required:
+                          - param_name
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: AlreadyDeactivatedError
+                    description: >-
+                      Represents the error response returned when the specified
+                      layout is already in inactive state.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the error status indicator. Possible
+                          values: **error** - Indicates the request did not
+                          complete successfully. Always returned in the
+                          response.
+                      code:
+                        type: string
+                        enum:
+                          - ALREADY_DEACTIVATED
+                          - NOT_ALLOWED
+                        description: >-
+                          Represents the error code for the request failure.
+                          Possible values: **ALREADY_DEACTIVATED** - Indicates
+                          the specified layout is already in an inactive state.
+                          **NOT_ALLOWED** - Indicates the operation is not
+                          allowed. Always returned in the response.
+                      message:
+                        type: string
+                        maxLength: 500
+                        description: >-
+                          Represents the error message indicating the layout is
+                          already in inactive state. Always returned in the
+                          response.
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context about the
+                          already-deactivated layout error. Always returned in
+                          the response.
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the index in the resource path where
+                              the error occurred.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: FlatAssociationsExistError
+                    description: >-
+                      Layout cannot be deactivated because it has existing
+                      associations (flat response, not wrapped in layouts array)
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - ASSOCIATIONS_EXIST
+                        description: >-
+                          Error code indicating the layout has existing
+                          associations preventing deactivation
+                      details:
+                        type: object
+                        description: Details about the layout with existing associations
+                        properties:
+                          id:
+                            type: string
+                            pattern: ^[0-9]+$
+                            minLength: 1
+                            maxLength: 20
+                            description: >-
+                              The unique identifier of the layout that has
+                              existing associations
+                        required:
+                          - id
+                        additionalProperties: false
+                      message:
+                        type: string
+                        maxLength: 500
+                        description: >-
+                          Human-readable error message explaining why
+                          deactivation is blocked
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: Error status indicator
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    additionalProperties: false
+                additionalProperties: true
+              examples:
+                InvalidLayoutId:
+                  summary: Invalid layout ID provided
+                  description: >-
+                    Shows the INVALID_DATA error returned when the layout ID in
+                    the request path does not exist in the specified module.
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No layout found with given id
+                    status: error
+                MissingModuleParam:
+                  summary: Required module parameter missing
+                  description: >-
+                    Shows the REQUIRED_PARAM_MISSING error returned when the
+                    module query parameter is not included in the request.
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: module
+                    message: One of the expected parameter is missing
+                    status: error
+                LayoutHasAssociations:
+                  summary: Layout cannot be deactivated due to existing associations
+                  description: >-
+                    Shows the ASSOCIATIONS_EXIST error returned when the layout
+                    has existing dependencies that must be resolved before
+                    deactivation.
+                  value:
+                    layouts:
+                      - code: ASSOCIATIONS_EXIST
+                        details:
+                          id: '111111000000101446'
+                        message: >-
+                          Cannot deactivate layout as it is being used in some
+                          places
+                        status: error
+                TransferToSameLayout:
+                  summary: >-
+                    Cannot transfer configuration to the layout being
+                    deactivated
+                  description: >-
+                    Shows the NOT_ALLOWED error returned when the transfer_to
+                    parameter references the same layout ID as the one being
+                    deactivated.
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      param_name: transfer_to
+                    message: Cannot transfer to the deactivated layout
+                    status: error
+                AlreadyDeactivated:
+                  summary: Layout is already deactivated
+                  description: >-
+                    Shows the ALREADY_DEACTIVATED error returned when the
+                    specified layout is already in inactive state.
+                  value:
+                    code: ALREADY_DEACTIVATED
+                    details:
+                      resource_path_index: 2
+                    message: Cannot deactivate already deactive layout
+                    status: error
+                FlatAssociationsExist:
+                  summary: Layout has associations (flat response)
+                  description: >-
+                    Cannot deactivate the layout as it is being used in some
+                    places; returned as a flat top-level object rather than
+                    wrapped in a layouts array
+                  value:
+                    code: ASSOCIATIONS_EXIST
+                    details:
+                      id: '1000000118778'
+                    message: >-
+                      Cannot deactivate layout as it is being used in some
+                      places
+                    status: error
+        '403':
+          description: >-
+            The authenticated user does not have the CRM customization
+            permission required to deactivate the layout. **Resolution:** The
+            CRM administrator must grant the layout customization permission
+            (**Customize Zoho CRM**) to the user's profile before retrying.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: DeactivateNoPermissionErrorResponse
+                description: >-
+                  Represents the error response returned when the user lacks the
+                  CRM customization permission required to deactivate a layout.
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - NO_PERMISSION
+                    description: >-
+                      Represents the error code indicating that the user does
+                      not have the permission required to deactivate the layout.
+                      Possible values: **NO_PERMISSION** - The user's CRM
+                      profile is missing the layout customization permission.
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional context about the permissions the
+                      user's profile is missing.
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of permissions the user's profile
+                          must be granted to deactivate the layout.
+                        maxItems: 10
+                        items:
+                          type: string
+                          maxLength: 100
+                          description: >-
+                            Represents the API name of a permission the user's
+                            profile must be granted to deactivate the layout.
+                    required:
+                      - permissions
+                    additionalProperties: false
+                  message:
+                    type: string
+                    maxLength: 200
+                    description: >-
+                      Represents the human-readable error message describing the
+                      missing permission.
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: >-
+                      Represents the status of the response. Possible values:
+                      **error** - The request encountered an error and did not
+                      complete.
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                additionalProperties: false
+              examples:
+                NoPermission:
+                  summary: User lacks the required layout customization permission
+                  description: >-
+                    Shows the error response returned when the authenticated
+                    user does not have the **Customize Zoho CRM** permission
+                    required to deactivate a layout.
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Customize_Zoho_CRM
+                    message: permission denied
+                    status: error
+        '500':
+          description: >-
+            An unexpected error occurred while processing the layout
+            deactivation request. Resolution: Retry the request. If the issue
+            persists, contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: InternalError
+                description: >-
+                  Represents the error response returned when an unexpected
+                  internal server error occurs during layout deactivation.
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INTERNAL_ERROR
+                    description: >-
+                      Represents the error code for the internal server error.
+                      Possible values: **INTERNAL_ERROR** - Indicates an
+                      unexpected error occurred while processing the request.
+                      Always returned in the response.
+                  message:
+                    type: string
+                    maxLength: 500
+                    description: >-
+                      Represents the error message describing the internal
+                      server error. Always returned in the response.
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: >-
+                      Represents the error status indicator. Possible values:
+                      **error** - Indicates the request failed due to an
+                      internal server error. Always returned in the response.
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                additionalProperties: false
+              examples:
+                InternalError:
+                  summary: Internal server error during deactivation
+                  description: >-
+                    Shows the INTERNAL_ERROR response returned when an
+                    unexpected error occurs during layout deactivation.
+                  value:
+                    code: INTERNAL_ERROR
+                    details: {}
+                    message: Internal Server Error
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.layouts.DELETE
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the layout to activate or deactivate.
+        Refer to the [Get Layouts](layouts.yaml#$.paths./settings/layouts.get)
+        resource for valid values.
+      schema:
+        type: string
+        format: int64
+        description: Layout identifier as a 64-bit integer
+      examples:
+        StandardLayoutId:
+          value: '4831139000000655701'
+          summary: Standard layout ID
+        CustomLayoutId:
+          value: '4831139000000673152'
+          summary: Custom layout ID
+    Module:
+      name: module
+      in: query
+      required: true
+      description: >-
+        Specify the API name of the module that contains the layout. Refer to
+        the [Get Modules](modules.yaml#$.paths./settings/modules.get) resource
+        for valid values.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+        pattern: ^[A-Z][A-Za-z0-9_]*$
+        description: Module API name
+      examples:
+        LeadsModule:
+          value: Leads
+          summary: Standard CRM module - Leads
+        ContactsModule:
+          value: Contacts
+          summary: Standard CRM module - Contacts
+        DealsModule:
+          value: Deals
+          summary: Standard CRM module - Deals
+        CustomModule:
+          value: Custom_Projects
+          summary: Custom module example
+        CustomModuleWithNumbers:
+          value: Testing_module_1
+          summary: Custom module with numeric suffix
+  schemas:
+    LayoutActivateRequest:
+      type: object
+      description: >-
+        Represents the request payload for activating a layout, including the
+        layout identifier and optional profile associations.
+      properties:
+        layouts:
+          type: array
+          description: >-
+            Specify the array containing exactly one layout object to activate.
+            The layout includes its unique identifier and optionally the
+            profiles to associate or disassociate. Profile associations can be
+            added (default) or removed (using _delete flag). The array must
+            contain exactly one item.
+          minItems: 1
+          maxItems: 1
+          items:
+            type: object
+            description: >-
+              Specify the layout configuration, including its unique identifier
+              and the profile associations to add or remove during activation.
+            properties:
+              id:
+                type: string
+                description: >-
+                  Specify the unique identifier of the deactivated layout to
+                  activate. Must reference an existing deactivated layout within
+                  the specified module. The ID is represented as a string
+                  containing a 64-bit integer value. Layout IDs are data
+                  center-specific. The status key in the response from the [Get
+                  Layouts Metadata
+                  API](layouts.yaml#$.paths./settings/layouts.get) indicates
+                  whether the layout is **active** or **inactive**.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 20
+                examples:
+                  - '4831139000000673152'
+                  - '4831139000000655701'
+                x-zs-$ref:
+                  resource: layouts
+                  origins:
+                    - operationId: getLayouts
+                      propertyId: LayoutId
+                format: int64
+                example: '4832675000000850800'
+              profiles:
+                type: array
+                description: >-
+                  Specify the profile associations to add to or remove from the
+                  layout during activation. Omitting this field or providing an
+                  empty array preserves existing profile associations. Refer to
+                  the [Get
+                  Profiles](profiles.yaml#$.paths./settings/profiles.get)
+                  resource for valid values. Use the _delete flag to remove
+                  existing associations. Empty array or omitting this field
+                  entirely preserves existing profile associations. At least one
+                  profile must remain associated with the layout after all
+                  operations are applied. While duplicate profile IDs are
+                  technically allowed, they cause unnecessary processing and
+                  should be avoided.
+                maxItems: 100
+                items:
+                  type: object
+                  description: >-
+                    Specify a profile to associate with or disassociate from the
+                    layout.
+                  properties:
+                    id:
+                      type: string
+                      description: >-
+                        Specify the unique identifier of the profile to
+                        associate with or disassociate from the layout. Must be
+                        a profile that exists in the CRM organization and is
+                        associated with the specified module. The ID is
+                        represented as a string containing a 64-bit integer
+                        value. Refer to the [Get
+                        Profiles](profiles.yaml#$.paths./settings/profiles.get)
+                        resource for valid values.
+                      pattern: ^[0-9]+$
+                      minLength: 1
+                      maxLength: 20
+                      examples:
+                        - '4831139000000650385'
+                        - '4831139000000015972'
+                      x-zs-$ref:
+                        resource: profiles
+                        origins:
+                          - operationId: getProfiles
+                            propertyId: ProfileId
+                      format: int64
+                      example: '4832675000000850800'
+                    _delete:
+                      type: boolean
+                      description: >-
+                        Specify whether to remove this profile's association
+                        from the layout. Possible values: **true** - Removes the
+                        profile association from the layout. **false** - Adds or
+                        retains the profile association on the layout.
+                      default: false
+                      examples:
+                        - true
+                        - false
+                  required:
+                    - id
+                  additionalProperties: false
+            required:
+              - id
+            additionalProperties: false
+      required:
+        - layouts
+      additionalProperties: false
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: >-
+        OAuth 2.0 authorization code flow for accessing Zoho CRM APIs. Requires
+        appropriate scopes for layout management operations.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.layouts.CREATE: Permission to activate layouts
+            ZohoCRM.settings.layouts.DELETE: Permission to deactivate layouts

@@ -1,0 +1,27 @@
+# Custom Views
+
+- [OpenAPI specification](custom_views.yaml)
+- [Custom Views](mds/updateCustomViewsBulk.md)
+  - To update the configuration of one or more Custom Views in bulk for a specified module in your Zoho CRM organization.
+  - [Examples](mds/examples/updateCustomViewsBulk.md)
+- [CustomView creation](mds/createCustomView.md)
+  - To create one or more Custom Views for a specified module in your Zoho CRM organization.
+  - [Examples](mds/examples/createCustomView.md)
+- [Get All Custom Views](mds/getCustomViews.md)
+  - To retrieve the list of all Custom Views configured for a specified module in your Zoho CRM organization.
+  - [Examples](mds/examples/getCustomViews.md)
+- [Delete Custom Views](mds/deleteCustomView.md)
+  - To delete one or more Custom Views from a specified module in your Zoho CRM organization.
+  - [Examples](mds/examples/deleteCustomView.md)
+- [CustomView update](mds/updateCustomView.md)
+  - To update the configuration of a specific Custom View in a module of your Zoho CRM organization, using the Custom View ID. Use the [Get Custom Views API](custom_views.yaml#$.paths./settings/custom_views.get) to retrieve the custom view IDs.
+  - [Examples](mds/examples/updateCustomView.md)
+- [Get Custom View By Id](mds/getCustomViewById.md)
+  - To retrieve the details of a specific Custom View for a module in your Zoho CRM organization, using the Custom View ID.
+  - [Examples](mds/examples/getCustomViewById.md)
+- [Sort Order](mds/changeSort.md)
+  - To change the sort field and sort order for one or more Custom Views in the specified module of your Zoho CRM organization.
+  - [Examples](mds/examples/changeSort.md)
+- [Sort Order by ID](mds/changeSortById.md)
+  - To change the sort field and sort order for a specific Custom View in the specified module of your Zoho CRM organization. Use the [Get Custom Views Metadata API](custom_views.yaml#$.paths./settings/custom_views.get) to retrieve the custom view IDs."
+  - [Examples](mds/examples/changeSortById.md)

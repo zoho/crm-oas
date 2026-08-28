@@ -1,0 +1,2182 @@
+openapi: 3.1.0
+info:
+  title: Contact Roles
+  description: >
+    Contact roles are labels that classify the relationship or function of a
+    contact when they are associated with a deal in Zoho CRM. This API enables
+    developers to create, retrieve, update, and delete contact roles configured
+    in the CRM organization.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >
+          The top-level domain for the Zoho CRM API server based on the data
+          center region.
+
+
+          **Possible values:**
+
+          - **com** - US.
+
+          - **eu** - EU.
+
+          - **in** - India.
+
+          - **cn** - China.
+
+          - **au** - Australia.
+
+
+          Default: **com**.
+      version:
+        default: v8
+        description: 'The API version identifier. Default: **v8**.'
+paths:
+  /Contacts/roles:
+    get:
+      summary: List Contact Roles
+      description: >-
+        Retrieves the list of contact roles available in your Zoho CRM
+        organization.
+      operationId: getContactRoles
+      responses:
+        '200':
+          description: >-
+            Returns the list of contact roles configured in the CRM
+            organization.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ContactRolesResponse
+                type: object
+                description: >-
+                  Contains the list of contact roles configured in the CRM
+                  organization.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    description: >-
+                      Represents the list of contact roles configured in the CRM
+                      organization.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents a contact role configured in the CRM
+                        organization.
+                      additionalProperties: false
+                      properties:
+                        name:
+                          type: string
+                          description: Represents the name of the contact role.
+                          pattern: '[A-Za-z0-9 ]'
+                          maxLength: 50
+                        id:
+                          type: string
+                          description: >-
+                            Represents the unique ID of the contact role. Use
+                            the [List Contact
+                            Roles](contact_roles.yaml#$.paths./contacts/roles.get)
+                            resource to retrieve contact role IDs.
+                          maxLength: 19
+                        sequence_number:
+                          type: number
+                          description: >-
+                            Represents the display position of the contact role
+                            in the CRM UI picklist.
+                      required:
+                        - name
+                        - id
+                        - sequence_number
+                required:
+                  - contact_roles
+              examples:
+                Success:
+                  value:
+                    contact_roles:
+                      - name: Manager
+                        id: '123456789'
+                        sequence_number: 2
+                  description: >-
+                    Shows a successful response with a single contact role
+                    entry, including the role name, unique ID, and picklist
+                    position.
+                  summary: Successful retrieval of contact roles
+        '204':
+          description: >-
+            Indicates that no contact roles are configured in the CRM
+            organization.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.contacts.READ
+    post:
+      summary: Create Contact Roles
+      description: Creates one or more contact roles in your Zoho CRM organization.
+      operationId: createContactRoles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Specify the contact role details to create in the CRM
+                organization.
+              additionalProperties: false
+              properties:
+                contact_roles:
+                  type: array
+                  description: Specify the list of contact roles to create.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: Specify the details of a single contact role to create.
+                    additionalProperties: false
+                    properties:
+                      name:
+                        type: string
+                        description: Specify the name of the contact role.
+                        pattern: '[A-Za-z0-9 ]{1,50}'
+                        maxLength: 50
+                      sequence_number:
+                        type: number
+                        description: >-
+                          Specify the display position of the contact role in
+                          the CRM UI picklist.
+                    required:
+                      - name
+                      - sequence_number
+              required:
+                - contact_roles
+            examples:
+              Success:
+                value:
+                  contact_roles:
+                    - name: Manager
+                      sequence_number: 2
+                description: >-
+                  Shows a request to create one contact role with its name and
+                  picklist position.
+                summary: Create a single contact role
+        required: true
+        description: >-
+          The request body must contain a `contact_roles` array. You can include
+          a maximum of 100 objects per request.
+      responses:
+        '200':
+          description: >-
+            Returns the contact role creation results when all contact roles in
+            the request succeed.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: CreateContactRolesResponse
+                description: >-
+                  Contains the results of the contact role creation, with a
+                  status entry for each contact role in the request.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    description: Contains the results for each contact role in the request.
+                    maxItems: 100
+                    items:
+                      $ref: '#/components/schemas/ContactRoleSuccessSchema'
+                required:
+                  - contact_roles
+              examples:
+                Success:
+                  value:
+                    contact_roles:
+                      - code: SUCCESS
+                        details:
+                          id: '123456789'
+                        message: Contact role created successfully.
+                        status: success
+                  description: >-
+                    Shows a successful response for a single contact role
+                    creation, including the generated unique ID.
+                  summary: Successful contact role creation
+        '207':
+          description: >-
+            Returns a mixed response when the CRM creates some contact roles
+            successfully and others fail validation.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: CreateContactRolesMultiStatus207
+                description: >-
+                  Contains mixed success and error results for bulk contact role
+                  creation.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    description: >-
+                      Contains the mixed results for each contact role in the
+                      request.
+                    minItems: 2
+                    maxItems: 100
+                    items:
+                      oneOf:
+                        - $ref: >-
+                            #/components/schemas/MandatoryFieldNotFoundErrorSchema
+                        - $ref: '#/components/schemas/InvalidDataErrorSchemaPOST'
+                        - $ref: '#/components/schemas/DuplicateDataErrorSchemaPOST'
+                        - $ref: '#/components/schemas/ContactRoleSuccessSchema'
+                      description: >-
+                        Represents a single result entry, which is either a
+                        success record or an error record.
+                    allOf:
+                      - description: >-
+                          Ensures the array contains at least one successfully
+                          created contact role.
+                        contains:
+                          $ref: '#/components/schemas/ContactRoleSuccessSchema'
+                        minContains: 1
+                      - description: >-
+                          Ensures the array contains at least one contact role
+                          that failed validation.
+                        contains:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/MandatoryFieldNotFoundErrorSchema
+                            - $ref: '#/components/schemas/InvalidDataErrorSchemaPOST'
+                            - $ref: >-
+                                #/components/schemas/DuplicateDataErrorSchemaPOST
+                        minContains: 1
+                required:
+                  - contact_roles
+              examples:
+                MultiStatus:
+                  value:
+                    contact_roles:
+                      - code: SUCCESS
+                        details:
+                          id: '123456789'
+                        message: Contact role created successfully.
+                        status: success
+                      - code: INVALID_DATA
+                        details:
+                          api_name: name
+                          json_path: $.contact_roles[1].name
+                          expected_data_type: text
+                        message: invalid data provided
+                        status: error
+                  description: >-
+                    Shows a multi-status response with one successfully created
+                    contact role and one with invalid data.
+                  summary: Mixed success and error results
+        '400':
+          description: >
+            The contact roles could not be created due to validation errors.
+
+
+            **Resolution:** Review the error details for each contact role in
+            the response, correct any invalid fields, and retry the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreateContactRolesErrorResponse
+                type: object
+                description: >-
+                  Contains the validation errors for the contact role creation
+                  request.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    x-zs-$id: CreateContactRolesErrorArray
+                    description: >-
+                      Contains the validation errors for each contact role that
+                      failed.
+                    maxItems: 100
+                    items:
+                      oneOf:
+                        - $ref: >-
+                            #/components/schemas/MandatoryFieldNotFoundErrorSchema
+                        - $ref: '#/components/schemas/InvalidDataErrorSchemaPOST'
+                        - $ref: '#/components/schemas/DuplicateDataErrorSchemaPOST'
+                      description: >-
+                        Represents a single validation error for a contact role
+                        that failed creation.
+                required:
+                  - contact_roles
+              examples:
+                MandatoryNotFound:
+                  value:
+                    contact_roles:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: name
+                          json_path: $.contact_roles[0].name
+                        status: error
+                  description: >-
+                    Shows an error response when a required field is missing
+                    from the contact role request.
+                  summary: Required field missing in request
+                InvalidDataSimple:
+                  value:
+                    contact_roles:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: text
+                          api_name: name
+                          json_path: $.contact_roles[0].name
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows an error response when an invalid value is provided
+                    for a contact role field during creation.
+                  summary: Invalid data in contact role field
+                DuplicateData:
+                  value:
+                    contact_roles:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.contact_roles[0].name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Shows an error response when a contact role with the same
+                    name already exists in the CRM organization.
+                  summary: Duplicate contact role name
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.contacts.WRITE
+    put:
+      summary: Update Contact Roles
+      description: >-
+        Updates the properties of one or more existing contact roles in your
+        Zoho CRM organization.
+      operationId: updateContactRoles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Specify the contact role details to update in the CRM
+                organization.
+              additionalProperties: false
+              properties:
+                contact_roles:
+                  type: array
+                  description: Specify the list of contact roles to update.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: Specify the details of a single contact role to update.
+                    additionalProperties: false
+                    properties:
+                      name:
+                        type: string
+                        description: Specify the name of the contact role.
+                        pattern: '[A-Za-z0-9 ]{1,50}'
+                        maxLength: 50
+                      id:
+                        type: string
+                        description: >-
+                          Specify the unique ID of the contact role to update.
+                          Use the [List Contact
+                          Roles](contact_roles.yaml#$.paths./contacts/roles.get)
+                          resource to retrieve contact role IDs.
+                        maxLength: 19
+                      sequence_number:
+                        type: number
+                        description: >-
+                          Specify the display position of the contact role in
+                          the CRM UI picklist.
+                    required:
+                      - name
+                      - id
+              required:
+                - contact_roles
+            examples:
+              Success:
+                value:
+                  contact_roles:
+                    - name: Manager
+                      id: '123456789'
+                      sequence_number: 2
+                description: >-
+                  Shows a request to update one contact role with its name, ID,
+                  and picklist position.
+                summary: Update a single contact role
+        required: true
+        description: >-
+          The request body must contain a `contact_roles` array. You can include
+          a maximum of 100 objects per request.
+      responses:
+        '200':
+          description: >-
+            Returns the results after the CRM updates all contact roles in the
+            request successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: UpdateContactRolesResponse
+                description: Contains the results of the contact role update operation.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    description: >-
+                      Contains the update results for each contact role in the
+                      request.
+                    maxItems: 100
+                    items:
+                      type: object
+                      x-zs-$id: Contactroleupdateresultdetails
+                      description: >-
+                        Represents the update result for a single contact role
+                        in the request.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >
+                            Represents the status code of the update operation.
+
+
+                            **Possible values:**
+
+                            - **SUCCESS** - The contact role update completed
+                            successfully.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: Represents the details of the updated contact role.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the updated contact
+                                role.
+                              maxLength: 19
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the result of the
+                            update operation.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: >
+                            Represents the overall status of the update
+                            operation.
+
+
+                            **Possible values:**
+
+                            - **success** - The contact role update completed
+                            successfully.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - contact_roles
+              examples:
+                Success:
+                  value:
+                    contact_roles:
+                      - code: SUCCESS
+                        details:
+                          id: '123456789'
+                        message: Contact role updated successfully.
+                        status: success
+                  description: >-
+                    Shows a successful response for a single contact role
+                    update, confirming the updated role ID.
+                  summary: Successful contact role update
+        '207':
+          description: >-
+            Returns a mixed response when the CRM updates some contact roles
+            successfully and others fail validation.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: UpdateContactRolesMultiStatus207
+                description: >-
+                  Contains mixed success and error results for bulk contact role
+                  update.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    description: >-
+                      Contains the mixed results for each contact role in the
+                      request.
+                    maxItems: 100
+                    items:
+                      oneOf:
+                        - $ref: >-
+                            #/components/schemas/MandatoryFieldNotFoundErrorSchema
+                        - $ref: '#/components/schemas/InvalidDataErrorSchemaPut'
+                        - $ref: '#/components/schemas/DuplicateDataErrorSchemaPUT'
+                        - $ref: '#/components/schemas/ArrayOfDuplicateSchema'
+                        - $ref: '#/components/schemas/ContactRoleSuccessSchema'
+                      description: >-
+                        Represents a single result entry, which is either a
+                        success record or an error record.
+                    allOf:
+                      - description: >-
+                          Ensures the array contains at least one successfully
+                          updated contact role.
+                        contains:
+                          $ref: '#/components/schemas/ContactRoleSuccessSchema'
+                        minContains: 1
+                      - description: >-
+                          Ensures the array contains at least one contact role
+                          that failed validation.
+                        contains:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/MandatoryFieldNotFoundErrorSchema
+                            - $ref: '#/components/schemas/InvalidDataErrorSchemaPut'
+                            - $ref: '#/components/schemas/DuplicateDataErrorSchemaPUT'
+                            - $ref: '#/components/schemas/ArrayOfDuplicateSchema'
+                        minContains: 1
+                required:
+                  - contact_roles
+              examples:
+                MultiStatus:
+                  value:
+                    contact_roles:
+                      - code: SUCCESS
+                        details:
+                          id: '123456789'
+                        message: Contact role created successfully.
+                        status: success
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.contact_roles[0].id
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows a multi-status response with one successfully updated
+                    contact role and one missing a required field.
+                  summary: Mixed success and error results
+        '400':
+          description: >
+            The contact roles could not be updated due to validation errors.
+
+
+            **Resolution:** Review the error details for each contact role in
+            the response, correct any invalid fields, and retry the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: Errorinupdatingcontactroles
+                oneOf:
+                  - type: object
+                    x-zs-$id: Errorresponsewrapperforcontactroleupdatefailures
+                    description: >-
+                      Contains the list of error responses for contact roles
+                      that failed during the update operation.
+                    additionalProperties: false
+                    properties:
+                      contact_roles:
+                        type: array
+                        description: >-
+                          Contains the error details for each contact role that
+                          failed during the update operation.
+                        maxItems: 100
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/MandatoryFieldNotFoundErrorSchema
+                            - $ref: '#/components/schemas/InvalidDataErrorSchemaPut'
+                            - $ref: '#/components/schemas/DuplicateDataErrorSchemaPUT'
+                            - $ref: '#/components/schemas/ArrayOfDuplicateSchema'
+                          description: >-
+                            Represents a single validation error for a contact
+                            role that failed the update operation.
+                    required:
+                      - contact_roles
+                description: >-
+                  Contains the error details for the contact role update
+                  request.
+              examples:
+                MandatoryNotFound:
+                  value:
+                    contact_roles:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.contact_roles[0].id
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows an error response when a required field is missing
+                    from the contact role update request.
+                  summary: Required field missing in request
+                InvalidData:
+                  value:
+                    contact_roles:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: name
+                          json_path: $.contact_roles[0].name
+                          id: '1718237000010991001'
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows an error response when an invalid value is provided
+                    for a contact role field during update.
+                  summary: Invalid data in contact role field
+                DuplicateData:
+                  value:
+                    contact_roles:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.contact_roles[0].name
+                          id: '1718237000010991001'
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Shows an error response when a contact role with the same
+                    name already exists in the CRM organization.
+                  summary: Duplicate contact role name
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.contacts.UPDATE
+    delete:
+      summary: Delete Contact Roles
+      description: >-
+        Deletes one or more contact roles by their unique identifiers in your
+        Zoho CRM organization.
+      operationId: deleteContactRoles
+      parameters:
+        - $ref: '#/components/parameters/Ids'
+      responses:
+        '200':
+          description: Returns the deletion results for all contact roles in the request.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: DeleteContactRolesResponse
+                description: Contains the results of the contact role deletion operation.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    description: >-
+                      Contains the deletion results for each contact role in the
+                      request.
+                    maxItems: 100
+                    items:
+                      type: object
+                      x-zs-$id: Contactroledeletionresultdetails
+                      description: >-
+                        Represents the deletion result for a single contact role
+                        in the request.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >
+                            Represents the status code of the deletion
+                            operation.
+
+
+                            **Possible values:**
+
+                            - **SUCCESS** - The contact role deletion completed
+                            successfully.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          x-zs-$id: Contactroledeletiondetails
+                          description: Represents the details of the deleted contact role.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the deleted contact
+                                role.
+                              maxLength: 19
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the result of the
+                            deletion operation.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: >
+                            Represents the overall status of the deletion
+                            operation.
+
+
+                            **Possible values:**
+
+                            - **success** - The contact role deletion completed
+                            successfully.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - contact_roles
+              examples:
+                Success:
+                  value:
+                    contact_roles:
+                      - code: SUCCESS
+                        details:
+                          id: '123456789'
+                        message: Contact role deleted successfully.
+                        status: success
+                  description: >-
+                    Shows a successful response for a single contact role
+                    deletion, confirming the deleted role ID.
+                  summary: Successful contact role deletion
+        '400':
+          description: >
+            The contact roles could not be deleted due to invalid IDs or a
+            missing required parameter.
+
+
+            **Resolution:** The **ids** query parameter must be provided and all
+            specified contact role IDs must exist in the CRM organization.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ErrorResponseDeleteContactRoles
+                oneOf:
+                  - type: object
+                    x-zs-$id: ErrorResponseWrapperForContactRoleDeleteFailures
+                    description: >-
+                      Contains the list of error responses for contact roles
+                      that failed deletion.
+                    additionalProperties: false
+                    properties:
+                      contact_roles:
+                        type: array
+                        description: >-
+                          Represents the list of error results for each contact
+                          role that failed during deletion.
+                        maxItems: 100
+                        items:
+                          oneOf:
+                            - type: object
+                              x-zs-$id: InvalidDataErrorSimpleDelete
+                              description: >-
+                                Represents an invalid data error for a contact
+                                role that does not exist or is invalid.
+                              additionalProperties: false
+                              properties:
+                                code:
+                                  type: string
+                                  description: >
+                                    Represents the error code.
+
+
+                                    **Possible values:**
+
+                                    - **INVALID_DATA** - The contact role data
+                                    is invalid.
+                                  enum:
+                                    - INVALID_DATA
+                                message:
+                                  type: string
+                                  description: Represents the error message.
+                                  maxLength: 255
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the error details for the invalid
+                                    data.
+                                  additionalProperties: false
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the ID of the contact role
+                                        that triggered the invalid data error.
+                                      maxLength: 19
+                                  required:
+                                    - id
+                                status:
+                                  type: string
+                                  description: >
+                                    Represents the error status.
+
+
+                                    **Possible values:**
+
+                                    - **error** - The contact role deletion
+                                    failed.
+                                  enum:
+                                    - error
+                              required:
+                                - code
+                                - message
+                                - details
+                                - status
+                            - type: object
+                              x-zs-$id: LowerLimitReachedErrorSimpleDelete
+                              description: >-
+                                Represents an error when deleting a contact role
+                                would violate the minimum required number of
+                                roles.
+                              additionalProperties: false
+                              properties:
+                                status:
+                                  type: string
+                                  description: >
+                                    Represents the error status.
+
+
+                                    **Possible values:**
+
+                                    - **error** - The contact role deletion
+                                    failed.
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >
+                                    Represents the error code.
+
+
+                                    **Possible values:**
+
+                                    - **LOWER_LIMIT_REACHED** - Deleting the
+                                    contact role would reduce the total below
+                                    the minimum required.
+                                  enum:
+                                    - LOWER_LIMIT_REACHED
+                                message:
+                                  type: string
+                                  description: Represents the error message.
+                                  maxLength: 255
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the error details for the limit
+                                    violation.
+                                  additionalProperties: false
+                                  properties:
+                                    limit:
+                                      type: integer
+                                      format: int32
+                                      description: >-
+                                        Represents the minimum number of contact
+                                        roles required in the CRM organization.
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the ID of the contact role
+                                        that triggered the limit error.
+                                      maxLength: 19
+                                  required:
+                                    - limit
+                                    - id
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                          description: >-
+                            Represents a single deletion error for a contact
+                            role.
+                    required:
+                      - contact_roles
+                  - type: object
+                    x-zs-$id: RequiredParamMissingError
+                    description: >-
+                      Represents an error when the required **ids** query
+                      parameter is not provided in the request.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >
+                          Represents the error code.
+
+
+                          **Possible values:**
+
+                          - **REQUIRED_PARAM_MISSING** - The required **ids**
+                          query parameter is missing from the request.
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                      message:
+                        type: string
+                        description: Represents the error message.
+                        maxLength: 255
+                      details:
+                        type: object
+                        description: >-
+                          Represents the error details for the missing
+                          parameter.
+                        additionalProperties: false
+                        properties:
+                          param_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the missing required
+                              parameter.
+                            maxLength: 100
+                        required:
+                          - param_name
+                      status:
+                        type: string
+                        description: |
+                          Represents the error status.
+
+                          **Possible values:**
+                          - **error** - The contact role deletion failed.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                description: >-
+                  Contains the error details for the contact role deletion
+                  request.
+              examples:
+                InvalidData:
+                  value:
+                    contact_roles:
+                      - code: INVALID_DATA
+                        message: Invalid data provided
+                        details:
+                          id: '123456789'
+                        status: error
+                  description: >-
+                    Shows an error response when the specified contact role ID
+                    does not exist in the CRM organization.
+                  summary: Invalid contact role ID
+                LowerLimitReached:
+                  value:
+                    contact_roles:
+                      - status: error
+                        code: LOWER_LIMIT_REACHED
+                        message: Lower limit reached
+                        details:
+                          limit: 1
+                          id: '123456789'
+                  description: >-
+                    Shows an error response when deleting the contact role would
+                    reduce the total count below the minimum required.
+                  summary: Lower limit reached on contact roles
+                RequiredParamMissing:
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: ids
+                    message: One of the expected parameter is missing
+                    status: error
+                  description: >-
+                    Shows an error response when the required ids query
+                    parameter is not provided in the DELETE request.
+                  summary: Required query parameter missing
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.contacts.DELETE
+  /Contacts/roles/{role}:
+    get:
+      summary: Get a Contact Role
+      description: >-
+        Retrieves the details of a specific contact role by its unique
+        identifier in your Zoho CRM organization.
+      operationId: getContactRole
+      parameters:
+        - $ref: '#/components/parameters/Role'
+      responses:
+        '200':
+          description: Returns the details of the specified contact role.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: Responsecontaininglistofcontactroles
+                description: Contains the details of the specified contact role.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    description: Represents the details of the specified contact role.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents a contact role entry, including its name,
+                        unique ID, and display position.
+                      additionalProperties: false
+                      properties:
+                        name:
+                          type: string
+                          description: Represents the name of the contact role.
+                          pattern: '[A-Za-z0-9 ]'
+                          maxLength: 50
+                        id:
+                          type: string
+                          description: Represents the unique ID of the contact role.
+                          maxLength: 19
+                        sequence_number:
+                          type: number
+                          description: >-
+                            Represents the display position of the contact role
+                            in the CRM UI picklist.
+                      required:
+                        - name
+                        - id
+                        - sequence_number
+                required:
+                  - contact_roles
+              examples:
+                Success:
+                  value:
+                    contact_roles:
+                      - name: Manager
+                        id: '123456789'
+                        sequence_number: 1
+                  description: >-
+                    Shows a successful response for a specific contact role,
+                    including the role name, unique ID, and picklist position.
+                  summary: Successful retrieval of a specific contact role
+        '204':
+          description: >-
+            Indicates that the specified contact role does not exist in the CRM
+            organization.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.contacts.READ
+    put:
+      summary: Update a Contact Role
+      description: >-
+        Updates a specific contact role by its unique identifier in your Zoho
+        CRM organization.
+      operationId: updateContactRole
+      parameters:
+        - $ref: '#/components/parameters/Role'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Specify the contact role details to update.
+              additionalProperties: false
+              properties:
+                contact_roles:
+                  type: array
+                  description: Specify the list of contact roles to update.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: Specify the details of the contact role to update.
+                    additionalProperties: false
+                    properties:
+                      name:
+                        type: string
+                        description: Specify the name of the contact role.
+                        pattern: '[A-Za-z0-9 ]'
+                        maxLength: 50
+                      sequence_number:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Specify the display position of the contact role in
+                          the CRM UI picklist.
+                    required:
+                      - name
+              required:
+                - contact_roles
+            examples:
+              Success:
+                value:
+                  contact_roles:
+                    - name: Manager
+                      sequence_number: 2
+                description: >-
+                  Shows a request to update a contact role with its name and
+                  picklist position.
+                summary: Update a specific contact role
+        required: true
+        description: The request body must contain a `contact_roles` array with one object.
+      responses:
+        '200':
+          description: >-
+            Returns the result of the contact role update when the operation
+            completes successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: MultipleSuccessResponse200
+                description: Contains the result of the contact role update operation.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    description: Contains the update result for the specified contact role.
+                    maxItems: 100
+                    items:
+                      type: object
+                      x-zs-$id: ContactroleupdateresultDetails
+                      description: >-
+                        Represents the update result for the specified contact
+                        role.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >
+                            Represents the status code of the update operation.
+
+
+                            **Possible values:**
+
+                            - **SUCCESS** - The contact role update completed
+                            successfully.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: Represents the details of the updated contact role.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the updated contact
+                                role.
+                              maxLength: 19
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the result of the
+                            update operation.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: >
+                            Represents the overall status of the update
+                            operation.
+
+
+                            **Possible values:**
+
+                            - **success** - The contact role update completed
+                            successfully.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - contact_roles
+              examples:
+                Success:
+                  value:
+                    contact_roles:
+                      - code: SUCCESS
+                        details:
+                          id: '123456789'
+                        message: Contact role updated successfully.
+                        status: success
+                  description: >-
+                    Shows a successful response for a contact role update,
+                    confirming the updated role ID.
+                  summary: Successful contact role update
+        '400':
+          description: >
+            The contact role could not be updated due to a validation error.
+
+
+            **Resolution:** Review the error details, correct any invalid
+            fields, and retry the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: Errorwhileupdatingparticularcontactrole
+                oneOf:
+                  - type: object
+                    x-zs-$id: ErrorresponsewrapperforcontactroleupdatedFailures
+                    description: >-
+                      Contains the error details for the contact role that
+                      failed during the update operation.
+                    additionalProperties: false
+                    properties:
+                      contact_roles:
+                        type: array
+                        description: >-
+                          Represents the list of error results for the contact
+                          role update operation.
+                        maxItems: 100
+                        items:
+                          oneOf:
+                            - type: object
+                              x-zs-$id: MandatoryFieldNotFoundErrorSimpleUpdateSingle
+                              description: >-
+                                Represents an error when a required field is
+                                missing from the request.
+                              additionalProperties: false
+                              properties:
+                                code:
+                                  type: string
+                                  description: >
+                                    Represents the error code.
+
+
+                                    **Possible values:**
+
+                                    - **MANDATORY_NOT_FOUND** - A required field
+                                    is missing from the request.
+                                  enum:
+                                    - MANDATORY_NOT_FOUND
+                                message:
+                                  type: string
+                                  description: Represents the error message.
+                                  maxLength: 255
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the error details for the missing
+                                    field.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the missing
+                                        required field.
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path to the missing
+                                        required field.
+                                      maxLength: 255
+                                  required:
+                                    - api_name
+                                    - json_path
+                                status:
+                                  type: string
+                                  description: >
+                                    Represents the error status.
+
+
+                                    **Possible values:**
+
+                                    - **error** - The contact role update
+                                    failed.
+                                  enum:
+                                    - error
+                              required:
+                                - code
+                                - message
+                                - details
+                                - status
+                            - type: object
+                              x-zs-$id: InvalidDataErrorSimpleUpdateSingle
+                              description: >-
+                                Represents an invalid data error for a contact
+                                role field.
+                              additionalProperties: false
+                              properties:
+                                code:
+                                  type: string
+                                  description: >
+                                    Represents the error code.
+
+
+                                    **Possible values:**
+
+                                    - **INVALID_DATA** - The contact role data
+                                    is invalid.
+                                  enum:
+                                    - INVALID_DATA
+                                message:
+                                  type: string
+                                  description: Represents the error message.
+                                  maxLength: 255
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the error details for the invalid
+                                    data.
+                                  additionalProperties: false
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the ID of the contact role
+                                        that triggered the invalid data error.
+                                      maxLength: 19
+                                  required:
+                                    - id
+                                status:
+                                  type: string
+                                  description: >
+                                    Represents the error status.
+
+
+                                    **Possible values:**
+
+                                    - **error** - The contact role update
+                                    failed.
+                                  enum:
+                                    - error
+                              required:
+                                - code
+                                - message
+                                - details
+                                - status
+                          description: >-
+                            Represents a single error result for the contact
+                            role update operation.
+                    required:
+                      - contact_roles
+                description: >-
+                  Contains the error details for the contact role update
+                  request.
+              examples:
+                MandatoryNotFound:
+                  summary: Required field missing in request
+                  value:
+                    contact_roles:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        details:
+                          api_name: name
+                          json_path: $.contact_roles[0]
+                        status: error
+                  description: >-
+                    Shows an error response when a required field is missing
+                    from the contact role update request.
+                InvalidDataWithId:
+                  summary: Invalid contact role ID in request
+                  value:
+                    contact_roles:
+                      - code: INVALID_DATA
+                        message: invalid data
+                        details:
+                          id: '738964000000242001'
+                        status: error
+                  description: >-
+                    Shows an error response when the contact role ID in the
+                    request is invalid.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.contacts.UPDATE
+    delete:
+      summary: Delete a Contact Role
+      description: >-
+        Deletes a specific contact role by its unique identifier in your Zoho
+        CRM organization.
+      operationId: deleteContactRole
+      parameters:
+        - $ref: '#/components/parameters/Role'
+      responses:
+        '200':
+          description: >-
+            Returns the result of the contact role deletion when the operation
+            completes successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: DeleteSccessResponse
+                description: Contains the result of the contact role deletion operation.
+                additionalProperties: false
+                properties:
+                  contact_roles:
+                    type: array
+                    description: Contains the deletion results for the contact role.
+                    maxItems: 100
+                    items:
+                      type: object
+                      x-zs-$id: ContactroledeletionresultDetails
+                      description: >-
+                        Represents the deletion result for the specified contact
+                        role.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >
+                            Represents the status code of the deletion
+                            operation.
+
+
+                            **Possible values:**
+
+                            - **SUCCESS** - The contact role deletion completed
+                            successfully.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: Represents the details of the deleted contact role.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the deleted contact
+                                role.
+                              maxLength: 19
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the result of the
+                            deletion operation.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: >
+                            Represents the overall status of the deletion
+                            operation.
+
+
+                            **Possible values:**
+
+                            - **success** - The contact role deletion completed
+                            successfully.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - contact_roles
+              examples:
+                Success:
+                  value:
+                    contact_roles:
+                      - code: SUCCESS
+                        details:
+                          id: '123456789'
+                        message: Contact role deleted successfully.
+                        status: success
+                  description: >-
+                    Shows a successful response for a contact role deletion,
+                    confirming the deleted role ID.
+                  summary: Successful contact role deletion
+        '400':
+          description: >
+            The contact role could not be deleted due to an invalid ID or a
+            limit violation.
+
+
+            **Resolution:** The contact role ID must be valid and deleting it
+            must not reduce the total number of contact roles below the minimum
+            required.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: Errorindeletingcontactrole
+                oneOf:
+                  - type: object
+                    x-zs-$id: Errorresponsewrapperforcontactroledeletefailures
+                    description: >-
+                      Contains the list of error responses for the contact role
+                      that failed deletion.
+                    additionalProperties: false
+                    properties:
+                      contact_roles:
+                        type: array
+                        description: >-
+                          Represents the list of error results for the contact
+                          role deletion operation.
+                        maxItems: 100
+                        items:
+                          oneOf:
+                            - type: object
+                              x-zs-$id: InvalidDataErrorSimpleDeleteSingle
+                              description: >-
+                                Represents an invalid data error for a contact
+                                role that does not exist or is invalid.
+                              additionalProperties: false
+                              properties:
+                                code:
+                                  type: string
+                                  description: >
+                                    Represents the error code.
+
+
+                                    **Possible values:**
+
+                                    - **INVALID_DATA** - The contact role data
+                                    is invalid.
+                                  enum:
+                                    - INVALID_DATA
+                                message:
+                                  type: string
+                                  description: Represents the error message.
+                                  maxLength: 255
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the error details for the invalid
+                                    data.
+                                  additionalProperties: false
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the ID of the contact role
+                                        that triggered the invalid data error.
+                                      maxLength: 19
+                                  required:
+                                    - id
+                                status:
+                                  type: string
+                                  description: >
+                                    Represents the error status.
+
+
+                                    **Possible values:**
+
+                                    - **error** - The contact role deletion
+                                    failed.
+                                  enum:
+                                    - error
+                              required:
+                                - code
+                                - message
+                                - details
+                                - status
+                            - type: object
+                              x-zs-$id: LowerLimitReachedErrorSimpleDeleteSingle
+                              description: >-
+                                Represents an error when deleting the contact
+                                role would violate the minimum required number
+                                of roles.
+                              additionalProperties: false
+                              properties:
+                                status:
+                                  type: string
+                                  description: >
+                                    Represents the error status.
+
+
+                                    **Possible values:**
+
+                                    - **error** - The contact role deletion
+                                    failed.
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >
+                                    Represents the error code.
+
+
+                                    **Possible values:**
+
+                                    - **LOWER_LIMIT_REACHED** - Deleting the
+                                    contact role would reduce the total below
+                                    the minimum required.
+                                  enum:
+                                    - LOWER_LIMIT_REACHED
+                                message:
+                                  type: string
+                                  description: Represents the error message.
+                                  maxLength: 255
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the error details for the limit
+                                    violation.
+                                  additionalProperties: false
+                                  properties:
+                                    limit:
+                                      type: integer
+                                      format: int32
+                                      description: >-
+                                        Represents the minimum number of contact
+                                        roles required in the CRM organization.
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the ID of the contact role
+                                        that triggered the limit error.
+                                      maxLength: 19
+                                  required:
+                                    - limit
+                                    - id
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                          description: >-
+                            Represents a single deletion error for the specified
+                            contact role.
+                    required:
+                      - contact_roles
+                description: >-
+                  Contains the error details for the contact role deletion
+                  request.
+              examples:
+                LowerLimitReached:
+                  summary: Lower limit reached on contact roles
+                  value:
+                    contact_roles:
+                      - status: error
+                        code: LOWER_LIMIT_REACHED
+                        message: Lower limit reached
+                        details:
+                          limit: 1
+                          id: '123456789'
+                  description: >-
+                    Shows an error response when deleting the contact role would
+                    reduce the total count below the minimum required.
+                InvalidData:
+                  summary: Invalid contact role ID
+                  value:
+                    contact_roles:
+                      - code: INVALID_DATA
+                        message: Invalid data provided
+                        details:
+                          id: '123456789'
+                        status: error
+                  description: >-
+                    Shows an error response when the specified contact role ID
+                    does not exist in the CRM organization.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.contacts.DELETE
+security:
+  - OAuth2:
+      - ZohoCRM.modules.ALL
+      - ZohoCRM.modules.contacts.READ
+      - ZohoCRM.modules.contacts.CREATE
+      - ZohoCRM.modules.contacts.UPDATE
+      - ZohoCRM.modules.contacts.DELETE
+      - ZohoCRM.modules.contacts.WRITE
+components:
+  parameters:
+    Role:
+      name: role
+      in: path
+      description: >
+        Specify the unique identifier of the contact role. Use the [List Contact
+        Roles](contact_roles.yaml#$.paths./contacts/roles.get) resource to
+        retrieve contact role IDs.
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+    Ids:
+      name: ids
+      in: query
+      description: >
+        Specify a comma-separated list of contact role IDs to delete. Use the
+        [List Contact Roles](contact_roles.yaml#$.paths./contacts/roles.get)
+        resource to retrieve contact role IDs.
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+  schemas:
+    ContactRoleSuccessSchema:
+      type: object
+      x-zs-$id: ContactRoleSuccessSchema
+      description: Represents the result of a successful contact role operation.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: |
+            Represents the status code of the operation.
+
+            **Possible values:**
+            - **SUCCESS** - The contact role operation completed successfully.
+          enum:
+            - SUCCESS
+        details:
+          type: object
+          description: >-
+            Represents the details of the contact role for the create or update
+            operation.
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              description: Represents the unique ID of the contact role.
+              maxLength: 19
+          required:
+            - id
+        message:
+          type: string
+          description: Represents the message describing the result of the operation.
+          maxLength: 255
+        status:
+          type: string
+          description: |
+            Represents the overall status of the operation.
+
+            **Possible values:**
+            - **success** - The contact role operation completed successfully.
+          enum:
+            - success
+      required:
+        - code
+        - details
+        - message
+        - status
+    MandatoryFieldNotFoundErrorSchema:
+      type: object
+      x-zs-$id: MandatoryFieldNotFoundErrorSchema
+      description: Represents an error when a required field is missing from the request.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: >
+            Represents the error code.
+
+
+            **Possible values:**
+
+            - **MANDATORY_NOT_FOUND** - A required field is missing from the
+            request.
+          enum:
+            - MANDATORY_NOT_FOUND
+        message:
+          type: string
+          description: Represents the error message.
+          maxLength: 255
+        details:
+          type: object
+          description: Represents the error details for the missing field.
+          additionalProperties: false
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the missing required field.
+              maxLength: 100
+            json_path:
+              type: string
+              description: Represents the JSON path to the missing required field.
+              maxLength: 255
+          required:
+            - api_name
+            - json_path
+        status:
+          type: string
+          description: |
+            Represents the error status.
+
+            **Possible values:**
+            - **error** - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - message
+        - details
+        - status
+    InvalidDataErrorSchemaPut:
+      type: object
+      x-zs-$id: InvalidDataErrorSchemaPut
+      description: >-
+        Represents an invalid data error for a contact role field in an update
+        operation.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: |
+            Represents the error code.
+
+            **Possible values:**
+            - **INVALID_DATA** - The contact role data is invalid.
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: Represents the error message.
+          maxLength: 255
+        details:
+          type: object
+          description: Represents the error details for the invalid data.
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              description: >-
+                Represents the ID of the contact role that triggered the invalid
+                data error.
+              maxLength: 19
+            api_name:
+              type: string
+              description: Represents the API name of the field that contains invalid data.
+              maxLength: 100
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the field that contains invalid
+                data.
+              maxLength: 255
+          required:
+            - api_name
+            - json_path
+        status:
+          type: string
+          description: |
+            Represents the error status.
+
+            **Possible values:**
+            - **error** - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - message
+        - details
+        - status
+    InvalidDataErrorSchemaPOST:
+      type: object
+      x-zs-$id: InvalidDataErrorSchemaPOST
+      description: >-
+        Represents an invalid data error for a contact role field in a create
+        operation.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: |
+            Represents the error code.
+
+            **Possible values:**
+            - **INVALID_DATA** - The contact role data is invalid.
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: Represents the error message.
+          maxLength: 255
+        details:
+          type: object
+          description: Represents the error details for the invalid data.
+          additionalProperties: false
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that contains invalid data.
+              maxLength: 100
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the field that contains invalid
+                data.
+              maxLength: 255
+            expected_data_type:
+              type: string
+              description: Represents the expected data type for the field.
+              maxLength: 100
+          required:
+            - api_name
+            - json_path
+            - expected_data_type
+        status:
+          type: string
+          description: |
+            Represents the error status.
+
+            **Possible values:**
+            - **error** - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - message
+        - details
+        - status
+    DuplicateDataErrorSchemaPOST:
+      type: object
+      x-zs-$id: DuplicateDataErrorSchemaPOST
+      description: >-
+        Represents an error when a contact role with the same name already
+        exists in the CRM organization.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: >
+            Represents the error code.
+
+
+            **Possible values:**
+
+            - **DUPLICATE_DATA** - A contact role with the same name already
+            exists.
+          enum:
+            - DUPLICATE_DATA
+        message:
+          type: string
+          description: Represents the error message.
+          maxLength: 255
+        details:
+          type: object
+          description: Represents the error details for the duplicate data.
+          additionalProperties: false
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains a duplicate
+                value.
+              maxLength: 100
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the field that contains a duplicate
+                value.
+              maxLength: 255
+          required:
+            - api_name
+            - json_path
+        status:
+          type: string
+          description: |
+            Represents the error status.
+
+            **Possible values:**
+            - **error** - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - message
+        - details
+        - status
+    DuplicateDataErrorSchemaPUT:
+      type: object
+      x-zs-$id: DuplicateDataErrorSchemaPUT
+      description: >-
+        Represents an error when a contact role with the same name already
+        exists in the CRM organization.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: >
+            Represents the error code.
+
+
+            **Possible values:**
+
+            - **DUPLICATE_DATA** - A contact role with the same name already
+            exists.
+          enum:
+            - DUPLICATE_DATA
+        message:
+          type: string
+          description: Represents the error message.
+          maxLength: 255
+        details:
+          type: object
+          description: Represents the error details for the duplicate data.
+          additionalProperties: false
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains a duplicate
+                value.
+              maxLength: 100
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the field that contains a duplicate
+                value.
+              maxLength: 255
+            id:
+              type: string
+              description: >-
+                Represents the ID of the contact role that has the duplicate
+                name.
+              maxLength: 19
+          required:
+            - api_name
+            - json_path
+        status:
+          type: string
+          description: |
+            Represents the error status.
+
+            **Possible values:**
+            - **error** - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - message
+        - details
+        - status
+    ArrayOfDuplicateSchema:
+      type: array
+      x-zs-$id: Arrayofduplicatedataerrors
+      description: Contains the list of duplicate data errors for contact role operations.
+      maxItems: 100
+      items:
+        type: object
+        description: Represents a duplicate data error for a contact role field.
+        additionalProperties: false
+        properties:
+          status:
+            type: string
+            description: |
+              Represents the error status.
+
+              **Possible values:**
+              - **error** - The request failed.
+            enum:
+              - error
+          code:
+            type: string
+            description: >
+              Represents the error code.
+
+
+              **Possible values:**
+
+              - **DUPLICATE_DATA** - A contact role with the same name already
+              exists.
+            enum:
+              - DUPLICATE_DATA
+          message:
+            type: string
+            description: Represents the error message.
+            maxLength: 255
+          details:
+            oneOf:
+              - type: object
+                x-zs-$id: DuplicatedataerrordetailswithID
+                description: >-
+                  Represents duplicate data error details that include the ID of
+                  the conflicting record.
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    description: >-
+                      Represents the ID of the existing contact role that
+                      conflicts with the duplicate name.
+                    maxLength: 19
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the field that contains a
+                      duplicate value.
+                    maxLength: 100
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path to the field that contains a
+                      duplicate value.
+                    maxLength: 255
+                required:
+                  - id
+                  - api_name
+                  - json_path
+              - type: object
+                x-zs-$id: DuplicatedataerrordetailswithoutID
+                description: >-
+                  Represents duplicate data error details that include the API
+                  name and JSON path of the conflicting field.
+                additionalProperties: false
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the field that contains a
+                      duplicate value.
+                    maxLength: 100
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path to the field that contains a
+                      duplicate value.
+                    maxLength: 255
+                required:
+                  - api_name
+                  - json_path
+            description: Represents the error details for the duplicate data.
+        required:
+          - status
+          - code
+          - message
+          - details
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.ALL: >-
+              Grants full access to all Zoho CRM modules, including read,
+              create, update, and delete operations.
+            ZohoCRM.modules.contacts.CREATE: >-
+              Grants permission to create contact roles in the Zoho CRM
+              organization.
+            ZohoCRM.modules.contacts.READ: >-
+              Grants permission to read contact roles in the Zoho CRM
+              organization.
+            ZohoCRM.modules.contacts.UPDATE: >-
+              Grants permission to update contact roles in the Zoho CRM
+              organization.
+            ZohoCRM.modules.contacts.DELETE: >-
+              Grants permission to delete contact roles in the Zoho CRM
+              organization.
+            ZohoCRM.modules.contacts.WRITE: >-
+              Grants permission to create and update contact roles in the Zoho
+              CRM organization.

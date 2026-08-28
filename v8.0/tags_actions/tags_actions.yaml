@@ -1,0 +1,2832 @@
+openapi: 3.1.0
+info:
+  title: Tag Actions API
+  description: >-
+    This file contains tag actions endpoints for managing tag associations on
+    CRM records, including adding, removing, and merging tags, as well as
+    retrieving tag records count.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Production API server for Zoho CRM.
+    variables:
+      dc:
+        description: >
+          The top-level domain for the Zoho CRM API server based on the data
+          center region.
+
+
+          **Possible values:**
+
+          - **com** - US.
+
+          - **eu** - EU.
+
+          - **in** - India.
+
+          - **cn** - China.
+
+          - **au** - Australia.
+
+          - **ca** - Canada.
+
+          - **jp** - Japan.
+
+
+          Default: **com**.
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: The API version identifier. Default:v8.
+        default: v8
+paths:
+  /{module}/actions/add_tags:
+    post:
+      summary: Add Tags to Records
+      description: Associates tags to one or more records in the specified module.
+      operationId: postAddTags
+      parameters:
+        - $ref: '#/components/parameters/ParamPathModule'
+      requestBody:
+        description: Request body containing the tags to associate and the record IDs.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostaddtagsRequest'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  tags:
+                    - name: test
+                      color_code: '#F17574'
+                    - name: new
+                      color_code: '#63C57E'
+                    - name: 34ytwerfdgjhfwgerfs
+                      color_code: '#E7A826'
+                  ids: '["3060320000002538026"]'
+                  over_write: true
+      responses:
+        '200':
+          description: OK - Tags associated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostaddtagsResponse200'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '3060320000002538026'
+                          affected_data: null
+                          tags:
+                            - name: test
+                              id: '3060320000000666862'
+                              color_code: '#F17574'
+                            - name: new
+                              id: '3060320000000669006'
+                              color_code: '#63C57E'
+                            - name: 34ytwerfdgjhfwgerfs
+                              id: '3060320000000666022'
+                              color_code: '#E7A826'
+                        message: tags updated successfully
+                        status: success
+                    locked_count: '0'
+        '400':
+          description: >-
+            Bad Request - The request cannot be processed due to invalid syntax
+            or validation errors. Review the error details and correct the
+            issues before retrying.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 400
+                oneOf:
+                  - $ref: '#/components/schemas/RecordLockedError'
+                  - $ref: '#/components/schemas/TagsInvalidDataError'
+                  - $ref: '#/components/schemas/InvalidModuleNameError'
+                  - $ref: '#/components/schemas/ModuleTagsNotSupportedError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/RequiredParamMissingError'
+                  - type: object
+                    additionalProperties: false
+                    description: Wrapped error response with per-tag validation errors
+                    properties:
+                      tags:
+                        type: array
+                        description: >-
+                          Array of error objects for tag field validation
+                          failures
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/TagFieldInvalidDataTypeError
+                            - $ref: '#/components/schemas/TagFieldMaxLengthError'
+                        maxItems: 25
+                    required:
+                      - tags
+                    x-zs-$id: PostaddtagsError
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Permission denied error when attempting bulk tag addition
+                      without write access
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - FAILURE
+                        description: Error code
+                      details:
+                        type: object
+                        additionalProperties: true
+                        description: Additional error context
+                      message:
+                        type: string
+                        enum:
+                          - permission denied to  update records
+                        description: Human-readable error message
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: Error status
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    x-zs-$id: PostAddTagsNoWritePermissionError
+                x-zs-$id: PostaddtagsError400
+              examples:
+                RecordLockedResponse1:
+                  summary: >-
+                    Error response with code RECORD_LOCKED: Sorry, you cannot
+                    perform this operation as the record is locked.
+                  value:
+                    code: RECORD_LOCKED
+                    details:
+                      action: record_locking
+                      id: '3060320000002538026'
+                    message: >-
+                      Sorry, you cannot perform this operation as the record is
+                      locked.
+                    status: error
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    tags)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 3
+                      api_name: tags
+                      json_path: $.tags
+                    message: invalid data
+                    status: error
+                InvalidModuleResponse1:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the module name
+                    given seems to be invalid
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the module name given seems to be invalid
+                    status: error
+                InvalidModuleResponse2:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the given module is
+                    not supported for this api
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the given module is not supported for this api
+                    status: error
+                InvalidRequestMethodResponse1:
+                  summary: >-
+                    Error response with code INVALID_REQUEST_METHOD: The http
+                    request method type is not a valid one
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The http request method type is not a valid one
+                    status: error
+                RequiredParamMissingResponse1:
+                  summary: >-
+                    Error response with code REQUIRED_PARAM_MISSING: One of the
+                    expected param is missing
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: module
+                    message: One of the expected param is missing
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: name)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.tags[*].name
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    name)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 25
+                          json_path: $.tags[*].name
+                        status: error
+                InvalidDataResponse4:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: color_code)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: color_code
+                          expected_data_type: text
+                          json_path: $.tags[*].color_code
+                        status: error
+                InvalidDataResponse5:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    color_code)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: color_code
+                          maximum_length: 7
+                          json_path: $.tags[*].color_code
+                        status: error
+        '403':
+          description: >-
+            Forbidden - The client does not have access rights to perform the
+            operation.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 403
+                x-zs-$id: PostaddtagsError403
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Edit_Leads
+                        - Crm_Implied_Tags_Leads
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.ALL
+  /{module}/actions/remove_tags:
+    post:
+      summary: Remove Tags from Records
+      description: Removes tags from one or more records in the specified module.
+      operationId: postRemoveTags
+      parameters:
+        - $ref: '#/components/parameters/ParamQueryModule1'
+        - $ref: '#/components/parameters/ParamPathModule'
+      requestBody:
+        description: Request body containing the tags to remove and the record IDs.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostremovetagsRequest'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  tags:
+                    - name: newtd
+                  ids: '["3060320000002496003"]'
+      responses:
+        '200':
+          description: OK - Tags removed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostremovetagsResponse200'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '3060320000002496003'
+                          tags: []
+                        message: tags updated successfully
+                        status: success
+                    locked_count: '0'
+        '400':
+          description: >-
+            Bad Request - The request cannot be processed due to invalid syntax
+            or validation errors. Review the error details and correct the
+            issues before retrying.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 400
+                oneOf:
+                  - type: object
+                    additionalProperties: false
+                    description: Wrapped error response with per-record errors
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Array of error objects for records that failed the
+                          operation
+                        items:
+                          $ref: '#/components/schemas/RecordLockedError'
+                        maxItems: 25
+                      locked_count:
+                        maxLength: 10
+                        type: string
+                        description: >-
+                          Number of records that are locked and could not be
+                          updated
+                    required:
+                      - data
+                    x-zs-$id: PostremovetagsError400Wrapper
+                  - $ref: '#/components/schemas/TagsInvalidDataError'
+                  - $ref: '#/components/schemas/InvalidModuleNameError'
+                  - $ref: '#/components/schemas/ModuleTagsNotSupportedError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - type: object
+                    additionalProperties: false
+                    description: Wrapped error response with per-tag validation errors
+                    properties:
+                      tags:
+                        type: array
+                        description: >-
+                          Array of error objects for tag field validation
+                          failures
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/TagFieldInvalidDataTypeError
+                            - $ref: '#/components/schemas/TagFieldMaxLengthError'
+                        maxItems: 25
+                    required:
+                      - tags
+                    x-zs-$id: PostremovetagsError
+                x-zs-$id: PostremovetagsError400
+              examples:
+                RecordLockedResponse1:
+                  summary: >-
+                    Error response with code RECORD_LOCKED: Sorry, you cannot
+                    perform this operation as the record is locked.
+                  value:
+                    data:
+                      - code: RECORD_LOCKED
+                        details:
+                          action: record_locking
+                          id: '3060320000002538026'
+                        message: >-
+                          Sorry, you cannot perform this operation as the record
+                          is locked.
+                        status: error
+                    locked_count: '1'
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    tags)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: tags
+                      json_path: $.tags
+                    message: invalid data
+                    status: error
+                InvalidModuleResponse1:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the module name
+                    given seems to be invalid
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the module name given seems to be invalid
+                    status: error
+                InvalidModuleResponse2:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the given module is
+                    not supported for this api
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the given module is not supported for this api
+                    status: error
+                InvalidRequestMethodResponse1:
+                  summary: >-
+                    Error response with code INVALID_REQUEST_METHOD: The http
+                    request method type is not a valid one
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The http request method type is not a valid one
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: name)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.tags[*].name
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    name)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 25
+                          json_path: $.tags[*].name
+                        status: error
+        '403':
+          description: >-
+            Forbidden - The client does not have access rights to perform the
+            operation.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 403
+                x-zs-$id: PostremovetagsError403
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Edit_Leads
+                        - Crm_Implied_Tags_Leads
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.ALL
+  /{module}/{id}/actions/add_tags:
+    post:
+      summary: Add Tags to a Record
+      description: Adds tags to a specific record in the specified module.
+      operationId: postAddTagsWithId
+      parameters:
+        - $ref: '#/components/parameters/ParamPathModule'
+        - $ref: '#/components/parameters/ParamPathId'
+        - $ref: '#/components/parameters/ParamQueryOverWrite'
+      requestBody:
+        description: Request body containing the tags to add to the record.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostaddtagsRequest'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  tags:
+                    - name: test
+                      color_code: '#F17574'
+                    - name: new
+                      color_code: '#63C57E'
+                    - name: 34ytwerfdgjhfwgerfs
+                      color_code: '#E7A826'
+                  over_write: true
+      responses:
+        '200':
+          description: OK - Tags added successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostaddtagsResponse200'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          modifiedTime: Tue, 30 Dec 2025 03:42 PM
+                          id: '3060320000002538026'
+                          tags:
+                            - name: a
+                              id: '3060320000001987093'
+                              color_code: '#FEDA62'
+                            - name: newtd
+                              id: '3060320000000666047'
+                              color_code: '#FD87BD'
+                        message: tags updated successfully
+                        status: success
+        '400':
+          description: >-
+            Bad Request - The request cannot be processed due to invalid syntax
+            or validation errors. Review the error details and correct the
+            issues before retrying.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 400
+                oneOf:
+                  - $ref: '#/components/schemas/RecordLockedError'
+                  - $ref: '#/components/schemas/TagsInvalidDataError'
+                  - $ref: '#/components/schemas/InvalidModuleNameError'
+                  - $ref: '#/components/schemas/ModuleTagsNotSupportedError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/TagErrorItemResponse'
+                  - $ref: '#/components/schemas/TagInvalidDataTypeError'
+                  - $ref: '#/components/schemas/MappingMismatchErrorResponse'
+                  - type: object
+                    additionalProperties: false
+                    description: Wrapped error response with per-tag validation errors
+                    properties:
+                      tags:
+                        type: array
+                        description: >-
+                          Array of error objects for tag field validation
+                          failures
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/TagFieldInvalidDataTypeError
+                            - $ref: '#/components/schemas/TagFieldMaxLengthError'
+                        maxItems: 25
+                    required:
+                      - tags
+                    x-zs-$id: PostaddtagsSingleRecError
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Permission denied error when attempting to add tags
+                      without write access
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - FAILURE
+                        description: Error code
+                      details:
+                        type: object
+                        additionalProperties: true
+                        description: Additional error context
+                      message:
+                        type: string
+                        enum:
+                          - permission denied to  update records
+                        description: Human-readable error message
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: Error status
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    x-zs-$id: PostAddTagsWithIdNoWritePermissionError
+                x-zs-$id: PostaddtagsErrors
+              examples:
+                RecordLockedResponse1:
+                  summary: >-
+                    Error response with code RECORD_LOCKED: Sorry, you cannot
+                    perform this operation as the record is locked.
+                  value:
+                    code: RECORD_LOCKED
+                    details:
+                      action: record_locking
+                      id: '3060320000002538026'
+                    message: >-
+                      Sorry, you cannot perform this operation as the record is
+                      locked.
+                    status: error
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    tags)
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: invalid data
+                    status: error
+                InvalidModuleResponse1:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the module name
+                    given seems to be invalid
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the module name given seems to be invalid
+                    status: error
+                InvalidModuleResponse2:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the given module is
+                    not supported for this api
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the given module is not supported for this api
+                    status: error
+                InvalidRequestMethodResponse1:
+                  summary: >-
+                    Error response with code INVALID_REQUEST_METHOD: The http
+                    request method type is not a valid one
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The http request method type is not a valid one
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: name)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.tags[*].name
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    name)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 25
+                          json_path: $.tags[*].name
+                        status: error
+                InvalidDataResponse4:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: color_code)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: color_code
+                          expected_data_type: text
+                          json_path: $.tags[*].color_code
+                        status: error
+                InvalidDataResponse5:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    color_code)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: color_code
+                          maximum_length: 7
+                          json_path: $.tags[*].color_code
+                        status: error
+        '403':
+          description: >-
+            Forbidden - The client does not have access rights to perform the
+            operation.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 403
+                x-zs-$id: PostaddtagsErrorSingleRec
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Edit_Leads
+                        - Crm_Implied_Tags_Leads
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.ALL
+  /{module}/{id}/actions/remove_tags:
+    post:
+      summary: Remove Tags from a Record
+      description: Removes tags from a specific record in the specified module.
+      operationId: postRemoveTagsWithId
+      parameters:
+        - $ref: '#/components/parameters/ParamPathModule'
+        - $ref: '#/components/parameters/ParamPathId'
+      requestBody:
+        description: Request body containing the tags to remove from the record.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostremovetagsRequest'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  tags:
+                    - name: newtd
+      responses:
+        '200':
+          description: OK - Tags removed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostremovetagsResponse200'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          modifiedTime: Tue, 30 Dec 2025 03:47 PM
+                          id: '3060320000002538026'
+                          tags:
+                            - name: a
+                              id: '3060320000001987093'
+                        message: tags updated successfully
+                        status: success
+        '400':
+          description: >-
+            Bad Request - The request cannot be processed due to invalid syntax
+            or validation errors. Review the error details and correct the
+            issues before retrying.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 400
+                oneOf:
+                  - $ref: '#/components/schemas/RecordLockedError'
+                  - $ref: '#/components/schemas/TagInvalidDataTypeError'
+                  - $ref: '#/components/schemas/InvalidModuleNameError'
+                  - $ref: '#/components/schemas/ModuleTagsNotSupportedError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/TagsInvalidDataError'
+                  - type: object
+                    additionalProperties: false
+                    description: Wrapped error response with per-tag validation errors
+                    properties:
+                      tags:
+                        type: array
+                        description: >-
+                          Array of error objects for tag field validation
+                          failures
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/TagFieldInvalidDataTypeError
+                            - $ref: '#/components/schemas/TagFieldMaxLengthError'
+                        maxItems: 25
+                    required:
+                      - tags
+                    x-zs-$id: PostremovetagsSingleRec
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Permission denied error when attempting to remove tags
+                      without write access
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - FAILURE
+                        description: Error code
+                      details:
+                        type: object
+                        additionalProperties: true
+                        description: Additional error context
+                      message:
+                        type: string
+                        enum:
+                          - permission denied to  update records
+                        description: Human-readable error message
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: Error status
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    x-zs-$id: PostRemoveTagsNoWritePermissionError
+                x-zs-$id: PostremovetagsErrorSingleRec
+              examples:
+                RecordLockedResponse1:
+                  summary: >-
+                    Error response with code RECORD_LOCKED: Sorry, you cannot
+                    perform this operation as the record is locked.
+                  value:
+                    code: RECORD_LOCKED
+                    details:
+                      action: record_locking
+                      id: '3060320000002538026'
+                    message: >-
+                      Sorry, you cannot perform this operation as the record is
+                      locked.
+                    status: error
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    tags)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      expected_data_type: jsonarray
+                      api_name: tags
+                      json_path: $.tags
+                      maximum_length: 1
+                    message: invalid data
+                    status: error
+                InvalidModuleResponse1:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the module name
+                    given seems to be invalid
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the module name given seems to be invalid
+                    status: error
+                InvalidModuleResponse2:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the given module is
+                    not supported for this api
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the given module is not supported for this api
+                    status: error
+                InvalidRequestMethodResponse1:
+                  summary: >-
+                    Error response with code INVALID_REQUEST_METHOD: The http
+                    request method type is not a valid one
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The http request method type is not a valid one
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: name)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.tags[*].name
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    name)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 25
+                          json_path: $.tags[*].name
+                        status: error
+        '403':
+          description: >-
+            Forbidden - The client does not have access rights to perform the
+            operation.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 403
+                x-zs-$id: PostremovetagsError403SingleRec
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Edit_Leads
+                        - Crm_Implied_Tags_Leads
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.ALL
+  /settings/tags/{id}/actions/records_count:
+    get:
+      summary: Get Tag Records Count
+      description: >-
+        Retrieves the number of records associated with a specific tag,
+        including workflow, blueprint, and orchestration usage details.
+      operationId: getTagRecordsCount
+      parameters:
+        - $ref: '#/components/parameters/ParamQueryId'
+        - $ref: '#/components/parameters/ParamQueryModule'
+        - $ref: '#/components/parameters/ParamPathId'
+      responses:
+        '200':
+          description: >-
+            OK - Successfully retrieved the tag records count with configured
+            areas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetrecordscountResponse200'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    configured_areas:
+                      workflow_tagActionRecords:
+                        Orchestration:
+                          '3060320000000666022':
+                            RemoveTags:
+                              - name: >-
+                                  newtd, newraf, test, new, new2, three,
+                                  34ytwerfdgjhfwgerfs, asf, daf, das, dw, fr, e,
+                                  gfe, ht, oy, kjtd, hfsdgfas, d, ds
+                                rules:
+                                  - subtype_name: rewq
+                                    subtype: transition
+                                    module: Leads
+                                    name: qwert - V1
+                                    execution_type: instant
+                                    id: '3060320000002372133'
+                                    source: 1
+                                    subtype_id: '3060320000002183036'
+                                    status: Active
+                                id: '3060320000002372782'
+                            AddTags:
+                              - name: >-
+                                  34ytwerfdgjhfwgerfs, newtd, newraf, new2,
+                                  three, asf, daf, das, f, dw, fr, e, gfe, ht,
+                                  jryi, oy, new, kjtd, hfsdgfas, d
+                                rules:
+                                  - subtype_name: test
+                                    subtype: state
+                                    module: Leads
+                                    name: qwert - V1
+                                    execution_type: instant
+                                    id: '3060320000002372133'
+                                    source: 1
+                                    subtype_id: '3060320000002372686'
+                                    status: Active
+                                id: '3060320000002372688'
+                        Blueprint:
+                          '3060320000000666022':
+                            RemoveTags:
+                              - name: >-
+                                  newtd, newraf, test, new, new2, three, asf,
+                                  daf, f, das, dw, fr, e, gfe, ht, jryi,
+                                  34ytwerfdgjhfwgerfs, oy, hfsdgfas, d
+                                rules:
+                                  - subtype_name: qwertyu
+                                    subtype: transition
+                                    module: Leads
+                                    name: new
+                                    execution_type: instant
+                                    id: '3060320000001828051'
+                                    source: 1
+                                    subtype_id: '3060320000001828038'
+                                id: '3060320000002372109'
+                            AddTags:
+                              - name: >-
+                                  blue, newtd, newraf, test,
+                                  34ytwerfdgjhfwgerfs, new2, three, asf, daf,
+                                  das, f, dw, fr, e, gfe, ht, jryi, oy, kjtd,
+                                  hfsdgfas
+                                rules:
+                                  - subtype_name: qwertyu
+                                    subtype: transition
+                                    module: Leads
+                                    name: new
+                                    execution_type: instant
+                                    id: '3060320000001828051'
+                                    source: 1
+                                    subtype_id: '3060320000001828038'
+                                id: '3060320000001828044'
+                        Workflow:
+                          '3060320000000666022':
+                            RemoveTags:
+                              - name: >-
+                                  newraf, test, new, new2, three,
+                                  34ytwerfdgjhfwgerfs, newtd, daf, das, f, dw,
+                                  fr, e, gfe, ht, jryi, asf, oy, kjtd, hfsdgfas
+                                rules:
+                                  - subtype: rule_condition
+                                    module: Leads
+                                    name: qwerty
+                                    execution_type: instant
+                                    id: '3060320000002072019'
+                                    source: 1
+                                    subtype_id: '3060320000002072020'
+                                id: '3060320000002372082'
+                              - name: >-
+                                  newtd, newraf, test, new, new2, three, asf,
+                                  daf, das, 34ytwerfdgjhfwgerfs, fr, e, gfe, dw,
+                                  ht, jryi, oy, kjtd, hfsdgfas, d
+                                rules:
+                                  - subtype: rule_condition
+                                    module: Leads
+                                    name: qwerty
+                                    execution_type: schedule
+                                    id: '3060320000002072019'
+                                    source: 1
+                                    subtype_id: '3060320000002072020'
+                                id: '3060320000002372091'
+                            AddTags:
+                              - name: >-
+                                  newtd, newraf, test, new, new2, three, asf,
+                                  daf, das, f, dw, fr, e, gfe,
+                                  34ytwerfdgjhfwgerfs, ht, jryi, kjtd, hfsdgfas,
+                                  d
+                                rules:
+                                  - subtype: rule_condition
+                                    module: Leads
+                                    name: qwerty
+                                    execution_type: instant
+                                    id: '3060320000002072019'
+                                    source: 1
+                                    subtype_id: '3060320000002072020'
+                                id: '3060320000002372081'
+                              - name: >-
+                                  34ytwerfdgjhfwgerfs, test, new, new2, three,
+                                  newraf, asf, daf, das, f, dw, fr, e, gfe, ht,
+                                  jryi, oy, kjtd, hfsdgfas, d
+                                rules:
+                                  - subtype: rule_condition
+                                    module: Leads
+                                    name: qwerty
+                                    execution_type: schedule
+                                    id: '3060320000002072019'
+                                    source: 1
+                                    subtype_id: '3060320000002072020'
+                                id: '3060320000002072235'
+                              - name: newraf, 34ytwerfdgjhfwgerfs, test
+                                rules:
+                                  - subtype: rule_condition
+                                    module: Leads
+                                    name: New Rule
+                                    execution_type: instant
+                                    id: '3060320000000666866'
+                                    source: 1
+                                    subtype_id: '3060320000000666867'
+                                id: '3060320000000666870'
+                      custom_view:
+                        cvnames: []
+                        inaccessible_custom_view_present: false
+                        cvmodules: []
+                        cvids: []
+                    count: '18'
+        '400':
+          description: >-
+            Bad Request - The request cannot be processed due to invalid syntax
+            or missing required parameters.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 400
+                oneOf:
+                  - $ref: '#/components/schemas/RequiredParamMissingError'
+                  - $ref: '#/components/schemas/InvalidModuleNameError'
+                  - $ref: '#/components/schemas/ModuleTagsNotSupportedError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/ErrorResponseTagIdNotFound'
+                x-zs-$id: GetrecordscountError400
+              examples:
+                RequiredParamMissingResponse1:
+                  summary: >-
+                    Error response with code REQUIRED_PARAM_MISSING: One of the
+                    expected param is missing
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: module
+                    message: One of the expected param is missing
+                    status: error
+                InvalidModuleResponse1:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the module name
+                    given seems to be invalid
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the module name given seems to be invalid
+                    status: error
+                InvalidModuleResponse2:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the given module is
+                    not supported for this api
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the given module is not supported for this api
+                    status: error
+                InvalidRequestMethodResponse1:
+                  summary: >-
+                    Error response with code INVALID_REQUEST_METHOD: The http
+                    request method type is not a valid one
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The http request method type is not a valid one
+                    status: error
+        '403':
+          description: >-
+            Forbidden - The client does not have access rights to perform the
+            operation.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 403
+                x-zs-$id: GetrecordscountError403
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Edit_Leads
+                        - Crm_Implied_Tags_Leads
+                    message: permission denied
+                    status: error
+        '404':
+          description: Not Found - The specified tag ID does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseTagIdNotFound'
+                x-zs-$id: ErrorResponseTagIdNotFound
+                description: Error response when the given tag ID is invalid or not found
+              examples:
+                TagIdNotFoundResponse1:
+                  summary: 'Error response with code INVALID_DATA: invalid tag id'
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: id
+                    message: tags not found
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.tags.all
+  /settings/tags/{id}/actions/merge:
+    post:
+      summary: Merge Tags
+      description: >-
+        Merges two tags into one, combining their associated records and
+        metadata. The tag specified in the path parameter (id) is the master tag
+        that will remain after the merge. The conflict_id in the request body
+        specifies the tag to be merged into the master tag.
+      operationId: mergeTags
+      parameters:
+        - $ref: '#/components/parameters/ParamPathId'
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.tags.all
+      requestBody:
+        description: Request body containing the tag to merge into the master tag.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostmergeRequest'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  tags:
+                    - conflict_id: '3060320000001987032'
+                      modified_time: '2025-09-25T12:00:04+05:30'
+      responses:
+        '200':
+          description: OK - Tags merged successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostmergeResponse200'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    tags:
+                      - code: SUCCESS
+                        details:
+                          created_time: '2025-09-25T12:00:04+05:30'
+                          modified_time: '2025-12-30T17:35:44+05:30'
+                          modified_by:
+                            name: Amelia Burrows
+                            id: '3060320000000520001'
+                          id: '3060320000001987032'
+                          created_by:
+                            name: Amelia Burrows
+                            id: '3060320000000520001'
+                          color_code: '#1DB9B4'
+                        message: tags merged successfully
+                        status: success
+        '400':
+          description: >-
+            Bad Request - The request cannot be processed due to invalid syntax
+            or validation errors. Review the error details and correct the
+            issues before retrying.
+          content:
+            application/json:
+              schema:
+                description: Error response for status 400
+                x-zs-$id: PostmergeError400
+                oneOf:
+                  - $ref: '#/components/schemas/TagInvalidDataTypeError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - type: object
+                    description: Wrapped error response with tag-level validation errors
+                    additionalProperties: false
+                    properties:
+                      tags:
+                        type: array
+                        description: Array of tag error objects for validation failures
+                        items:
+                          oneOf:
+                            - $ref: '#/components/schemas/MergeTagInvalidIdError'
+                            - $ref: '#/components/schemas/NoPermissionError'
+                        maxItems: 25
+                    required:
+                      - tags
+                    x-zs-$id: PostmergeError400Wrapper
+              examples:
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    tags)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      expected_data_type: jsonarray
+                      api_name: tags
+                      json_path: $.tags
+                    message: invalid data
+                    status: error
+                InvalidRequestMethodResponse1:
+                  summary: >-
+                    Error response with code INVALID_REQUEST_METHOD: The http
+                    request method type is not a valid one
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The http request method type is not a valid one
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    id)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.tags[0].id
+                        message: Invalid data
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: conflict_id)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: conflict_id
+                          expected_data_type: bigint
+                          json_path: $.tags[*].conflict_id
+                        status: error
+                InvalidDataResponse4:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    conflict_id)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: conflict_id
+                          maximum_length: 19
+                          json_path: $.tags[*].conflict_id
+                        status: error
+                InvalidDataResponse5:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: modified_time)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: modified_time
+                          expected_data_type: datetime
+                          json_path: $.tags[*].modified_time
+                        status: error
+                InvalidDataResponse6:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    modified_time)
+                  value:
+                    tags:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: modified_time
+                          maximum_length: 25
+                          json_path: $.tags[*].modified_time
+                        status: error
+        '403':
+          description: >-
+            Forbidden - The client does not have access rights to perform the
+            operation.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Wrapped error response with tag-level permission errors
+                additionalProperties: false
+                properties:
+                  tags:
+                    type: array
+                    description: Array of permission error objects
+                    items:
+                      $ref: '#/components/schemas/NoPermissionError'
+                    maxItems: 25
+                required:
+                  - tags
+                x-zs-$id: MergeOperationNoPermissionTagsErrorResponse
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    tags:
+                      - code: NO_PERMISSION
+                        details:
+                          permissions:
+                            - Crm_Implied_Edit_Leads
+                            - Crm_Implied_Tags_Leads
+                        message: permission denied
+                        status: error
+components:
+  schemas:
+    GETRulesNested1:
+      type: object
+      additionalProperties: false
+      description: >-
+        Nested schema for rules within workflow, blueprint, or orchestration
+        configurations.
+      properties:
+        subtype_name:
+          type: string
+          description: Name of the rule subtype
+          maxLength: 255
+        subtype:
+          type: string
+          description: Rule subtype identifier
+          maxLength: 255
+        module:
+          type: string
+          description: Module associated with the rule
+          maxLength: 255
+        name:
+          type: string
+          description: Name of the rule
+          maxLength: 255
+        execution_type:
+          type: string
+          description: Execution type of the rule (e.g., instant, schedule)
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the rule
+          maxLength: 255
+        source:
+          type: integer
+          format: int32
+          description: Source identifier for the rule
+        subtype_id:
+          type: string
+          description: Unique identifier of the rule subtype
+          maxLength: 255
+      required:
+        - execution_type
+        - id
+        - module
+        - name
+        - source
+        - subtype
+        - subtype_id
+        - subtype_name
+    TagFieldInvalidDataTypeError:
+      type: object
+      additionalProperties: false
+      description: Error indicating that a tag field has an invalid data type.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: Expected data type for the field
+              maxLength: 255
+            api_name:
+              type: string
+              description: API name of the field with invalid data type
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path to the field with invalid data type
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Invalid data type
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: TagFieldInvalidDataTypeError
+    NoPermissionError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Error indicating that the user does not have permission to perform the
+        operation.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NO_PERMISSION
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            permissions:
+              type: array
+              description: List of required permissions
+              items:
+                type: string
+                description: Permission required to access the resource
+                maxLength: 255
+              maxItems: 25
+          required:
+            - permissions
+        message:
+          type: string
+          description: Error message
+          enum:
+            - permission denied
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: NoPermissionError
+    GETRulesNested2:
+      type: object
+      additionalProperties: false
+      description: Nested schema for rules with simplified structure.
+      properties:
+        subtype:
+          type: string
+          description: Rule subtype identifier
+          maxLength: 255
+        module:
+          type: string
+          description: Module associated with the rule
+          maxLength: 255
+        name:
+          type: string
+          description: Name of the rule
+          maxLength: 255
+        execution_type:
+          type: string
+          description: Execution type of the rule
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the rule
+          maxLength: 255
+        source:
+          type: integer
+          format: int32
+          description: Source identifier for the rule
+        subtype_id:
+          type: string
+          description: Unique identifier of the rule subtype
+          maxLength: 255
+      required:
+        - execution_type
+        - id
+        - module
+        - name
+        - source
+        - subtype
+        - subtype_id
+    PostmergeResponse200:
+      type: object
+      additionalProperties: false
+      description: Success response when tags are merged successfully.
+      properties:
+        tags:
+          type: array
+          description: Array containing the merged tag details
+          items:
+            $ref: '#/components/schemas/TagsNested2'
+          maxItems: 1
+      x-zs-$id: PostmergeResponse200
+    GETRemovetagsNested1:
+      type: object
+      additionalProperties: false
+      description: Nested schema for RemoveTags action configurations.
+      properties:
+        name:
+          type: string
+          description: Name of the RemoveTags configuration
+          maxLength: 255
+        rules:
+          type: array
+          description: Rules associated with the RemoveTags configuration
+          items:
+            $ref: '#/components/schemas/GETRulesNested1'
+          maxItems: 1
+        id:
+          type: string
+          description: Unique identifier of the RemoveTags configuration
+          maxLength: 255
+      required:
+        - id
+        - name
+        - rules
+    GETRemovetagsNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for RemoveTags action configurations.
+      properties:
+        name:
+          type: string
+          description: Name of the RemoveTags configuration
+          maxLength: 255
+        rules:
+          type: array
+          description: Rules associated with the RemoveTags configuration
+          items:
+            $ref: '#/components/schemas/GETRulesNested'
+          maxItems: 1
+        id:
+          type: string
+          description: Unique identifier of the RemoveTags configuration
+          maxLength: 255
+      required:
+        - id
+        - name
+        - rules
+    PostmergeRequest:
+      type: object
+      additionalProperties: false
+      description: Request body schema for merging tags.
+      properties:
+        tags:
+          type: array
+          description: Array containing the tag to merge (Required)
+          items:
+            $ref: '#/components/schemas/TagsNested'
+          maxItems: 1
+      required:
+        - tags
+    GETOrchestrationNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for Orchestration configurations.
+      properties:
+        '3060320000000666022':
+          $ref: '#/components/schemas/GET3060320000000666022Nested'
+      required:
+        - '3060320000000666022'
+    GETCustomViewNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for custom_view configurations.
+      properties:
+        cvnames:
+          items: {}
+          type: array
+          description: List of custom view names
+          maxItems: 0
+        inaccessible_custom_view_present:
+          type: boolean
+          description: Indicates whether inaccessible custom views exist
+        cvmodules:
+          items: {}
+          type: array
+          description: List of modules with custom views
+          maxItems: 0
+        cvids:
+          items: {}
+          type: array
+          description: List of custom view IDs
+          maxItems: 0
+      required:
+        - cvids
+        - cvmodules
+        - cvnames
+        - inaccessible_custom_view_present
+    GETRulesNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for rules with detailed properties.
+      properties:
+        subtype_name:
+          type: string
+          description: Name of the rule subtype
+          maxLength: 255
+        subtype:
+          type: string
+          description: Rule subtype identifier
+          maxLength: 255
+        module:
+          type: string
+          description: Module associated with the rule
+          maxLength: 255
+        name:
+          type: string
+          description: Name of the rule
+          maxLength: 255
+        execution_type:
+          type: string
+          description: Execution type of the rule
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the rule
+          maxLength: 255
+        source:
+          type: integer
+          format: int32
+          description: Source identifier for the rule
+        subtype_id:
+          type: string
+          description: Unique identifier of the rule subtype
+          maxLength: 255
+        status:
+          type: string
+          description: Status of the rule (e.g., Active)
+          maxLength: 255
+      required:
+        - execution_type
+        - id
+        - module
+        - name
+        - source
+        - status
+        - subtype
+        - subtype_id
+        - subtype_name
+    GETRemovetagsNested2:
+      type: object
+      additionalProperties: false
+      description: >-
+        Nested schema for RemoveTags action configurations with simplified
+        rules.
+      properties:
+        name:
+          type: string
+          description: Name of the RemoveTags configuration
+          maxLength: 255
+        rules:
+          type: array
+          description: Rules associated with the RemoveTags configuration
+          items:
+            $ref: '#/components/schemas/GETRulesNested2'
+          maxItems: 1
+        id:
+          type: string
+          description: Unique identifier of the RemoveTags configuration
+          maxLength: 255
+      required:
+        - id
+        - name
+        - rules
+    PostaddtagsRequest:
+      type: object
+      additionalProperties: false
+      description: Request body schema for adding tags to records.
+      properties:
+        ids:
+          type:
+            - string
+            - 'null'
+          description: >
+            JSON array string of record IDs to associate tags with. Use the [Get
+            Records API](record.yaml#$.paths./module.get) to retrieve record
+            IDs.
+          enum:
+            - '["3060320000002538026"]'
+          maxLength: 102
+        over_write:
+          type:
+            - boolean
+            - 'null'
+          description: >-
+            If true, replaces all existing tags. If false, appends tags to
+            existing ones.
+        tags:
+          type: array
+          description: Array of tags to associate with the records (Required)
+          items:
+            $ref: '#/components/schemas/TagsNested'
+          maxItems: 3
+      required:
+        - tags
+    DetailsNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for operation details in responses.
+      properties:
+        modifiedTime:
+          type: string
+          description: Last modified time of the record
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the record
+          maxLength: 255
+        affected_data:
+          type: 'null'
+          description: Affected data in the operation
+        tags:
+          type: array
+          description: Tags associated with the record
+          items:
+            $ref: '#/components/schemas/TagsNested1'
+          maxItems: 10
+        not_added_tags:
+          type: array
+          description: Tags that were not added to the record
+          items:
+            $ref: '#/components/schemas/TagsNested1'
+          maxItems: 10
+    GETAddtagsNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for AddTags action configurations.
+      properties:
+        name:
+          type: string
+          description: Name of the AddTags configuration
+          maxLength: 255
+        rules:
+          type: array
+          description: Rules associated with the AddTags configuration
+          items:
+            $ref: '#/components/schemas/GETRulesNested'
+          maxItems: 1
+        id:
+          type: string
+          description: Unique identifier of the AddTags configuration
+          maxLength: 255
+      required:
+        - id
+        - name
+        - rules
+    CreatedByNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for created_by user details.
+      properties:
+        name:
+          type: string
+          description: Name of the user who created the resource
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the user
+          maxLength: 255
+    GetrecordscountResponse200:
+      type: object
+      additionalProperties: false
+      description: Success response for tag records count API.
+      properties:
+        configured_areas:
+          $ref: '#/components/schemas/GETConfiguredAreasNested'
+        count:
+          type: string
+          description: Total count of records associated with the tag
+          maxLength: 255
+      required:
+        - count
+      x-zs-$id: GetrecordscountResponse200
+    PostaddtagsResponse200:
+      type: object
+      additionalProperties: false
+      description: Success response when tags are associated successfully to records.
+      properties:
+        ids:
+          maxLength: 102
+          type: string
+          description: Record IDs that were processed
+        over_write:
+          type: boolean
+          description: Indicates whether tags were replaced or appended
+        data:
+          type: array
+          description: Array of operation results for each record
+          items:
+            $ref: '#/components/schemas/DataNested'
+          maxItems: 20
+        locked_count:
+          type: string
+          description: Number of records that were locked and could not be updated
+          maxLength: 255
+        success_count:
+          type: string
+          description: Number of records that were successfully updated
+          maxLength: 255
+        tags:
+          maxLength: 255
+          type: string
+          description: Root key for tags
+      x-zs-$id: PostaddtagsResponse200
+    GET3060320000000666022Nested2:
+      type: object
+      additionalProperties: false
+      description: Nested schema for tag ID 3060320000000666022 configurations.
+      properties:
+        RemoveTags:
+          type: array
+          description: RemoveTags configurations
+          items:
+            $ref: '#/components/schemas/GETRemovetagsNested2'
+          maxItems: 2
+        AddTags:
+          type: array
+          description: AddTags configurations
+          items:
+            $ref: '#/components/schemas/GETAddtagsNested2'
+          maxItems: 3
+      required:
+        - AddTags
+        - RemoveTags
+    GET3060320000000666022Nested1:
+      type: object
+      additionalProperties: false
+      description: Nested schema for tag ID 3060320000000666022 configurations.
+      properties:
+        RemoveTags:
+          type: array
+          description: RemoveTags configurations
+          items:
+            $ref: '#/components/schemas/GETRemovetagsNested1'
+          maxItems: 1
+        AddTags:
+          type: array
+          description: AddTags configurations
+          items:
+            $ref: '#/components/schemas/GETAddtagsNested1'
+          maxItems: 1
+      required:
+        - AddTags
+        - RemoveTags
+    TagInvalidDataTypeError:
+      type: object
+      additionalProperties: false
+      description: Error indicating that a tag field has an invalid data type.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: Expected data type for the field
+              maxLength: 255
+            api_name:
+              type: string
+              description: API name of the field with invalid data
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path to the field with invalid data
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - invalid data
+            - invalid tag id
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: TagInvalidDataTypeError
+    MappingMismatchErrorResponse:
+      type: object
+      additionalProperties: false
+      description: Error indicating a mapping mismatch between fields.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - MAPPING_MISMATCH
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            mapped_field:
+              type: object
+              additionalProperties: false
+              description: Field mapping details
+              properties:
+                api_name:
+                  type: string
+                  description: API name of the mapped field
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: JSON path to the mapped field
+                  maxLength: 1000
+            api_name:
+              type: string
+              description: API name of the field with mapping mismatch
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path to the field with mapping mismatch
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          maxLength: 255
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: MappingMismatchErrorResponse
+    GET3060320000000666022Nested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for tag ID 3060320000000666022 configurations.
+      properties:
+        RemoveTags:
+          type: array
+          description: RemoveTags configurations
+          items:
+            $ref: '#/components/schemas/GETRemovetagsNested'
+          maxItems: 1
+        AddTags:
+          type: array
+          description: AddTags configurations
+          items:
+            $ref: '#/components/schemas/GETAddtagsNested'
+          maxItems: 1
+      required:
+        - AddTags
+        - RemoveTags
+    GETWorkflowNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for Workflow configurations.
+      properties:
+        '3060320000000666022':
+          $ref: '#/components/schemas/GET3060320000000666022Nested2'
+      required:
+        - '3060320000000666022'
+    ModifiedByNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for modified_by user details.
+      properties:
+        name:
+          type: string
+          description: Name of the user who last modified the resource
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the user
+          maxLength: 255
+    InvalidRequestMethodError:
+      type: object
+      additionalProperties: false
+      description: Error indicating that the HTTP request method is invalid.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_REQUEST_METHOD
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Error message
+          enum:
+            - The http request method type is not a valid one
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: InvalidRequestMethodError
+    TagErrorItemResponse:
+      type: object
+      description: Error object for individual tag failures.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Invalid data
+            - Invalid data type
+            - invalid data
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+        - details
+      x-zs-$id: TagErrorItemResponse
+    MergeTagInvalidIdError:
+      type: object
+      additionalProperties: false
+      description: Error returned when the master tag ID in the URL path is invalid.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: true
+          description: Error details identifying the invalid field
+          properties:
+            api_name:
+              type: string
+              description: Name of the invalid field
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path to the invalid field
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - invalid data
+            - Invalid data
+            - Invalid data type
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Merge Tag Invalid ID Error
+      x-zs-$id: MergeTagInvalidIdError
+    InvalidModuleNameError:
+      type: object
+      additionalProperties: false
+      description: Error indicating that the specified module name is invalid.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_MODULE
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Error message
+          enum:
+            - the module name given seems to be invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: InvalidModuleNameError
+    ErrorResponseTagIdNotFound:
+      type: object
+      additionalProperties: false
+      description: Error indicating that the specified tag ID was not found.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: The field name that caused the error
+              maxLength: 100
+        message:
+          type: string
+          description: Error message
+          enum:
+            - tags not found
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseTagIdNotFound
+    RequiredParamMissingError:
+      type: object
+      additionalProperties: false
+      description: Error indicating that a required parameter is missing.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - REQUIRED_PARAM_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            param_name:
+              type: string
+              description: Name of the missing parameter
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: Error message
+          enum:
+            - One of the expected param is missing
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: RequiredParamMissingError
+    GETAddtagsNested1:
+      type: object
+      additionalProperties: false
+      description: Nested schema for AddTags action configurations.
+      properties:
+        name:
+          type: string
+          description: Name of the AddTags configuration
+          maxLength: 255
+        rules:
+          type: array
+          description: Rules associated with the AddTags configuration
+          items:
+            $ref: '#/components/schemas/GETRulesNested1'
+          maxItems: 1
+        id:
+          type: string
+          description: Unique identifier of the AddTags configuration
+          maxLength: 255
+      required:
+        - id
+        - name
+        - rules
+    DetailsNested2:
+      type: object
+      additionalProperties: false
+      description: Nested schema for details in merge response.
+      properties:
+        created_time:
+          type: string
+          description: Creation timestamp of the tag
+          maxLength: 255
+        modified_time:
+          type: string
+          description: Last modification timestamp of the tag
+          maxLength: 255
+        modified_by:
+          $ref: '#/components/schemas/ModifiedByNested'
+        id:
+          type: string
+          description: Unique identifier of the tag
+          maxLength: 255
+        created_by:
+          $ref: '#/components/schemas/CreatedByNested'
+        color_code:
+          type:
+            - string
+            - 'null'
+          description: Color code of the tag
+          maxLength: 255
+        rid:
+          type: string
+          description: Resource ID
+          format: uuid
+    TagsInvalidDataError:
+      type: object
+      additionalProperties: false
+      description: Error indicating invalid data type for the tags field.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: Maximum allowed length for the field
+            api_name:
+              type: string
+              description: API name of the field with invalid data
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path to the field with invalid data
+              maxLength: 1000
+            expected_data_type:
+              type: string
+              description: Expected data type for the field
+              maxLength: 255
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          maxLength: 255
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: TagsInvalidDataError
+    TagFieldMaxLengthError:
+      type: object
+      additionalProperties: false
+      description: Error indicating that a tag field exceeds the maximum allowed length.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: Maximum allowed length for the field
+            api_name:
+              type: string
+              description: API name of the field exceeding max length
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path to the field exceeding max length
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: TagFieldMaxLengthError
+    GETBlueprintNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for Blueprint configurations.
+      properties:
+        '3060320000000666022':
+          $ref: '#/components/schemas/GET3060320000000666022Nested1'
+      required:
+        - '3060320000000666022'
+    GETAddtagsNested2:
+      type: object
+      additionalProperties: false
+      description: Nested schema for AddTags action configurations with simplified rules.
+      properties:
+        name:
+          type: string
+          description: Name of the AddTags configuration
+          maxLength: 255
+        rules:
+          type: array
+          description: Rules associated with the AddTags configuration
+          items:
+            $ref: '#/components/schemas/GETRulesNested2'
+          maxItems: 1
+        id:
+          type: string
+          description: Unique identifier of the AddTags configuration
+          maxLength: 255
+      required:
+        - id
+        - name
+        - rules
+    GETWorkflowTagactionrecordsNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for workflow tag action records.
+      properties:
+        Orchestration:
+          $ref: '#/components/schemas/GETOrchestrationNested'
+        Blueprint:
+          $ref: '#/components/schemas/GETBlueprintNested'
+        Workflow:
+          $ref: '#/components/schemas/GETWorkflowNested'
+      required:
+        - Blueprint
+        - Orchestration
+        - Workflow
+    PostremovetagsResponse200:
+      type: object
+      additionalProperties: false
+      description: Success response when tags are removed from records successfully.
+      properties:
+        data:
+          type: array
+          description: Array of operation results for each record
+          items:
+            $ref: '#/components/schemas/DataNested'
+          maxItems: 20
+        locked_count:
+          type: string
+          description: Number of records that were locked and could not be updated
+          maxLength: 255
+      x-zs-$id: PostremovetagsResponse200
+    GETConfiguredAreasNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for configured_areas in records count response.
+      properties:
+        workflow_tagActionRecords:
+          $ref: '#/components/schemas/GETWorkflowTagactionrecordsNested'
+        custom_view:
+          $ref: '#/components/schemas/GETCustomViewNested'
+      required:
+        - custom_view
+        - workflow_tagActionRecords
+    DataNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for data in operation responses.
+      properties:
+        code:
+          type: string
+          description: Status code of the operation
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/DetailsNested'
+        message:
+          type: string
+          description: Human-readable message about the operation result
+          maxLength: 255
+        status:
+          type: string
+          description: Status of the operation (e.g., success, error)
+          maxLength: 255
+    ModuleTagsNotSupportedError:
+      type: object
+      additionalProperties: false
+      description: Error indicating that the specified module does not support tags.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_MODULE
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Error message
+          enum:
+            - the given module is not supported for this api
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ModuleTagsNotSupportedError
+    TagsNested1:
+      type: object
+      additionalProperties: false
+      description: Nested schema for tag details in responses.
+      properties:
+        name:
+          type: string
+          description: Tag name
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the tag
+          maxLength: 255
+        color_code:
+          type:
+            - string
+            - 'null'
+          description: Color code of the tag
+          maxLength: 255
+        rid:
+          type: string
+          description: Resource ID
+          format: uuid
+    RecordLockedError:
+      type: object
+      additionalProperties: false
+      description: Error indicating that the record is locked and cannot be modified.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - RECORD_LOCKED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            action:
+              type: string
+              description: Action that was attempted on the locked record
+              maxLength: 255
+            id:
+              type: string
+              description: Unique identifier of the locked record
+              maxLength: 255
+          required:
+            - action
+            - id
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Sorry, you cannot perform this operation as the record is locked.
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: RecordLockedError
+    TagsNested2:
+      type: object
+      additionalProperties: false
+      description: Nested schema for tag details in merge response.
+      properties:
+        code:
+          type: string
+          description: Status code of the merge operation
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/DetailsNested2'
+        message:
+          type: string
+          description: Human-readable message about the merge result
+          maxLength: 255
+        status:
+          type: string
+          description: Status of the merge operation
+          maxLength: 255
+    TagsNested:
+      type: object
+      additionalProperties: false
+      description: Nested schema for tag details in requests.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: Tag name
+          maxLength: 25
+        modified_time:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Last modification timestamp of the tag
+          maxLength: 25
+        color_code:
+          type:
+            - string
+            - 'null'
+          description: Color code of the tag
+          maxLength: 7
+        conflict_id:
+          type:
+            - string
+            - 'null'
+          description: ID of the tag to be merged into the master tag
+          maxLength: 19
+    PostremovetagsRequest:
+      type: object
+      additionalProperties: false
+      description: Request body schema for removing tags from records.
+      properties:
+        ids:
+          type:
+            - string
+            - 'null'
+          description: >
+            JSON array string of record IDs to remove tags from. Use the [Get
+            Records API](record.yaml#$.paths./module.get) to retrieve record
+            IDs.
+          enum:
+            - '["3060320000002496003"]'
+          maxLength: 99
+        tags:
+          type: array
+          description: Array of tags to remove from the records (Required)
+          items:
+            $ref: '#/components/schemas/TagsNested'
+          maxItems: 1
+      required:
+        - tags
+  parameters:
+    ParamPathId:
+      name: id
+      in: path
+      description: >
+        Unique identifier of the record or tag. Use the [Get Tags
+        API](tags.yaml#$.paths./settings/tags.get) to retrieve tag IDs.
+      required: true
+      schema:
+        maxLength: 19
+        type: string
+        example: '{id}'
+    ParamQueryId:
+      name: id
+      in: query
+      description: >
+        Tag ID to retrieve the records count for. Use the [Get Tags
+        API](tags.yaml#$.paths./settings/tags.get) to retrieve tag IDs.
+      required: false
+      schema:
+        type: string
+        maxLength: 19
+        example: '111111111112346460'
+    ParamQueryModule1:
+      name: module
+      example: Leads
+      in: query
+      description: >
+        The API name of the module to perform the operation on. Use the [Get
+        Modules API](modules.yaml#$.paths./settings/modules.get) to retrieve the
+        module API names.
+      required: false
+      schema:
+        type: string
+        maxLength: 100
+    ParamPathModule:
+      name: module
+      example: Leads
+      in: path
+      description: >
+        The API name of the module to perform the operation on. Use the [Get
+        Modules API](modules.yaml#$.paths./settings/modules.get) to retrieve the
+        module API names.
+      required: true
+      schema:
+        type: string
+        maxLength: 100
+    ParamQueryModule:
+      name: module
+      example: Leads
+      in: query
+      description: >
+        The API name of the module to retrieve the tag records count for. Use
+        the [Get Modules API](modules.yaml#$.paths./settings/modules.get) to
+        retrieve the module API names.
+      required: true
+      schema:
+        type: string
+        maxLength: 100
+    ParamQueryOverWrite:
+      name: over_write
+      in: query
+      description: >-
+        If true, replaces all existing tags on the record with the specified
+        tags. If false or omitted, the specified tags are appended to the
+        existing tags.
+      required: false
+      schema:
+        type: boolean
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.tags.all: Grants full access to tag management operations.
+            ZohoCRM.modules.ALL: Grants full access to all Zoho CRM modules.
+            ZohoCRM.modules.CREATE: Grants permission to create records in modules.
+            ZohoCRM.settings.tags.READ: Grants permission to read tag settings.
+            ZohoCRM.settings.tags.CREATE: Grants permission to create tags.

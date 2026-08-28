@@ -1,0 +1,30 @@
+# Variables
+
+- [OpenAPI specification](variables.yaml)
+- [Retrieve all variables](mds/getVariables.md)
+  - Retrieves all available CRM variables. Returns the API name, display name, description, type, value, and variable group for each variable. Requires the ZohoCRM.settings.variables.READ scope.
+  - [Examples](mds/examples/getVariables.md)
+- [Update variables](mds/updateVariables.md)
+  - Updates one or more CRM variables in a single request. The id key is mandatory in the request body to identify each variable. You cannot update the type or variable group of a variable. Requires the ZohoCRM.settings.variables.UPDATE scope.
+  - [Examples](mds/examples/updateVariables.md)
+- [Create variables](mds/createVariables.md)
+  - Creates one or more CRM variables. The name, api_name, and variable_group keys are mandatory. The type key specifies the data type of the variable. Possible types: integer, text, percent, decimal, currency, date, datetime, email, phone, url, checkbox, textarea, long. Requires the ZohoCRM.settings.variables.CREATE scope.
+  - [Examples](mds/examples/createVariables.md)
+- [Delete variables](mds/deleteVariables.md)
+  - Deletes one or more CRM variables by their IDs. Pass variable IDs as a comma-separated list in the ids query parameter, or pass rids in the rids query parameter. A variable that is associated with other features such as email templates, webhooks, or functions cannot be deleted until the association is removed. Requires the ZohoCRM.settings.variables.DELETE scope.
+  - [Examples](mds/examples/deleteVariables.md)
+- [specific variable](mds/getVariableById.md)
+  - Retrieves the details of a specific CRM variable by its ID. The group query parameter, specifying the variable group ID or API name, is mandatory when retrieving a specific variable. Requires the ZohoCRM.settings.variables.READ scope.
+  - [Examples](mds/examples/getVariableById.md)
+- [Specific variable](mds/updateVariableById.md)
+  - Updates a specific CRM variable identified by its ID or API name. You cannot update the type or variable group of the variable. For the list of updatable input keys, refer to the Create Variables operation. Requires the ZohoCRM.settings.variables.UPDATE scope.
+  - [Examples](mds/examples/updateVariableById.md)
+- [Specific variable](mds/deleteVariablesById.md)
+  - Deletes a specific CRM variable identified by its ID. A variable that is associated with other features such as email templates, webhooks, or functions cannot be deleted until the association is removed. Requires the ZohoCRM.settings.variables.DELETE scope.
+  - [Examples](mds/examples/deleteVariablesById.md)
+- [Variable Associations](mds/getVariableAssociations.md)
+  - Get associated variables
+  - [Examples](mds/examples/getVariableAssociations.md)
+- [Generate API Name](mds/postGenerateApiName.md)
+  - generates api name
+  - [Examples](mds/examples/postGenerateApiName.md)

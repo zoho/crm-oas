@@ -1,0 +1,635 @@
+openapi: 3.1.0
+info:
+  title: Files
+  description: >-
+    The Zoho File System (ZFS) is the central storage layer for all files and
+    attachments in Zoho CRM. This API lets you upload files to ZFS and retrieve
+    them using their encrypted file IDs. Zoho CRM Files API - endpoints to
+    upload and retrieve files. POST /crm/v8/files accepts multipart/form-data
+    with a required 'file' field (binary) and returns upload metadata (id, name,
+    status). GET /crm/v8/files?id={id} returns the binary content for the
+    specified file.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain that determines the data center region for API
+          requests. Possible values: **com**, **eu**, **in**, **cn**, **au**.
+          Default: **com**.
+      version:
+        default: v8
+        description: 'The API version to use in the request URL. Default: **v8**.'
+paths:
+  /files:
+    post:
+      operationId: uploadFiles
+      summary: Upload files to ZFS
+      description: >-
+        To upload one or more files to the Zoho File System (ZFS) in your Zoho
+        CRM account. The API returns an encrypted file ID for each uploaded
+        file, which you can use to attach the file to a file upload field, image
+        upload field, or record image field through the Create or Update Records
+        API. The file is uploaded using multipart/form-data with a required
+        'file' field containing the binary data of the file to be uploaded. The
+        response includes the file ID, name, status, and other details. Can
+        upload 10 files in a single request by repeating the 'file' field.
+        Maximum file size is 20 MB.
+      x-zs-llm-description: >-
+        The file ID returned is single-use. Once it is associated with a CRM
+        record, email template, or any other entity via their respective APIs,
+        the file ID is consumed and becomes unavailable. To reuse the same file
+        content, upload the file again to obtain a new file ID.
+      security:
+        - OAuth2:
+            - ZohoCRM.files.CREATE
+      parameters:
+        - name: inline
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - inline
+          description: >-
+            Specify the upload type for inline images. Possible values:
+            **inline** - Upload the file as an inline image for use in email
+            templates or rich-text fields.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              description: >-
+                Multipart form data for uploading one or more files to the Zoho
+                File System.
+              type: object
+              properties:
+                file:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                    description: Specify the binary content of the file to upload.
+                  maxItems: 10
+                  description: >-
+                    Upload one or more files using repeated **file** keys in the
+                    multipart form data.
+              required:
+                - file
+              additionalProperties: false
+        required: true
+      responses:
+        '200':
+          description: >-
+            Returns an array of upload results, one per file, containing the
+            encrypted file ID for CRM record association and the upload status
+            confirmation.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UploadFilesResponse
+                description: >-
+                  Represents the response schema for a successful file upload to
+                  the Zoho File System.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Contains the array of upload results, one object per file
+                      submitted in the request. The order corresponds to the
+                      order of files in the multipart request.
+                    minItems: 1
+                    maxItems: 10
+                    items:
+                      type: object
+                      description: >-
+                        Represents the upload result for a single file,
+                        including its status, success code, and file metadata.
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                            - success
+                          description: >-
+                            Represents the upload result status. Possible
+                            values: **success** - The file uploaded to ZFS
+                            without errors.
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                          description: >-
+                            Represents the success code for the upload
+                            operation. Possible values: **SUCCESS** - The file
+                            uploaded to ZFS without errors.
+                        message:
+                          type: string
+                          maxLength: 500
+                          description: >-
+                            Represents the success message confirming the file
+                            upload.
+                          examples:
+                            - connections.txt uploaded successfully
+                            - profile_photo.jpg uploaded successfully
+                        details:
+                          type: object
+                          description: >-
+                            Contains the file metadata for the uploaded file,
+                            including the unique identifier for CRM record
+                            association.
+                          properties:
+                            name:
+                              type: string
+                              maxLength: 500
+                              description: >-
+                                Represents the original filename as provided in
+                                the upload request.
+                              minLength: 1
+                              examples:
+                                - contract_2024.pdf
+                                - profile_photo.jpg
+                            id:
+                              type: string
+                              x-zs-$id: UploadedFileId
+                              maxLength: 150
+                              description: >-
+                                Unique file identifier in ZFS. Use this ID to
+                                attach the file to CRM records or retrieve it
+                                via GET /files
+                              x-zs-llm-description: >-
+                                The file ID returned is single-use. Once it is
+                                associated with a CRM record, email template, or
+                                any other entity via their respective APIs, the
+                                file ID is consumed and becomes unavailable. To
+                                reuse the same file content, upload the file
+                                again to obtain a new file ID.
+                              minLength: 1
+                              examples:
+                                - ae9c6cd994aa55a0fda90faaff4a2f472b1c94e7
+                                - bjbiuwg467q8t3uhbnfubf2yg4t4h7gfbijbkwqe
+                          required:
+                            - name
+                            - id
+                          additionalProperties: false
+                      required:
+                        - status
+                        - code
+                        - message
+                        - details
+                      additionalProperties: false
+                required:
+                  - data
+                additionalProperties: false
+              examples:
+                SingleFileUpload:
+                  summary: Single file upload
+                  value:
+                    data:
+                      - status: success
+                        code: SUCCESS
+                        message: invoice_2024_Q4.pdf uploaded successfully
+                        details:
+                          name: invoice_2024_Q4.pdf
+                          id: ae9c6cd994aa55a0fda90faaff4a2f472b1c94e7
+                MultiFileUpload:
+                  summary: Multiple files upload
+                  value:
+                    data:
+                      - status: success
+                        code: SUCCESS
+                        message: contract.pdf uploaded successfully
+                        details:
+                          name: contract.pdf
+                          id: ae9c6cd994aa55a0fda90faaff4a2f472b1c94e7
+                      - status: success
+                        code: SUCCESS
+                        message: signature.png uploaded successfully
+                        details:
+                          name: signature.png
+                          id: bf8d7de885bb66b1feb91fbbgg5b3g583c2d85f8
+        '400':
+          description: >-
+            The file upload request is malformed or invalid.Bad Request - The
+            file upload request is malformed or invalid. Returns
+            `failure_in_attachment_handling` when the 'file' field is missing or
+            contains no file data. Returns `INVALID_REQUEST` when request
+            constraints are violated, such as exceeding the 10-file limit per
+            request. **Resolution:** Verify that the request includes a **file**
+            field with valid binary file data in multipart/form-data format, and
+            that the request does not exceed ten files.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MultipleErrorResponses
+                oneOf:
+                  - x-zs-$id: RequiredParamMissingResponseCode
+                    type: object
+                    description: >-
+                      Returned when the **file** field is missing from the
+                      multipart/form-data request or when a **file** field is
+                      present but contains no actual file data.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the overall result status of the API
+                          request. Possible values: **error** - The request
+                          failed due to a validation or processing issue.
+                      code:
+                        type: string
+                        enum:
+                          - failure_in_attachment_handling
+                        description: >-
+                          Represents the error code for the upload failure.
+                          Possible values: **failure_in_attachment_handling** -
+                          The **file** field is missing or contains no file
+                          data.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message prompting proper file
+                          upload.
+                        enum:
+                          - >-
+                            Problem in uploading attachment. kindly upload the
+                            file properly
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional error context. Typically empty for
+                          this error type.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - x-zs-$id: InvalidRequestResponse
+                    type: object
+                    description: >-
+                      Returned when the request violates API constraints, most
+                      commonly when more than ten files are included in a single
+                      upload request.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the overall result status of the API
+                          request. Possible values: **error** - The request
+                          failed due to a validation or processing issue.
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_REQUEST
+                        description: >-
+                          Represents the error code for the request violation.
+                          Possible values: **INVALID_REQUEST** - The request
+                          violates API constraints such as exceeding the
+                          ten-file limit.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message requesting verification
+                          of request parameters.
+                        enum:
+                          - >-
+                            unable to process your request. please verify
+                            whether you have entered proper method name,
+                            parameter and parameter values.
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional error context. Typically empty for
+                          this error type.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+              examples:
+                MissingFileField:
+                  summary: Missing 'file' field in request
+                  description: >-
+                    Sample error response for the failure_in_attachment_handling
+                    error: problem in uploading attachment. Occurs when the
+                    multipart/form-data request does not include any 'file'
+                    field
+                  value:
+                    code: failure_in_attachment_handling
+                    details: {}
+                    message: >-
+                      Problem in uploading attachment. kindly upload the file
+                      properly
+                    status: error
+                EmptyFileField:
+                  summary: Empty 'file' field with no data
+                  description: >-
+                    Sample error response for the failure_in_attachment_handling
+                    error: problem in uploading attachment. Occurs when a 'file'
+                    field exists but contains no actual file data
+                  value:
+                    code: failure_in_attachment_handling
+                    details: {}
+                    message: >-
+                      Problem in uploading attachment. kindly upload the file
+                      properly
+                    status: error
+                TooManyFiles:
+                  summary: Exceeds ten-file limit
+                  description: >-
+                    Sample error response for the INVALID_REQUEST error: unable
+                    to process your request.
+                  value:
+                    code: INVALID_REQUEST
+                    details: {}
+                    message: >-
+                      unable to process your request. please verify whether you
+                      have entered proper method name, parameter and parameter
+                      values.
+                    status: error
+        '415':
+          description: >-
+            Unsupported Media Type / File Size Exceeded - Returned when one or
+            more uploaded files exceed the maximum allowed size of 20 MB per
+            file. The API rejects the entire request if any single file violates
+            this constraint. **Resolution:** Verify that each file in the
+            request is within the 20 MB size limit before uploading and that it
+            is of a supported media type.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MultipleErrorResponses415
+                oneOf:
+                  - x-zs-$id: FileSizeMoreThanAllowedSizeResponse
+                    type: object
+                    description: >-
+                      Returned when any file in the upload request exceeds the
+                      20 MB size limit. The entire upload is rejected, even if
+                      other files are within the allowed size.
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the overall result status of the API
+                          request. Possible values: **error** - The request
+                          failed due to a validation or processing issue.
+                      code:
+                        type: string
+                        enum:
+                          - FILE_SIZE_MORE_THAN_ALLOWED_SIZE
+                        description: >-
+                          Represents the error code for the file size violation.
+                          Possible values: **FILE_SIZE_MORE_THAN_ALLOWED_SIZE**
+                          - One or more files exceed the 20 MB maximum file size
+                          limit.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message prompting file size
+                          verification.
+                        enum:
+                          - >-
+                            Please check if the size of the file is in the
+                            correct range
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional error context. Typically empty for
+                          this error type.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+              examples:
+                FileTooLarge:
+                  summary: File exceeds size limit
+                  description: >-
+                    Sample error response for the
+                    FILE_SIZE_MORE_THAN_ALLOWED_SIZE error: please check if the
+                    size of the file is in the correct range. Occurs when any
+                    file in the multipart upload request exceeds the maximum
+                    allowed size of 20 MB
+                  value:
+                    code: FILE_SIZE_MORE_THAN_ALLOWED_SIZE
+                    details: {}
+                    message: >-
+                      Please check if the size of the file is in the correct
+                      range
+                    status: error
+    get:
+      operationId: getFile
+      summary: Retrieve a file from ZFS
+      description: >-
+        To retrieve the binary content of a file stored in Zoho File System
+        (ZFS) using its unique file ID. The file ID is provided as a required
+        query parameter 'id'. If the file exists, the API returns the file's
+        binary data along with appropriate headers indicating the MIME type and
+        content disposition for download. If the file ID does not correspond to
+        any file in ZFS, a 204 No Content response is returned. This endpoint is
+        used to download files that have been previously uploaded to ZFS and
+        associated with Zoho CRM records.
+      security:
+        - OAuth2:
+            - ZohoCRM.files.READ
+      parameters:
+        - name: id
+          in: query
+          required: false
+          description: >-
+            Specify the encrypted file ID received in the response when
+            uploading files to the Zoho File System. Use the [ZFC
+            API](files.yaml#$.paths./files.get) to retrieve the File IDs.
+          schema:
+            type: string
+            maxLength: 150
+      responses:
+        '200':
+          description: >-
+            Successfully uploaded file to Zoho File System. Returns the uploaded
+            file as binary content with appropriate headers indicating the file
+            type and disposition
+          headers:
+            Content-Type:
+              description: >-
+                MIME type of the uploaded file (e.g., application/pdf,
+                image/png, text/plain).
+              schema:
+                type: string
+                maxLength: 500
+                description: MIME type of the file including charset if applicable
+              example: image/png;charset=UTF-8
+            Content-Disposition:
+              description: >-
+                Indicates how the content should be displayed. Includes the
+                original filename for download purposes.
+              schema:
+                type: string
+                maxLength: 500
+                description: Content disposition with original filename
+              example: attachment;filename*=UTF-8''image %282%29.png
+          content:
+            application/octet-stream:
+              schema:
+                x-zs-$id: FileBinaryContentResponse
+                type: string
+                format: binary
+                description: >-
+                  Binary content of the requested file, returned with the
+                  appropriate MIME type header.
+        '204':
+          description: >-
+            The specified file ID does not match any file in the Zoho File
+            System. No Content - Returned when the provided file ID does not
+            match any file in the Zoho File System. This occurs when the 'id'
+            parameter contains an invalid file identifier, an empty string, or
+            references a file that has been deleted or never existed.
+            **Resolution:** Verify that the **id** parameter contains a valid
+            encrypted file ID from a previous upload response.
+        '400':
+          description: >-
+            The request is missing required parameters. **For regular file
+            mode**: The **id** parameter is missing. **For email template mode**
+            (when `type=email_template`): One or more of the required parameters
+            (`file_id`, `template_id`, `attach_id`) are missing. **Resolution:**
+            For regular file retrieval, include the **id** query parameter. For
+            email template attachments, ensure all required parameters are
+            present: `type=email_template`, `file_id`, `template_id`, and
+            `attach_id`.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UploadFile400ErrorResponses
+                oneOf:
+                  - $ref: '#/components/schemas/RequiredParamMissingResponse'
+              examples:
+                MissingIdParameter:
+                  summary: Missing id parameter (regular mode)
+                  description: >-
+                    Sample error response when the **id** parameter is missing
+                    for regular file retrieval.
+                  value:
+                    status: error
+                    code: REQUIRED_PARAM_MISSING
+                    message: One of the expected parameter is missing
+                    details:
+                      param_name: id
+                MissingEmailTemplateAttachId:
+                  summary: Missing attach_id parameter
+                  description: >-
+                    Sample error response when `type=email_template` but the
+                    **attach_id** parameter is missing.
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: required attachment id param not found
+                    details:
+                      param_name: attach_id
+                MissingEmailTemplateTemplateId:
+                  summary: Missing template_id parameter
+                  description: >-
+                    Sample error response when `type=email_template` but the
+                    **template_id** parameter is missing.
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: required template id param not found
+                    details:
+                      param_name: template_id
+                MissingEmailTemplateFileId:
+                  summary: Missing file_id parameter
+                  description: >-
+                    Sample error response when `type=email_template` but the
+                    **file_id** parameter is missing.
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: required file id param not found
+                    details:
+                      param_name: file_id
+security:
+  - OAuth2:
+      - ZohoCRM.files.READ
+components:
+  schemas:
+    RequiredParamMissingResponse:
+      x-zs-$id: RequiredParamMissingResponse
+      type: object
+      description: >-
+        Returned when the required **id** query parameter is not present in the
+        request URL.
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+          description: >-
+            Represents the overall result status of the API request. Possible
+            values: **error** - The request failed due to a validation or
+            processing issue.
+        code:
+          type: string
+          enum:
+            - REQUIRED_PARAM_MISSING
+          description: Represents the error code returned by the API.
+        message:
+          type: string
+          description: Represents the error message describing the issue.
+          enum:
+            - One of the expected parameter is missing
+        details:
+          type: object
+          description: >-
+            Contains additional context about the error, including the name of
+            the missing parameter.
+          properties:
+            param_name:
+              type: string
+              enum:
+                - id
+              description: >-
+                Represents the name of the required parameter that is missing
+                from the request.
+          required:
+            - param_name
+          additionalProperties: false
+      required:
+        - status
+        - code
+        - message
+        - details
+      additionalProperties: false
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.files.CREATE: Create and upload files in Zoho CRM
+            ZohoCRM.files.READ: Read and download files from Zoho CRM

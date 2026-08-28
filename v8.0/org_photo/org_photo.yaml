@@ -1,0 +1,603 @@
+openapi: 3.1.0
+info:
+  title: Org photo
+  description: >-
+    The organization photo is the profile image displayed for your Zoho CRM
+    organization. This API enables developers to retrieve, upload, and delete
+    the organization photo.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM, supporting requests across multiple
+      data center regions.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain (TLD) of the API server, corresponding to the
+          Zoho data center region.
+
+          Possible values:
+
+          com - United States.
+
+          eu - Europe.
+
+          in - India.
+
+          cn - China.
+
+          au - Australia.
+      version:
+        default: v8
+        description: The version of the Zoho CRM API. The default value is v8.
+paths:
+  /org/photo:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.org.READ
+      summary: Organization photo
+      description: To retrieve the organization photo for your Zoho CRM organization.
+      operationId: getOrgPhoto
+      responses:
+        '200':
+          description: Returns the organization photo as PNG binary image data.
+          content:
+            image/png:
+              schema:
+                x-zs-$id: OrganizationPhoto
+                type: string
+                format: binary
+                description: Represents the organization photo as PNG binary image data.
+        '204':
+          description: No organization photo is available for this organization.
+    post:
+      security:
+        - OAuth2:
+            - ZohoCRM.org.CREATE
+      summary: Upload Organization Photo
+      description: To upload a photo for your Zoho CRM organization.
+      operationId: uploadOrganizationPhoto
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              description: Request body schema for uploading the organization photo.
+              additionalProperties: false
+              properties:
+                file:
+                  type: object
+                  description: 'Specify the image file to upload as the organization photo. '
+                  additionalProperties: false
+              required:
+                - file
+        required: true
+        description: >-
+          The request body must include the image file in multipart/form-data
+          format.
+      responses:
+        '200':
+          description: Returns the upload status for the organization photo.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: OrgPhotoUploadSuccessResponse
+                type: object
+                description: Response schema for a successful organization photo upload.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Status of the operation
+                    enum:
+                      - success
+                  code:
+                    type: string
+                    description: Response code
+                    enum:
+                      - SUCCESS
+                  message:
+                    type: string
+                    description: Success message
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: >-
+                      Success response containing the upload status for the
+                      organization photo.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Specifies the status of the response.
+                        enum:
+                          - success
+                      code:
+                        type: string
+                        description: Represents the result code for this operation.
+                        enum:
+                          - SUCCESS
+                      message:
+                        type: string
+                        description: Indicates the success message for this operation.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional details about the operation
+                          result.
+                        additionalProperties: false
+                        properties: {}
+              examples:
+                SuccessResponse:
+                  summary: Success response for status code 200
+                  value:
+                    status: success
+                    code: SUCCESS
+                    message: Organization photo uploaded successfully
+                    details: {}
+                  description: Shows a successful upload response with a SUCCESS code.
+        '400':
+          description: >-
+            The request is invalid. Resolution: Verify that the request URL,
+            token, and data are valid.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: BadRequestErrorResponse
+                type: object
+                description: Error response schema for 400 bad request errors.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Represents the status of the response.
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: Specifies the error code for this response.
+                    enum:
+                      - INVALID_URL_PATTERN
+                      - INVALID_DATA
+                      - INVALID_REQUEST_METHOD
+                      - INVALID_REQUEST
+                      - INVALID_TOKEN
+                  message:
+                    type: string
+                    description: Represents the error message for this response.
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Contains additional details about the error.
+                    additionalProperties: false
+                    properties:
+                      expected_type:
+                        type: string
+                        description: >-
+                          Expected data type for the file field when
+                          INVALID_DATA error occurs
+                        maxLength: 50
+              examples:
+                BadRequestError:
+                  summary: 'INVALID_DATA error: request data is invalid'
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: Invalid data provided
+                    details: {}
+                  description: >-
+                    Shows an INVALID_DATA error when the request contains
+                    invalid data.
+        '403':
+          description: >-
+            The user does not have permission to upload the organization photo.
+            Resolution: Verify that the OAuth token includes the
+            ZohoCRM.org.CREATE scope.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ForbiddenErrorResponse
+                type: object
+                description: Error response schema for 403 permission-denied errors.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Represents the status of the response.
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: Indicates the error code for this response.
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: Represents the error message for this response.
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Contains additional details about the permission error.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Specifies the permission items required for this
+                          operation.
+                        maxItems: 100
+                        items:
+                          type: string
+                          description: Permission name
+                          maxLength: 50
+              examples:
+                NoPermissionError:
+                  summary: >-
+                    NO_PERMISSION error: insufficient permissions to upload
+                    organization photo
+                  value:
+                    status: error
+                    code: NO_PERMISSION
+                    message: Permission denied to upload organization photo
+                    details:
+                      permissions:
+                        - org.photo.upload
+                  description: >-
+                    Shows a NO_PERMISSION error when the user lacks permission
+                    to upload the organization photo.
+        '413':
+          description: >-
+            The file size exceeds the maximum allowed limit. Resolution: Upload
+            a file within the maximum allowed size.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: FileSizeExceedsErrorResponse
+                type: object
+                description: Error response schema for 413 file size exceeded errors.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Represents the status of the response.
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: Represents the error code for this response.
+                    enum:
+                      - FILE_SIZE_EXCEEDS
+                  message:
+                    type: string
+                    description: Represents the error message for this response.
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Contains additional details about the file size error.
+                    additionalProperties: false
+                    properties:
+                      size:
+                        type: integer
+                        description: Represents the maximum allowed file size in bytes.
+                        format: int32
+              examples:
+                FileSizeExceedsError:
+                  summary: >-
+                    FILE_SIZE_EXCEEDS error: uploaded file exceeds the maximum
+                    allowed size
+                  value:
+                    status: error
+                    code: FILE_SIZE_EXCEEDS
+                    message: File size exceeds the maximum allowed limit
+                    details:
+                      size: 5242880
+                  description: >-
+                    Shows a FILE_SIZE_EXCEEDS error when the uploaded file
+                    exceeds the maximum allowed size.
+        '415':
+          description: >-
+            The file type is unsupported or the image resolution exceeds the
+            allowed limit. Resolution: Upload an image file with a supported
+            format and resolution.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UnsupportedMediaTypeErrorResponse
+                oneOf:
+                  - x-zs-$id: FileResolutionExceedsErrorResponse
+                    type: object
+                    description: >-
+                      Error response for uploading an image that exceeds the
+                      maximum allowed resolution.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Represents the status of the response.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Represents the error code for this response.
+                        enum:
+                          - FILE_RESOLUTION_EXCEEDS
+                      message:
+                        type: string
+                        description: Represents the error message for this response.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional details about the resolution
+                          error.
+                        additionalProperties: false
+                        properties:
+                          resolution:
+                            type: integer
+                            description: >-
+                              Represents the maximum allowed image resolution in
+                              pixels.
+                            format: int32
+                  - x-zs-$id: InvalidDataErrorResponse
+                    type: object
+                    description: >-
+                      Error response for uploading a file with an unsupported
+                      image format.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Represents the status of the response.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Specifies the error code for this response.
+                        enum:
+                          - INVALID_DATA
+                      message:
+                        type: string
+                        description: Indicates the error message for this response.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: Contains additional details about the error.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                description: Error response schema for 415 unsupported media type errors.
+              examples:
+                FileResolutionExceedsError:
+                  summary: >-
+                    FILE_RESOLUTION_EXCEEDS error: image resolution exceeds the
+                    allowed limit
+                  value:
+                    status: error
+                    code: FILE_RESOLUTION_EXCEEDS
+                    message: File resolution exceeds the maximum allowed limit
+                    details:
+                      resolution: 10000000
+                  description: >-
+                    Shows a FILE_RESOLUTION_EXCEEDS error when the uploaded
+                    image resolution exceeds the allowed limit.
+                InvalidDataError:
+                  summary: >-
+                    INVALID_DATA error: uploaded file is not a supported image
+                    format
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: Invalid file format. Only image files are allowed
+                    details: {}
+                  description: >-
+                    Shows an INVALID_DATA error when the uploaded file format is
+                    not a supported image type.
+    delete:
+      security:
+        - OAuth2:
+            - ZohoCRM.org.DELETE
+      summary: Delete the organization photo
+      description: To delete the organization photo from your Zoho CRM organization.
+      operationId: deleteOrgPhoto
+      responses:
+        '200':
+          description: Returns the deletion status for the organization photo.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: OrgPhotoDeleteSuccessResponse
+                description: Response schema for a successful organization photo deletion.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Status of the operation
+                    enum:
+                      - success
+                  code:
+                    type: string
+                    description: Response code
+                    enum:
+                      - SUCCESS
+                  message:
+                    type: string
+                    description: Success message
+                    maxLength: 1000
+                  details:
+                    type: object
+                    x-zs-$id: OrgPhotoDeleteSuccessResponse
+                    description: >-
+                      Success response containing the deletion status for the
+                      organization photo.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Represents the status of the response.
+                        enum:
+                          - success
+                      code:
+                        type: string
+                        description: The result code for this operation.
+                        enum:
+                          - SUCCESS
+                      message:
+                        type: string
+                        description: The success message for this operation.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional details about the operation
+                          result.
+                        additionalProperties: false
+              examples:
+                SuccessResponse:
+                  summary: Success response for status 200
+                  value:
+                    status: success
+                    code: SUCCESS
+                    message: Organization photo deleted successfully
+                    details: {}
+                  description: Shows a successful deletion response with a SUCCESS code.
+        '400':
+          description: >-
+            The request is invalid. Resolution: Verify that the request URL,
+            token, and data are valid.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: BadRequestInvalidRequestParamError
+                type: object
+                description: Error response schema for 400 bad request errors.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Represents the status of the response.
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: The error code for this response.
+                    enum:
+                      - INVALID_URL_PATTERN
+                      - INVALID_DATA
+                      - INVALID_REQUEST_METHOD
+                      - INVALID_REQUEST
+                      - INVALID_TOKEN
+                  message:
+                    type: string
+                    description: Indicates the error message for this response.
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Contains additional details about the error.
+                    additionalProperties: false
+              examples:
+                BadRequestError:
+                  summary: 'INVALID_DATA error: request data is invalid'
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: Invalid data provided
+                    details: {}
+                  description: >-
+                    Shows an INVALID_DATA error when the request contains
+                    invalid data.
+        '403':
+          description: >-
+            The user does not have permission to delete the organization photo.
+            Resolution: Verify that the OAuth token includes the
+            ZohoCRM.org.DELETE scope.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ForbiddenDeleteOrgPhotoErrorResponse
+                type: object
+                description: Error response schema for 403 permission-denied errors.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Indicates the status of the response.
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: Represents the error code for this response.
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: Represents the error message for this response.
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Contains additional details about the permission error.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of required permissions for this
+                          operation.
+                        maxItems: 100
+                        items:
+                          type: string
+                          description: Represents a required permission name.
+                          maxLength: 500
+              examples:
+                NoPermissionError:
+                  summary: >-
+                    NO_PERMISSION error: insufficient permissions to delete
+                    organization photo
+                  value:
+                    status: error
+                    code: NO_PERMISSION
+                    message: Permission denied to delete organization photo
+                    details:
+                      permissions:
+                        - org.photo.delete
+                  description: >-
+                    Shows a NO_PERMISSION error when the user lacks permission
+                    to delete the organization photo.
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.org.ALL: >-
+              Grants full access to organization settings in the Zoho CRM
+              organization.
+            ZohoCRM.org.READ: >-
+              Grants permission to read organization settings in the Zoho CRM
+              organization.
+            ZohoCRM.org.CREATE: >-
+              Grants permission to create organization settings in the Zoho CRM
+              organization.
+            ZohoCRM.org.DELETE: >-
+              Grants permission to delete organization settings in the Zoho CRM
+              organization.
+            ZohoCRM.features.READ: >-
+              Grants read access to feature details in the Zoho CRM
+              organization.

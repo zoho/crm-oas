@@ -1,0 +1,21 @@
+# Modules
+
+- [OpenAPI specification](modules.yaml)
+- [Retrieve modules](mds/getModules.md)
+  - Retrieves the list of all modules available in the Zoho CRM account, including standard, custom, subform, and linking (MxN) modules. Supports optional filtering by `status`, `feature_name`, and `include` to control the scope and depth of the response. When both `status` and `feature_name` are provided, modules must satisfy both criteria. Returns all matching modules in a single response without pagination.
+  - [Examples](mds/examples/getModules.md)
+- [Create a custom module](mds/createModules.md)
+  - To create a custom module in your Zoho CRM organization. Only one module can be created per request. The required permission depends on the access type: **Crm_Implied_Customize_Zoho_CRM** for org-based modules and **Crm_Implied_Create_Team_Module** for team-based modules. Submitting the same api_name multiple times will result in validation errors. The optional access_type controls module access model (org_based/team_based).
+  - [Examples](mds/examples/createModules.md)
+- [Update CRM modules](mds/updateModules.md)
+  - Updates existing modules in the CRM. Allows modification of module labels (`singular_label`, `plural_label`) and profile assignments. Supports batch updates of up to 100 modules per request. Returns 200 when all modules update successfully, or 207 Multi-Status when some succeed and others fail. Module `access_type` cannot be updated and must not be included in the request body. This operation is idempotent - submitting the same request multiple times produces the same result.
+  - [Examples](mds/examples/updateModules.md)
+- [Get module metadata by API name](mds/getModuleByApiName.md)
+  - Retrieves complete metadata for a specific CRM module identified by its API name, including fields, layouts, profiles, related lists, and feature capabilities. Returns 204 when the module is not available through this endpoint, or 400 when the identifier is invalid or the module is unsupported
+  - [Examples](mds/examples/getModuleByApiName.md)
+- [Update Module Labels and Profiles](mds/updateModuleByApiName.md)
+  - Updates the singular label, plural label, and profile assignments for the module identified by {moduleIdentifier}. Immutable fields such as access_type and api_name cannot be changed; attempting to include them returns a NOT_ALLOWED error
+  - [Examples](mds/examples/updateModuleByApiName.md)
+- [Generate web-tab link for a module](mds/getGenerateLink.md)
+  - To generate the configured web-tab link for a specific module in your Zoho CRM organization. The moduleid path parameter must be the module's API name (e.g., Leads, Contacts, Custom_Module_1).
+  - [Examples](mds/examples/getGenerateLink.md)

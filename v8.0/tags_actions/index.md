@@ -1,0 +1,21 @@
+# Tag Actions API
+
+- [OpenAPI specification](tags_actions.yaml)
+- [Add Tags to Records](mds/postAddTags.md)
+  - Associates tags to one or more records in the specified module.
+  - [Examples](mds/examples/postAddTags.md)
+- [Remove Tags from Records](mds/postRemoveTags.md)
+  - Removes tags from one or more records in the specified module.
+  - [Examples](mds/examples/postRemoveTags.md)
+- [Add Tags to a Record](mds/postAddTagsWithId.md)
+  - Adds tags to a specific record in the specified module.
+  - [Examples](mds/examples/postAddTagsWithId.md)
+- [Remove Tags from a Record](mds/postRemoveTagsWithId.md)
+  - Removes tags from a specific record in the specified module.
+  - [Examples](mds/examples/postRemoveTagsWithId.md)
+- [Get Tag Records Count](mds/getTagRecordsCount.md)
+  - Retrieves the number of records associated with a specific tag, including workflow, blueprint, and orchestration usage details.
+  - [Examples](mds/examples/getTagRecordsCount.md)
+- [Merge Tags](mds/mergeTags.md)
+  - Merges two tags into one, combining their associated records and metadata. The tag specified in the path parameter (id) is the master tag that will remain after the merge. The conflict_id in the request body specifies the tag to be merged into the master tag.
+  - [Examples](mds/examples/mergeTags.md)

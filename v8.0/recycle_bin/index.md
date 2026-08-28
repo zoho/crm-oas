@@ -1,0 +1,27 @@
+# Recycle Bin
+
+- [OpenAPI specification](recycle_bin.yaml)
+- [Get recycle-bin records](mds/getRecycleBinRecords.md)
+  - To retrieve a paginated list of records currently present in the Recycle Bin in your Zoho CRM account. The response contains up to 200 records per page, along with pagination metadata. The list can be filtered by display name, source module, the user who deleted the records, or the deletion timestamp. Sorting is supported by display name, deletion time, or deleted-by user in ascending or descending order.
+  - [Examples](mds/examples/getRecycleBinRecords.md)
+- [Delete recycle-bin records](mds/deleteRecycleBinRecords.md)
+  - To permanently delete one or more records from the Recycle Bin in your Zoho CRM account. When deleting a parent record, Zoho CRM also removes all its associated child records from the Recycle Bin, such as Notes and Attachments. When the total number of records to delete is 1000 or fewer, the operation completes immediately and returns a 200 response with per-item results. When the total exceeds 1000, the deletion runs as a background job and returns a 202 response. Partial successes return a 207 multi-status response with individual success and error entries per record.
+  - [Examples](mds/examples/deleteRecycleBinRecords.md)
+- [Restore multiple Recycle Bin records](mds/restoreRecycleBinRecords.md)
+  - To restore one or more deleted records from the Recycle Bin in your Zoho CRM account. Supply the scope of restoration in the request body using exactly one of three options: **ids** to restore specific records, **filters** to restore records matching field-based criteria, or **restore_all_records** to restore every record currently in the Recycle Bin. When restoring a parent record, Zoho CRM also restores all its associated child records, such as Notes and Attachments. If the total number of records to restore, including child records, is 1000 or fewer, the operation completes immediately. When the total exceeds 1000, when the **filters** option is applied, or when **restore_all_records** is **true**, the restoration runs as a background job. Admin users can restore any record; non-admin users can restore only the records they own unless their profile grants broader access.
+  - [Examples](mds/examples/restoreRecycleBinRecords.md)
+- [Get recycle-bin record count](mds/getRecycleBinCounts.md)
+  - To retrieve the total count of records currently present in the Recycle Bin in your Zoho CRM account. The count reflects every entry across all modules.
+  - [Examples](mds/examples/getRecycleBinCounts.md)
+- [Empty the Recycle Bin](mds/emptyRecycleBin.md)
+  - To permanently delete every record from the Recycle Bin in your Zoho CRM account. This action is irreversible - the records cannot be restored after this operation completes. When the Recycle Bin contains 1000 or fewer records, including child records such as Notes and Attachments, Zoho CRM deletes the records immediately and returns a 200 response. When the count exceeds 1000, the deletion runs as a background job and returns a 202 response. Only users with the Admin profile can empty the Recycle Bin.
+  - [Examples](mds/examples/emptyRecycleBin.md)
+- [Restore a Recycle Bin record](mds/restoreRecycleBinRecord.md)
+  - To restore a single deleted record from the Recycle Bin in your Zoho CRM account. The record is moved back to its original module along with all its associated child records, such as Notes and Attachments. When the total number of restored records, including child records, is 1000 or fewer, the restoration completes immediately and returns a 200 response. When the total exceeds 1000, the operation is scheduled as a background job. Admin users can restore any record; non-admin users can restore only the records they own unless their profile grants broader access.
+  - [Examples](mds/examples/restoreRecycleBinRecord.md)
+- [Get a recycle-bin record](mds/getRecycleBinRecord.md)
+  - To retrieve metadata for a single record from the Recycle Bin in your Zoho CRM account using its unique ID. The response includes the display name, source module, deletion timestamp, original owner, and the user who deleted the record.
+  - [Examples](mds/examples/getRecycleBinRecord.md)
+- [Delete a recycle-bin record permanently](mds/deleteRecycleBinRecord.md)
+  - To permanently delete a single record from the Recycle Bin in your Zoho CRM account using its unique ID. Deleting a parent record also removes all its associated child records from the Recycle Bin, such as Notes and Attachments. This operation is irreversible - the record cannot be restored after deletion. When the total number of records to delete, including child records, exceeds 1000, the operation runs as a background job.
+  - [Examples](mds/examples/deleteRecycleBinRecord.md)

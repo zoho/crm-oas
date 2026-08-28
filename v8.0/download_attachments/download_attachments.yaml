@@ -1,0 +1,304 @@
+openapi: 3.1.0
+info:
+  title: Download Email Attachments
+  description: >-
+    Email attachments are files sent or received as part of emails associated
+    with CRM records such as leads, contacts, deals, and accounts. 
+
+    This API enables developers to retrieve the binary content of a specific
+    email attachment for a given record.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >
+      Production API server for Zoho CRM. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >
+          The top-level domain that identifies the regional Zoho CRM data
+          center. Possible values: **com**, **eu**, **in**, **cn**, **au**.
+          Default: **com**.
+      version:
+        default: v8
+        description: >
+          The Zoho CRM REST API version used to construct the request URL.
+          Default: **v8**.
+paths:
+  /{module}/{recordId}/Emails/actions/download_attachments:
+    get:
+      summary: Download an email attachment
+      description: >-
+        To download the binary content of an attachment that belongs to an email
+        associated with a record in your Zoho CRM organization.
+      operationId: downloadEmailAttachments
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/RecordId'
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/MessageId'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '200':
+          description: >-
+            Returns the binary content of the requested email attachment as an
+            octet stream.
+          content:
+            application/octet-stream:
+              schema:
+                x-zs-$id: AttachmentBinarySchema
+                description: >-
+                  Represents the binary content of the requested email
+                  attachment, returned as an octet stream.
+                type: string
+                format: binary
+        '400':
+          description: >
+            The request is missing a mandatory parameter or contains an invalid
+            parameter value.
+
+            **Resolution:** The mandatory query parameters (**user_id**,
+            **message_id**, **id**, and **name**) must be provided with valid
+            values, and the **module** and **record_ID** path parameters must
+            reference an existing record.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: Error400ResponseSchema
+                description: >-
+                  Represents the error payload returned when the request missed
+                  a mandatory parameter or fails validation.
+                oneOf:
+                  - x-zs-$id: ValidationErrorSchema
+                    description: >-
+                      Represents the error returned when the request contains an
+                      invalid parameter value.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |
+                          Represents the outcome of the request. 
+                          **Possible values:**
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code that identifies the specific
+                          validation failure.
+                        maxLength: 50
+                      message:
+                        type: string
+                        description: >-
+                          Represents the message describing the cause of the
+                          validation failure. 
+                        maxLength: 500
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional contextual information about the
+                          validation failure, such as the parameter or field
+                          that triggered the error.
+                        additionalProperties: true
+                    required:
+                      - status
+                      - code
+                      - message
+                  - x-zs-$id: MissingParamSchema
+                    description: >-
+                      Represents the error returned when a mandatory parameter
+                      is missing from the request.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |
+                          Represents the outcome of the request. 
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >
+                          Represents the error code indicating that a mandatory
+                          parameter was not provided in the request. Always
+                          returned in the response.
+
+                          Possible values:
+
+                          **MANDATORY_NOT_FOUND** - Indicates that one or more
+                          mandatory parameters are missing from the request.
+                        const: MANDATORY_NOT_FOUND
+                      message:
+                        type: string
+                        description: >-
+                          Represents the message describing which mandatory
+                          parameter is missing from the request. 
+                        maxLength: 500
+                    required:
+                      - status
+                      - code
+                      - message
+              examples:
+                InvalidData:
+                  description: >-
+                    Shows the response returned when the **record_ID** path
+                    parameter does not reference an existing record in the
+                    specified module.
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: Invalid record ID provided.
+                  summary: 'INVALID_DATA error when the record ID is incorrect. '
+        '401':
+          description: >
+            The OAuth access token supplied in the request is invalid or has
+            expired.
+
+            **Resolution:** A new access token must be generated with the
+            required scopes for this API.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                AuthFail:
+                  description: >-
+                    Shows the 401 response returned when the OAuth access token
+                    supplied in the **Authorization** header is invalid.
+                  value:
+                    status: error
+                    code: INVALID_TOKEN
+                    message: Invalid token.
+                  summary: INVALID_TOKEN error for an invalid OAuth access token
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.emails.READ
+            - ZohoCRM.modules.leads.READ
+components:
+  schemas:
+    ErrorResponse:
+      x-zs-$id: StandardErrorResponse
+      description: >-
+        Represents the standard error response returned by Zoho CRM APIs,
+        containing the failure status, code, message, and contextual details.
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: |
+            Represents the outcome of the request.
+            Possible values:
+            **error** - Indicates that the request failed.
+          enum:
+            - error
+        code:
+          type: string
+          description: >-
+            Represents the error code that identifies the specific failure
+            condition. 
+          maxLength: 100
+        message:
+          type: string
+          description: 'Represents the message describing the cause of the failure. '
+          maxLength: 1000
+        details:
+          type: object
+          description: >-
+            Contains additional contextual information about the failure, such
+            as the parameter name or field that triggered the error.
+          additionalProperties: true
+      required:
+        - status
+        - code
+        - message
+  parameters:
+    Module:
+      name: module
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the CRM module that contains the record
+        associated with the email. Refer to the [Get
+        Modules](modules.yaml#$.paths./settings/modules.get) resource for module
+        details.
+      schema:
+        type: string
+        maxLength: 100
+    RecordId:
+      name: recordId
+      in: path
+      required: true
+      description: Specify the unique ID of the record that the email is associated with.
+      schema:
+        type: string
+        maxLength: 20
+    UserId:
+      name: user_id
+      in: query
+      required: true
+      description: >-
+        Specify the unique ID of the user who sent the email. Refer to the [Get
+        Users](users.yaml#$.paths./users.get) resource for valid values.
+      schema:
+        type: integer
+        format: int64
+    MessageId:
+      name: message_id
+      in: query
+      required: true
+      description: >-
+        The message ID you get in the response when you send an email. Refer to
+        the "message_id" key in the response of [Send Mail
+        API](send_mail.yaml#$.paths.//{moduleName}/{id}/actions/send_mail.post)
+        or [Get Emails](emails.yaml#$.paths./{moduleApiName}/{id}/Emails.get) of
+        a Record API to get the message ID.
+      schema:
+        type: string
+        maxLength: 500
+    Id:
+      name: id
+      in: query
+      required: true
+      description: Specify the unique ID of the attachment to download.
+      schema:
+        type: string
+        maxLength: 1000
+    Name:
+      name: name
+      in: query
+      required: true
+      description: >-
+        Specify the file name of the attachment to download. You can get this
+        from the response of [Get Emails
+        API](emails.yaml#$.paths./{moduleApiName}/{id}/Emails.get).
+      schema:
+        type: string
+        maxLength: 150
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: Zoho CRM OAuth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.emails.READ: >-
+              Grants permission to read email records associated with CRM
+              modules.
+            ZohoCRM.modules.leads.READ: Grants permission to read lead records in Zoho CRM.

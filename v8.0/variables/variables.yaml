@@ -1,0 +1,3600 @@
+openapi: 3.1.0
+info:
+  title: Variables
+  description: >-
+    Manage CRM variables that store reusable values for use in email templates,
+    mail merge templates, inventory templates, and API authentication
+    parameters. Supports creating, retrieving, updating, and deleting variables.
+    Requires the ZohoCRM.settings.variables scope.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        description: API Server URL TLD
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: API Version
+        default: v8
+paths:
+  /settings/variables:
+    get:
+      summary: Retrieve all variables
+      description: >-
+        Retrieves all available CRM variables. Returns the API name, display
+        name, description, type, value, and variable group for each variable.
+        Requires the ZohoCRM.settings.variables.READ scope.
+      operationId: getVariables
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesListResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    variables:
+                      - read_only: false
+                        api_name: NewTEST
+                        name: NewTEST
+                        description: null
+                        id: '111115000000091005'
+                        source: crm
+                        type: integer
+                        variable_group:
+                          api_name: General
+                          id: '111115000000088076'
+                        value: ''
+                      - read_only: false
+                        api_name: newtotest
+                        name: newtotest
+                        description: null
+                        id: '111115000000094003'
+                        source: crm
+                        type: integer
+                        variable_group:
+                          api_name: General
+                          id: '111115000000088076'
+                        value: ''
+                      - read_only: false
+                        api_name: NTEST
+                        name: NTEST
+                        description: null
+                        id: '111115000000091001'
+                        source: crm
+                        type: integer
+                        variable_group:
+                          api_name: General
+                          id: '111115000000088076'
+                        value: ''
+        '403':
+          description: Forbidden - The client does not have access rights to the content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesPermissionDeniedError'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Variables_Access
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variables.READ
+    put:
+      summary: Update variables
+      description: >-
+        Updates one or more CRM variables in a single request. The id key is
+        mandatory in the request body to identify each variable. You cannot
+        update the type or variable group of a variable. Requires the
+        ZohoCRM.settings.variables.UPDATE scope.
+      operationId: updateVariables
+      requestBody:
+        description: The request body containing the variable data to update.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariablesBatchUpdateRequestAlt1'
+            examples:
+              SamplePutRequest:
+                summary: Sample request body
+                value:
+                  variables:
+                    - id: '111115000000091005'
+                      value: This is a new value
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesBatchUpdateResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    variables:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000114001'
+                        message: variable updated
+                        status: success
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateInvalidRequestErrors
+                description: Error response for invalid request
+                oneOf:
+                  - $ref: '#/components/schemas/VariablesInvalidTypeError'
+                  - x-zs-$id: UpdateInvalidRequestBodyErrors
+                    type: object
+                    additionalProperties: false
+                    description: Wrapped error response with variables
+                    properties:
+                      variables:
+                        type: array
+                        description: Array of error objects
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/VariableValueInvalidDataError
+                            - $ref: >-
+                                #/components/schemas/VariablesInvalidDataTypeError
+                            - $ref: '#/components/schemas/VariablesInvalidDataError'
+                            - $ref: '#/components/schemas/VariableGroupAmbiguityError'
+                            - $ref: >-
+                                #/components/schemas/VariablesDuplicateDataExtendedError
+                            - $ref: >-
+                                #/components/schemas/VariableGroupInvalidReferenceError
+                        maxItems: 25
+                    required:
+                      - variables
+              examples:
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    variables)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: variables
+                      json_path: $.variables
+                    message: invalid data
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    value)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: integer
+                          api_name: value
+                          json_path: $.variables[0].value
+                        message: invalid data
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: id)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.variables[*].id
+                        status: error
+                InvalidDataResponse4:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    id)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 14
+                          json_path: $.variables[*].id
+                        status: error
+                InvalidDataResponse5:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: value)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: value
+                          expected_data_type: text
+                          json_path: $.variables[*].value
+                        status: error
+                InvalidDataResponse6:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    value)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: value
+                          maximum_length: 19
+                          json_path: $.variables[*].value
+                        status: error
+                AmbiguityDuringProcessingResponse1:
+                  summary: >-
+                    Error response with code AMBIGUITY_DURING_PROCESSING:
+                    Ambiguity while processing the request
+                  value:
+                    variables:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.variables[0].id
+                        message: Ambiguity while processing the request
+                        status: error
+                AmbiguityDuringProcessingResponse2:
+                  summary: >-
+                    Error response with code AMBIGUITY_DURING_PROCESSING:
+                    Ambiguity while processing the request
+                  value:
+                    variables:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.variables[0].id
+                        message: Ambiguity while processing the request
+                        status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variables.UPDATE
+    post:
+      summary: Create variables
+      description: >-
+        Creates one or more CRM variables. The name, api_name, and
+        variable_group keys are mandatory. The type key specifies the data type
+        of the variable. Possible types: integer, text, percent, decimal,
+        currency, date, datetime, email, phone, url, checkbox, textarea, long.
+        Requires the ZohoCRM.settings.variables.CREATE scope.
+      operationId: createVariables
+      requestBody:
+        description: The request body containing the variable definitions to create.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariablesBatchInput'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  variables:
+                    - name: Variable33
+                      api_name: Variable33
+                      variable_group:
+                        id: '400000000470050090988'
+                      type: integer
+                      value: 33
+                      description: This denotes variable 3 description
+      responses:
+        '201':
+          description: Created - Resource created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesBatchOperationCreated'
+              examples:
+                Success201:
+                  summary: Success response for status 201
+                  value:
+                    variables:
+                      - code: SUCCESS
+                        details:
+                          id: '40000000047009'
+                        message: variable added
+                        status: success
+        '207':
+          description: Multi-Status - Response contains mixed status results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesBatchOperationMultiStatus'
+              examples:
+                Success207:
+                  summary: Success response for status 207
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: variables
+                          json_path: $.variables[0].variables
+                        message: Mandatory field variables not found
+                        status: error
+                      - code: SUCCESS
+                        details:
+                          id: '1234567890123456'
+                        message: Proper success message
+                        status: success
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreateInvalidRequestErrors
+                description: Error response for invalid request
+                oneOf:
+                  - x-zs-$id: CreateInvalidRequestBodyErrors
+                    type: object
+                    additionalProperties: false
+                    description: Represents the error response for limit exceeded
+                    properties:
+                      variables:
+                        type: array
+                        description: Array of error objects
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/VariablesRequestBodyMissingError
+                            - $ref: >-
+                                #/components/schemas/VariablesRequiredFieldMissingError
+                            - $ref: '#/components/schemas/VariablesDuplicateDataError'
+                            - $ref: >-
+                                #/components/schemas/VariablesDuplicateDataExtendedError
+                            - $ref: >-
+                                #/components/schemas/VariablesMandatoryFieldMissingError
+                            - $ref: >-
+                                #/components/schemas/VariablesInvalidDataTypeError
+                            - $ref: '#/components/schemas/VariablesInvalidDataError'
+                            - $ref: >-
+                                #/components/schemas/VariablesInvalidDataGenericError
+                            - $ref: >-
+                                #/components/schemas/VariablesInvalidDataGeneralError
+                            - $ref: >-
+                                #/components/schemas/VariableGroupInvalidReferenceError
+                            - $ref: '#/components/schemas/VariableGroupAmbiguityError'
+                            - $ref: >-
+                                #/components/schemas/VariableValueInvalidDataError
+                        maxItems: 25
+                    required:
+                      - variables
+                  - $ref: '#/components/schemas/VariablesInvalidTypeError'
+                  - x-zs-$id: CreateLimitExceededError
+                    description: Error response for limit exceeded
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      variables:
+                        description: Array of error details
+                        type: array
+                        maxItems: 1
+                        items:
+                          description: Individual error object
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            status:
+                              description: Status of the operation
+                              type: string
+                              enum:
+                                - error
+                            code:
+                              description: Represents the error code.
+                              type: string
+                              enum:
+                                - LIMIT_EXCEEDED
+                            message:
+                              description: A human-readable error message.
+                              type: string
+                              maxLength: 500
+                            details:
+                              description: Additional error details
+                              type: object
+                              additionalProperties: false
+                              properties: {}
+                              required: []
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                    required:
+                      - variables
+                  - x-zs-$id: CreateNotAllowedError
+                    description: >-
+                      Error response when the operation is not allowed for a
+                      specific field.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      variables:
+                        description: Array of error details
+                        type: array
+                        maxItems: 1
+                        items:
+                          description: Individual error object
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            status:
+                              description: Status of the operation
+                              type: string
+                              enum:
+                                - error
+                            code:
+                              description: Represents the error code.
+                              type: string
+                              enum:
+                                - NOT_ALLOWED
+                            message:
+                              description: A human-readable error message.
+                              type: string
+                              maxLength: 500
+                            details:
+                              description: Additional error details
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  description: >-
+                                    The API name of the field that is not
+                                    allowed.
+                                  type: string
+                                  maxLength: 100
+                                json_path:
+                                  description: >-
+                                    The JSON path to the field that is not
+                                    allowed.
+                                  type: string
+                                  maxLength: 500
+                              required:
+                                - api_name
+                                - json_path
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                    required:
+                      - variables
+                  - x-zs-$id: CreatePatternNotMatchedError
+                    description: Error response for pattern not matched
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      variables:
+                        description: Array of error details
+                        type: array
+                        maxItems: 1
+                        items:
+                          description: Individual error object
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            status:
+                              description: Status of the operation
+                              type: string
+                              enum:
+                                - error
+                            code:
+                              description: Represents the error code.
+                              type: string
+                              enum:
+                                - PATTERN_NOT_MATCHED
+                            message:
+                              description: A human-readable error message.
+                              type: string
+                              maxLength: 500
+                            details:
+                              description: Additional error details
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  description: >-
+                                    The API name of the field that is not
+                                    allowed.
+                                  type: string
+                                  maxLength: 100
+                                json_path:
+                                  description: >-
+                                    The JSON path to the field that is not
+                                    allowed.
+                                  type: string
+                                  maxLength: 500
+                              required:
+                                - api_name
+                                - json_path
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                    required:
+                      - variables
+                  - x-zs-$id: CreateVariableRequiredParamMissingError
+                    description: Error response for required parameter missing
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        description: Represents the error code.
+                        type: string
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                      details:
+                        description: Additional error details
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            description: The API name of the missing required parameter.
+                            type: string
+                            maxLength: 100
+                        required:
+                          - api_name
+                      message:
+                        description: A human-readable error message.
+                        type: string
+                        maxLength: 500
+                      status:
+                        description: Represents the status of the error.
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+              examples:
+                InvalidDataResponse1:
+                  summary: 'Error response with code INVALID_DATA: body'
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: jsonobject
+                        message: body
+                        status: error
+                MandatoryNotFoundResponse1:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: required field
+                    not found (Field: variables)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: variables
+                        message: required field not found
+                        status: error
+                DuplicateDataResponse1:
+                  summary: >-
+                    Error response with code DUPLICATE_DATA: duplicate data
+                    (Field: api_name)
+                  value:
+                    variables:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.variables[0].api_name
+                        message: duplicate data
+                        status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    variables)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 2
+                      api_name: variables
+                      json_path: $.variables
+                    message: invalid data
+                    status: error
+                MandatoryNotFoundResponse2:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: name)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: name
+                          json_path: $.variables[*].name
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.variables[*].name
+                        status: error
+                InvalidDataResponse4:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 50
+                          json_path: $.variables[*].name
+                        status: error
+                MandatoryNotFoundResponse3:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: api_name)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: api_name
+                          json_path: $.variables[*].api_name
+                        status: error
+                InvalidDataResponse5:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: api_name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: api_name
+                          expected_data_type: text
+                          json_path: $.variables[*].api_name
+                        status: error
+                InvalidDataResponse6:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    api_name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          maximum_length: 100
+                          json_path: $.variables[*].api_name
+                        status: error
+                InvalidDataResponse7:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    api_name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          regex: ^[a-zA-Z]+\\w*[a-zA-Z0-9]*$
+                          json_path: $.variables[*].api_name
+                        status: error
+                MandatoryNotFoundResponse4:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: variable_group)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: variable_group
+                          json_path: $.variables[*].variable_group
+                        status: error
+                InvalidDataResponse8:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: variable_group)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: variable_group
+                          expected_data_type: jsonobject
+                          json_path: $.variables[*].variable_group
+                        status: error
+                InvalidDataResponse9:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    variable_group)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: variable_group
+                          maximum_length: 2
+                          json_path: $.variables[*].variable_group
+                        status: error
+                MandatoryNotFoundResponse5:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: id)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: id
+                          json_path: $.variables[*].variable_group.id
+                        status: error
+                InvalidDataResponse10:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: id)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.variables[*].variable_group.id
+                        status: error
+                InvalidDataResponse11:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    id)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 21
+                          json_path: $.variables[*].variable_group.id
+                        status: error
+                MandatoryNotFoundResponse6:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: type)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: type
+                          json_path: $.variables[*].type
+                        status: error
+                InvalidDataResponse12:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: type)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: type
+                          expected_data_type: text
+                          json_path: $.variables[*].type
+                        status: error
+                InvalidDataResponse13:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    type)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: type
+                          maximum_length: 7
+                          json_path: $.variables[*].type
+                        status: error
+                InvalidDataResponse14:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    type)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: type
+                          supported_values:
+                            - text
+                            - integer
+                            - boolean
+                            - date
+                            - float
+                          json_path: $.variables[*].type
+                        status: error
+                InvalidDataResponse15:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: value)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: value
+                          expected_data_type: integer
+                          json_path: $.variables[*].value
+                        status: error
+                InvalidDataResponse16:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: description)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: description
+                          expected_data_type: text
+                          json_path: $.variables[*].description
+                        status: error
+                InvalidDataResponse17:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    description)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: description
+                          maximum_length: 250
+                          json_path: $.variables[*].description
+                        status: error
+                InvalidDataResponse18:
+                  summary: 'Error response with code INVALID_DATA: body'
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: jsonobject
+                        message: body
+                        status: error
+                MandatoryNotFoundResponse7:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: required field
+                    not found (Field: variables)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: variables
+                        message: required field not found
+                        status: error
+                AmbiguityDuringProcessingResponse1:
+                  summary: >-
+                    Error response with code AMBIGUITY_DURING_PROCESSING:
+                    Ambiguity while processing the request
+                  value:
+                    variables:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.variables[0].variable_group.id
+                        message: Ambiguity while processing the request
+                        status: error
+                AmbiguityDuringProcessingResponse2:
+                  summary: >-
+                    Error response with code AMBIGUITY_DURING_PROCESSING:
+                    Ambiguity while processing the request
+                  value:
+                    variables:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.variables[0].variable_group.id
+                        message: Ambiguity while processing the request
+                        status: error
+                MandatoryNotFoundResponse8:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: name)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: name
+                          json_path: $.variables[*].name
+                        status: error
+                InvalidDataResponse21:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.variables[*].name
+                        status: error
+                InvalidDataResponse22:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 50
+                          json_path: $.variables[*].name
+                        status: error
+                MandatoryNotFoundResponse9:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: api_name)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: api_name
+                          json_path: $.variables[*].api_name
+                        status: error
+                InvalidDataResponse23:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: api_name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: api_name
+                          expected_data_type: text
+                          json_path: $.variables[*].api_name
+                        status: error
+                InvalidDataResponse24:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    api_name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          maximum_length: 100
+                          json_path: $.variables[*].api_name
+                        status: error
+                InvalidDataResponse25:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    api_name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          regex: ^[a-zA-Z]+\\w*[a-zA-Z0-9]*$
+                          json_path: $.variables[*].api_name
+                        status: error
+                MandatoryNotFoundResponse10:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: variable_group)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: variable_group
+                          json_path: $.variables[*].variable_group
+                        status: error
+                InvalidDataResponse26:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: variable_group)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: variable_group
+                          expected_data_type: jsonobject
+                          json_path: $.variables[*].variable_group
+                        status: error
+                InvalidDataResponse27:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    variable_group)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: variable_group
+                          maximum_length: 2
+                          json_path: $.variables[*].variable_group
+                        status: error
+                MandatoryNotFoundResponse11:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: id)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: id
+                          json_path: $.variables[*].variable_group.id
+                        status: error
+                InvalidDataResponse28:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: id)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.variables[*].variable_group.id
+                        status: error
+                InvalidDataResponse29:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    id)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 21
+                          json_path: $.variables[*].variable_group.id
+                        status: error
+                MandatoryNotFoundResponse12:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: type)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: type
+                          json_path: $.variables[*].type
+                        status: error
+                InvalidDataResponse32:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: type)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: type
+                          expected_data_type: text
+                          json_path: $.variables[*].type
+                        status: error
+                InvalidDataResponse33:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    type)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: type
+                          maximum_length: 7
+                          json_path: $.variables[*].type
+                        status: error
+                InvalidDataResponse34:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    type)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: type
+                          supported_values:
+                            - text
+                            - integer
+                            - boolean
+                            - date
+                            - float
+                          json_path: $.variables[*].type
+                        status: error
+                InvalidDataResponse35:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: value)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: value
+                          expected_data_type: integer
+                          json_path: $.variables[*].value
+                        status: error
+                InvalidDataResponse36:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: description)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: description
+                          expected_data_type: text
+                          json_path: $.variables[*].description
+                        status: error
+                InvalidDataResponse37:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    description)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: description
+                          maximum_length: 250
+                          json_path: $.variables[*].description
+                        status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variables.CREATE
+    delete:
+      summary: Delete variables
+      description: >-
+        Deletes one or more CRM variables by their IDs. Pass variable IDs as a
+        comma-separated list in the ids query parameter, or pass rids in the
+        rids query parameter. A variable that is associated with other features
+        such as email templates, webhooks, or functions cannot be deleted until
+        the association is removed. Requires the
+        ZohoCRM.settings.variables.DELETE scope.
+      operationId: deleteVariables
+      parameters:
+        - $ref: '#/components/parameters/ParamQueryIds'
+      responses:
+        '207':
+          description: Multi-Status - Response contains mixed status results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesBatchRemovalMultiStatusResponse'
+              examples:
+                Success207:
+                  summary: Success response for status 207
+                  value:
+                    variables:
+                      - code: SUCCESS
+                        details:
+                          id: '111114000000454011'
+                        message: variable deleted
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          id: '111114000000454008'
+                        message: variable deleted
+                        status: success
+                      - code: INVALID_DATA
+                        details:
+                          id: '234576960'
+                        message: variable not deleted
+                        status: error
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeleteInvalidRequestErrors
+                description: Error response for invalid request
+                oneOf:
+                  - $ref: '#/components/schemas/VariablesInvalidTypeError'
+                  - x-zs-$id: DeleteVariablesRequiredParamMissingError
+                    description: Error response for required parameter missing
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        description: Represents the error code.
+                        type: string
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                          - EXPECTED_PARAM_MISSING
+                      details:
+                        description: Additional error details
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          param_name:
+                            description: The name of the parameter that caused the error.
+                            type: string
+                            maxLength: 255
+                        required:
+                          - param_name
+                      message:
+                        description: A human-readable error message.
+                        type: string
+                        maxLength: 500
+                      status:
+                        description: Represents the status of the error.
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - x-zs-$id: DeleteVariablesInvalidParamError
+                    description: Error response for variable deletion failures
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      variables:
+                        description: Array of error details
+                        type: array
+                        maxItems: 1
+                        items:
+                          description: Individual error object
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            status:
+                              description: Status of the operation
+                              type: string
+                              enum:
+                                - error
+                            code:
+                              description: Represents the error code.
+                              type: string
+                              enum:
+                                - INVALID_DATA
+                            message:
+                              description: A human-readable error message.
+                              type: string
+                              maxLength: 500
+                            details:
+                              description: Additional error details
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  description: >-
+                                    The ID of the variable that could not be
+                                    deleted.
+                                  type: string
+                                  format: int64
+                              required:
+                                - id
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                    required:
+                      - variables
+              examples:
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    variables)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: variables
+                      json_path: $.variables
+                    message: invalid data
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variables.DELETE
+  /settings/variables/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The unique ID of the variable. Mandatory.
+        schema:
+          type: string
+          examples:
+            - '111112000000092007'
+          maxLength: 255
+    get:
+      summary: specific variable
+      description: >-
+        Retrieves the details of a specific CRM variable by its ID. The group
+        query parameter, specifying the variable group ID or API name, is
+        mandatory when retrieving a specific variable. Requires the
+        ZohoCRM.settings.variables.READ scope.
+      operationId: getVariableById
+      parameters:
+        - $ref: '#/components/parameters/ParamQueryGroup'
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesbyGroupResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    variables:
+                      - api_name: Variable1
+                        name: Variable1
+                        description: This denotes variable 1 description
+                        id: '40000000047003'
+                        type: text
+                        variable_group:
+                          api_name: Group1
+                          id: '40000000047001'
+                        value: This denotes variable one value
+                        source: crm
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetByIdInvalidRequestErrors
+                description: Error response for invalid request
+                oneOf:
+                  - $ref: '#/components/schemas/VariableGroupInvalidIDError'
+                  - $ref: '#/components/schemas/InvalidUrlPatternError'
+                  - $ref: '#/components/schemas/InvalidResourceIdError'
+              examples:
+                InvalidDataResponse1:
+                  summary: 'Error response with code INVALID_DATA: Invalid data'
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      param_name: ' group_id'
+                    message: Invalid data
+                    status: error
+                InvalidUrlPatternResponse1:
+                  summary: >-
+                    Error response with code INVALID_URL_PATTERN: Please check
+                    if the URL trying to access is a correct one
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                InvalidDataResponse2:
+                  summary: 'Error response with code INVALID_DATA: Invalid ID'
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: invalid data
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variables.READ
+    put:
+      summary: Specific variable
+      description: >-
+        Updates a specific CRM variable identified by its ID or API name. You
+        cannot update the type or variable group of the variable. For the list
+        of updatable input keys, refer to the Create Variables operation.
+        Requires the ZohoCRM.settings.variables.UPDATE scope.
+      operationId: updateVariableById
+      requestBody:
+        description: The request body containing the variable data to update.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariablesScopedBatchUpdateRequestAlt1'
+            examples:
+              SamplePutRequest:
+                summary: Sample request body
+                value:
+                  variables:
+                    - id: '40000000047003'
+                      value: This is a new value
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesScopedBatchUpdateResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    variables:
+                      - code: SUCCESS
+                        details:
+                          id: '40000000047003'
+                        message: variable updated
+                        status: success
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateByIdInvalidRequestErrors
+                description: Error response for invalid request
+                oneOf:
+                  - $ref: '#/components/schemas/VariablesDomainNotSupportedError'
+                  - $ref: '#/components/schemas/VariablesInvalidTypeError'
+                  - x-zs-$id: UpdateByIdInvalidRequestBodyErrors
+                    type: object
+                    additionalProperties: false
+                    description: Wrapped error response with variables
+                    properties:
+                      variables:
+                        type: array
+                        description: Array of error objects
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/VariablesDuplicateDataExtendedError
+                            - $ref: >-
+                                #/components/schemas/VariableValueInvalidDataError
+                            - $ref: >-
+                                #/components/schemas/VariablesInvalidDataTypeError
+                            - $ref: '#/components/schemas/VariablesInvalidDataError'
+                        maxItems: 25
+                    required:
+                      - variables
+              examples:
+                InvalidDataResponse1:
+                  summary: 'Error response with code INVALID_DATA: invalid data'
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: invalid data
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    variables)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: variables
+                      json_path: $.variables
+                    message: invalid data
+                    status: error
+                DuplicateDataResponse1:
+                  summary: >-
+                    Error response with code DUPLICATE_DATA: duplicate data
+                    (Field: name)
+                  value:
+                    variables:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.variables[0].name
+                        message: duplicate data
+                        status: error
+                DuplicateDataResponse2:
+                  summary: >-
+                    Error response with code DUPLICATE_DATA: duplicate data
+                    (Field: name)
+                  value:
+                    variables:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.variables[0].api_name
+                        message: duplicate data
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    value)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: integer
+                          api_name: value
+                          json_path: $.variables[0].value
+                        message: invalid data
+                        status: error
+                InvalidDataResponse4:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: id)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.variables[*].id
+                        status: error
+                InvalidDataResponse5:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    id)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 14
+                          json_path: $.variables[*].id
+                        status: error
+                InvalidDataResponse6:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: value)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: value
+                          expected_data_type: text
+                          json_path: $.variables[*].value
+                        status: error
+                InvalidDataResponse7:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    value)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: value
+                          maximum_length: 19
+                          json_path: $.variables[*].value
+                        status: error
+                DuplicateDataResponse3:
+                  summary: >-
+                    Error response with code DUPLICATE_DATA: duplicate data
+                    (Field: name)
+                  value:
+                    variables:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.variables[0].name
+                        message: duplicate data
+                        status: error
+                DuplicateDataResponse4:
+                  summary: >-
+                    Error response with code DUPLICATE_DATA: duplicate data
+                    (Field: name)
+                  value:
+                    variables:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.variables[0].api_name
+                        message: duplicate data
+                        status: error
+                InvalidDataResponse8:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    value)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: integer
+                          api_name: value
+                          json_path: $.variables[0].value
+                        message: invalid data
+                        status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variables.UPDATE
+    delete:
+      summary: Specific variable
+      description: >-
+        Deletes a specific CRM variable identified by its ID. A variable that is
+        associated with other features such as email templates, webhooks, or
+        functions cannot be deleted until the association is removed. Requires
+        the ZohoCRM.settings.variables.DELETE scope.
+      operationId: deleteVariablesById
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesScopedRemovalResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    variables:
+                      - code: SUCCESS
+                        details:
+                          id: '40000000047003'
+                        message: variable deleted
+                        status: success
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeleteByIdInvalidRequestErrors
+                description: Error response for invalid request
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidResourceIdError'
+                  - x-zs-$id: DeleteByIdInvalidRequestBodyErrors
+                    type: object
+                    additionalProperties: false
+                    description: Wrapped error response with variables
+                    properties:
+                      variables:
+                        type: array
+                        description: Array of error objects
+                        items:
+                          $ref: '#/components/schemas/VariablesRemovalFailedError'
+                        maxItems: 25
+                    required:
+                      - variables
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+              examples:
+                InvalidDataResponse1:
+                  summary: 'Error response with code INVALID_DATA: Invalid ID'
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: invalid data
+                    status: error
+                InvalidDataResponse2:
+                  summary: 'Error response with code INVALID_DATA: variable not deleted'
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        details:
+                          id: '40000000047007'
+                        message: variable not deleted
+                        status: error
+                InvalidRequestMethodResponse1:
+                  summary: >-
+                    Error response with code INVALID_REQUEST_METHOD: The http
+                    request method type is not a valid one
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The http request method type is not a valid one
+                    status: error
+        '403':
+          description: Forbidden - The client does not have access rights to the content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesPermissionDeniedError'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Variables_Access
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variables.DELETE
+  /settings/variables/{id}/actions/associations:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The unique ID of the variable. Mandatory.
+        schema:
+          type: string
+          examples:
+            - '111112000000092007'
+          maxLength: 255
+    get:
+      summary: Variable Associations
+      description: Get associated variables
+      operationId: getVariableAssociations
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariableAssociationsResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    variables_associations:
+                      - name: email_templates
+                        resources:
+                          - name: Variable Email Template
+                            details:
+                              module:
+                                api_name: Leads
+                                id: '111111000000000042'
+                            id: '111111000000058477'
+        '403':
+          description: Forbidden - The client does not have access rights to the content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariablesPermissionDeniedError'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Variables_Access
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variables.READ
+  /settings/variables/actions/generate_api_name:
+    post:
+      summary: Generate API Name
+      description: generates api name
+      operationId: postGenerateApiName
+      requestBody:
+        description: The request body containing the variable definitions to create.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiNameGenerationRequestBody'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  variables:
+                    - name: nothingGenerate2
+                      variable_group:
+                        id: '400000000470050090988'
+                        name: General
+                        api_name: General
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiNameGenerationResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    variables:
+                      - code: SUCCESS
+                        details:
+                          api_name: nothingGenerate2
+                        message: the api name is generated successfully
+                        status: success
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PostGenerateApiNameVariablesBodyErrors
+                type: object
+                additionalProperties: false
+                description: Wrapped error response with variables
+                properties:
+                  variables:
+                    type: array
+                    description: Array of error objects
+                    items:
+                      oneOf:
+                        - $ref: >-
+                            #/components/schemas/ErrorApiNameGenerationMandatoryMissingResponse
+                        - $ref: >-
+                            #/components/schemas/ErrorMandatoryFieldMissingResponse
+                        - $ref: '#/components/schemas/ErrorInvalidDataTypeResponse'
+                        - $ref: '#/components/schemas/ErrorInvalidDataResponse'
+                    maxItems: 25
+                required:
+                  - variables
+              examples:
+                MandatoryNotFoundResponse1:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: required field
+                    not found (Field: variable_group)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: variable_group
+                          json_path: $.variables[0].variable_group
+                        message: required field not found
+                        status: error
+                MandatoryNotFoundResponse2:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: name)
+                  value:
+                    variables:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: name
+                          json_path: $.variables[*].name
+                        status: error
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.variables[*].name
+                        status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    name)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 16
+                          json_path: $.variables[*].name
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: variable_group)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: variable_group
+                          expected_data_type: jsonobject
+                          json_path: $.variables[*].variable_group
+                        status: error
+                InvalidDataResponse4:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    id)
+                  value:
+                    variables:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 21
+                          json_path: $.variables[*].variable_group.id
+                        status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variables.CREATE
+components:
+  schemas:
+    VariablesInvalidDataGenericError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Generic invalid data response with standard error structure. Includes
+        code INVALID_DATA and validation details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            regex:
+              type: string
+              description: The regular expression pattern that the field value must match.
+              maxLength: 255
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - regex
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Invalid Data Generic Error
+      x-zs-$id: ErrorResponseCore845321816
+    VariablesRequiredFieldMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Error returned when the required variables field is not provided.
+        Includes code MANDATORY_NOT_FOUND and validation details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - required field not found
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Required Field Missing Error
+      x-zs-$id: ErrorResponseCore1142616582
+    VariablesScopedRemovalResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Success response summarizing outcomes of variable removal within a
+        scoped context, with per-item results.
+      properties:
+        variables:
+          type: array
+          description: Array of operation results for each deleted variable.
+          items:
+            $ref: '#/components/schemas/VariableOperationResult'
+          maxItems: 1
+      title: Variables Removal Response (Scoped)
+      x-zs-$id: Delete1234567890Response200
+    VariablesBatchUpdateResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Success response summarizing the outcome of a batch update, with an
+        array of per-item operation results.
+      properties:
+        variables:
+          type: array
+          description: Array of operation results for each updated variable.
+          items:
+            $ref: '#/components/schemas/VariableOperationResult'
+          maxItems: 1
+      title: Variables Batch Update Response
+      x-zs-$id: PutvariablesResponse200
+    ApiNameGenerationRequestBody:
+      type: object
+      additionalProperties: false
+      description: >-
+        Alternate request payload wrapper containing items used to generate API
+        names.
+      properties:
+        variables:
+          type: array
+          description: Array of variable definitions. Mandatory.
+          items:
+            $ref: '#/components/schemas/ApiNameGenerationRequestBodyItem'
+          maxItems: 1
+      required:
+        - variables
+      title: API Name Generation Request V2
+    ApiNameGenerationRequestBodyItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Alternate input item for API name generation, specifying the variable
+        name and group.
+      properties:
+        name:
+          type: string
+          description: The display name for the variable. Mandatory.
+          maxLength: 50
+        variable_group:
+          $ref: '#/components/schemas/VariableGroupSchema'
+          description: The variable group to which this variable belongs. Mandatory.
+      required:
+        - name
+        - variable_group
+      title: API Name Generation Item V2
+    VariableAssociationResource:
+      type: object
+      additionalProperties: false
+      description: >-
+        A resource associated with variables, including name, id, and nested
+        association details.
+      properties:
+        name:
+          type: string
+          description: The name of the associated resource.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/VariableAssociationResourceDetails'
+        id:
+          type: string
+          description: The unique ID of the associated resource.
+          format: int64
+          maxLength: 19
+          x-zs-$id: VariableAssociationResourceId
+      required:
+        - details
+        - id
+        - name
+      title: Variable Association Resource
+    VariableGroupSchema:
+      type: object
+      additionalProperties: true
+      description: Base schema for variable_group
+      properties:
+        api_name:
+          description: The API name of the variable group.
+          x-zs-$ref:
+            resource: variable_groups
+            origins:
+              - operationId: getVariableGroups
+                propertyId: VariableGroupApiName
+          type: string
+          maxLength: 100
+        name:
+          type: string
+          description: The display name of the variable group.
+          maxLength: 50
+        id:
+          description: The unique ID of the variable group.
+          x-zs-$ref:
+            resource: variable_groups
+            origins:
+              - operationId: getVariableGroups
+                propertyId: VariableGroupId
+          type: string
+          maxLength: 19
+      title: Generated Schema
+    VariableOperationDetail:
+      type: object
+      additionalProperties: false
+      description: >-
+        Minimal details about a variable operation, including the
+        server-assigned variable identifier.
+      properties:
+        id:
+          type: string
+          description: The unique ID of the variable.
+          format: int64
+        api_name:
+          type: string
+          description: The API name of the variable.
+          maxLength: 255
+      title: Variable Operation Detail
+    VariablesBatchOperationMultiStatus:
+      type: object
+      additionalProperties: false
+      description: >-
+        Batch response indicating mixed successes and failures. Contains a
+        variables array with per-item outcomes and related details.
+      properties:
+        variables:
+          type: array
+          description: >-
+            Array of per-item operation results indicating success or failure
+            for each variable.
+          items:
+            $ref: '#/components/schemas/VariableOperationResult'
+          maxItems: 2
+      title: Variables Batch Operation (Multi-Status)
+      x-zs-$id: PostvariablesResponse207
+    ApiNameGenerationResponse:
+      type: object
+      additionalProperties: false
+      description: 200 response providing generated API names for the submitted variables.
+      properties:
+        variables:
+          type: array
+          description: Array of results for the API name generation operation.
+          items:
+            $ref: '#/components/schemas/VariableActionResult'
+          maxItems: 1
+      title: API Name Generation Response
+      x-zs-$id: PostgenerateapinameResponse200
+    VariableActionResult:
+      type: object
+      additionalProperties: false
+      description: >-
+        Per-item result for a variable operation, providing a code, message,
+        status, and details such as the variable ID.
+      properties:
+        code:
+          type: string
+          description: The result code of the operation (for example, SUCCESS).
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/VariableOperationDetail'
+        message:
+          type: string
+          description: A human-readable message describing the result of the operation.
+          maxLength: 255
+        status:
+          type: string
+          description: The status of the operation (for example, success or error).
+          maxLength: 255
+      title: Variable Action Result
+    VariableListItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Representation of a variable within collection responses, including
+        readOnly, apiName, name, description, id, source, type, value, and group
+        brief.
+      properties:
+        read_only:
+          type: boolean
+          description: Indicates whether the variable is read-only.
+        api_name:
+          type: string
+          description: The API name of the CRM variable.
+          maxLength: 100
+          x-zs-$id: VariablesApiName
+        name:
+          type: string
+          description: The display name of the variable.
+          maxLength: 50
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 3000
+          description: The description of the variable, if any.
+        id:
+          type: string
+          description: The unique ID of the variable.
+          format: int64
+          maxLength: 19
+          x-zs-$id: VariablesId
+        source:
+          type: string
+          description: The source of the variable (for example, crm).
+          maxLength: 255
+        type:
+          type: string
+          description: >-
+            The data type of the variable (for example, text, integer, percent,
+            decimal, currency, date, datetime, email, phone, url, checkbox,
+            textarea, long).
+          maxLength: 255
+        variable_group:
+          $ref: '#/components/schemas/VariableGroupSchema'
+        value:
+          type: string
+          description: The current value of the variable, if any.
+          maxLength: 3000
+      required:
+        - api_name
+        - description
+        - id
+        - name
+        - source
+        - type
+        - variable_group
+      title: Variable List Item
+    VariablesBatchUpdateRequestAlt1:
+      type: object
+      additionalProperties: false
+      description: >-
+        Alternate instance of the batch update request wrapper holding an array
+        of variable update items.
+      properties:
+        variables:
+          type: array
+          description: Array of variable update items to process. Mandatory.
+          items:
+            $ref: '#/components/schemas/ScopedVariableUpdateItem'
+          maxItems: 25
+      required:
+        - variables
+      title: Variables Batch Update Request (Alternate 1)
+    VariableGroupInvalidIDError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates an invalid variable group identifier in the request path.
+        Includes code INVALID_DATA and validation details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            param_name:
+              type: string
+              description: The name of the parameter that caused the error.
+              maxLength: 255
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variable Group Invalid ID Error
+      x-zs-$id: ErrorResponseCore1406268584
+    InvalidResourceIdError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates an invalid identifier in the request URL. Includes code
+        INVALID_DATA and contextual details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: The index of the invalid resource in the URL path.
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Resource ID Error
+      x-zs-$id: ErrorResponseCore96228106
+    VariableOperationResult:
+      type: object
+      additionalProperties: false
+      description: >-
+        Per-item outcome for a variable operation, including code, message,
+        status, and details such as the resulting variable id.
+      properties:
+        code:
+          type: string
+          description: >-
+            The result code of the operation (for example, SUCCESS,
+            INVALID_DATA).
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/VariableResultDetails'
+        message:
+          type: string
+          description: A human-readable message describing the result of the operation.
+          maxLength: 255
+        status:
+          type: string
+          description: The status of the operation (for example, success or error).
+          maxLength: 255
+      title: Variable Operation Result
+    VariableAssociationResourceDetails:
+      type: object
+      additionalProperties: false
+      description: Details about a resource association, including the referenced module.
+      properties:
+        module:
+          $ref: '#/components/schemas/AssociationResourceModuleDetails'
+      required:
+        - module
+      title: Variable Association Resource Details
+    InvalidUrlPatternError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the requested URL does not match a supported pattern.
+        Includes code INVALID_URL_PATTERN.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_URL_PATTERN
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Please check if the URL trying to access is a correct one
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid URL Pattern Error
+      x-zs-$id: ErrorResponseCore767063671
+    VariableAssociationGroup:
+      type: object
+      additionalProperties: false
+      description: >-
+        Grouping of variable associations under a named category, including the
+        list of associated resources.
+      properties:
+        name:
+          type: string
+          description: The name of the association category (for example, email_templates).
+          maxLength: 255
+        resources:
+          type: array
+          description: >-
+            Array of resources associated with this variable under this
+            category.
+          items:
+            $ref: '#/components/schemas/VariableAssociationResource'
+          maxItems: 1
+      required:
+        - name
+        - resources
+      title: Variable Association Group
+    InvalidRequestMethodError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when an unsupported HTTP request method is used. Includes code
+        INVALID_REQUEST_METHOD.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_REQUEST_METHOD
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - The http request method type is not a valid one
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Request Method Error
+      x-zs-$id: ErrorResponseCore1875045219
+    VariablesInvalidTypeError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates an invalid data type for the variables field. Includes code
+        INVALID_DATA and validation details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+            - PATTERN_NOT_MATCHED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: The maximum allowed length for the field.
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - invalid data
+            - Please check whether the input values are correct
+            - no data found to update
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Invalid Type Error
+      x-zs-$id: ErrorResponseCore1291593659
+    VariableGroupInvalidReferenceError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Error payload returned when the supplied variable group identifier (id)
+        is invalid during variable processing.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - the id given seems to be invalid
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variable Group Invalid Reference Error
+      x-zs-$id: VariableGroupInvalidReferenceError
+    ErrorInvalidDataResponse:
+      x-zs-$id: ErrorInvalidDataResponse
+      type: object
+      additionalProperties: false
+      description: 400 error for general invalid data submitted in the request.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: The maximum allowed length for the field.
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Data Error Response
+    ErrorApiNameGenerationMandatoryMissingResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        400 error returned when required fields for API name generation are not
+        provided.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - required field not found
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: API Name Generation Mandatory Missing Error Response
+      x-zs-$id: ErrorResponseCore1084285366
+    ErrorMandatoryFieldMissingResponse:
+      x-zs-$id: ErrorMandatoryFieldMissingResponse
+      type: object
+      additionalProperties: false
+      description: 400 error indicating a required field was not provided in the request.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Required field is missing
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Mandatory Field Missing Error Response
+    ErrorInvalidDataTypeResponse:
+      x-zs-$id: ErrorInvalidDataTypeResponse
+      type: object
+      additionalProperties: false
+      description: 400 error indicating a field has an incorrect data type.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: The expected data type for the field.
+              maxLength: 255
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Invalid data type
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Data Type Error Response
+    VariablesDuplicateDataError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates that submitted data duplicates existing records. Includes code
+        DUPLICATE_DATA, details, message, and status.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - DUPLICATE_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - duplicate data
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Duplicate Data Error
+      x-zs-$id: ErrorResponseCore789720987
+    VariablesInvalidDataGeneralError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Another form of invalid data error with validation details. Includes
+        code INVALID_DATA and message.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: 'Detail field: supported_values'
+              items:
+                type: string
+                description: 'Detail Field: supported_values'
+                maxLength: 255
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Invalid Data General Error
+      x-zs-$id: ErrorResponseCore679994589
+    VariableResultDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Details of an individual variable operation result, including the id of
+        the affected variable.
+      properties:
+        id:
+          type: string
+          description: The unique ID of the affected variable.
+          format: int64
+        api_name:
+          type: string
+          description: The API name of the affected variable.
+          maxLength: 100
+        json_path:
+          type: string
+          description: The JSON path to the field that caused the error.
+          maxLength: 255
+      title: Variable Result Details
+    VariableCreationItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a variable to create, including api_name, name, optional
+        description, data type (text, integer, boolean, date, float), initial
+        value, and the target variable_group reference.
+      properties:
+        api_name:
+          type: string
+          description: Specify the API name of the variables.
+          maxLength: 100
+          pattern: ^[a-zA-Z]+\w*[a-zA-Z0-9]*$
+        name:
+          type: string
+          description: Specify the name of the variables.
+          maxLength: 50
+        description:
+          type:
+            - string
+            - 'null'
+          description: Specify the description of the variables.
+          maxLength: 250
+        type:
+          type: string
+          description: Specify the type of the variables
+          enum:
+            - text
+            - integer
+            - boolean
+            - date
+            - float
+          maxLength: 7
+        variable_group:
+          $ref: '#/components/schemas/VariableGroupIdentifierInput'
+          description: Variable Groups json object (Required)
+        value:
+          type:
+            - integer
+            - 'null'
+          format: int32
+          description: Initial value of variable
+      required:
+        - api_name
+        - name
+        - type
+        - variable_group
+      title: Variable Creation Item
+    VariablesbyGroupResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Collection wrapper returning variables associated with the specified
+        group identifier.
+      properties:
+        variables:
+          type: array
+          description: Array of variable operation results.
+          items:
+            $ref: '#/components/schemas/VariableListItem'
+          maxItems: 25
+      required:
+        - variables
+      title: Variables by Group Response
+      x-zs-$id: GetVariableByIdResponse200
+    VariablesRemovalFailedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates failure to remove a variable due to an invalid ID or other
+        issues. Includes code INVALID_DATA and validation details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            id:
+              type: string
+              description: 'Detail field: id'
+              format: int64
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - variable not deleted
+            - the id given seems to be invalid
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Removal Failed Error
+      x-zs-$id: ErrorResponseCore1243464418
+    ScopedVariableUpdateItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Object used to update a variable's value within a scoped resource
+        context; accepts id and the new value.
+      properties:
+        id:
+          type: string
+          description: Id of variables
+          format: int64
+          maxLength: 19
+        value:
+          type:
+            - string
+            - 'null'
+          description: describes value for the variables
+          maxLength: 3000
+      required:
+        - id
+        - value
+      title: Scoped Variable Update Item
+    VariableValueInvalidDataError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates invalid data supplied for a variable's value during update.
+        Includes code INVALID_DATA and validation details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+            - PATTERN_NOT_MATCHED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: The expected data type for the field.
+              maxLength: 255
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - invalid data
+            - Please check whether the input values are correct
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variable Value Invalid Data Error
+      x-zs-$id: VariableValueInvalidDataError
+    VariablesInvalidDataTypeError:
+      type: object
+      additionalProperties: false
+      description: >-
+        General invalid data type error with validation details. Includes code
+        INVALID_DATA and a descriptive message.
+      properties:
+        code:
+          type: string
+          description: Represents the error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: The expected data type for the field.
+              maxLength: 255
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: Represents the error message
+          enum:
+            - Invalid data type
+        status:
+          type: string
+          description: Represents the status of the error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Invalid Data Type Error
+      x-zs-$id: ErrorResponseCore1793125962
+    VariablesRequestBodyMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Error returned when the request body is missing. Includes code
+        INVALID_DATA, validation details, message, and error status.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: The expected data type for the field.
+              maxLength: 255
+          required:
+            - expected_data_type
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - body
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Request Body Missing Error
+      x-zs-$id: ErrorResponseCore1077889464
+    VariableGroupAmbiguityError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Error payload indicating ambiguity while processing variable group
+        identifiers, such as conflicting id and api_name references.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            ambiguity_due_to:
+              type: array
+              description: 'Detail field: ambiguity_due_to'
+              items:
+                type: object
+                additionalProperties: false
+                description: 'Detail Field: ambiguity_due_to'
+                properties:
+                  api_name:
+                    type: string
+                    description: 'Nested detail field: api_name'
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: 'Nested detail field: json_path'
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - ambiguity_due_to
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Ambiguity while processing the request
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variable Group Ambiguity Error
+      x-zs-$id: ErrorResponseCore239977156
+    VariablesBatchOperationCreated:
+      type: object
+      additionalProperties: false
+      description: >-
+        Summary response for a batch variables operation where all items are
+        created successfully. Includes an array of per-item results.
+      properties:
+        variables:
+          type: array
+          description: Array of operation results for each created variable.
+          items:
+            $ref: '#/components/schemas/VariableOperationResult'
+          maxItems: 5
+      title: Variables Batch Operation (Created)
+      x-zs-$id: PostvariablesResponse201
+    VariablesDuplicateDataExtendedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Duplicate data error with extended validation details. Includes code
+        DUPLICATE_DATA, detailed context, message, and status.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - DUPLICATE_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - duplicate data
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Duplicate Data Extended Error
+      x-zs-$id: VariablesDuplicateDataExtendedError
+    VariablesDomainNotSupportedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the operation is not supported for the selected domain.
+        Includes code INVALID_DATA and validation details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: The index of the invalid resource in the URL path.
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - invalid data
+            - the id given seems to be invalid or already deleted
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Domain Not Supported Error
+      x-zs-$id: ErrorResponseCore1388195419
+    VariableAssociationsResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Success response containing an array of variable association groups for
+        the requested context.
+      properties:
+        variables_associations:
+          type: array
+          description: >-
+            Array of variable association groups, each containing the
+            association type and related resources.
+          items:
+            $ref: '#/components/schemas/VariableAssociationGroup'
+          maxItems: 1
+      required:
+        - variables_associations
+      title: Variable Associations Response
+      x-zs-$id: GetassociationsResponse200
+    VariablesInvalidDataError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Generic invalid data error for the submitted payload. Includes code
+        INVALID_DATA, details, message, and status.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: The maximum allowed length for the field.
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Invalid data
+            - invalid data
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Invalid Data Error
+      x-zs-$id: ErrorResponseCore1645526583
+    VariablesListResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Response wrapper containing an array of variables returned by the list
+        operation.
+      properties:
+        variables:
+          type: array
+          description: >-
+            Array of variable objects, each containing the variable details such
+            as name, API name, type, value, and variable group.
+          items:
+            $ref: '#/components/schemas/VariableListItem'
+          maxItems: 200
+      required:
+        - variables
+      title: Variables List Response
+      x-zs-$id: GetvariablesResponse200
+    AssociationResourceModuleDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Minimal reference to a module used in association details, containing id
+        and apiName.
+      properties:
+        api_name:
+          type: string
+          description: The API name of the CRM module.
+          maxLength: 255
+          x-zs-$id: AssociationResourceModuleApiName
+        id:
+          type: string
+          description: The unique ID of the CRM module.
+          format: int64
+          x-zs-$id: AssociationResourceModuleId
+      required:
+        - api_name
+        - id
+      title: Module Reference
+    VariablesBatchInput:
+      type: object
+      additionalProperties: false
+      description: >-
+        Request body wrapper that carries an array of variable definitions to be
+        processed in a single batch.
+      properties:
+        variables:
+          type: array
+          description: 'Array of variable definitions to create. Maximum: 25 items.'
+          items:
+            $ref: '#/components/schemas/VariableCreationItem'
+          maxItems: 2
+      required:
+        - variables
+      title: Variables Batch Input
+    VariableGroupIdentifierInput:
+      type: object
+      additionalProperties: false
+      description: >-
+        Nested object that identifies the variable group when defining a
+        variable. Includes the group's id (required).
+      properties:
+        id:
+          type: string
+          description: The unique ID of the variable group. Mandatory.
+          format: int64
+      required:
+        - id
+      title: Variable Group Identifier
+    VariablesMandatoryFieldMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Error for a missing required field in the payload. Includes code
+        MANDATORY_NOT_FOUND and validation details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - Required field is missing
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Mandatory Field Missing Error
+      x-zs-$id: ErrorResponseCore731875101
+    VariablesScopedBatchUpdateRequestAlt1:
+      type: object
+      additionalProperties: false
+      description: >-
+        Alternate instance of the scoped batch update request wrapper for
+        variable updates.
+      properties:
+        variables:
+          type: array
+          description: Array of variable update items to process. Mandatory.
+          items:
+            $ref: '#/components/schemas/ScopedVariableUpdateItem'
+          maxItems: 1
+      required:
+        - variables
+      title: Variables Batch Update Request (Scoped Alternate 1)
+    VariablesScopedBatchUpdateResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Success response summarizing scoped batch updates with an array of
+        per-item operation results.
+      properties:
+        variables:
+          type: array
+          description: Array of variable update items to process.
+          items:
+            $ref: '#/components/schemas/VariableOperationResult'
+          maxItems: 1
+      title: Variables Batch Update Response (Scoped)
+      x-zs-$id: VariablesScopedBatchUpdateResponse
+    VariablesBatchRemovalMultiStatusResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Batch removal response indicating mixed outcomes for multiple variables,
+        with per-item result details.
+      properties:
+        variables:
+          type: array
+          description: Array of operation results for each deleted variable.
+          items:
+            $ref: '#/components/schemas/VariableOperationResult'
+          maxItems: 6
+      title: Variables Batch Removal Multi-Status Response
+      x-zs-$id: DeletevariablesResponse207
+    VariablesPermissionDeniedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the caller lacks permission to access variables. Includes
+        code NO_PERMISSION and validation details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - NO_PERMISSION
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            permissions:
+              type: array
+              description: The list of required permissions.
+              items:
+                type: string
+                description: The required permission.
+                maxLength: 255
+              maxItems: 25
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - permission denied
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Variables Permission Denied Error
+      x-zs-$id: ErrorResponseCore637385226
+  parameters:
+    ParamQueryGroup:
+      name: group
+      in: query
+      description: >-
+        The unique ID or API name of the variable group to which the variable
+        belongs. Mandatory when retrieving a specific variable by ID.
+      required: false
+      style: form
+      explode: true
+      schema:
+        format: int64
+        type: string
+    ParamQueryIds:
+      name: ids
+      in: query
+      description: >-
+        Comma-separated list of variable IDs to delete. Mandatory when deleting
+        multiple variables. Maximum: 100 IDs.
+      required: false
+      style: form
+      explode: false
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 100
+        uniqueItems: true
+        items:
+          type: string
+          format: int64
+          description: The unique ID of the variable to delete.
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.variables.ALL: Access to all settings.variables  scopes
+            ZohoCRM.settings.variables.READ: 'Read access to settings.variables '
+            ZohoCRM.settings.variables.CREATE: 'Create access to settings.variables '
+            ZohoCRM.settings.variables.UPDATE: 'Update access to settings.variables '
+            ZohoCRM.settings.variables.DELETE: 'Delete access to settings.variables '

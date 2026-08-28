@@ -1,0 +1,24 @@
+# Fields API
+
+- [OpenAPI specification](fields.yaml)
+- [List fields metadata](mds/getFields.md)
+  - To retrieve the field metadata for the specified module in your Zoho CRM account, including standard, custom, subform, and linking module fields. The response includes fields from all layouts but does not contain layout-specific configurations such as mandatory flags or picklist values.
+  - [Examples](mds/examples/getFields.md)
+- [Create custom fields in a module](mds/createFields.md)
+  - To create custom fields in a module in your Zoho CRM organization, where supported modules include Leads, Contacts, Accounts, Campaigns, Cases, Invoices, Deals, Price Books, Products, Purchase Orders, Quotes, Sales Orders, Solutions, Vendors, Calls, Tasks, Events, Users, and Custom modules.
+  - [Examples](mds/examples/createFields.md)
+- [Update custom fields](mds/updateField.md)
+  - To update one or more custom fields in a module in your Zoho CRM account.
+  - [Examples](mds/examples/updateField.md)
+- [Get field metadata by ID](mds/getFieldsWithID.md)
+  - To retrieve the metadata of a specific custom field in a module in your Zoho CRM account by its field ID.
+  - [Examples](mds/examples/getFieldsWithID.md)
+- [Update a custom field](mds/putFieldsWithId.md)
+  - To update a specific custom field in a module in your Zoho CRM account by its unique field ID.
+  - [Examples](mds/examples/putFieldsWithId.md)
+- [Delete a custom field](mds/deleteCustomField.md)
+  - To delete a custom field from a module in your Zoho CRM account. The field must not be used in workflows, approvals, scoring rules, or other configurations before deletion.
+  - [Examples](mds/examples/deleteCustomField.md)
+- [Get scheduled jobs for a field](mds/getScheduledJobs.md)
+  - To retrieve the status of scheduled jobs for picklist field operations in your Zoho CRM account, such as replace or delete picklist option jobs.
+  - [Examples](mds/examples/getScheduledJobs.md)

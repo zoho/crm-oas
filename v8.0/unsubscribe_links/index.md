@@ -1,0 +1,24 @@
+# Unsubscribe Links
+
+- [OpenAPI specification](unsubscribe_links.yaml)
+- [Get Unsubscribe Links](mds/getUnsubscribeLinks.md)
+  - To retrieve the details of all unsubscribe links configured in your CRM account. This API returns a list of unsubscribe links with their complete configuration, including page type, submission behavior, timestamps, and creator information.
+  - [Examples](mds/examples/getUnsubscribeLinks.md)
+- [Update Unsubscribe Links](mds/putUnsubscribeLinks.md)
+  - To update one or more unsubscribe links in bulk. You can modify the link's name, page type, custom URL, standard page message, submission action type, redirect URL, or submission message.
+  - [Examples](mds/examples/putUnsubscribeLinks.md)
+- [Create Unsubscribe Link](mds/postUnsubscribeLinks.md)
+  - To create an unsubscribe link that can be used in email templates or email footers. You can configure the link to display a standard Zoho CRM unsubscribe page or redirect to a custom webpage.
+  - [Examples](mds/examples/postUnsubscribeLinks.md)
+- [Get Unsubscribe Link by ID](mds/getUnsubscribeLinkById.md)
+  - To retrieve the complete configuration details of a specific unsubscribe link using its ID. This includes page settings, submission behavior, timestamps, and creator information.
+  - [Examples](mds/examples/getUnsubscribeLinkById.md)
+- [Update Unsubscribe Link by ID](mds/putUnsubscribeLinksById.md)
+  - To update a specific unsubscribe link. You can modify the link's name, page type, custom URL, standard page message, submission action type, redirect URL, or submission message.
+  - [Examples](mds/examples/putUnsubscribeLinksById.md)
+- [Delete Unsubscribe Link by ID](mds/deleteUnsubscribeLinksById.md)
+  - To delete a specific unsubscribe link. Note that the default unsubscribe link cannot be deleted.
+  - [Examples](mds/examples/deleteUnsubscribeLinksById.md)
+- [Get Unsubscribe Link Associations](mds/getAssociations.md)
+  - To retrieve information about where unsubscribe links are being used (associated places) in your CRM account, such as in email templates.
+  - [Examples](mds/examples/getAssociations.md)

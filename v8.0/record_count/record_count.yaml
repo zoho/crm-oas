@@ -1,0 +1,3082 @@
+openapi: 3.1.0
+info:
+  title: Module Record Count
+  description: >-
+    The Module Record Count API returns the total number of records in a
+    specified Zoho CRM module. This API enables developers to count records in
+    any supported module, with optional filtering by custom view or search
+    criteria.
+  version: '8.0'
+  summary: Module Record Count API
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The domain corresponding to your Zoho CRM data center (e.g.,
+          www.zohoapis.com, www.zohoapis.eu).
+      version:
+        enum:
+          - v8
+        default: v8
+        description: API version
+paths:
+  /{moduleApiName}/actions/count:
+    get:
+      tags:
+        - Records
+      summary: Module Record Count
+      description: >-
+        To retrieve the total number of records in a specified Zoho CRM module,
+        optionally filtered by a Custom View or search criteria. The count can
+        be filtered using `cvid` (Custom View ID) or search parameters
+        (`criteria`, `email`, `phone`, or `word`). These two filter groups are
+        mutually exclusive - they cannot be combined in the same request. The
+        `converted` and `approved` parameters apply only to the Leads module.
+        The `type` parameter applies only to the Users module. Note: The record
+        count may take 1-10 minutes to reflect the latest changes in Zoho CRM.
+
+
+        The count can be filtered using `cvid` (Custom View ID) or one of the
+        search parameters (`criteria`, `phone`, `email`, `word`).
+
+
+        **Important Constraint (Zoho Documentation):**
+
+
+        You can only include **either** `cvid` **or** one of the search
+        parameters (`criteria`, `phone`, `email`, `word`) in a single request.
+        Combining `cvid` with any search parameter will result in an
+        `AMBIGUITY_DURING_PROCESSING` error (HTTP 400).
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.READ
+        - OAuth2:
+            - ZohoCRM.modules.Leads.READ
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Deals.READ
+        - OAuth2:
+            - ZohoCRM.modules.Tasks.READ
+        - OAuth2:
+            - ZohoCRM.modules.Events.READ
+        - OAuth2:
+            - ZohoCRM.modules.Calls.READ
+        - OAuth2:
+            - ZohoCRM.modules.Products.READ
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.READ
+        - OAuth2:
+            - ZohoCRM.modules.Campaigns.READ
+        - OAuth2:
+            - ZohoCRM.modules.Cases.READ
+        - OAuth2:
+            - ZohoCRM.modules.Solutions.READ
+        - OAuth2:
+            - ZohoCRM.modules.pricebooks.READ
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.READ
+        - OAuth2:
+            - ZohoCRM.modules.salesorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.purchaseorders.READ
+      operationId: getRecordCount
+      parameters:
+        - $ref: '#/components/parameters/ModuleApiName'
+        - $ref: '#/components/parameters/Email'
+        - $ref: '#/components/parameters/Phone'
+        - $ref: '#/components/parameters/Word'
+        - $ref: '#/components/parameters/Cvid'
+        - $ref: '#/components/parameters/Criteria'
+        - $ref: '#/components/parameters/Filters'
+        - $ref: '#/components/parameters/IncludeFilters'
+        - $ref: '#/components/parameters/CrossFilters'
+        - $ref: '#/components/parameters/Converted'
+        - $ref: '#/components/parameters/Approved'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Type'
+      responses:
+        '200':
+          description: Successful response containing the total record count.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetRecordCountResponse
+                type: object
+                description: >-
+                  Represents the response body containing the total number of
+                  records matching the specified filter criteria.
+                additionalProperties: false
+                properties:
+                  count:
+                    type: integer
+                    format: int32
+                    description: >-
+                      Represents the total number of records matching the
+                      specified filter criteria. Always returned in the
+                      response.
+                required:
+                  - count
+              examples:
+                Success:
+                  summary: Successful record count response
+                  value:
+                    count: 42
+          x-zs-llm-description: >-
+            This tool is used to get the number of records for the given CRM
+            module by using either cvid or criteria
+        '400':
+          description: >-
+            Bad Request - invalid module name, unsupported module, or ambiguous
+            use of parameters.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetCount400ErrorResponses
+                description: >-
+                  Represents the union of possible error response bodies
+                  returned for a 400 Bad Request.
+                oneOf:
+                  - type: object
+                    description: Invalid request error response
+                    x-zs-$id: PostInvalidRequestErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code indicating invalid request
+                        enum:
+                          - INVALID_REQUEST
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 1000
+                        const: >-
+                          unable to process your request. please verify whether
+                          you have entered proper method name, parameter and
+                          parameter values.
+                      details:
+                        type: object
+                        description: Additional error details
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                  - type: object
+                    description: Invalid request error response
+                    x-zs-$id: PostFieldTypeUnavailableErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code indicating invalid request
+                        enum:
+                          - FIELD_TYPE_UNAVAILABLE
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 1000
+                        enum:
+                          - this data type is not found in this module
+                      details:
+                        type: object
+                        description: Additional error details
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                  - type: object
+                    description: Operation not supported error response
+                    x-zs-$id: PostNotSupportedErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        const: error
+                      code:
+                        type: string
+                        description: Error code indicating unsupported operation
+                        const: NOT_SUPPORTED
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 1000
+                        enum:
+                          - The module does not support this operation
+                          - module not suppoted for search
+                          - the given module is not supported for count
+                      details:
+                        type: object
+                        description: Additional error details including module information
+                        additionalProperties: false
+                        properties:
+                          module:
+                            type: string
+                            description: The module that does not support this operation
+                            maxLength: 100
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    description: Missing required parameter error response
+                    x-zs-$id: PostExpectedParamMissingErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code indicating missing parameters
+                        enum:
+                          - EXPECTED_PARAM_MISSING
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: >-
+                          Additional error details including missing parameter
+                          names
+                        additionalProperties: false
+                        properties:
+                          param_names:
+                            type: array
+                            description: List of missing parameter names
+                            maxItems: 50
+                            items:
+                              type: string
+                              description: Parameter name
+                              maxLength: 100
+                              enum:
+                                - criteria
+                                - email
+                                - phone
+                                - word
+                        required:
+                          - param_names
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    description: Invalid module error response
+                    x-zs-$id: PostInvalidModuleErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code indicating invalid module
+                        enum:
+                          - INVALID_MODULE
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: >-
+                          Additional error details including resource path
+                          information
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: Index of the invalid resource path segment
+                            format: int32
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    description: Invalid query error response with various detail formats
+                    x-zs-$id: PostInvalidQueryVariantsErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code indicating invalid query
+                        enum:
+                          - INVALID_QUERY
+                      message:
+                        type: string
+                        description: >-
+                          Human-readable error message describing the query
+                          issue
+                        enum:
+                          - Cannot use the restricted field.
+                          - Invalid query formed
+                          - invalid value for search
+                          - the field is not available for search
+                          - Please check the value of the field
+                          - special characters are not allowed
+                          - invalid operator found
+                          - no_masking_permission
+                          - >-
+                            More than one wildcard(*) not allowed in a
+                            searchword
+                      details:
+                        oneOf:
+                          - type: object
+                            description: Invalid Operator passed for datatype
+                            x-zs-$id: PostInvalidOperatorForDataTypeDetails
+                            additionalProperties: false
+                            properties:
+                              operator:
+                                type: string
+                                description: The invalid operator used in the query
+                                maxLength: 50
+                            required:
+                              - operator
+                              - api_name
+                          - type: object
+                            description: Data type mismatch error details
+                            x-zs-$id: PostInvalidQueryDataTypeMismatchDetails
+                            additionalProperties: false
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: The expected data type for the field
+                                maxLength: 100
+                              reason:
+                                type: string
+                                description: Detailed reason for the error
+                                maxLength: 500
+                            required:
+                              - expected_data_type
+                              - reason
+                              - api_name
+                          - type: object
+                            description: Data type mismatch error details
+                            x-zs-$id: PostInvalidQueryDataTypeMismatchDetailsWithValue
+                            additionalProperties: false
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: The expected data type for the field
+                                maxLength: 100
+                              reason:
+                                type: string
+                                description: Detailed reason for the error
+                                maxLength: 500
+                              value:
+                                type: string
+                                description: The invalid value provided in the query
+                                maxLength: 500
+                            required:
+                              - expected_data_type
+                              - reason
+                              - api_name
+                              - value
+                          - type: object
+                            description: Invalid operator error details
+                            x-zs-$id: PostInvalidQueryInvalidOperatorDetails
+                            additionalProperties: false
+                            properties:
+                              operator:
+                                type: string
+                                description: The invalid operator used in the query
+                                maxLength: 50
+                              reason:
+                                type: string
+                                description: Detailed reason for the error
+                                maxLength: 500
+                            required:
+                              - operator
+                              - reason
+                              - api_name
+                          - type: object
+                            description: General query error details
+                            x-zs-$id: PostInvalidQueryGeneralDetails
+                            additionalProperties: false
+                            properties:
+                              reason:
+                                type: string
+                                description: Detailed reason for the error
+                                maxLength: 500
+                              details:
+                                type: string
+                                description: >-
+                                  Additional details about the error, only Zoho
+                                  Search team
+                                maxLength: 1000
+                            required:
+                              - reason
+                              - api_name
+                          - type: object
+                            description: Invalid value error details
+                            x-zs-$id: PostInvalidQueryInvalidValueDetails
+                            additionalProperties: false
+                            properties:
+                              reason:
+                                type: string
+                                description: Detailed reason for the error
+                                maxLength: 500
+                              value:
+                                type: string
+                                description: The invalid value provided in the query
+                                maxLength: 500
+                            required:
+                              - reason
+                              - api_name
+                              - value
+                          - type: object
+                            description: Invalid value error details
+                            x-zs-$id: PostInvalidQueryInvalidParamDetails
+                            additionalProperties: false
+                            properties:
+                              param_name:
+                                type: string
+                                description: Name of the parameter causing the error
+                                maxLength: 500
+                                enum:
+                                  - email
+                                  - phone
+                                  - word
+                            required:
+                              - param_name
+                          - type: object
+                            description: Invalid value error details
+                            x-zs-$id: PostInvalidQueryEmptyDetails
+                            additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    description: Invalid query error response with various detail formats
+                    x-zs-$id: PostInvalidDataVariantsErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code indicating invalid query
+                        enum:
+                          - INVALID_DATA
+                      message:
+                        type: string
+                        description: >-
+                          Human-readable error message describing the query
+                          issue
+                        enum:
+                          - Cannot use the restricted field.
+                          - Invalid query formed
+                          - invalid value for search
+                          - the field is not available for search
+                          - Please check the value of the field
+                          - special characters are not allowed
+                          - invalid operator found
+                          - no_masking_permission
+                          - invalid data
+                          - >-
+                            More than one wildcard(*) not allowed in a
+                            searchword
+                          - provide atleast 2 letters for search
+                      details:
+                        oneOf:
+                          - type: object
+                            description: Data type mismatch error details
+                            x-zs-$id: PostInvalidDataDataTypeMismatchDetails
+                            additionalProperties: false
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: The expected data type for the field
+                                maxLength: 100
+                              reason:
+                                type: string
+                                description: Detailed reason for the error
+                                maxLength: 500
+                            required:
+                              - expected_data_type
+                              - reason
+                              - api_name
+                          - type: object
+                            description: Invalid operator error details
+                            x-zs-$id: PostInvalidDataInvalidOperatorDetails
+                            additionalProperties: false
+                            properties:
+                              operator:
+                                type: string
+                                description: The invalid operator used in the query
+                                maxLength: 50
+                              reason:
+                                type: string
+                                description: Detailed reason for the error
+                                maxLength: 500
+                            required:
+                              - operator
+                              - reason
+                              - api_name
+                          - type: object
+                            description: General query error details
+                            x-zs-$id: PostInvalidDataGeneralDetails
+                            additionalProperties: false
+                            properties:
+                              reason:
+                                type: string
+                                description: Detailed reason for the error
+                                maxLength: 500
+                              details:
+                                type: string
+                                description: >-
+                                  Additional details about the error, only Zoho
+                                  Search team
+                                maxLength: 1000
+                            required:
+                              - reason
+                              - api_name
+                          - type: object
+                            description: Invalid value error details
+                            x-zs-$id: PostInvalidDataInvalidValueDetails
+                            additionalProperties: false
+                            properties:
+                              reason:
+                                type: string
+                                description: Detailed reason for the error
+                                maxLength: 500
+                              value:
+                                type: string
+                                description: The invalid value provided in the query
+                                maxLength: 500
+                            required:
+                              - reason
+                              - api_name
+                              - value
+                          - type: object
+                            description: Invalid value error details
+                            x-zs-$id: PostInvalidParamValueDetails
+                            additionalProperties: false
+                            properties:
+                              param_name:
+                                type: string
+                                description: Name of the parameter causing the error
+                                maxLength: 500
+                            required:
+                              - param_name
+                          - type: object
+                            description: Invalid value error details
+                            x-zs-$id: PostInvalidDataEmptyDetails
+                            additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    description: Invalid query error response for IN operator violations
+                    x-zs-$id: PostInvalidQueryInOperatorErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code indicating invalid query
+                        enum:
+                          - INVALID_QUERY
+                      message:
+                        type: string
+                        description: >-
+                          Human-readable error message describing the query
+                          issue
+                        enum:
+                          - Only 100 values are allowed in "IN" criteria
+                          - Invalid query formed
+                      details:
+                        type: object
+                        description: Additional error details including field information
+                        additionalProperties: false
+                        properties:
+                          param_name:
+                            type: string
+                            description: Name of the parameter causing the error
+                            maxLength: 100
+                        required:
+                          - api_name
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    description: >-
+                      Limit reached error response when maximum record iteration
+                      exceeded
+                    x-zs-$id: PostLimitReachedErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code indicating limit reached
+                        enum:
+                          - LIMIT_REACHED
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        enum:
+                          - maximum response iteration limit reached
+                      details:
+                        type: object
+                        description: Additional error details including the limit value
+                        additionalProperties: false
+                        properties:
+                          limit:
+                            type: string
+                            description: Maximum number of records allowed
+                            enum:
+                              - '2000'
+                        required:
+                          - limit
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    description: Criteria limit exceeded error response
+                    x-zs-$id: PostCriteriaLimitExceededErrorResponse
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Error status indicator
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code indicating criteria limit exceeded
+                        enum:
+                          - CRITERIA_LIMIT_EXCEEDED
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        enum:
+                          - >-
+                            no of criterium that can be given exceed the limit
+                            15
+                      details:
+                        type: object
+                        description: Additional error details
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    description: Ambiguity during processing error response
+                    x-zs-$id: AmbiguityDuringProcessingError
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: Indicates the response is an error.
+                      code:
+                        type: string
+                        enum:
+                          - AMBIGUITY_DURING_PROCESSING
+                        description: >-
+                          Error code representing ambiguity during request
+                          processing.
+                      message:
+                        type: string
+                        description: >-
+                          Detailed message describing the ambiguity in the
+                          request.
+                        maxLength: 512
+                        enum:
+                          - >-
+                            Please use either Cvid or Search Params. Combination
+                            of both the params is not allowed
+                      details:
+                        type: object
+                        description: Additional details about the ambiguity.
+                        additionalProperties: false
+                        properties:
+                          ambiguity_due_to:
+                            type: array
+                            description: List of parameters causing ambiguity.
+                            maxItems: 2
+                            items:
+                              type: object
+                              additionalProperties: false
+                              description: Parameter causing ambiguity.
+                              properties:
+                                param_name:
+                                  type: string
+                                  description: Name of the parameter causing ambiguity.
+                                  maxLength: 100
+                              required:
+                                - param_name
+                  - x-zs-$id: NotSupportedVersionError
+                    description: >-
+                      Error response when the requested operation or module is
+                      not supported.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: Indicates the response is an error.
+                      code:
+                        type: string
+                        enum:
+                          - API_NOT_SUPPORTED
+                        description: >-
+                          Error code representing unsupported operation or
+                          module.
+                      message:
+                        type: string
+                        description: >-
+                          Detailed message describing why the request is not
+                          supported.
+                        maxLength: 512
+                        enum:
+                          - api not supported in this version
+                      details:
+                        type: object
+                        description: >-
+                          Additional details including the unsupported module
+                          name.
+                        additionalProperties: false
+                        properties:
+                          supported_version:
+                            type: string
+                            description: The API version that supports this operation.
+                            maxLength: 100
+                            enum:
+                              - v2.1
+                    required:
+                      - status
+                      - code
+                      - message
+              examples:
+                InvalidRequest:
+                  summary: Invalid request error
+                  value:
+                    status: error
+                    code: INVALID_REQUEST
+                    message: >-
+                      unable to process your request. please verify whether you
+                      have entered proper method name, parameter and parameter
+                      values.
+                    details: {}
+                  description: >-
+                    Illustrates the error returned when the request is invalid
+                    due to malformed or unsupported input.
+                FieldTypeUnavailable:
+                  summary: Field type not found in module
+                  value:
+                    status: error
+                    code: FIELD_TYPE_UNAVAILABLE
+                    message: this data type is not found in this module
+                    details: {}
+                  description: >-
+                    Illustrates the error returned when the specified field type
+                    is not found in the module.
+                NotSupported:
+                  summary: Module not supported for count
+                  value:
+                    status: error
+                    code: NOT_SUPPORTED
+                    message: the given module is not supported for count
+                    details:
+                      module: Module_Name
+                  description: >-
+                    Illustrates the error returned when the specified module
+                    does not support the record count operation.
+                ModuleNotSupportedForSearch:
+                  summary: Module not supported for search
+                  value:
+                    status: error
+                    code: NOT_SUPPORTED
+                    message: module not suppoted for search
+                    details:
+                      module: Activities
+                  description: >-
+                    Illustrates the error returned when the specified module
+                    does not support search-based record count operations.
+                ExpectedParamMissing:
+                  summary: Missing required search parameter
+                  value:
+                    status: error
+                    code: EXPECTED_PARAM_MISSING
+                    message: one of the expected parameter is missing
+                    details:
+                      param_names:
+                        - criteria
+                        - email
+                        - phone
+                        - word
+                InvalidModule:
+                  summary: Invalid module name provided
+                  value:
+                    status: error
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Illustrates the error returned when the specified module
+                    name does not correspond to a valid Zoho CRM module.
+                InvalidQueryRestrictedField:
+                  summary: Restricted field in search criteria
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: Cannot use the restricted field.
+                    details:
+                      reason: Cannot use the restricted field.
+                      api_name: Custom_Field_1
+                  description: >-
+                    Illustrates the error returned when the request includes a
+                    restricted field in the search criteria.
+                InvalidQueryInvalidValue:
+                  summary: Invalid value in search criteria
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: invalid value for search
+                    details:
+                      reason: Please check the value of the field
+                      api_name: Phone
+                      value: ABC123
+                  description: >-
+                    Illustrates the error returned when an invalid value is
+                    provided in the search criteria query.
+                InvalidQueryInvalidOperator:
+                  summary: Invalid operator for field type
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: invalid operator found
+                    details:
+                      operator: greater_than
+                      reason: The operator is not valid for the field type
+                      api_name: Email
+                  description: >-
+                    Illustrates the error returned when the operator specified
+                    in the criteria is not valid for the field type.
+                InvalidQueryDataTypeMismatch:
+                  summary: Data type mismatch in search criteria
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: invalid value for search
+                    details:
+                      expected_data_type: Integer
+                      reason: invalid value for search
+                      api_name: Age
+                  description: >-
+                    Illustrates the error returned when a data type mismatch is
+                    detected in the search criteria query.
+                InvalidQueryFieldNotAvailable:
+                  summary: Field not available for search
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: the field is not available for search
+                    details:
+                      reason: the field is not available for search
+                      api_name: Encrypted_Field
+                  description: >-
+                    Illustrates the error returned when the specified field is
+                    not available for search in the module.
+                InvalidQuerySpecialCharacters:
+                  summary: Special characters in search criteria
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: special characters are not allowed
+                    details:
+                      reason: special characters are not allowed
+                      api_name: Search_Field
+                  description: >-
+                    Illustrates the error returned when unsupported special
+                    characters are used in the search criteria.
+                InvalidQueryNoMaskingPermission:
+                  summary: No masking permission for searched field
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: no_masking_permission
+                    details:
+                      reason: no_masking_permission
+                      api_name: Masked_Field
+                  description: >-
+                    Illustrates the error returned when the requesting user does
+                    not have permission to search masked fields.
+                InvalidQueryMultipleWildcards:
+                  summary: Multiple wildcards in criteria not allowed
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: More than one wildcard(*) not allowed in a searchword
+                    details:
+                      reason: More than one wildcard(*) not allowed in a searchword
+                      api_name: Search_Field
+                  description: >-
+                    Illustrates the error returned when multiple wildcard
+                    characters are used in the search criteria.
+                InvalidQueryInvalidParam:
+                  summary: Invalid parameter in search criteria
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: Invalid query formed
+                    details:
+                      param_name: email
+                  description: >-
+                    Illustrates the error returned when the request includes an
+                    invalid parameter in the search criteria query.
+                InvalidQueryInvalidOperatorForDataType:
+                  summary: Operator not supported for data type
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: invalid operator found
+                    details:
+                      operator: starts_with
+                      api_name: Annual_Revenue
+                  description: >-
+                    Illustrates the error returned when the operator is not
+                    supported for the field's data type.
+                InvalidDataTimeInvalidValue:
+                  summary: Invalid date/time value in criteria
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: invalid value for search
+                    details:
+                      reason: Please check the value of the field
+                      api_name: Created_Time
+                      value: invalid-date
+                  description: >-
+                    Illustrates the error returned when a date or time value in
+                    the criteria does not match the expected format.
+                InvalidDateValue:
+                  summary: Invalid date value in criteria
+                  value:
+                    code: INVALID_QUERY
+                    details:
+                      expected_data_type: date
+                      reason: invalid value for search
+                      api_name: NonDate
+                      value: asadsa
+                    message: Invalid query formed
+                    status: error
+                  description: >-
+                    Illustrates the error returned when an invalid date value is
+                    provided in the criteria.
+                InvalidDataTypeMismatch:
+                  summary: Data type mismatch in criteria
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: invalid data
+                    details:
+                      expected_data_type: datetime
+                      reason: invalid value for search
+                      api_name: Modified_Time
+                  description: >-
+                    Illustrates the error returned when the value provided in
+                    the criteria does not match the expected data type of the
+                    field.
+                InvalidDataInvalidOperator:
+                  summary: Invalid data - operator error
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: invalid operator found
+                    details:
+                      operator: between
+                      reason: The operator is not valid for the field type
+                      api_name: Picklist_Field
+                  description: >-
+                    Illustrates the error returned when the request uses an
+                    invalid operator for a field in the `criteria` parameter.
+                InvalidDataRestrictedField:
+                  summary: Restricted field used in criteria
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: Cannot use the restricted field.
+                    details:
+                      reason: Cannot use the restricted field.
+                      api_name: System_Field
+                  description: >-
+                    Illustrates the error returned when the criteria includes a
+                    field that is restricted from search operations.
+                InvalidDataSpecialCharacters:
+                  summary: Special characters in criteria value
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: special characters are not allowed
+                    details:
+                      reason: special characters are not allowed
+                      api_name: Name
+                  description: >-
+                    Illustrates the error returned when the criteria value
+                    contains unsupported special characters.
+                InvalidDataMultipleWildcards:
+                  summary: Multiple wildcards not allowed in criteria
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: More than one wildcard(*) not allowed in a searchword
+                    details:
+                      reason: More than one wildcard(*) not allowed in a searchword
+                      api_name: Company
+                  description: >-
+                    Illustrates the error returned when the criteria value
+                    contains more than one wildcard character.
+                InvalidDataMinimumLength:
+                  summary: Search term below minimum length
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: provide atleast 2 letters for search
+                    details:
+                      param_name: word
+                  description: >-
+                    Illustrates the error returned when the search term in the
+                    criteria is shorter than the minimum required length of 2
+                    characters.
+                InvalidDataInvalidParam:
+                  summary: Invalid data - parameter error
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: invalid data
+                    details:
+                      param_name: word
+                  description: >-
+                    Illustrates the error returned when an invalid parameter
+                    name is provided in the `criteria` parameter.
+                InvalidQueryInOperatorLimit:
+                  summary: IN operator value limit exceeded
+                  value:
+                    status: error
+                    code: INVALID_QUERY
+                    message: Only 100 values are allowed in "IN" criteria
+                    details:
+                      api_name: Lead_Status
+                  description: >-
+                    Illustrates the error returned when the number of values
+                    provided for the `in` operator exceeds the allowed limit.
+                LimitReached:
+                  summary: Maximum record iteration limit reached
+                  value:
+                    status: error
+                    code: LIMIT_REACHED
+                    message: maximum response iteration limit reached
+                    details:
+                      limit: '2000'
+                CriteriaLimitExceeded:
+                  summary: More than 10 criteria specified
+                  value:
+                    status: error
+                    code: CRITERIA_LIMIT_EXCEEDED
+                    message: no of criterium that can be given exceed the limit 15
+                    details: {}
+                  description: >-
+                    Illustrates the error returned when the request includes
+                    more than 10 criteria in the `criteria` parameter.
+                AmbiguityError:
+                  summary: Ambiguous parameters - cvid with criteria
+                  value:
+                    status: error
+                    code: AMBIGUITY_DURING_PROCESSING
+                    message: >-
+                      Please use either Cvid or Search Params. Combination of
+                      both the params is not allowed
+                    details:
+                      ambiguity_due_to:
+                        - param_name: cvid
+                        - param_name: criteria
+                NotSupportedVersion:
+                  summary: Operation not supported in this API version
+                  value:
+                    status: error
+                    code: API_NOT_SUPPORTED
+                    message: api not supported in this version
+                    details:
+                      supported_version: v2.1
+        '401':
+          description: Unauthorized (e.g., OAUTH_SCOPE_MISMATCH).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ScopeMismatch:
+                  summary: OAuth scope mismatch error
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: You do not have the scope required to use this API.
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNALERROR:
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Internal Server Error
+                    status: error
+                  description: >-
+                    Illustrates the error returned when an unexpected
+                    server-side failure occurs during processing.
+                  summary: Internal server error
+components:
+  parameters:
+    ModuleApiName:
+      name: moduleApiName
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the module for which you want to retrieve the
+        record count. Refer to the [Get
+        Modules](modules.yaml#$.paths./settings/modules.get) resource for valid
+        values.
+      schema:
+        type: string
+        description: >-
+          The API name of the module for which to retrieve the record count
+          (e.g., `Leads`, `Accounts`).
+        maxLength: 5000
+      examples:
+        Leads:
+          value: Leads
+        Accounts:
+          value: Accounts
+    Email:
+      name: email
+      in: query
+      description: >-
+        Specify an email address to filter the count to records that contain
+        this value in any email field of the specified module. Encode special
+        characters before submitting (for example, use `p%2Bboyle@abc.com` for
+        `p+boyle@abc.com`).
+      required: false
+      schema:
+        type: string
+        maxLength: 3000
+        description: >-
+          The email address to filter records by. Note that special characters
+          must be URL-encoded (e.g., `p%2Bboyle@abc.com` for `p+boyle@abc.com`).
+      example: p%2Bboyle@abc.com
+    Phone:
+      name: phone
+      in: query
+      description: >-
+        Specify a phone number to filter the count to records that contain this
+        value in any phone field of the specified module.
+      required: false
+      schema:
+        type: string
+        maxLength: 3000
+        description: The phone number to filter records by.
+      example: '9876543210'
+    Word:
+      name: word
+      in: query
+      required: false
+      description: >-
+        Specify a search term to filter the count to records that contain this
+        word in any searchable field within the specified module.
+      schema:
+        type: string
+        maxLength: 3000
+        description: The word to filter records by.
+      example: fin
+    Cvid:
+      name: cvid
+      in: query
+      description: >-
+        Specify the ID of the Custom View from which to retrieve the record
+        count. Refer to the [Get Custom
+        Views](custom_views.yaml#$.paths./settings/custom_views.get) resource
+        for valid values.
+      required: false
+      schema:
+        type: string
+        maxLength: 3000
+        description: The Custom View ID to filter records by.
+      example: 5690xxxx980
+    Criteria:
+      name: criteria
+      in: query
+      description: >-
+        Performs search by following the shown criteria:
+        `(({api_name}:{operator}:{value}) and/or
+        ({api_name}:{operator}:{value}))`
+
+
+        Performs a search based on the following format:
+
+        `(({field_API_name}:{operator}:{value}) and/or
+        ({field_API_name}:{operator}:{value}))`
+
+
+        Replace `{field_API_name}`, `{operator}`, and `{value}` with the
+        appropriate field API name, condition, and value.
+
+
+        **Key Points:**
+
+        - You can search for a maximum of **10 criteria** (with same or
+        different columns)
+
+        - The only operator that is supported for **encrypted fields** is
+        `equals`
+
+        - When using the `equals` operator in the Search API, it behaves like
+        `contains`, retrieving records that include the specified value
+
+
+        **Single Condition:**
+
+        If the condition is `(Company:equals:ABC)`, the response will include
+        records with "ABC" as well as "ABC Inc" in the Company field.
+
+
+        **Multiple Conditions:**
+
+        `equals` still behaves like `contains`. For example,
+        `((Company:equals:ABC) and (First_Name:starts_with:M))`, it retrieves
+        records where the "First Name" starts with "M" and the "Company"
+        contains "ABC" (e.g., "ABC" or "ABC Inc.").
+
+
+        **Note:** The above behaviour does not apply to the **picklist field
+        type**.
+
+
+        **IN Operator:**
+
+        The `in` operator checks if a field's value matches any value in a given
+        list.
+
+        For example, `(Full_Name:in:Patricia,Boyle,Kate)`, it retrieves records
+        where the Full Name is Patricia, Boyle, or Kate.
+
+
+        **Special Character Handling:**
+
+        When a single-line field value contains characters such as `{`, `}`,
+        `[`, `]`, `^`, `:`, `-`, `/`, `!`, `?`, `*`, `_`, `@`, space, the Search
+        API returns records with similar-looking values, even if the characters
+        are not an exact match.
+
+
+        For example, if Record A has the field value `sales-team@zoho.com` and
+        Record B has `sales_team@zoho.com`, a search using
+        `equals:sales-team@zoho.com` may return both records.
+
+
+        **Escaping Special Characters:**
+
+        When using parentheses `()`, commas `,`, or a backslash `\` as the last
+        character in a search value, follow these steps:
+
+        1. Escape special characters using a backslash `\`
+
+        2. Encode the value before making the API request. Select the value of
+        the criteria, right-click the value, and choose the EncodeURIComponent
+        option.
+
+
+        **Example 1: Escaping Parentheses and Commas**
+
+        - Search term: `((Last_Name:equals:Burns,B) and
+        (First_Name:starts_with:M))`
+
+        - Escape the comma `\,`: `((Last_Name:equals:Burns\,B) and
+        (First_Name:starts_with:M))`
+
+        - Encode the value: `((Last_Name:equals:Burns%5C%2CB) and
+        (First_Name:starts_with:M))`
+
+
+        **Example 2: Escaping a Backslash at the End**
+
+        - Search term: `(Last_Name:equals:K\)`
+
+        - Escape the backslash `\\`: `(Last_Name:equals:K\\)`
+
+        - Encode the value: `(Last_Name:equals:K%5C%5C)`
+
+
+        **Supported Data Types:**
+
+        `picklist`, `owner_lookup`, `user_lookup`, `lookup`, `phone`, `email`,
+        `date`, `datetime`, `text`, `textarea`, `integer`, `currency`,
+        `decimal`, `multiselectpicklist`, `bigint`, `percent`, `formula`,
+        `website`, `boolean`, `double`
+
+
+        **Supported Operators:**
+
+        `equals`, `starts_with`, `in`, `not_equal`, `greater_equal`,
+        `greater_than`, `less_equal`, `less_than`, `between`
+
+
+        **Operator Compatibility by Data Type:**
+
+
+        | Data Type | equals | starts_with | in | not_equal | greater_equal |
+        greater_than | less_equal | less_than | between |
+
+        |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+
+        | **text** | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **textarea** | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **email** | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **phone** | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **website** | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **picklist** | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **multiselectpicklist** | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **lookup** | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **owner_lookup** | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **user_lookup** | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **boolean** | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+        | **integer** | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+        | **bigint** | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+        | **currency** | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+        | **decimal** | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+        | **double** | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+        | **percent** | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+        | **date** | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+        | **datetime** | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+        | **formula** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+
+        **Legend:** ✓ = Supported, ✗ = Not Supported
+
+
+        **Note:** Refer to the Zoho CRM API documentation for the most
+        up-to-date operator compatibility information.
+      required: false
+      schema:
+        type: string
+        maxLength: 3000
+        description: Search criteria string with field API name, operator, and value
+      examples:
+        SimpleEquals:
+          summary: Simple equals search (text field)
+          value: (Last_Name:equals:Smith)
+          description: >-
+            Retrieves records where Last_Name contains 'Smith' (e.g., 'Smith',
+            'Smithson')
+        TextStartsWith:
+          summary: Text field with starts_with operator
+          value: (Company:starts_with:Zoho)
+          description: Retrieves records where Company starts with 'Zoho'
+        TextNotEqual:
+          summary: Text field with not_equal operator
+          value: (Department:not_equal:Sales)
+          description: Retrieves records where Department is not 'Sales'
+        TextInOperator:
+          summary: Text field with IN operator
+          value: (Last_Name:in:Smith,Johnson,Williams)
+          description: >-
+            Retrieves records where Last_Name is Smith, Johnson, or Williams
+            (max 100 values)
+        EmailEquals:
+          summary: Email field with equals operator
+          value: (Email:equals:john@example.com)
+          description: Retrieves records where Email contains 'john@example.com'
+        EmailStartsWith:
+          summary: Email field with starts_with operator
+          value: (Email:starts_with:admin)
+          description: Retrieves records where Email starts with 'admin'
+        PhoneEquals:
+          summary: Phone field with equals operator
+          value: (Phone:equals:9876543210)
+          description: Retrieves records where Phone contains '9876543210'
+        PhoneIn:
+          summary: Phone field with IN operator
+          value: (Mobile:in:9876543210,9876543211,9876543212)
+          description: Retrieves records where Mobile matches any of the provided numbers
+        WebsiteEquals:
+          summary: Website field with equals operator
+          value: (Website:equals:zoho.com)
+          description: Retrieves records where Website contains 'zoho.com'
+        WebsiteStartsWith:
+          summary: Website field with starts_with operator
+          value: (Website:starts_with:https)
+          description: Retrieves records where Website starts with 'https'
+        TextareaEquals:
+          summary: Textarea field with equals operator
+          value: (Description:equals:Project)
+          description: Retrieves records where Description contains 'Project'
+        TextareaStartsWith:
+          summary: Textarea field with starts_with operator
+          value: (Notes:starts_with:Important)
+          description: Retrieves records where Notes starts with 'Important'
+        TextareaNotEqual:
+          summary: Textarea field with not_equal operator
+          value: (Comments:not_equal:Closed)
+          description: Retrieves records where Comments does not contain 'Closed'
+        IntegerEquals:
+          summary: Integer field with equals operator
+          value: (No_of_Employees:equals:100)
+          description: Retrieves records where No_of_Employees is exactly 100
+        IntegerGreaterThan:
+          summary: Integer field with greater_than operator
+          value: (No_of_Employees:greater_than:50)
+          description: Retrieves records where No_of_Employees is greater than 50
+        IntegerGreaterEqual:
+          summary: Integer field with greater_equal operator
+          value: (No_of_Employees:greater_equal:100)
+          description: Retrieves records where No_of_Employees is 100 or more
+        IntegerLessThan:
+          summary: Integer field with less_than operator
+          value: (No_of_Employees:less_than:500)
+          description: Retrieves records where No_of_Employees is less than 500
+        IntegerLessEqual:
+          summary: Integer field with less_equal operator
+          value: (No_of_Employees:less_equal:1000)
+          description: Retrieves records where No_of_Employees is 1000 or less
+        IntegerBetween:
+          summary: Integer field with between operator
+          value: (No_of_Employees:between:100,500)
+          description: >-
+            Retrieves records where No_of_Employees is between 100 and 500
+            (inclusive)
+        IntegerIn:
+          summary: Integer field with IN operator
+          value: (No_of_Employees:in:50,100,200,500)
+          description: >-
+            Retrieves records where No_of_Employees matches any of the specified
+            values
+        IntegerNotEqual:
+          summary: Integer field with not_equal operator
+          value: (No_of_Employees:not_equal:0)
+          description: Retrieves records where No_of_Employees is not 0
+        CurrencyEquals:
+          summary: Currency field with equals operator
+          value: (Annual_Revenue:equals:1000000)
+          description: Retrieves records where Annual_Revenue is exactly 1,000,000
+        CurrencyGreaterThan:
+          summary: Currency field with greater_than operator
+          value: (Annual_Revenue:greater_than:500000)
+          description: Retrieves records where Annual_Revenue is greater than 500,000
+        CurrencyBetween:
+          summary: Currency field with between operator
+          value: (Annual_Revenue:between:100000,1000000)
+          description: >-
+            Retrieves records where Annual_Revenue is between 100,000 and
+            1,000,000
+        CurrencyIn:
+          summary: Currency field with IN operator
+          value: (Annual_Revenue:in:100000,500000,1000000)
+          description: >-
+            Retrieves records where Annual_Revenue matches any of the specified
+            values
+        DecimalEquals:
+          summary: Decimal field with equals operator
+          value: (Exchange_Rate:equals:1.25)
+          description: Retrieves records where Exchange_Rate is exactly 1.25
+        DecimalGreaterEqual:
+          summary: Decimal field with greater_equal operator
+          value: (Exchange_Rate:greater_equal:1.0)
+          description: Retrieves records where Exchange_Rate is 1.0 or more
+        DecimalBetween:
+          summary: Decimal field with between operator
+          value: (Exchange_Rate:between:1.0,1.5)
+          description: Retrieves records where Exchange_Rate is between 1.0 and 1.5
+        BigIntEquals:
+          summary: BigInt field with equals operator
+          value: (Record_ID:equals:9876543210123)
+          description: Retrieves records where Record_ID is exactly 9876543210123
+        BigIntGreaterThan:
+          summary: BigInt field with greater_than operator
+          value: (Record_ID:greater_than:1000000000000)
+          description: Retrieves records where Record_ID is greater than 1,000,000,000,000
+        BigIntBetween:
+          summary: BigInt field with between operator
+          value: (Record_ID:between:1000000000000,9999999999999)
+          description: Retrieves records where Record_ID is within the specified range
+        BigIntIn:
+          summary: BigInt field with IN operator
+          value: (Record_ID:in:1234567890123,9876543210123)
+          description: >-
+            Retrieves records where Record_ID matches any of the specified
+            values
+        PercentEquals:
+          summary: Percent field with equals operator
+          value: (Discount:equals:10)
+          description: Retrieves records where Discount is exactly 10%
+        PercentGreaterThan:
+          summary: Percent field with greater_than operator
+          value: (Discount:greater_than:5)
+          description: Retrieves records where Discount is greater than 5%
+        PercentBetween:
+          summary: Percent field with between operator
+          value: (Discount:between:5,20)
+          description: Retrieves records where Discount is between 5% and 20%
+        PercentLessEqual:
+          summary: Percent field with less_equal operator
+          value: (Discount:less_equal:15)
+          description: Retrieves records where Discount is 15% or less
+        DateEquals:
+          summary: Date field with equals operator
+          value: (Closing_Date:equals:2024-12-31)
+          description: Retrieves records where Closing_Date is exactly 2024-12-31
+        DateGreaterThan:
+          summary: Date field with greater_than operator
+          value: (Closing_Date:greater_than:2024-01-01)
+          description: Retrieves records where Closing_Date is after 2024-01-01
+        DateBetween:
+          summary: Date field with between operator
+          value: (Closing_Date:between:2024-01-01,2024-12-31)
+          description: >-
+            Retrieves records where Closing_Date is within the 2024 calendar
+            year
+        DateLessThan:
+          summary: Date field with less_than operator
+          value: (Closing_Date:less_than:2024-06-30)
+          description: Retrieves records where Closing_Date is before 2024-06-30
+        DateIn:
+          summary: Date field with IN operator
+          value: (Closing_Date:in:2024-01-15,2024-03-15,2024-06-15)
+          description: >-
+            Retrieves records where Closing_Date matches any of the specified
+            dates
+        DateNotEqual:
+          summary: Date field with not_equal operator
+          value: (Closing_Date:not_equal:2024-12-31)
+          description: Retrieves records where Closing_Date is not 2024-12-31
+        DateTimeEquals:
+          summary: DateTime field with equals operator
+          value: (Created_Time:equals:2024-12-18T10:30:00+05:30)
+          description: >-
+            Retrieves records where Created_Time is exactly the specified date
+            and time
+        DateTimeGreaterEqual:
+          summary: DateTime field with greater_equal operator
+          value: (Modified_Time:greater_equal:2024-01-01T00:00:00+00:00)
+          description: Retrieves records modified on or after 2024-01-01
+        DateTimeBetween:
+          summary: DateTime field with between operator
+          value: >-
+            (Created_Time:between:2024-01-01T00:00:00+00:00,2024-12-31T23:59:59+00:00)
+          description: Retrieves records created within the 2024 calendar year
+        DateTimeLessEqual:
+          summary: DateTime field with less_equal operator
+          value: (Modified_Time:less_equal:2024-06-30T23:59:59+05:30)
+          description: Retrieves records modified on or before 2024-06-30
+        BooleanEquals:
+          summary: Boolean field with equals operator
+          value: (Email_Opt_Out:equals:true)
+          description: Retrieves records where Email_Opt_Out is true
+        BooleanNotEqual:
+          summary: Boolean field with not_equal operator
+          value: (Email_Opt_Out:not_equal:true)
+          description: Retrieves records where Email_Opt_Out is false
+        PicklistEquals:
+          summary: Picklist field with equals operator
+          value: (Lead_Status:equals:Qualified)
+          description: >-
+            Retrieves records where Lead_Status is exactly 'Qualified' (exact
+            match for picklist)
+        PicklistNotEqual:
+          summary: Picklist field with not_equal operator
+          value: (Lead_Status:not_equal:Converted)
+          description: Retrieves records where Lead_Status is not 'Converted'
+        PicklistIn:
+          summary: Picklist field with IN operator
+          value: (Lead_Status:in:Qualified,Contacted,Working)
+          description: >-
+            Retrieves records where Lead_Status matches any of the specified
+            values
+        MultiselectPicklistEquals:
+          summary: Multiselectpicklist field with equals operator
+          value: (Interested_Products:equals:CRM)
+          description: Retrieves records where Interested_Products contains 'CRM'
+        MultiselectPicklistStartsWith:
+          summary: Multiselectpicklist field with starts_with operator
+          value: (Tags:starts_with:Priority)
+          description: Retrieves records where Tags starts with 'Priority'
+        MultiselectPicklistIn:
+          summary: Multiselectpicklist field with IN operator
+          value: (Interested_Products:in:CRM,Marketing,Sales)
+          description: >-
+            Retrieves records where Interested_Products contains any of the
+            specified values
+        MultiselectPicklistNotEqual:
+          summary: Multiselectpicklist field with not_equal operator
+          value: (Tags:not_equal:Archived)
+          description: Retrieves records where Tags does not contain 'Archived'
+        LookupEquals:
+          summary: Lookup field with equals operator
+          value: (Account_Name:equals:Zoho Corporation)
+          description: Retrieves records where Account_Name is 'Zoho Corporation'
+        LookupIn:
+          summary: Lookup field with IN operator
+          value: (Account_Name:in:Zoho Corporation,ABC Inc,XYZ Ltd)
+          description: >-
+            Retrieves records where Account_Name matches any of the specified
+            accounts
+        LookupNotEqual:
+          summary: Lookup field with not_equal operator
+          value: (Account_Name:not_equal:Test Account)
+          description: Retrieves records where Account_Name is not 'Test Account'
+        OwnerEquals:
+          summary: Owner lookup field with equals operator
+          value: (Owner:equals:John Doe)
+          description: Retrieves records where Owner is 'John Doe'
+        OwnerIn:
+          summary: Owner lookup field with IN operator
+          value: (Owner:in:John Doe,Jane Smith,Bob Johnson)
+          description: Retrieves records owned by any of the specified users
+        AutonumberEquals:
+          summary: Autonumber field with equals operator
+          value: (Lead_Number:equals:LEAD-10001)
+          description: Retrieves records where Lead_Number is exactly 'LEAD-10001'
+        AutonumberIn:
+          summary: Autonumber field with IN operator
+          value: (Lead_Number:in:LEAD-10001,LEAD-10002,LEAD-10003)
+          description: >-
+            Retrieves records where Lead_Number matches any of the specified
+            values
+        MultipleConditionsAnd:
+          summary: Multiple conditions with AND logic
+          value: ((Company:equals:Zoho) and (Annual_Revenue:greater_than:1000000))
+          description: >-
+            Retrieves records where Company contains 'Zoho' AND Annual_Revenue
+            is greater than 1,000,000
+        MultipleConditionsOr:
+          summary: Multiple conditions with OR logic
+          value: ((Lead_Status:equals:Qualified) or (Lead_Status:equals:Contacted))
+          description: >-
+            Retrieves records where Lead_Status is either 'Qualified' OR
+            'Contacted'
+        ComplexNestedConditions:
+          summary: Complex nested conditions with AND/OR
+          value: >-
+            (((Company:equals:Zoho) and (Annual_Revenue:greater_than:1000000))
+            or ((Lead_Status:equals:Hot) and
+            (No_of_Employees:greater_than:100)))
+          description: Complex query combining multiple criteria with nested AND/OR logic
+        ThreeConditionsAnd:
+          summary: Three conditions with AND
+          value: >-
+            (((Lead_Status:equals:Qualified) and
+            (Annual_Revenue:greater_than:500000)) and
+            (No_of_Employees:greater_than:50))
+          description: Retrieves records matching all three conditions
+        MixedFieldTypes:
+          summary: Mixed field types with AND/OR
+          value: >-
+            (((Closing_Date:between:2024-01-01,2024-12-31) and
+            (Deal_Amount:greater_than:50000)) or (Priority:equals:High))
+          description: Combines date, currency, and picklist fields in one query
+        DateRangeCurrentYear:
+          summary: Date range for current year
+          value: (Created_Time:between:2024-01-01,2024-12-31)
+          description: Retrieves all records created in 2024
+        NumericRange:
+          summary: Numeric range with multiple conditions
+          value: >-
+            ((Annual_Revenue:between:100000,1000000) and
+            (No_of_Employees:between:10,500))
+          description: Retrieves records within specified revenue and employee count ranges
+        NegativeConditions:
+          summary: Multiple NOT EQUAL conditions
+          value: ((Lead_Status:not_equal:Junk) and (Lead_Status:not_equal:Lost))
+          description: Retrieves records excluding 'Junk' and 'Lost' status
+        MaximumCriteria:
+          summary: Maximum 10 criteria example
+          value: >-
+            (((Lead_Status:equals:Qualified) and
+            (Annual_Revenue:greater_than:100000)) and
+            ((No_of_Employees:greater_than:10) and (Industry:equals:Technology))
+            and ((Rating:equals:Hot) and (Email_Opt_Out:equals:false)) and
+            ((Created_Time:greater_than:2024-01-01) and
+            (Lead_Source:equals:Web)) and ((Country:equals:USA) and
+            (State:equals:California)))
+          description: Example with 10 criteria (maximum allowed)
+        MultipleAnd:
+          summary: Multiple conditions with AND
+          value: ((Company:equals:ABC) and (First_Name:starts_with:M))
+          description: Combines multiple criteria with AND logic
+        MultipleOr:
+          summary: Multiple conditions with OR
+          value: ((Last_Name:equals:Smith) or (Last_Name:equals:Johnson))
+          description: Retrieves records matching either condition
+        InOperator:
+          summary: IN operator for multiple values
+          value: (Full_Name:in:Patricia,Boyle,Kate)
+          description: Matches any value in the comma-separated list (max 100 values)
+        EscapedComma:
+          summary: Escaped comma in value
+          value: ((Last_Name:equals:Burns%5C%2CB) and (First_Name:starts_with:M))
+          description: >-
+            Searching for a value containing comma: 'Burns,B' (escaped and
+            encoded)
+        EscapedBackslash:
+          summary: Escaped backslash at end
+          value: (Last_Name:equals:K%5C%5C)
+          description: >-
+            Searching for a value ending with backslash: 'K\' (escaped and
+            encoded)
+        Between:
+          summary: Between operator for date range
+          value: (Created_Time:between:2024-01-01,2024-12-31)
+          description: Retrieves records within the specified date range
+        GreaterThan:
+          summary: Greater than operator
+          value: (Annual_Revenue:greater_than:1000000)
+          description: Retrieves records where Annual_Revenue is greater than 1000000
+        NotEqual:
+          summary: Not equal operator
+          value: (Lead_Status:not_equal:Converted)
+          description: Retrieves records where Lead_Status is not 'Converted'
+        Complex:
+          summary: Complex nested criteria
+          value: >-
+            (((Company:equals:Zoho) and (First_Name:starts_with:J)) or
+            (Last_Name:equals:Smith))
+          description: Complex query with nested AND/OR logic (max 10 criteria)
+    Filters:
+      name: filters
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/FilterCriterionRequest'
+      description: Filter for fetching specific custom views based on criteria
+    IncludeFilters:
+      name: include_filters
+      in: query
+      description: To include inner details of criteria and cross filters
+      required: false
+      schema:
+        maxLength: 50
+        type: string
+    CrossFilters:
+      name: cross_filters
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 3000
+      description: Cross filter criteria for related module records
+    Converted:
+      name: converted
+      in: query
+      description: >-
+        Specify the conversion status to filter the count to lead records. This
+        parameter is supported only for the **Leads** module. Possible values:
+
+        **true** - Count only converted leads.
+
+        **false** - Count only unconverted leads.
+
+        **both** - Count leads regardless of conversion status.
+      required: false
+      schema:
+        type: string
+        enum:
+          - 'true'
+          - 'false'
+          - both
+        description: >-
+          Set to true to count only converted leads; false to count only
+          unconverted leads.
+      examples:
+        ConvertedLeads:
+          value: 'true'
+        NonConvertedLeads:
+          value: 'false'
+        BothConvertedAndNonConvertedLeads:
+          value: both
+    Approved:
+      name: approved
+      in: query
+      description: >-
+        Specify the approval status to filter the count to lead records. This
+        parameter is supported only for the **Leads** module. Possible values:
+
+        **true** - Count only approved leads.
+
+        **false** - Count only unapproved leads.
+
+        **both** - Count leads regardless of approval status.
+      required: false
+      schema:
+        type: string
+        enum:
+          - 'true'
+          - 'false'
+          - both
+        description: >-
+          Set to true to count only converted leads; false to count only
+          unconverted leads.
+      examples:
+        ConvertedLeads:
+          value: 'true'
+        NonConvertedLeads:
+          value: 'false'
+        BothConvertedAndNonConvertedLeads:
+          value: both
+    Page:
+      name: page
+      in: query
+      description: Specify the page number to retrieve when paginating through results.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 1
+        minimum: 1
+        description: The page number for pagination.
+      example: 1
+    PerPage:
+      name: per_page
+      in: query
+      description: Specify the number of records to include per page.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 200
+        minimum: 1
+        maximum: 200
+        description: Number of records per page for pagination.
+      example: 200
+    Type:
+      name: type
+      in: query
+      description: >-
+        Specify the type of user records to count. This parameter is supported
+        only for the **Users** module. Possible values:
+
+        **AllUsers** - All users.
+
+        **ActiveUsers** - Active users.
+
+        **DeactiveUsers** - Deactivated users.
+
+        **ConfirmedUsers** - Confirmed users.
+
+        **ConfirmedReportingUsers** - Confirmed users with reporting access.
+
+        **NotConfirmedUsers** - Unconfirmed users.
+
+        **DeletedUsers** - Deleted users.
+
+        **ActiveConfirmedUsers** - Active and confirmed users.
+
+        **AdminUsers** - Users with administrator privileges.
+
+        **ActiveConfirmedAdmins** - Active, confirmed users with administrator
+        privileges.
+
+        **CurrentUser** - The currently authenticated user.
+      required: false
+      schema:
+        type: string
+        description: Specifies the user type to filter records by.
+        enum:
+          - AllUsers
+          - ActiveUsers
+          - DeactiveUsers
+          - ConfirmedUsers
+          - ConfirmedReportingUsers
+          - NotConfirmedUsers
+          - DeletedUsers
+          - ActiveConfirmedUsers
+          - AdminUsers
+          - ActiveConfirmedAdmins
+          - CurrentUser
+      examples:
+        AllUsers:
+          summary: Get count of all users
+          value: AllUsers
+          description: Retrieves count of all users in the organization
+        ActiveUsers:
+          summary: Get count of active users
+          value: ActiveUsers
+          description: Retrieves count of users who are currently active
+        DeactiveUsers:
+          summary: Get count of deactivated users
+          value: DeactiveUsers
+          description: Retrieves count of users who have been deactivated
+        ConfirmedUsers:
+          summary: Get count of confirmed users
+          value: ConfirmedUsers
+          description: Retrieves count of users who have confirmed their accounts
+        ConfirmedReportingUsers:
+          summary: Get count of confirmed reporting users
+          value: ConfirmedReportingUsers
+          description: Retrieves count of confirmed users with reporting access
+        NotConfirmedUsers:
+          summary: Get count of unconfirmed users
+          value: NotConfirmedUsers
+          description: Retrieves count of users who have not yet confirmed their accounts
+        DeletedUsers:
+          summary: Get count of deleted users
+          value: DeletedUsers
+          description: Retrieves count of users who have been deleted
+        ActiveConfirmedUsers:
+          summary: Get count of active and confirmed users
+          value: ActiveConfirmedUsers
+          description: Retrieves count of users who are both active and confirmed
+        AdminUsers:
+          summary: Get count of admin users
+          value: AdminUsers
+          description: Retrieves count of users with administrator privileges
+        ActiveConfirmedAdmins:
+          summary: Get count of active confirmed admin users
+          value: ActiveConfirmedAdmins
+          description: >-
+            Retrieves count of users who are active, confirmed, and have admin
+            privileges
+        CurrentUser:
+          summary: Get current user information
+          value: CurrentUser
+          description: >-
+            Retrieves count for the currently authenticated user (typically
+            returns 1)
+  schemas:
+    ErrorResponse:
+      x-zs-$id: ErrorResponse
+      type: object
+      description: >-
+        Represents a standard error response returned by the Zoho CRM API when a
+        request fails.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the unique error code that identifies the type of
+            failure.
+          maxLength: 64
+        message:
+          type: string
+          description: Represents the error message describing the reason for the failure.
+          maxLength: 512
+        details:
+          type: object
+          description: >-
+            Represents additional details about the error, which may include the
+            field API name or parameter name associated with the failure.
+          additionalProperties: false
+        status:
+          type: string
+          description: |-
+            Indicates the response status. Possible values:
+            **error** - The request resulted in an error.
+          enum:
+            - error
+    FilterFieldBase:
+      type: object
+      x-zs-$id: FilterFieldBase
+      description: >-
+        Represents the base field reference used in filter operations,
+        containing minimal required properties. The field's data_type is not
+        part of this object; resolve it from the corresponding FieldSchema. For
+        formula fields, use formula.return_type as the effective data_type; for
+        rollup_summary fields, use rollup_summary.return_type.
+      properties:
+        id:
+          type: string
+          format: int64
+          description: Represents the unique ID of the field used for filter operations.
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the field used for filter application.
+            Supports relationship notation, for example, Deals__r.Stage.
+      additionalProperties: true
+    SimpleFilterCriterionValueString:
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueString
+      description: >-
+        Represents a string filter criterion value applicable to fields with a
+        data_type of text, textarea, email, phone, website, autonumber,
+        picklist, multiselectpicklist, date, or datetime, as well as any
+        data_type not explicitly covered by SimpleFilterCriterionValueNumber,
+        SimpleFilterCriterionValueBoolean,
+        SimpleFilterCriterionValueObjectRequest,
+        SimpleFilterCriterionValueObjectResponse, or the multiselect lookup
+        value schemas.
+      maxLength: 255
+    SimpleFilterCriterionValueNumber:
+      type: number
+      x-zs-$id: SimpleFilterCriterionValueNumber
+      description: >-
+        Represents a numeric filter criterion value applicable to fields with a
+        data_type of integer, currency, or double.
+    SimpleFilterCriterionValueObjectBase:
+      type: object
+      description: >-
+        Represents the base minified record structure of a lookup module,
+        containing the record's unique identifier and display name.
+      properties:
+        id:
+          type: string
+          format: int64
+          description: Represents the unique ID of the lookup module record.
+        name:
+          type: string
+          maxLength: 255
+          description: Represents the display name of the lookup module record.
+      additionalProperties: true
+    SimpleFilterCriterionValueObjectRequest:
+      x-zs-$id: SimpleFilterCriterionValueObjectRequest
+      allOf:
+        - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectBase'
+        - type: object
+          additionalProperties: true
+          description: >-
+            Represents the constraint that the ID property is required for the
+            lookup object filter criterion value in request bodies.
+          required:
+            - id
+          properties:
+            id: {}
+      unevaluatedProperties: false
+      description: >-
+        Represents a lookup object filter criterion value for request bodies,
+        applicable when the field's data_type is lookup, ownerlookup, or
+        userlookup. The ID property is required.
+    SimpleFilterCriterionValueObjectPredefined:
+      x-zs-$id: SimpleFilterCriterionValueObjectPredefined
+      description: >-
+        Represents a predefined placeholder object filter criterion value for
+        lookup fields, applicable with equal or not_equal comparators when the
+        field's data_type is ownerlookup or userlookup. Two forms are supported:
+        (1) the currently logged-in user, represented by passing only the name
+        property with the predefined value ${CURRENTUSER} and no ID property;
+        and (2) the logged-in user's role, represented by passing the ID
+        property with the predefined value ${CURRENTUSERROLE} and an optional
+        display label in the name property. For specific real users or roles
+        that are not predefined, use SimpleFilterCriterionValueObjectRequest,
+        which requires the ID property.
+      oneOf:
+        - type: object
+          x-zs-$id: SimpleFilterCriterionValueObjectPredefinedCurrentUser
+          description: >-
+            Represents the predefined object form for the currently logged-in
+            user, in which only the name property carries the predefined value
+            ${CURRENTUSER} and no ID property is included.
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              enum:
+                - ${CURRENTUSER}
+              description: >-
+                Represents the predefined placeholder for the currently
+                logged-in user.
+
+                Possible values:
+
+                ${CURRENTUSER} - Represents the currently logged-in user.
+          additionalProperties: false
+        - type: object
+          x-zs-$id: SimpleFilterCriterionValueObjectPredefinedCurrentUserRole
+          description: >-
+            Represents the predefined object form for the currently logged-in
+            user's role, in which the ID property carries the predefined value
+            ${CURRENTUSERROLE} and the name property is an optional display
+            label.
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              enum:
+                - ${CURRENTUSERROLE}
+              description: >-
+                Represents the predefined placeholder for the logged-in user's
+                role record ID.
+
+                Possible values:
+
+                ${CURRENTUSERROLE} - Represents the role of the currently
+                logged-in user.
+            name:
+              type: string
+              maxLength: 255
+              description: >-
+                Represents an optional display label for the predefined role,
+                such as Logged in User Role.
+          additionalProperties: true
+    SimpleFilterCriterionValueBoolean:
+      type: boolean
+      x-zs-$id: SimpleFilterCriterionValueBoolean
+      description: >-
+        Represents a Boolean filter criterion value. Applicable only when the
+        field has a Boolean data type (checkbox field).
+    SimpleFilterCriterionValueGeneralPredefined:
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueGeneralPredefined
+      description: >-
+        Represents a predefined placeholder value applicable to any field
+        data_type with the equal comparator.
+
+        Possible values:
+
+        ${EMPTY} - Matches records where the field has no value.
+
+        ${NOTEMPTY} - Matches records where the field has any non-empty value.
+      enum:
+        - ${EMPTY}
+        - ${NOTEMPTY}
+      x-enumDescriptions:
+        ${EMPTY}: Matches records where the field has no value (null or empty string).
+        ${NOTEMPTY}: Matches records where the field has any non-empty value.
+    SimpleFilterCriterionValueDateTimePredefined:
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueDateTimePredefined
+      description: >-
+        Represents a predefined placeholder value applicable only when the
+        field's data_type is date or datetime, with the equal comparator.
+      enum:
+        - ${TODAY}
+        - ${TOMORROW}
+        - ${TOMORROWPLUS}
+        - ${YESTERDAY}
+        - ${YESTERDAYMINUS}
+        - ${LASTMONTH}
+        - ${THISMONTH}
+        - ${NEXTMONTH}
+        - ${LASTWEEK}
+        - ${THISWEEK}
+        - ${NEXTWEEK}
+        - ${THISYEAR}
+        - ${THISFY}
+        - ${THISFQ}
+        - ${LASTYEAR}
+        - ${PREVFY}
+        - ${PREVFQ}
+        - ${NEXTYEAR}
+        - ${NEXTFY}
+        - ${NEXTFQ}
+        - ${EMPTY}
+        - ${NOTEMPTY}
+      x-enumDescriptions:
+        ${TODAY}: >-
+          Matches records where the date field falls on the current calendar
+          day.
+        ${TOMORROW}: Matches records where the date field falls on the next calendar day.
+        ${TOMORROWPLUS}: >-
+          Matches records where the date field is on tomorrow or any later date
+          (tomorrow onwards).
+        ${YESTERDAY}: >-
+          Matches records where the date field falls on the previous calendar
+          day.
+        ${YESTERDAYMINUS}: >-
+          Matches records where the date field is on yesterday or any earlier
+          date (up to and including yesterday).
+        ${LASTMONTH}: >-
+          Matches records where the date field falls within the entire previous
+          calendar month.
+        ${THISMONTH}: >-
+          Matches records where the date field falls within the current calendar
+          month.
+        ${NEXTMONTH}: >-
+          Matches records where the date field falls within the next calendar
+          month.
+        ${LASTWEEK}: >-
+          Matches records where the date field falls within the previous
+          calendar week (Monday–Sunday).
+        ${THISWEEK}: >-
+          Matches records where the date field falls within the current calendar
+          week.
+        ${NEXTWEEK}: >-
+          Matches records where the date field falls within the next calendar
+          week.
+        ${THISYEAR}: >-
+          Matches records where the date field falls within the current calendar
+          year.
+        ${THISFY}: >-
+          Matches records where the date field falls within the current fiscal
+          year.
+        ${THISFQ}: >-
+          Matches records where the date field falls within the current fiscal
+          quarter.
+        ${LASTYEAR}: >-
+          Matches records where the date field falls within the previous
+          calendar year.
+        ${PREVFY}: >-
+          Matches records where the date field falls within the previous fiscal
+          year.
+        ${PREVFQ}: >-
+          Matches records where the date field falls within the previous fiscal
+          quarter.
+        ${NEXTYEAR}: >-
+          Matches records where the date field falls within the next calendar
+          year.
+        ${NEXTFY}: >-
+          Matches records where the date field falls within the next fiscal
+          year.
+        ${NEXTFQ}: >-
+          Matches records where the date field falls within the next fiscal
+          quarter.
+        ${EMPTY}: Matches records where the date field has no value set.
+        ${NOTEMPTY}: Matches records where the date field has a value set.
+    SimpleFilterCriterionValueNDaysPredefined:
+      maxLength: 255
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueNDaysPredefined
+      description: >-
+        Represents a predefined N-period range placeholder value applicable only
+        when the field's data_type is date or datetime, with the equal
+        comparator. Follows the pattern ${NEXT_N_<PERIOD>:<n>} or
+        ${LAST_N_<PERIOD>:<n>}, where PERIOD is DAYS, WEEKS, MONTHS, or YEARS
+        and n is a positive integer. The current period is always excluded from
+        the range.
+      pattern: ^\$\{(LAST_N_|NEXT_N_)(DAYS|WEEKS|MONTHS|YEARS):([0-9]+)\}$
+    SimpleFilterCriterionValueAgeDuePredefined:
+      maxLength: 255
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueAgeDuePredefined
+      description: >-
+        Represents a predefined age or due-in-days placeholder value applicable
+        only when the field's data_type is date or datetime. Follows the pattern
+        ${AGEINDAYS}+<n> for records where the date field was exactly n days in
+        the past, or ${DUEINDAYS}+<n> for records where the date field is
+        exactly n days in the future. Supported comparators are equal,
+        not_equal, less_than, greater_than, less_equal, and greater_equal.
+      pattern: ^\$\{(AGEINDAYS|DUEINDAYS)\}\+[0-9]+$
+    EqualFilterCriterionRequest:
+      type: object
+      x-zs-$id: EqualFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the equal comparator. The value type
+        is determined by the field's data_type: use
+        SimpleFilterCriterionValueString for text, textarea, email, phone,
+        website, autonumber, picklist, multiselectpicklist, date, or datetime
+        fields; SimpleFilterCriterionValueNumber for integer, currency, or
+        double fields; SimpleFilterCriterionValueBoolean for Boolean fields;
+        SimpleFilterCriterionValueObjectRequest for lookup, ownerlookup, or
+        userlookup fields; and SimpleFilterCriterionValueObjectPredefined for
+        predefined user or role object placeholders. Accepts scalar or array
+        values. Resolve the data_type from the field's FieldSchema.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the equal filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the equal filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - equal
+          description: >-
+            Represents the equal comparison operator applied to the criterion.
+
+            Possible values:
+
+            equal - Matches records where the field value equals the specified
+            filter value.
+        value:
+          anyOf:
+            - type: array
+              x-zs-$id: EqualFilterCriterionRequestValueArray
+              description: Contains an array of filter values for the equal comparator.
+              minItems: 1
+              maxItems: 500
+              items:
+                x-zs-$id: EqualFilterCriterionRequestValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+                  - x-zs-$id: EqualFilterCriterionRequestValueArrayItemsObject
+                    anyOf:
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectRequest
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectPredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueBoolean'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectRequest'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueGeneralPredefined'
+            - $ref: >-
+                #/components/schemas/SimpleFilterCriterionValueDateTimePredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNDaysPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the filter value used in the equal comparator. Accepts a
+            scalar or an array of values, depending on the field's data_type.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    NotEqualFilterCriterionRequest:
+      type: object
+      x-zs-$id: NotEqualFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the not_equal comparator. The value
+        type is determined by the field's data_type: use
+        SimpleFilterCriterionValueString for text, textarea, email, phone,
+        website, autonumber, picklist, multiselectpicklist, date, or datetime
+        fields; SimpleFilterCriterionValueNumber for integer, currency, or
+        double fields; SimpleFilterCriterionValueBoolean for Boolean fields;
+        SimpleFilterCriterionValueObjectRequest for lookup, ownerlookup, or
+        userlookup fields; and SimpleFilterCriterionValueObjectPredefined for
+        predefined user or role object placeholders.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the not-equal filter
+                criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the not-equal filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - not_equal
+          description: >-
+            Represents the not-equal comparison operator applied to the
+            criterion.
+
+            Possible values:
+
+            not_equal - Matches records where the field value does not equal the
+            specified filter value.
+        value:
+          anyOf:
+            - type: array
+              maxItems: 500
+              x-zs-$id: NotEqualFilterCriterionRequestValueArray
+              description: Contains an array of filter values for the not_equal comparator.
+              minItems: 1
+              items:
+                x-zs-$id: NotEqualFilterCriterionRequestValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+                  - x-zs-$id: NotEqualFilterCriterionRequestValueArrayItemsObject
+                    anyOf:
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectRequest
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectPredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueBoolean'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectRequest'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the filter value used in the not_equal comparator.
+            Accepts a scalar or an array of values, depending on the field's
+            data_type.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    EqualityFilterCriterionRequest:
+      x-zs-$id: EqualityFilterCriterionRequest
+      description: >-
+        Represents an equality filter criterion that dispatches to either the
+        EqualFilterCriterionRequest or NotEqualFilterCriterionRequest schema
+        based on the comparator value.
+      oneOf:
+        - $ref: '#/components/schemas/EqualFilterCriterionRequest'
+        - $ref: '#/components/schemas/NotEqualFilterCriterionRequest'
+    TextFilterCriterionRequest:
+      type: object
+      x-zs-$id: TextFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the like, not_like, starts_with,
+        ends_with, contains, and not_contains comparators. The value must be a
+        string scalar or array; use SimpleFilterCriterionValueString for
+        text-based field types. Object and Boolean values are not supported.
+        Resolve the data_type from the field's FieldSchema.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the text filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the text filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - like
+            - not_like
+            - starts_with
+            - ends_with
+            - contains
+            - not_contains
+          description: >-
+            Represents the text comparison operator applied to the criterion.
+
+            Possible values:
+
+            like - Matches records where the field value contains the specified
+            pattern.
+
+            not_like - Matches records where the field value does not contain
+            the specified pattern.
+
+            starts_with - Matches records where the field value begins with the
+            specified string.
+
+            ends_with - Matches records where the field value ends with the
+            specified string.
+
+            contains - Matches records where the field value contains the
+            specified string.
+
+            not_contains - Matches records where the field value does not
+            contain the specified string.
+        value:
+          description: >-
+            Represents the string filter value used in the text comparator.
+            Accepts a scalar string or an array of string values.
+          oneOf:
+            - type: array
+              x-zs-$id: TextFilterCriterionRequestValueArray
+              description: >-
+                Contains an array of primitive string values for the text filter
+                comparator.
+              minItems: 1
+              maxItems: 500
+              items:
+                x-zs-$id: TextFilterCriterionRequestValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    OrderingFilterCriterionRequest:
+      type: object
+      x-zs-$id: OrderingFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the less_than, less_equal,
+        greater_than, and greater_equal comparators. The value must be a scalar;
+        arrays and objects are not supported. The value type is determined by
+        the field's data_type: use SimpleFilterCriterionValueString for date or
+        datetime fields, and SimpleFilterCriterionValueNumber for integer,
+        currency, or double fields.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the ordering filter
+                criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the ordering filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - less_than
+            - less_equal
+            - greater_than
+            - greater_equal
+          description: >-
+            Represents the ordering comparison operator applied to the
+            criterion.
+
+            Possible values:
+
+            less_than - Matches records where the field value is less than the
+            specified filter value.
+
+            less_equal - Matches records where the field value is less than or
+            equal to the specified filter value.
+
+            greater_than - Matches records where the field value is greater than
+            the specified filter value.
+
+            greater_equal - Matches records where the field value is greater
+            than or equal to the specified filter value.
+        value:
+          anyOf:
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the scalar filter value used in the ordering comparator.
+            Arrays and objects are not supported for ordering comparators.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    BetweenFilterCriterionRequest:
+      type: object
+      x-zs-$id: BetweenFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the between and not_between
+        comparators. The value must be an array of exactly two elements —
+        [lower_bound, upper_bound]. The value type is determined by the field's
+        data_type: use SimpleFilterCriterionValueString for date or datetime
+        fields, and SimpleFilterCriterionValueNumber for integer, currency, or
+        double fields. Resolve the data_type from the field's FieldSchema. For
+        formula fields, use formula.return_type as the effective data_type; for
+        rollup_summary fields, use rollup_summary.return_type.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the range filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the range filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - between
+            - not_between
+          description: >-
+            Represents the range comparison operator applied to the criterion,
+            indicating whether the field value falls within or outside the
+            specified bounds.
+
+            Possible values:
+
+            between - Matches records where the field value falls within the
+            specified range.
+
+            not_between - Matches records where the field value falls outside
+            the specified range.
+        value:
+          type: array
+          x-zs-$id: BetweenFilterCriterionRequestValueArray
+          description: >-
+            Contains the two boundary values — [lower_bound, upper_bound] —
+            against which the field is evaluated for the between or not_between
+            comparator.
+          minItems: 2
+          maxItems: 2
+          items:
+            x-zs-$id: BetweenFilterCriterionRequestValueArrayItems
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    SetFilterCriterionRequest:
+      type: object
+      x-zs-$id: SetFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the in and not_in comparators. The
+        value must be an array of primitive values. The value type is determined
+        by the field's data_type: use SimpleFilterCriterionValueString for
+        text-based types, and SimpleFilterCriterionValueNumber for integer,
+        currency, or double fields.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the set filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the set filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - in
+            - not_in
+          description: >-
+            Represents the set membership comparison operator applied to the
+            criterion.
+
+            Possible values:
+
+            in - Matches records where the field value is in the specified set
+            of values.
+
+            not_in - Matches records where the field value is not in the
+            specified set of values.
+        value:
+          type: array
+          x-zs-$id: SetFilterCriterionRequestValueArray
+          description: >-
+            Contains an array of primitive filter values used in the set
+            comparison.
+          minItems: 1
+          maxItems: 500
+          items:
+            x-zs-$id: SetFilterCriterionRequestValueArrayItems
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    MultiSelectLookupFilterCriterionRequest:
+      type: object
+      x-zs-$id: MultiSelectLookupFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the include_all, include_any,
+        exclude_all, and exclude_any comparators. Applicable only when the
+        field's data_type is multiuserlookup or multiselectlookup. The value
+        must be an array of SimpleFilterCriterionValueObjectRequest lookup
+        objects.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the multi-select lookup
+                filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the multi-select
+            lookup filter criterion is applied. The field must have a data_type
+            of multiuserlookup or multiselectlookup.
+        comparator:
+          type: string
+          enum:
+            - include_all
+            - include_any
+            - exclude_all
+            - exclude_any
+          description: >-
+            Represents the multi-select lookup comparison operator applied to
+            the criterion. Applicable only when the field's data_type is
+            multiuserlookup or multiselectlookup.
+
+            Possible values:
+
+            include_all - Matches records that include all specified lookup
+            values.
+
+            include_any - Matches records that include at least one of the
+            specified lookup values.
+
+            exclude_all - Matches records that exclude all specified lookup
+            values.
+
+            exclude_any - Matches records that exclude at least one of the
+            specified lookup values.
+        value:
+          maxItems: 5
+          type: array
+          x-zs-$id: MultiSelectLookupFilterCriterionRequestValueArray
+          description: >-
+            Contains an array of lookup object references used in the
+            multi-select comparison.
+          minItems: 1
+          items:
+            x-zs-$id: MultiSelectLookupFilterCriterionRequestValueArrayItems
+            $ref: '#/components/schemas/SimpleFilterCriterionValueObjectRequest'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    SimpleFilterCriterionRequest:
+      x-zs-$id: SimpleFilterCriterionRequest
+      description: >-
+        Represents a simple field-based filter criterion that dispatches to the
+        appropriate comparator-specific schema. The equal and not_equal
+        comparators support scalar or array values; text comparators support
+        scalar or array strings; ordering comparators require a scalar; between
+        and not_between comparators require a two-element array; in and not_in
+        comparators require an array of primitives; and include_all,
+        include_any, exclude_all, and exclude_any comparators require an array
+        of lookup objects and apply only when the field's data_type is
+        multiuserlookup or multiselectlookup.
+      oneOf:
+        - $ref: '#/components/schemas/EqualityFilterCriterionRequest'
+        - $ref: '#/components/schemas/TextFilterCriterionRequest'
+        - $ref: '#/components/schemas/OrderingFilterCriterionRequest'
+        - $ref: '#/components/schemas/BetweenFilterCriterionRequest'
+        - $ref: '#/components/schemas/SetFilterCriterionRequest'
+        - $ref: '#/components/schemas/MultiSelectLookupFilterCriterionRequest'
+    GroupedFilterCriterionRequest:
+      type: object
+      x-zs-$id: GroupedFilterCriterionRequest
+      description: >-
+        Represents a grouped filter criterion containing multiple filter
+        conditions evaluated with a logical operator. Supports recursive nesting
+        for complex filtering logic.
+      properties:
+        group:
+          type: array
+          description: >-
+            Contains an array of filter conditions grouped together and
+            evaluated with the specified logical operator.
+          minItems: 2
+          maxItems: 25
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionRequest'
+              - $ref: '#/components/schemas/GroupedFilterCriterionRequest'
+        group_operator:
+          type: string
+          enum:
+            - AND
+            - OR
+            - and
+            - or
+          description: >-
+            Represents the logical operator applied between the filter
+            conditions in the group.
+
+            Possible values:
+
+            AND - All conditions in the group must be satisfied.
+
+            OR - At least one condition in the group must be satisfied.
+
+            and - Equivalent to AND; all conditions in the group must be
+            satisfied.
+
+            or - Equivalent to OR; at least one condition in the group must be
+            satisfied.
+      required:
+        - group
+        - group_operator
+      additionalProperties: false
+    FilterCriterionRequest:
+      x-zs-$id: FilterCriterionRequest
+      description: >-
+        Represents the top-level filter criterion for data selection, supporting
+        both simple field-based filters and complex grouped filters with logical
+        operators.
+      oneOf:
+        - $ref: '#/components/schemas/SimpleFilterCriterionRequest'
+        - $ref: '#/components/schemas/GroupedFilterCriterionRequest'
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.READ: Read access to all modules
+            ZohoCRM.modules.ALL: Full access to all modules
+            ZohoCRM.modules.Leads.READ: Read access to Leads module
+            ZohoCRM.modules.Contacts.READ: Read access to Contacts module
+            ZohoCRM.modules.Accounts.READ: Read access to Accounts module
+            ZohoCRM.modules.Deals.READ: Read access to Deals module
+            ZohoCRM.modules.Tasks.READ: Read access to Tasks module
+            ZohoCRM.modules.Events.READ: Read access to Events module
+            ZohoCRM.modules.Calls.READ: Read access to Calls module
+            ZohoCRM.modules.Products.READ: Read access to Products module
+            ZohoCRM.modules.Vendors.READ: Read access to Vendors module
+            ZohoCRM.modules.Campaigns.READ: Read access to Campaigns module
+            ZohoCRM.modules.Cases.READ: Read access to Cases module
+            ZohoCRM.modules.Solutions.READ: Read access to Solutions module
+            ZohoCRM.modules.pricebooks.READ: Read access to Price Books module
+            ZohoCRM.modules.Quotes.READ: Read access to Quotes module
+            ZohoCRM.modules.salesorders.READ: Read access to Sales Orders module
+            ZohoCRM.modules.purchaseorders.READ: Read access to Purchase Orders module
+            ZohoCRM.modules.Invoices.READ: Read access to Invoices module
+            ZohoCRM.modules.Forecasts.READ: Read access to Forecasts module
+            ZohoCRM.modules.Activities.READ: Read access to Activities module
+            ZohoCRM.modules.Notes.READ: Read access to Notes module
+            ZohoCRM.modules.Attachments.READ: Read access to Attachments module
+            ZohoCRM.modules.custom.READ: Read access to Custom modules
+            ZohoCRM.users.READ: Read access to users modules
+            ZohoCRM.users.ALL: Full access to users module
+            ZohoCRM.modules.CREATE: Access to ZohoCRM.modules.CREATE scope

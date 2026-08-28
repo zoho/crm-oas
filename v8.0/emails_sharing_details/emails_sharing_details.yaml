@@ -1,0 +1,296 @@
+openapi: 3.1.0
+info:
+  title: Email Sharing Details
+  description: >-
+    Email sharing details define which users' email accounts can be accessed
+    when viewing emails related to a specific CRM record, along with the
+    available email filter options. This API enables developers to retrieve the
+    email sharing configuration for a record in a supported module.
+  version: '8.0'
+servers:
+  - url: https://www.zohoapis.{dc}/crm/{version}
+    description: Production API server for Zoho CRM.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: The top-level domain of the Zoho API server for the target region.
+      version:
+        default: v8
+        description: The version of the Zoho CRM API.
+paths:
+  /{moduleApiName}/{id}/__emails_sharing_details:
+    get:
+      operationId: getEmailSharingDetail
+      summary: Get email sharing details for a record
+      description: >-
+        To retrieve the email sharing details for a specific record in your Zoho
+        CRM organization, including the users whose email accounts are
+        accessible and the available email filter options for the record's email
+        view.
+      parameters:
+        - name: moduleApiName
+          in: path
+          required: true
+          description: >-
+            Specifies the **API name** of the module for which you want to
+            retrieve the email sharing details. 
+
+            Possible values: **Leads**, **Contacts**, **Accounts**, **Deals**,
+            **CustomModule1**. 
+
+            Refer to the [Retrieve CRM module
+            metadata](modules.json#$.paths./settings/modules.get) resource for
+            valid values.
+          schema:
+            type: string
+            enum:
+              - Leads
+              - Contacts
+              - Accounts
+              - Deals
+              - CustomModule1
+          example: Leads
+        - name: id
+          in: path
+          required: true
+          description: >-
+            Specify the **ID** of the **record** for which you want to retrieve
+            the email sharing details.
+          schema:
+            type: string
+            maxLength: 100
+            description: Record ID
+          example: '412463000000867017'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.ALL
+            - ZohoCRM.modules.emails.READ
+      responses:
+        '200':
+          description: >-
+            Returns the email sharing configuration for the requested record,
+            including the users with accessible email accounts and the available
+            email filter options.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: EmailsSharingDetailsResponse
+                description: >-
+                  Represents the response body for the **Get Email Shared
+                  Details** operation, containing the email sharing
+                  configuration for the requested record.
+                additionalProperties: false
+                properties:
+                  __emails_sharing_details:
+                    type: array
+                    description: >-
+                      A JSON array representing the list of email sharing
+                      configurations for the record, including the users whose
+                      emails can be shared and the available email filter
+                      options.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Represents the email sharing configuration for the
+                        record, containing the list of users whose **emails are
+                        accessible** and the available **email filter** options.
+                      additionalProperties: false
+                      properties:
+                        shared_from_users:
+                          type:
+                            - array
+                            - 'null'
+                          description: >-
+                            Specifies the list of users whose email accounts are
+                            accessible when viewing the record's emails. Always
+                            returned in the response.
+                          maxItems: 50
+                          items:
+                            type: object
+                            description: >-
+                              Represents a user whose email account is
+                              accessible for the record's email view, including
+                              the user's name, unique ID, and email account
+                              type.
+                            additionalProperties: false
+                            properties:
+                              name:
+                                type: string
+                                description: >-
+                                  Represents the name of the user with email
+                                  access.
+                                maxLength: 250
+                              _type:
+                                type: string
+                                description: >-
+                                  Represents the type of email account used by
+                                  the user. Possible values: **imap**, **pop**,
+                                  **api**. Always returned in the response.
+                                enum:
+                                  - imap
+                                  - pop
+                                  - api
+                              id:
+                                type: string
+                                description: >-
+                                  Represents the unique ID of the user. Always
+                                  returned in the response.
+                                maxLength: 100
+                            required:
+                              - name
+                              - _type
+                              - id
+                        available_types:
+                          type: array
+                          description: >-
+                            Represents the available email filter options for
+                            the record's email view. Always returned in the
+                            response.
+                          maxItems: 5
+                          minItems: 1
+                          items:
+                            type: string
+                            description: >-
+                              Represents an email filter option. 
+
+                              Possible values: **emails_sent_from_crm**,
+                              **all_contacts_emails**,
+                              **all_imap_shared_users**,
+                              **all_pop_shared_users**, **all_emails**.
+                            enum:
+                              - emails_sent_from_crm
+                              - all_contacts_emails
+                              - all_imap_shared_users
+                              - all_pop_shared_users
+                              - all_emails
+                      required:
+                        - shared_from_users
+                        - available_types
+              examples:
+                EmailsSharingDetailsResponseExample:
+                  summary: Successful response with email sharing details for a record
+                  value:
+                    __emails_sharing_details:
+                      - available_types:
+                          - emails_sent_from_crm
+                          - all_contacts_emails
+                          - all_imap_shared_users
+                          - all_emails
+                        shared_from_users:
+                          - id: '412463000001213019'
+                            name: Will Grandon
+                            _type: pop
+                          - id: '412463000000867017'
+                            name: boyle
+                            _type: imap
+                  description: >-
+                    Shows a successful response with two users in the
+                    **shared_from_users** list and four available email filter
+                    categories.
+        '400':
+          description: >-
+            The request contains invalid data or an unrecognized module API
+            name. 
+
+            **Resolution:** The module API name in the request URL must match
+            one of the supported modules, and the record ID must be valid.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the error response body returned when the request
+                  fails due to invalid input or an unrecognized module.
+                additionalProperties: false
+                x-zs-$id: ErrorResponse
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code that identifies the type of
+                      error. Possible values: **INVALID_DATA**,
+                      **INVALID_MODULE**. Always returned in the response.
+                    enum:
+                      - INVALID_DATA
+                      - INVALID_MODULE
+                  message:
+                    type: string
+                    enum:
+                      - The given data is invalid.
+                      - The module API name is invalid.
+                      - the module name given seems to be invalid
+                    description: >-
+                      Represents the error message that describes the cause of
+                      the error. Possible values: **The given data is
+                      invalid.**, **The module API name is invalid.**. Always
+                      returned in the response.
+                  details:
+                    type: object
+                    description: >-
+                      Represents an object containing additional context about
+                      the error, such as the path segment where the issue
+                      occurred. Always returned in the response.
+                    additionalProperties: false
+                    properties:
+                      resource_path_index:
+                        type: integer
+                        description: >-
+                          Represents the index of the path segment in the
+                          request URL where the error occurred.
+                        format: int32
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the response. Possible values:
+                      **error**. Always returned in the response.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                InvalidModuleExample:
+                  summary: 400 error response for an unrecognized module API name
+                  value:
+                    code: INVALID_MODULE
+                    message: The module API name is invalid.
+                    details:
+                      resource_path_index: 3
+                    status: error
+                  description: >-
+                    Shows a 400 error response when the module API name in the
+                    request URL is unrecognized, with the INVALID_MODULE error
+                    code.
+                InvalidDataExample:
+                  summary: 400 error response for invalid request data
+                  value:
+                    code: INVALID_DATA
+                    message: The given data is invalid.
+                    details:
+                      resource_path_index: 3
+                    status: error
+                  description: >-
+                    Shows a 400 error response when the request contains invalid
+                    data, with the INVALID_DATA error code.
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.ALL: Grants full access to all module resources in Zoho CRM.
+            ZohoCRM.modules.emails.READ: Grants read-only access to the Emails module in Zoho CRM.

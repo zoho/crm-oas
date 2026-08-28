@@ -1,0 +1,781 @@
+openapi: 3.1.0
+info:
+  title: User Territories
+  description: >-
+    User territories API in Zoho CRM enables to retrieve, associate, and remove
+    territory assignments for specific users.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: The Zoho CRM API server.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain (TLD) of the Zoho CRM data center, such as com,
+          eu, in, com.au, or jp.
+      version:
+        default: v8
+        description: The version of the Zoho CRM API, such as v8.
+paths:
+  /users/{user}/territories:
+    get:
+      operationId: getTerritoriesOfUser
+      description: >-
+        To retrieve all territories assigned to a specific user in your Zoho CRM
+        organization.
+      summary: Get territories of a user
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.territories.READ
+            - ZohoCRM.users.READ
+      parameters:
+        - $ref: '#/components/parameters/User'
+      responses:
+        '200':
+          description: >-
+            Returns a **territories** array with the territories assigned to the
+            user and pagination **info**.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerritoryGetResponse'
+              examples:
+                GetTerritoriesOfUser:
+                  summary: Get territories of a user
+                  value:
+                    territories:
+                      - id: '111121000000078023'
+                        Manager:
+                          id: '111121000000076087'
+                        Name: T3
+                        Reporting_To:
+                          id: '111121000000076087'
+                          Name: zoho crm
+                      - id: '111121000000086015'
+                        Manager:
+                          id: '111121000000076087'
+                        Name: T4
+                        Reporting_To:
+                          id: '111121000000078023'
+                          Name: T3
+                    info:
+                      per_page: 200
+                      count: 2
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows the territories assigned to a user, including
+                    territory names and their reporting hierarchy.
+        '204':
+          description: No territories are assigned to the specified user.
+        '400':
+          description: >-
+            The user ID in the request URL is invalid. Resolution: A valid user
+            ID must be specified. Valid user IDs can be retrieved using the [Get
+            Users](users.json#$.paths./{users}.get) API.
+          content:
+            application/json:
+              examples:
+                InvalidUserId:
+                  summary: Invalid user ID error
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                    message: the related id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows an invalid user ID error when the specified user does
+                    not exist in the organization.
+              schema:
+                $ref: '#/components/schemas/CommonUrlErrorResponse'
+    put:
+      operationId: associateTerritoriesToUser
+      summary: Add territories to a user
+      description: >-
+        To associate one or more territories with a specific user in your Zoho
+        CRM organization.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.territories.UPDATE
+            - ZohoCRM.users.UPDATE
+      parameters:
+        - $ref: '#/components/parameters/User'
+      requestBody:
+        content:
+          application/json:
+            examples:
+              AssociateTerritoriesExample:
+                summary: Associate territories with a user
+                value:
+                  territories:
+                    - id: '111121000000076093'
+                description: >-
+                  Shows an association request for a single territory using its
+                  unique ID.
+            schema:
+              additionalProperties: false
+              description: Specify the data required to associate territories with a user.
+              type: object
+              properties:
+                territories:
+                  description: >-
+                    JSON array specifying the territories to associate with the
+                    user.
+                  maxItems: 200
+                  type: array
+                  items:
+                    description: Specify one territory to associate with the user.
+                    additionalProperties: false
+                    type: object
+                    properties:
+                      id:
+                        format: int64
+                        description: >-
+                          Specify the unique ID of the territory. Valid
+                          territory IDs can be retrieved using the [Get
+                          Territories](user_territories.json#$.paths./{users}/{user}/territories.get)
+                          API.
+                        type: string
+                        x-zs-$ref:
+                          resource: territories
+                          origins:
+                            - operationId: getTerritories
+                              propertyId: TerritoriesId
+                    required:
+                      - id
+              required:
+                - territories
+        required: true
+        description: >-
+          The request body must contain a **territories** array with the
+          territory IDs to associate with the user.
+      responses:
+        '200':
+          description: >-
+            Returns a **territories** array containing the association result
+            for each requested territory.
+          content:
+            application/json:
+              examples:
+                AssociateTerritoriesExample:
+                  summary: Successful territory association response
+                  value:
+                    territories:
+                      - code: SUCCESS
+                        details:
+                          id: '111121000000076093'
+                        message: Territory associated to the user successfully
+                        status: success
+                  description: >-
+                    Shows a successful association response with the territory
+                    ID confirmed.
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: >-
+            One or more territories in the request have validation errors.
+            Resolution: Check the **code** field in each **territories** item
+            for the specific error type and resolve accordingly.
+          content:
+            application/json:
+              examples:
+                InvalidTerritoryIdErrorResponse:
+                  summary: Invalid territory ID error
+                  value:
+                    territories:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.territories[0].id
+                        message: Invalid Territory Id
+                        status: error
+                  description: >-
+                    Shows an invalid territory ID error when the specified
+                    territory does not exist.
+                AlreadyAssociatedTerritoryErrorResponse:
+                  summary: Duplicate territory association error
+                  value:
+                    territories:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: id
+                          json_path: $.territories[0].id
+                        message: Territory already associated with the user
+                        status: error
+                  description: >-
+                    Shows a duplicate association error when the territory is
+                    already assigned to the user.
+                PermissionDeniedError:
+                  summary: Permission denied error for territory
+                  value:
+                    territories:
+                      - code: PERMISSION_DENIED
+                        details:
+                          api_name: id
+                          json_path: $.territories[0].id
+                        message: >-
+                          User does not have update/delete permission for the
+                          territory
+                        status: error
+                  description: >-
+                    Shows a permission denied error when the user lacks update
+                    or delete permission for the territory.
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+        '403':
+          description: >-
+            The logged-in user cannot update their own territory associations.
+            Resolution: Territory associations for the currently logged-in user
+            must be managed by a different user with the required permissions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonUrlErrorResponse'
+              examples:
+                LoggedInUserCannotUpdateTerritories:
+                  summary: Logged-in user cannot update their own territories
+                  value:
+                    code: NOT_ALLOWED
+                    details: {}
+                    message: Logged in user can't update their territories
+                    status: error
+                  description: >-
+                    Shows a not-allowed error when the logged-in user attempts
+                    to update their own territory associations.
+    delete:
+      summary: Remove territories from a user
+      description: >-
+        To remove one or more territories from a user in your Zoho CRM
+        organization.
+      operationId: removeTerritoriesfromUser
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.territories.DELETE
+            - ZohoCRM.users.DELETE
+      parameters:
+        - $ref: '#/components/parameters/User'
+        - $ref: '#/components/parameters/Ids'
+      responses:
+        '200':
+          description: >-
+            Returns a **territories** array containing the removal result for
+            each specified territory.
+          content:
+            application/json:
+              examples:
+                RemoveTerritoriesExample:
+                  summary: Successful territories removal response
+                  value:
+                    territories:
+                      - code: SUCCESS
+                        details:
+                          id: '111121000000088044'
+                        message: Territory removed from the user successfully
+                        status: success
+                  description: >-
+                    Shows a successful removal response for a territory with the
+                    territory ID confirmed.
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: >-
+            One or more territory IDs in the request are invalid. Resolution:
+            Valid territory IDs must be specified in the **ids** parameter.
+            Valid territory IDs can be retrieved using the [Get
+            Territories](user_territories.json#$.paths./{users}/{user}/territories.get)
+            API.
+          content:
+            application/json:
+              examples:
+                InvalidTerritoryId:
+                  summary: Invalid territory ID error
+                  value:
+                    territories:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.territories[0].id
+                        message: Invalid Territory Id
+                        status: error
+                  description: >-
+                    Shows an invalid territory ID error when one or more
+                    specified territory IDs are not assigned to the user.
+              schema:
+                $ref: '#/components/schemas/CommonErrorResponse'
+  /users/{user}/territories/{territory}:
+    get:
+      summary: Specific territory of a user
+      description: >-
+        To retrieve a specific territory assigned to a user in your Zoho CRM
+        organization.
+      operationId: getSpecificTerritoryOfUser
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.territories.READ
+            - ZohoCRM.users.READ
+      parameters:
+        - $ref: '#/components/parameters/User'
+        - $ref: '#/components/parameters/Territory'
+      responses:
+        '200':
+          description: >-
+            Returns the details of a specific territory assigned to the user in
+            a **territories** array.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerritoryGetResponse'
+              examples:
+                GetTerritoryOfUser:
+                  summary: Get specific territory of a user
+                  value:
+                    territories:
+                      - id: '111121000000078023'
+                        Manager:
+                          id: '111121000000076087'
+                        Name: T3
+                        Reporting_To:
+                          id: '111121000000076087'
+                          Name: zoho crm
+                    info:
+                      per_page: 200
+                      count: 1
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows the details of a specific territory assigned to the
+                    user.
+        '204':
+          description: The specified territory is not assigned to the user.
+        '400':
+          description: >-
+            The user ID in the request URL is invalid. Resolution: A valid user
+            ID must be specified. Valid user IDs can be retrieved using the [Get
+            Users](users.json#$.paths./{users}.get) API.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonUrlErrorResponse'
+              examples:
+                InvalidUserId:
+                  summary: Invalid user ID error
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                    message: the related id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows an invalid user ID error when the specified user does
+                    not exist in the organization.
+    delete:
+      description: >-
+        To remove a specific territory from a user in your Zoho CRM
+        organization.
+      summary: Remove territory from a user
+      operationId: removeSpecificTerritoriesfromUser
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.territories.DELETE
+            - ZohoCRM.users.DELETE
+      parameters:
+        - $ref: '#/components/parameters/User'
+        - $ref: '#/components/parameters/Territory'
+      responses:
+        '200':
+          description: >-
+            Returns the removal result for the territory in a **territories**
+            array.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                RemoveTerritoriesExample:
+                  summary: Successful territory removal response
+                  value:
+                    territories:
+                      - code: SUCCESS
+                        details:
+                          id: '111121000000088044'
+                        message: Territory removed from the user successfully
+                        status: success
+                  description: >-
+                    Shows a successful territory removal response with the
+                    territory ID confirmed.
+        '400':
+          description: >-
+            The territory ID in the request URL is invalid. Resolution: A valid
+            territory ID must be specified. Valid territory IDs can be retrieved
+            using the[Get
+            Territories](user_territories.json#$.paths./{users}/{user}/territories/.get)
+            API.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonUrlErrorResponse'
+              examples:
+                InvalidTerritoryId:
+                  summary: Invalid territory ID error
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 3
+                    message: Invalid Territory Id
+                    status: error
+                  description: >-
+                    Shows an invalid territory ID error when the specified
+                    territory is not assigned to the user.
+security:
+  - OAuth2:
+      - ZohoCRM.users.ALL
+      - ZohoCRM.settings.territories.ALL
+components:
+  parameters:
+    User:
+      description: >-
+        Specify the unique ID of the user. Valid user IDs can be retrieved using
+        the [Get Users](users.json#$.paths./{users}.get) API.
+      name: user
+      in: path
+      required: true
+      schema:
+        format: int64
+        type: string
+    Territory:
+      description: >-
+        Specify the unique ID of the territory. Valid territory IDs can be
+        retrieved using the [Get
+        Territories](user_territories.json#$.paths./{users}/{user}/territories.get)
+        API.
+      name: territory
+      in: path
+      required: true
+      schema:
+        format: int64
+        type: string
+    Ids:
+      description: >-
+        Specify the territory IDs to remove from the user. Accepts
+        comma-separated values. Maximum: 100. Valid territory IDs can be
+        retrieved using the [Get
+        Territories](user_territories.json#$.paths./{users}/{user}/territories.get)
+        API.
+      name: ids
+      in: query
+      required: true
+      schema:
+        type: string
+        description: Comma-separated IDs (digits only, separated by commas)
+        pattern: ^[0-9]+(,[0-9]+)*$
+        maxLength: 2000
+  schemas:
+    CommonUrlErrorResponse:
+      type: object
+      x-zs-$id: CommonUrlErrorResponse
+      additionalProperties: false
+      description: >-
+        Represents a top-level error response for invalid path parameters,
+        including a resource path index in the error details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code for the request failure. Possible values:
+            INVALID_DATA - One or more path parameters in the request URL are
+            invalid. NOT_ALLOWED - The operation is not permitted for the
+            specified user.
+          enum:
+            - INVALID_DATA
+            - NOT_ALLOWED
+        details:
+          type: object
+          description: >-
+            Represents additional details about the error, including the path
+            parameter index.
+          additionalProperties: false
+          properties:
+            resource_path_index:
+              type: integer
+              description: >-
+                Represents the zero-based index of the path parameter that
+                caused the error.
+              format: int32
+        message:
+          type: string
+          description: Represents the error message describing the issue.
+          maxLength: 1000
+        status:
+          type: string
+          description: >-
+            Represents the status of the response. Possible values: error - The
+            request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - status
+    CommonErrorResponse:
+      type: object
+      x-zs-$id: CommonErrorResponse
+      additionalProperties: false
+      description: >-
+        Represents the error response containing per-territory validation
+        failure details.
+      properties:
+        territories:
+          type: array
+          description: Represents the list of per-territory validation errors.
+          minItems: 0
+          maxItems: 200
+          uniqueItems: true
+          items:
+            type: object
+            additionalProperties: false
+            description: >-
+              Represents the validation error details for a single territory in
+              the request.
+            properties:
+              code:
+                type: string
+                description: >-
+                  Represents the error code for the territory validation
+                  failure. Possible values: INVALID_DATA - The territory ID is
+                  invalid. DUPLICATE_DATA - The territory is already associated
+                  with the user. PERMISSION_DENIED - The user lacks the required
+                  permission for the territory.
+                enum:
+                  - INVALID_DATA
+                  - DUPLICATE_DATA
+                  - PERMISSION_DENIED
+              details:
+                type: object
+                description: >-
+                  Represents additional details about the territory validation
+                  error.
+                additionalProperties: false
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API field name associated with the
+                      validation error.
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path to the field that caused the
+                      validation error.
+                    maxLength: 1000
+              message:
+                type: string
+                description: >-
+                  Represents the error message describing the territory
+                  validation failure.
+                maxLength: 1000
+              status:
+                type: string
+                description: >-
+                  Represents the status of the territory operation. Possible
+                  values: error - The territory operation failed.
+                enum:
+                  - error
+            required:
+              - code
+              - details
+              - status
+      required:
+        - territories
+    TerritoryGetResponse:
+      additionalProperties: false
+      x-zs-$id: TerritoryGetResponse
+      description: >-
+        Represents the response containing territories assigned to a user and
+        pagination details.
+      type: object
+      properties:
+        territories:
+          type: array
+          description: >-
+            The JSON array representing the list of territories assigned to the
+            user.
+          minItems: 0
+          maxItems: 200
+          uniqueItems: true
+          items:
+            type: object
+            description: Represents the details of a single territory assigned to the user.
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+                description: Represents the unique ID of the territory.
+                format: int64
+              Manager:
+                type: object
+                description: >-
+                  Represents the manager of the territory. Valid user IDs and
+                  names can be retrieved using the [Get
+                  Users](users.json#$.paths./{users}.get) API.
+                additionalProperties: false
+                properties:
+                  Name:
+                    type: string
+                    description: Represents the full name of the territory manager.
+                    maxLength: 255
+                  id:
+                    type: string
+                    description: Represents the unique ID of the territory manager.
+                    format: int64
+              Reporting_To:
+                type: object
+                description: >-
+                  Represents the parent territory that this territory reports to
+                  in the hierarchy.
+                additionalProperties: false
+                properties:
+                  Name:
+                    type: string
+                    description: >-
+                      Represents the name of the parent territory or reporting
+                      entity.
+                    maxLength: 255
+                  id:
+                    type: string
+                    description: >-
+                      Represents the unique ID of the parent territory or
+                      reporting entity.
+                    format: int64
+                required:
+                  - Name
+                  - id
+              Name:
+                type: string
+                description: Represents the name of the territory.
+                maxLength: 255
+            required:
+              - id
+              - Manager
+              - Reporting_To
+              - Name
+        info:
+          type: object
+          description: Represents the pagination details for the response.
+          additionalProperties: false
+          properties:
+            count:
+              type: integer
+              description: >-
+                Represents the number of territory records returned in the
+                current page. 
+              format: int32
+            page:
+              type: integer
+              description: Represents the current page number in the paginated response.
+              format: int32
+            per_page:
+              type: integer
+              description: Represents the maximum number of records returned per page.
+              format: int32
+            more_records:
+              type: boolean
+              description: >-
+                Indicates whether more territory records are available beyond
+                the current page. Possible values: true - More records are
+                available. false - No more records are available.
+          required:
+            - count
+            - page
+            - per_page
+            - more_records
+      required:
+        - territories
+        - info
+    SuccessResponse:
+      type: object
+      additionalProperties: false
+      x-zs-$id: TerritorySuccessResponse
+      description: Represents the response containing the per-territory operation results.
+      properties:
+        territories:
+          type: array
+          description: Represents the list of per-territory operation results.
+          minItems: 0
+          maxItems: 200
+          uniqueItems: true
+          items:
+            type: object
+            additionalProperties: false
+            description: Represents the result of a single territory operation.
+            properties:
+              code:
+                type: string
+                description: >-
+                  Represents the result code for the territory operation.
+                  Possible values: SUCCESS - The territory operation completed
+                  successfully.
+                enum:
+                  - SUCCESS
+              details:
+                type: object
+                description: Represents the additional details for the operation result.
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    format: int64
+                    description: >-
+                      Represents the unique ID of the territory on which the
+                      operation was performed.
+                required:
+                  - id
+              message:
+                type: string
+                description: >-
+                  Represents the message describing the result of the territory
+                  operation.
+                maxLength: 1000
+              status:
+                type: string
+                description: >-
+                  Represents the status of the territory operation. Possible
+                  values: success - The operation completed successfully.
+                enum:
+                  - success
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - territories
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.users.ALL: >-
+              Grants full access to perform read, update, and delete operations
+              on user resources in Zoho CRM.
+            ZohoCRM.settings.territories.ALL: >-
+              Grants full access to perform read, update, and delete operations
+              on territory settings in Zoho CRM.
+            ZohoCRM.users.READ: Grants permission to read user resources in Zoho CRM.
+            ZohoCRM.settings.territories.READ: Grants permission to read territory settings in Zoho CRM.
+            ZohoCRM.users.UPDATE: Grants permission to update user resources in Zoho CRM.
+            ZohoCRM.settings.territories.UPDATE: Grants permission to update territory settings in Zoho CRM.
+            ZohoCRM.users.DELETE: Grants permission to delete user resources in Zoho CRM.
+            ZohoCRM.settings.territories.DELETE: Grants permission to delete territory settings in Zoho CRM.

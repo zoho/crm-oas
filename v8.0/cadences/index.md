@@ -1,0 +1,42 @@
+# Cadences
+
+- [OpenAPI specification](cadences.yaml)
+- [List Cadences](mds/getCadences.md)
+  - To retrieve the list of Cadences in your Zoho CRM organization.
+  - [Examples](mds/examples/getCadences.md)
+- [Create cadence](mds/postCadences.md)
+  - Creates a new cadence (initially in draft status) with its follow-up tree and optional un-enrollment rules in a single call. custom_view cadences require a custom_view.id; manual_enrollment cadences must omit custom_view. Follow-ups reference each other via reference_id (a client-chosen string) so that parent/child links can be expressed in a single request before server ids are assigned. The cadence must be published and activated before it will enroll records.
+  - [Examples](mds/examples/postCadences.md)
+- [Update multiple Cadences (bulk form)](mds/putUpdateCadences.md)
+  - Partial-update form that takes the cadence id inside the request body (cadences[0].id). Updates only the provided fields; module / type / custom_view cannot be changed after creation. Editing a currently-published cadence creates a draft on the first save. Follow-up add/update is expressed inline via the follow_ups array.
+  - [Examples](mds/examples/putUpdateCadences.md)
+- [Get a Cadence](mds/getCadence.md)
+  - To retrieve the configuration and details of a specific Cadence from your Zoho CRM organization. The response includes the follow-up action tree with server-resolved parent follow-up IDs, unenroll properties, Custom View configuration, and the current Cadence status.
+  - [Examples](mds/examples/getCadence.md)
+- [Delete a Cadence](mds/deleteSingleCadence.md)
+  - To delete a Cadence and its associated records from your Zoho CRM organization. Deleting a Cadence removes all related action records, including workflow tasks, email notifications, and WhatsApp notifications, as well as process states and flow transitions. Pending enrollment schedules are removed, but record-level enrollment history is retained.
+  - [Examples](mds/examples/deleteSingleCadence.md)
+- [Cadence](mds/putUpdateCadence.md)
+  - Partial-update form that takes the cadence id from the URL path. Same body shape and semantics as the bulk PUT variant (see PUT /settings/automation/cadences). module / type / custom_view cannot be changed after creation.
+  - [Examples](mds/examples/putUpdateCadence.md)
+- [Clone a Cadence](mds/postCloneCadences.md)
+  - Creates a new cadence with the same follow-up tree as the source cadence (identified by path id) but with the name / description / custom_view supplied in the body. Every follow-up action is copied into a new action record - the clone has no shared rows with the source. The new cadence starts in draft status and must be published before it can enroll records.
+  - [Examples](mds/examples/postCloneCadences.md)
+- [Activate Cadence](mds/postActivate.md)
+  - Activates a published cadence so it begins enrolling records. The cadence must currently be inactive; otherwise, the ALREADY_ACTIVATED error is returned. Edition limits are enforced, including the maximum number of active cadences per module and the total number of active cadences. For custom_view cadences, activation subscribes to the email engagement triggers required for signal-based follow-ups.
+  - [Examples](mds/examples/postActivate.md)
+- [Deactivate a Cadence](mds/postDeactivate.md)
+  - To deactivate a Cadence in your Zoho CRM organization. The Cadence must currently be active; attempting to deactivate an already inactive Cadence returns the ALREADY_DEACTIVATED error.
+  - [Examples](mds/examples/postDeactivate.md)
+- [Publish a Cadence](mds/postPublish.md)
+  - Publishes a draft cadence by merging its follow-up tree, transitions, and triggers into the live cadence, and then clears the draft. If the cadence is being published for the first time, it is promoted from a draft to an inactive published cadence. Call the Activate Cadence API separately to begin enrolling records. Before publishing, ensure the cadence contains at least one follow-up and complies with the action count and active cadence limits. When the enrollment type is `custom_view`, the `process_existing_records` parameter determines whether records that already match the custom view are enrolled at the time of publication.
+  - [Examples](mds/examples/postPublish.md)
+- [Get Cadence records count](mds/listCadencesRecordsCount.md)
+  - To retrieve the record counts for the specified Cadences from your Zoho CRM organization. For each Cadence ID supplied in the **ids** query parameter, the response returns the number of records currently associated with that Cadence. A maximum of 100 Cadence IDs can be supplied per request.
+  - [Examples](mds/examples/listCadencesRecordsCount.md)
+- [Get Cadence analytics](mds/getCadenceAnalytics.md)
+  - To retrieve per-follow-up execution statistics for the specified Cadence in your Zoho CRM organization. Each follow-up element returns an analytics payload whose structure depends on its action type: tasks (open, completed, and failed counts), schedule_call (created, scheduled, completed, missed, cancelled, overdue, and failed counts), email_notifications (sent, opened, clicked, replied, bounced, unsubscribed, and unsent counts), and whatsapp_message_notification (delivered and failed counts). Use the **filters** parameter to restrict results to a single action type, and the **follow_ups_executed_from** and **follow_ups_executed_till** parameters to restrict to a time range.
+  - [Examples](mds/examples/getCadenceAnalytics.md)
+- [Get Cadence module actions count](mds/getCadenceModuleActionsCount.md)
+  - To retrieve the total number of follow-up actions configured for the specified CRM module across all Cadences in your Zoho CRM organization. The count includes tasks, emails, calls, and WhatsApp messages, and is used to enforce the edition-level per-module action count limit.
+  - [Examples](mds/examples/getCadenceModuleActionsCount.md)

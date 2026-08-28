@@ -1,0 +1,2290 @@
+openapi: 3.1.0
+info:
+  title: Map Dependency API
+  description: >-
+    Map dependency defines parent-child relationships between option-based
+    fields (picklist, multi-select picklist or radio button fields) in a layout,
+    controlling which child field values are available based on the selected
+    parent field value. 
+
+
+    This API enables developers to retrieve, create, update, and delete map
+    dependency configurations for module layouts.
+
+
+    > **Note**
+
+    > - A parent can have multiple child fields, but a child can have only one
+    parent.
+
+    > - Map dependency is layout-specific.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /settings/layouts/{layoutId}/map_dependency:
+    get:
+      summary: Get field dependencies for a layout
+      operationId: getMapDependency
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.map_dependency.read
+      parameters:
+        - $ref: '#/components/parameters/LayoutId'
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Filters'
+      description: >-
+        To retrieve the list of field dependencies configured for a specific
+        layout in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Returns all picklist field dependencies for a layout. Use the Fields API
+        to resolve parent and child field IDs and api_names. Each dependency
+        maps a parent picklist field's values to allowed child picklist field
+        values via the pick_list_values array. Dependencies where internal is
+        true are system-defined and read-only.
+      responses:
+        '200':
+          description: >-
+            Returns the list of field dependencies configured for the specified
+            layout.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetMapDependencySuccessResponse
+                type: object
+                description: >-
+                  Represents the successful response containing the list of
+                  field dependencies and pagination details for the specified
+                  layout.
+                additionalProperties: false
+                properties:
+                  map_dependency:
+                    type: array
+                    description: >-
+                      Contains the list of field dependency objects for the
+                      specified layout. 
+                    maxItems: 200
+                    items:
+                      type: object
+                      description: >-
+                        Represents a field dependency object, including the
+                        parent and child field references, dependency metadata,
+                        and activity status.
+                      additionalProperties: false
+                      properties:
+                        parent:
+                          $ref: '#/components/schemas/FieldReference'
+                          description: Details of the parent field.
+                        child:
+                          $ref: '#/components/schemas/FieldReference'
+                          description: Details of the child field.
+                        sub_module:
+                          oneOf:
+                            - x-zs-$id: SubModuleNull
+                              type: 'null'
+                              description: >-
+                                Indicates that the dependency applies to the
+                                main module fields and is not associated with
+                                any subform.
+                            - type: object
+                              x-zs-$id: SubModuleObject
+                              description: >-
+                                Represents the details of the subform module
+                                when the dependency applies to a subform field.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique identifier of the
+                                    subform module. Make a [Get Modules
+                                    API](modules.yaml#$.paths./settings/modules.get)
+                                    to get the details of the subform module. 
+                                  format: int64
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the subform
+                                    module. 
+                                  maxLength: 50
+                              required:
+                                - id
+                                - api_name
+                          description: >-
+                            The API name and ID of the field that is mapped as
+                            the parent in the subform of the module. For
+                            non-subforms, this value is **null**. This key is
+                            present only when you fetch all the mapped
+                            dependencies in a module.
+                        internal:
+                          type: boolean
+                          description: >
+                            Indicates whether the dependency was defined by the
+                            system or created by the user. Possible values:
+                            **true**, **false**. 
+                          enum:
+                            - true
+                            - false
+                        active:
+                          type: boolean
+                          description: >
+                            Indicates whether the dependency is active in the
+                            layout. Possible values: **true**, **false**. 
+                          enum:
+                            - true
+                            - false
+                        id:
+                          type: string
+                          description: >-
+                            Represents the unique identifier of the field
+                            dependency. 
+                          format: int64
+                        source:
+                          type: integer
+                          format: int32
+                          description: >
+                            Represents the source of the dependency. Possible
+                            values: **1**. It indicates Zoho CRM as the source. 
+                          enum:
+                            - 1
+                        category:
+                          type: integer
+                          format: int32
+                          description: >
+                            Represents the category of the dependency. Possible
+                            values: **0**. **0** represents the default
+                            category. 
+                          enum:
+                            - 0
+                      required:
+                        - parent
+                        - child
+                        - sub_module
+                        - internal
+                        - active
+                        - id
+                        - source
+                        - category
+                  info:
+                    type: object
+                    description: 'Contains the pagination details for the response. '
+                    additionalProperties: false
+                    properties:
+                      page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the current page number in the paginated
+                          response.
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the maximum number of records included on
+                          each page. 
+                      count:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the number of records returned on the
+                          current page. 
+                      more_records:
+                        type: boolean
+                        description: >
+                          Indicates whether additional pages of records are
+                          available. Possible values: **true**, **false**. 
+                    required:
+                      - page
+                      - per_page
+                      - count
+                      - more_records
+                required:
+                  - map_dependency
+                  - info
+              examples:
+                SuccessResponse:
+                  value:
+                    map_dependency:
+                      - parent:
+                          api_name: Lead_Source
+                          id: '1043386000000002609'
+                        internal: false
+                        sub_module: null
+                        active: true
+                        id: '1043386000020283001'
+                        source: 1
+                        category: 0
+                        child:
+                          api_name: Lead_Status
+                          id: '1043386000000002611'
+                      - parent:
+                          api_name: Pick_List_1
+                          id: '1043386000019791055'
+                        internal: false
+                        sub_module:
+                          api_name: Subform_3
+                          id: '1043386000016645081'
+                        active: true
+                        id: '1043386000020283005'
+                        source: 1
+                        category: 0
+                        child:
+                          api_name: Pick_List_2
+                          id: '1043386000019791245'
+                    info:
+                      per_page: 200
+                      count: 2
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows two field dependencies - one for a standard module
+                    field pair and one for a subform field pair - along with
+                    pagination details.
+                  summary: Example of a successful response with field dependencies.
+                InactiveDependencyResponse:
+                  value:
+                    map_dependency:
+                      - parent:
+                          api_name: Salutation
+                          id: '1043386000000002601'
+                        internal: false
+                        sub_module: null
+                        active: false
+                        id: '1043386000020283009'
+                        source: 1
+                        category: 0
+                        child:
+                          api_name: Industry
+                          id: '1043386000000003402'
+                    info:
+                      per_page: 200
+                      count: 1
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows a field dependency where the child field has been
+                    moved to the unused fields list of the layout, making the
+                    dependency inactive (active is **false**).
+                  summary: >-
+                    Example of a successful response containing an inactive
+                    field dependency.
+        '204':
+          description: No field dependencies are configured for the specified layout.
+        '400':
+          description: >
+            The request contains invalid parameters or data.
+
+            **Resolution:** Verify the module API name and layout ID in the
+            request, and ensure all required parameters are included and all
+            filter criteria are valid JSON.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetMapDependencyErrorResponse
+                description: >-
+                  Represents the error response returned when the request
+                  contains invalid parameters or data.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: 'Represents the status of the response. '
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: >
+                      Represents the error code for the request error. Possible
+                      values: **REQUIRED_PARAM_MISSING**, **INVALID_MODULE**,
+                      **NOT_SUPPORTED**, **INVALID_DATA**,
+                      **DEPENDENT_FIELD_MISSING**, **MANDATORY_NOT_FOUND**. 
+                    enum:
+                      - REQUIRED_PARAM_MISSING
+                      - INVALID_MODULE
+                      - NOT_SUPPORTED
+                      - INVALID_DATA
+                      - DEPENDENT_FIELD_MISSING
+                      - MANDATORY_NOT_FOUND
+                  message:
+                    type: string
+                    description: 'Describes the error that occurred. '
+                    maxLength: 500
+                  details:
+                    type: object
+                    description: 'Contains additional details about the error. '
+                    additionalProperties: true
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+              examples:
+                RequiredParamMissing:
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: module
+                    message: One of the expected parameter is missing
+                    status: error
+                  description: >-
+                    Shows an error returned when a required parameter, such as
+                    **module**, is not included in the request.
+                  summary: Example of required parameter missing.
+                InvalidModule:
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      param_name: module
+                    message: the module name given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows an error returned when the module API name provided is
+                    not recognized.
+                  summary: Example of invalid module name.
+                InvalidLayoutId:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: Invalid Layout Id
+                    status: error
+                  description: >-
+                    Shows an error returned when the layout ID in the request
+                    path is invalid.
+                  summary: Example of invalid layout ID.
+                LayoutDeactivated:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The layout is deactivated
+                    status: error
+                  description: >-
+                    Shows an error returned when the specified layout has been
+                    deactivated.
+                  summary: Example of deactivated layout.
+                InvalidFilterValue:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: filters
+                      json_path: $
+                      param_name: filters
+                    message: the value given is invalid
+                    status: error
+                  description: >-
+                    Shows an error returned when the **filters** parameter value
+                    is not valid JSON.
+                  summary: Example of an invalid filters parameter value.
+                InvalidComparator:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: comparator
+                      json_path: $.comparator
+                      supported_values:
+                        - equal
+                        - in
+                      param_name: filters
+                    message: The value given is invalid
+                    status: error
+                  description: >-
+                    Shows an error returned when the **comparator** value in the
+                    filter is invalid. Supported values are **equal** and
+                    **in**.
+                  summary: Example of invalid filter comparator value.
+                DependentFieldMissing:
+                  value:
+                    code: DEPENDENT_FIELD_MISSING
+                    details:
+                      dependee:
+                        api_name: field
+                        json_path: $.field
+                      api_name: comparator
+                      json_path: $.comparator
+                      param_name: filters
+                    message: Dependent Field missing
+                    status: error
+                  description: >-
+                    Shows an error returned when the **comparator** filter
+                    attribute is specified without the required **field**
+                    attribute.
+                  summary: Example of dependent field missing in filter.
+                MandatoryNotFound:
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    details:
+                      api_name: api_name
+                      json_path: $.field.api_name
+                      param_name: filters
+                    message: Required field not found
+                    status: error
+                  description: >-
+                    Shows an error returned when a required property in the
+                    filter object, such as **api_name**, is missing.
+                  summary: Example of mandatory filter field missing.
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Create a field dependency for a layout
+      description: >-
+        To create a field dependency between a parent picklist field and a child
+        picklist field for a specific layout in your Zoho CRM organization.
+
+
+        **Prerequisites**
+
+
+        - The selected layout must contain at least two option-based fields.
+
+        - Supported field types are Picklist, Radio Button, and Multi-select
+        Picklist.
+
+        - Multi-select Picklist fields can be used only as child fields.
+
+        - Parent and child fields must belong to the selected layout.
+
+        - When using subform fields, the parent and child fields must belong to
+        the same subform.
+
+        To create a field dependency between a parent picklist field and a child
+        picklist field for a specific layout in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Creates a picklist field dependency. The parent and child must be
+        picklist-type fields from the Fields API. A child field can only appear
+        in one dependency per layout. The pick_list_values array maps each
+        parent value's display_value to its allowed child values in the maps
+        array.
+      operationId: createMapDependency
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.map_dependency.create
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/LayoutId'
+        - $ref: '#/components/parameters/XZcsrfToken'
+      requestBody:
+        description: The request body contains the data required to perform the operation.
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request body for creating a field dependency
+                between picklist fields in a layout.
+              additionalProperties: false
+              properties:
+                map_dependency:
+                  type: array
+                  description: Specify the field dependency configuration to create.
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: >-
+                      Specify the configuration for the field dependency to
+                      create, including parent field, child field, and picklist
+                      value mappings.
+                    additionalProperties: false
+                    properties:
+                      parent:
+                        $ref: '#/components/schemas/FieldReference'
+                        description: Parent field details
+                      child:
+                        $ref: '#/components/schemas/FieldReference'
+                        description: Child field details
+                      pick_list_values:
+                        type: array
+                        description: >
+                          Each JSON object in this array corresponds to a
+                          specific picklist value in the parent field, and
+                          consists of the following keys:
+
+                          - **display_value** - string, optional - The display
+                          name of the picklist value of the parent field.
+
+                          - **actual_value** - string, optional - The actual
+                          name of the picklist value of the parent field.
+
+                          - **id** - string, mandatory - The unique ID of the
+                          picklist value of the parent field.
+
+                          - **maps** - JSON array, mandatory - The
+                          **display_value**, **actual_value**, and id of the
+                          picklist value of the child field that should be
+                          mapped with the parent field.
+                        maxItems: 2000
+                        items:
+                          $ref: '#/components/schemas/PicklistMappingCreate'
+                    required:
+                      - parent
+                      - child
+                      - pick_list_values
+              required:
+                - map_dependency
+            examples:
+              CreateDependency:
+                value:
+                  map_dependency:
+                    - parent:
+                        api_name: Lead_Source
+                        id: '111111000000004107'
+                      pick_list_values:
+                        - display_value: '-None-'
+                          maps:
+                            - display_value: Contacted
+                              actual_value: Contacted
+                              id: '111111000000016330'
+                            - display_value: Contact in Future
+                              actual_value: Contact in Future
+                              id: '111111000000016333'
+                          actual_value: '-None-'
+                          id: '111111000000016273'
+                        - display_value: Advertisement
+                          maps:
+                            - display_value: Pre-Qualified
+                              actual_value: Pre-Qualified
+                              id: '111111000000016327'
+                            - display_value: Not Qualified
+                              actual_value: Not Qualified
+                              id: '111111000000016351'
+                          actual_value: Advertisement
+                          id: '111111000000016276'
+                      child:
+                        api_name: Lead_Status
+                        id: '111111000000004109'
+                description: >-
+                  Shows the request body that maps **Lead_Source** as the parent
+                  field to **Lead_Status** as the child field, with two parent
+                  picklist value entries.
+                summary: Example of creating a field dependency.
+            x-zs-llm-examples:
+              - CreateDependency
+        required: true
+      responses:
+        '201':
+          description: >-
+            Returns the result of the create operation, including the unique
+            identifier of the newly created field dependency.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreateMapDependencySuccessResponse
+                type: object
+                description: >-
+                  Represents the success response returned after the field
+                  dependency is successfully created.
+                additionalProperties: false
+                properties:
+                  map_dependency:
+                    type: array
+                    description: 'Contains the result of the create operation. '
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/SuccessResponse'
+                required:
+                  - map_dependency
+              examples:
+                SuccessResponse:
+                  value:
+                    map_dependency:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000064003'
+                        message: map dependency created
+                        status: success
+                  description: >-
+                    Shows the success response containing the unique identifier
+                    of the newly created field dependency.
+                  summary: Example of field dependency created successfully.
+        '400':
+          description: >
+            The request contains invalid data or violates a dependency rule.
+
+            **Resolution:** Verify that the parent and child field IDs are
+            valid, the dependency does not already exist or create a circular
+            reference, and all required fields in **pick_list_values** are
+            provided.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreateMapDependencyErrorResponse
+                oneOf:
+                  - x-zs-$id: CreateMapDependencyRootErrorResponse
+                    type: object
+                    description: >-
+                      Represents a root-level error returned when the request
+                      itself is invalid, such as an invalid module or a missing
+                      required parameter.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: 'Represents the status of the response. '
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >
+                          Represents the error code for the root-level request
+                          error. Possible values: **REQUIRED_PARAM_MISSING**,
+                          **INVALID_MODULE**, **NOT_SUPPORTED**,
+                          **INVALID_DATA**. 
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                          - INVALID_MODULE
+                          - NOT_SUPPORTED
+                          - INVALID_DATA
+                      message:
+                        type: string
+                        description: 'Describes the root-level error that occurred. '
+                        maxLength: 500
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional details about the root-level
+                          error. 
+                        additionalProperties: true
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: CreateMapDependencyFieldLevelErrorResponse
+                    description: >-
+                      Represents a field-level error returned when the
+                      dependency data is invalid, such as duplicate mappings or
+                      invalid field references.
+                    additionalProperties: false
+                    properties:
+                      map_dependency:
+                        type: array
+                        description: >-
+                          Contains the field-level error details for each
+                          dependency in the request. 
+                        maxItems: 1
+                        items:
+                          type: object
+                          description: >-
+                            Represents the error details for a specific field in
+                            the dependency request.
+                          additionalProperties: false
+                          properties:
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status of the field-level
+                                response. 
+                              enum:
+                                - error
+                            code:
+                              type: string
+                              description: >
+                                Represents the error code for the field-level
+                                error. 
+
+                                Possible values: 
+
+                                **MANDATORY_NOT_FOUND**, **INVALID_DATA**,
+                                **MAPPING_ALREADY_EXISTS**, **NOT_ALLOWED**,
+                                **AMBIGUITY_DURING_PROCESSING**. 
+                              enum:
+                                - MANDATORY_NOT_FOUND
+                                - INVALID_DATA
+                                - MAPPING_ALREADY_EXISTS
+                                - NOT_ALLOWED
+                                - AMBIGUITY_DURING_PROCESSING
+                            message:
+                              type: string
+                              description: 'Describes the field-level error that occurred. '
+                              maxLength: 500
+                            details:
+                              type: object
+                              description: >-
+                                Contains field-specific details about the
+                                error. 
+                              additionalProperties: true
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                    required:
+                      - map_dependency
+                description: >-
+                  Represents the error response when the create request fails.
+                  It returns either a root-level error or a field-level error.
+              examples:
+                RequiredParamMissing:
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: module
+                    message: One of the expected parameter is missing
+                    status: error
+                  description: >-
+                    Shows an error returned when a required parameter, such as
+                    **module**, is not included in the request.
+                  summary: Example of a required parameter missing.
+                InvalidModule:
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      param_name: module
+                    message: the module name given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows an error returned when the module API name provided is
+                    not recognized.
+                  summary: Example of an invalid module name.
+                InvalidLayoutId:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: Invalid Layout Id
+                    status: error
+                  description: >-
+                    Shows an error returned when the layout ID in the request
+                    path is invalid.
+                  summary: Example of an invalid layout ID.
+                LayoutDeactivated:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The given layout is deactivated
+                    status: error
+                  description: >-
+                    Shows an error returned when the specified layout has been
+                    deactivated.
+                  summary: Example of deactivated layout.
+                MaxLengthExceeded:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: map_dependency
+                      json_path: $.map_dependency
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Shows an error returned when more than one dependency is
+                    included in the **map_dependency** array.
+                  summary: 'Example of map_dependency array with exceeding length. '
+                MappingAlreadyExists:
+                  value:
+                    map_dependency:
+                      - code: MAPPING_ALREADY_EXISTS
+                        details:
+                          id: '1234687624378284'
+                          dependency:
+                            - id: '123467634333580'
+                              json_path: $.map_dependency[0].parent.id
+                            - id: '123467634333590'
+                              json_path: $.map_dependency[0].child.id
+                        message: >-
+                          The given parent and child fields are already
+                          associated in another map dependency in this layout
+                        status: error
+                  description: >-
+                    Shows an error returned when a dependency between the
+                    specified parent and child fields already exists in this
+                    layout.
+                  summary: 'Example of already existing dependency mapping error. '
+                DependencyLoop:
+                  value:
+                    map_dependency:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].child.id
+                        message: >-
+                          The given child field when associated with this parent
+                          field will result in loop
+                        status: error
+                  description: >-
+                    Shows an error returned when adding the specified
+                    parent-child relationship would create a circular dependency
+                    loop.
+                  summary: Example error of dependency creating a loop.
+                ParentChildSame:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].child.id
+                        message: The parent and child fieldid cannot be same
+                        status: error
+                  description: >-
+                    Shows an error returned when the parent and child field IDs
+                    refer to the same field.
+                  summary: Example error for providing the same parent and child field.
+                MandatoryNotFound:
+                  value:
+                    map_dependency:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].pick_list_values[0].maps[1].id
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows an error returned when a required field, such as
+                    **ID** in the **maps** array, is missing from the request.
+                  summary: Example of required field not found.
+                InvalidParentFieldId:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].parent.id
+                        message: invalid parent fieldid
+                        status: error
+                  description: >-
+                    Shows an error returned when the parent field ID is not
+                    valid for the specified layout.
+                  summary: Example of invalid parent field ID.
+                InvalidChildFieldId:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].child.id
+                        message: invalid child fieldid
+                        status: error
+                  description: >-
+                    Shows an error returned when the child field ID is not valid
+                    for the specified layout.
+                  summary: Example of invalid child field ID.
+                InvalidChildOptionId:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].pick_list_values[0].maps[1].id
+                        message: Invalid child option id
+                        status: error
+                  description: >-
+                    Shows an error returned when a child picklist option ID in
+                    the **maps** array is invalid.
+                  summary: Example of invalid child picklist option ID.
+                InvalidParentOptionId:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].pick_list_values[0].id
+                        message: Invalid parent option id
+                        status: error
+                  description: >-
+                    Shows an error returned when a parent picklist option ID in
+                    the **pick_list_values** array is invalid.
+                  summary: Example of invalid parent picklist option ID.
+                PickListValuesNotFound:
+                  value:
+                    map_dependency:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: pick_list_values
+                          json_path: $.map_dependency[0].pick_list_values
+                        message: required  field not found
+                        status: error
+                  description: >-
+                    Shows an error returned when the required
+                    **pick_list_values** array is missing from the request.
+                  summary: Example of pick_list_values array missing.
+                MapsNotFound:
+                  value:
+                    map_dependency:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: maps
+                          json_path: $.map_dependency[0].pick_list_values[0].maps
+                        message: required  field not found
+                        status: error
+                  description: >-
+                    Shows an error returned when the **maps** array is missing
+                    from a **pick_list_values** entry.
+                  summary: Example of maps field missing.
+                ChildFieldUnused:
+                  value:
+                    map_dependency:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].child.id
+                        message: Child fieldid is in unused fields list of the layout
+                        status: error
+                  description: >-
+                    Shows an error returned when the child field ID refers to a
+                    field in the layout's unused fields list.
+                  summary: Example of child field in unused fields list.
+                ParentFieldUnused:
+                  value:
+                    map_dependency:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].parent.id
+                        message: Parent fieldid is in unused fields list of the layout
+                        status: error
+                  description: >-
+                    Shows an error returned when the parent field ID refers to a
+                    field in the layout's unused fields list.
+                  summary: Example of parent field in unused fields list.
+                AssociatedWithLayoutRule:
+                  value:
+                    map_dependency:
+                      - code: NOT_ALLOWED
+                        details: {}
+                        message: >-
+                          The given parent and child field are Associated with
+                          Layout Rule
+                        status: error
+                  description: >-
+                    Shows an error returned when the specified parent and child
+                    fields are already associated with a Layout Rule.
+                  summary: Example of fields associated with a Layout Rule.
+                InvalidApiName:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.map_dependency[0].parent.api_name
+                        message: The given api name is invalid
+                        status: error
+                  description: >-
+                    Shows an error returned when the API name provided for the
+                    parent or child field is invalid.
+                  summary: Example of invalid field API name.
+                AmbiguityDuringProcessing:
+                  value:
+                    map_dependency:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.map_dependency[0].parent.id
+                            - api_name: api_name
+                              json_path: $.map_dependency[0].parent.api_name
+                        message: Ambiguity while processing the request
+                        status: error
+                  description: >-
+                    Shows an error returned when both **ID** and **api_name**
+                    are provided for the same field, causing ambiguity during
+                    processing.
+                  summary: Example of ambiguity in request field data.
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /settings/layouts/{layoutId}/map_dependency/{dependencyId}:
+    get:
+      summary: Get a field dependency by ID
+      description: >-
+        To retrieve the complete details of a specific field dependency from a
+        layout in your Zoho CRM organization, including all picklist value
+        mappings.
+      x-zs-llm-description: >-
+        Returns a single picklist field dependency with full value mappings. The
+        parent and child objects contain field IDs and api_names from the Fields
+        API. The pick_list_values array shows which child picklist values are
+        allowed for each parent value.
+      operationId: getMapDependencyById
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.map_dependency.read
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/LayoutId'
+        - $ref: '#/components/parameters/DependencyId'
+      responses:
+        '200':
+          description: >-
+            Returns the complete details of the specified field dependency,
+            including all picklist value mappings.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetMapDependencyByIdSuccessResponse
+                type: object
+                description: >-
+                  Represents the response containing the complete details of the
+                  specified field dependency, including all picklist value
+                  mappings.
+                additionalProperties: false
+                properties:
+                  map_dependency:
+                    type: array
+                    description: >-
+                      Contains the field dependency details for the specified
+                      dependency ID. 
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents the field dependency object with
+                        complete parent and child field references, picklist
+                        value mappings, and dependency metadata.
+                      additionalProperties: false
+                      properties:
+                        parent:
+                          $ref: '#/components/schemas/FieldReference'
+                          description: Parent field details
+                        child:
+                          $ref: '#/components/schemas/FieldReference'
+                          description: Details of the child field
+                        pick_list_values:
+                          type: array
+                          description: >-
+                            Contains the complete mapping of parent picklist
+                            options to their corresponding child picklist
+                            options. 
+                          maxItems: 2000
+                          items:
+                            $ref: '#/components/schemas/PicklistMappingRead'
+                        internal:
+                          type: boolean
+                          description: >
+                            Indicates whether the dependency was defined by the
+                            system or created by the user. Possible values:
+                            **true**, **false**. 
+                          enum:
+                            - true
+                            - false
+                        active:
+                          type: boolean
+                          description: >
+                            Indicates whether the dependency is active in the
+                            layout. Possible values: **true**, **false**. 
+                          enum:
+                            - true
+                            - false
+                        id:
+                          type: string
+                          description: >-
+                            Represents the unique identifier of the field
+                            dependency. 
+                          format: int64
+                        source:
+                          type: integer
+                          format: int32
+                          description: >
+                            Represents the source of the dependency. Possible
+                            values: **1**. It indicates Zoho CRM as the source. 
+                          enum:
+                            - 1
+                        category:
+                          type: integer
+                          format: int32
+                          description: >
+                            Represents the category of the dependency. Possible
+                            values: **0**. **0** represents the default
+                            category. 
+                          enum:
+                            - 0
+                      required:
+                        - parent
+                        - child
+                        - pick_list_values
+                        - internal
+                        - active
+                        - id
+                        - source
+                        - category
+                required:
+                  - map_dependency
+              examples:
+                SuccessResponse:
+                  value:
+                    map_dependency:
+                      - parent:
+                          api_name: Lead_Source
+                          id: '1043386000000002609'
+                        internal: false
+                        active: true
+                        id: '1043386000020283001'
+                        source: 1
+                        category: 0
+                        pick_list_values:
+                          - display_value: '-None-'
+                            maps:
+                              - display_value: Contacted
+                                actual_value: Contacted
+                                id: '1043386000000016330'
+                              - display_value: Contact in Future
+                                actual_value: Contact in Future
+                                id: '1043386000000016333'
+                            actual_value: '-None-'
+                            id: '1043386000000016273'
+                        child:
+                          api_name: Lead_Status
+                          id: '1043386000000002611'
+                  description: >-
+                    Shows the complete details of a field dependency, including
+                    the parent and child field references and the full picklist
+                    value mapping.
+                  summary: Example of single field dependency with picklist mappings.
+        '204':
+          description: >
+            The specified field dependency was not found in the layout.
+
+            **Resolution**: Use the [Get Layouts
+            API](layouts.yaml#$.paths./settings/layouts.get) to provide a valid
+            ID in the request.
+        '400':
+          description: >
+            The request contains invalid parameters or data.
+
+            **Resolution:** Verify the module API name and ensure all required
+            parameters are included. Use the [Get Modules
+            API](modules.yaml#$.paths./settings/modules.get) to get the details
+            of a module.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetMapDependencyByIdErrorResponse
+                description: >-
+                  Represents the error response returned when the request
+                  contains invalid parameters or data.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: 'Represents the status of the response. '
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: >
+                      Represents the error code for the request error. Possible
+                      values: **REQUIRED_PARAM_MISSING**, **INVALID_MODULE**,
+                      **NOT_SUPPORTED**. 
+                    enum:
+                      - REQUIRED_PARAM_MISSING
+                      - INVALID_MODULE
+                      - NOT_SUPPORTED
+                  message:
+                    type: string
+                    description: 'Describes the error that occurred. '
+                    maxLength: 500
+                  details:
+                    type: object
+                    description: 'Contains additional details about the error. '
+                    additionalProperties: true
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Update an existing field dependency
+      description: >
+        Updates the picklist value mappings for an existing field dependency.
+        Use \"_delete\": null to remove specific mappings.
+      x-zs-llm-description: >-
+        Updates value mappings for an existing picklist field dependency. To
+        remove a specific parent-to-child mapping, include the mapping entry
+        with "_delete": null. Only the pick_list_values mappings can be changed;
+        the parent and child fields cannot be reassigned. Dependencies where
+        internal is true cannot be modified.
+      operationId: updateMapDependency
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.map_dependency.update
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/LayoutId'
+        - $ref: '#/components/parameters/DependencyId'
+      requestBody:
+        description: The request body contains the data required to perform the operation.
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request body for updating a field dependency
+                between picklist fields in a layout.
+              additionalProperties: false
+              properties:
+                map_dependency:
+                  type: array
+                  description: Specify the field dependency configuration to update.
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: >-
+                      Each object specifies the updated configuration for the
+                      field dependency, including the parent field, child field,
+                      and picklist value mappings.
+                    additionalProperties: false
+                    properties:
+                      parent:
+                        $ref: '#/components/schemas/FieldReference'
+                        description: Parent field details
+                      child:
+                        $ref: '#/components/schemas/FieldReference'
+                        description: Child field details
+                      pick_list_values:
+                        type: array
+                        description: >-
+                          Specify the updated picklist value mappings. Set
+                          **_delete** to **null** on a child option entry to
+                          remove that specific mapping.
+                        maxItems: 2000
+                        items:
+                          $ref: '#/components/schemas/PicklistMappingUpdate'
+                      internal:
+                        type: boolean
+                        description: >
+                          Specify whether the dependency is system-defined or
+                          user-created. Possible values: **true**, **false**.
+                      active:
+                        type: boolean
+                        description: >
+                          Specify whether the dependency should be active in the
+                          layout. Possible values: **true**, **false**.
+                      id:
+                        type: string
+                        description: >-
+                          Specify the unique identifier of the dependency to
+                          update.
+                        format: int64
+                      source:
+                        type: integer
+                        format: int32
+                        description: >
+                          Specify the source for the dependency. Possible
+                          values: **1**. It represents Zoho CRM.
+                        enum:
+                          - 1
+                      category:
+                        type: integer
+                        format: int32
+                        description: >
+                          Specify the category of the dependency. Possible
+                          values: **0**.
+                        enum:
+                          - 0
+                    required:
+                      - parent
+                      - child
+                      - pick_list_values
+              required:
+                - map_dependency
+            examples:
+              UpdateDependency:
+                value:
+                  map_dependency:
+                    - parent:
+                        api_name: Lead_Source
+                        id: '111111000000004107'
+                      internal: false
+                      active: true
+                      id: '111111000000058515'
+                      source: 1
+                      category: 0
+                      pick_list_values:
+                        - display_value: '-None-'
+                          maps:
+                            - display_value: Contacted
+                              actual_value: Contacted
+                              id: '111111000000016330'
+                            - display_value: Contact in Future
+                              actual_value: Contact in Future
+                              id: '111111000000016333'
+                          actual_value: '-None-'
+                          id: '111111000000016273'
+                        - display_value: Cold Call
+                          maps:
+                            - display_value: Pre-Qualified
+                              actual_value: Pre-Qualified
+                              id: '111111000000016327'
+                            - display_value: Not Qualified
+                              actual_value: Not Qualified
+                              id: '111111000000016351'
+                              _delete: null
+                          actual_value: Cold Call
+                          id: '111111000000016279'
+                      child:
+                        api_name: Lead_Status
+                        id: '111111000000004109'
+                description: >
+                  Shows a PUT request body that updates the picklist value
+                  mappings for a **Lead_Source** to **Lead_Status** dependency,
+                  including removing one mapping using **_delete: null**.
+                summary: Example of updating a field dependency.
+            x-zs-llm-examples:
+              - UpdateDependency
+        required: true
+      responses:
+        '200':
+          description: >-
+            Returns the result of the update operation, including the unique
+            identifier of the updated field dependency.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: UpdateMapDependencySuccessResponse
+                description: >-
+                  Represents the success response returned after the field
+                  dependency is successfully updated.
+                additionalProperties: false
+                properties:
+                  map_dependency:
+                    type: array
+                    description: 'Contains the result of the update operation. '
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/SuccessResponse'
+                required:
+                  - map_dependency
+              examples:
+                SuccessResponse:
+                  value:
+                    map_dependency:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000064003'
+                        message: map dependency updated
+                        status: success
+                  description: >-
+                    Shows the success response containing the unique identifier
+                    of the updated field dependency.
+                  summary: Example of field dependency updated successfully.
+        '400':
+          description: >
+            The request contains invalid data or violates an update rule.
+
+            **Resolution:** Verify that the dependency ID, parent and child
+            field IDs, and all picklist option IDs are valid. Internal
+            dependencies cannot be modified.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateMapDependencyErrorResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: UpdateMapDependencyRootError
+                    description: >-
+                      Represents a root-level error returned when the request
+                      itself is invalid, such as an invalid module, missing
+                      required parameter, or an attempt to modify an internal
+                      dependency.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: 'Represents the status of the response. '
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >
+                          Represents the error code for the root-level request
+                          error. 
+
+                          Possible values: **REQUIRED_PARAM_MISSING**,
+                          **INVALID_MODULE**, **NOT_SUPPORTED**,
+                          **INVALID_DATA**, **NOT_ALLOWED**. 
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                          - INVALID_MODULE
+                          - NOT_SUPPORTED
+                          - INVALID_DATA
+                          - NOT_ALLOWED
+                      message:
+                        type: string
+                        description: 'Describes the root-level error that occurred. '
+                        maxLength: 500
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional details about the root-level
+                          error. 
+                        additionalProperties: true
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: UpdateMapDependencyFieldLevelError
+                    description: >-
+                      Represents a field-level error returned when the
+                      dependency data is invalid, such as invalid field
+                      references or missing required picklist mappings.
+                    additionalProperties: false
+                    properties:
+                      map_dependency:
+                        type: array
+                        description: >-
+                          Contains the field-level error details for each
+                          dependency in the request. 
+                        maxItems: 1
+                        items:
+                          type: object
+                          description: >-
+                            Represents the error details for a specific field in
+                            the dependency request.
+                          additionalProperties: false
+                          properties:
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status of the field-level
+                                response. 
+                              enum:
+                                - error
+                            code:
+                              type: string
+                              description: >
+                                Represents the error code for the field-level
+                                error. 
+
+                                Possible values: **MANDATORY_NOT_FOUND**,
+                                **INVALID_DATA**, **NOT_ALLOWED**. 
+                              enum:
+                                - MANDATORY_NOT_FOUND
+                                - INVALID_DATA
+                                - NOT_ALLOWED
+                            message:
+                              type: string
+                              description: 'Describes the field-level error that occurred. '
+                              maxLength: 500
+                            details:
+                              type: object
+                              description: >-
+                                Contains field-specific details about the
+                                error. 
+                              additionalProperties: true
+                          required:
+                            - status
+                            - code
+                            - message
+                            - details
+                    required:
+                      - map_dependency
+                description: >-
+                  Represents the error response when the update request fails.
+                  Returns either a root-level error or a field-level error
+                  wrapped in the **map_dependency** array.
+              examples:
+                MaxLengthExceeded:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: map_dependency
+                      json_path: $.map_dependency
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Shows an error returned when more than one dependency is
+                    included in the **map_dependency** array.
+                  summary: Example of a map_dependency array exceeding length.
+                InvalidModule:
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      param_name: module
+                    message: the module name given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows an error returned when the module API name provided is
+                    not recognized.
+                  summary: Example of an invalid module name.
+                InvalidLayoutId:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: Invalid Layout Id
+                    status: error
+                  description: >-
+                    Shows an error returned when the layout ID in the request
+                    path is invalid.
+                  summary: Example of an invalid layout ID.
+                LayoutDeactivated:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The given layout is deactivated
+                    status: error
+                  description: >-
+                    Shows an error returned when the specified layout has been
+                    deactivated.
+                  summary: Example of deactivated layout.
+                InternalDependencyNotModifiable:
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: 4
+                    message: Internal Map Dependency cannot be modified
+                    status: error
+                  description: >-
+                    Shows an error returned when the specified dependency is
+                    system-defined and cannot be modified.
+                  summary: Example of an internal dependency cannot be modified.
+                MandatoryNotFound:
+                  value:
+                    map_dependency:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].pick_list_values[0].maps[1].id
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows an error returned when a required field, such as
+                    **ID** in the **maps** array, is missing from the request.
+                  summary: Example of required field not found.
+                InvalidParentFieldId:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].parent.id
+                        message: invalid parent fieldid
+                        status: error
+                  description: >-
+                    Shows an error returned when the parent field ID is not
+                    valid for the specified layout.
+                  summary: Example of an invalid parent field ID.
+                InvalidChildFieldId:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].child.id
+                        message: invalid child fieldid
+                        status: error
+                  description: >-
+                    Shows an error returned when the child field ID is not valid
+                    for the specified layout.
+                  summary: Example of an invalid child field ID.
+                InvalidChildOptionId:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].pick_list_values[0].maps[1].id
+                        message: Invalid child option id
+                        status: error
+                  description: >-
+                    Shows an error returned when a child picklist option ID in
+                    the **maps** array is invalid.
+                  summary: Example of an invalid child picklist option ID.
+                InvalidParentOptionId:
+                  value:
+                    map_dependency:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].pick_list_values[0].id
+                        message: Invalid parent option id
+                        status: error
+                  description: >-
+                    Shows an error returned when a parent picklist option ID in
+                    the **pick_list_values** array is invalid.
+                  summary: Example of an invalid parent picklist option ID.
+                PickListValuesNotFound:
+                  value:
+                    map_dependency:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: pick_list_values
+                          json_path: $.map_dependency[0].pick_list_values
+                        message: required  field not found
+                        status: error
+                  description: >-
+                    Shows an error returned when the required
+                    **pick_list_values** array is missing from the request.
+                  summary: Example of pick_list_values array missing.
+                MapsNotFound:
+                  value:
+                    map_dependency:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: maps
+                          json_path: $.map_dependency[0].pick_list_values[0].maps
+                        message: required  field not found
+                        status: error
+                  description: >-
+                    Shows an error returned when the **maps** array is missing
+                    from a **pick_list_values** entry.
+                  summary: Example of maps field missing.
+                ParentFieldUnused:
+                  value:
+                    map_dependency:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].parent.id
+                        message: Parent fieldid is in unused fields list of the layout
+                        status: error
+                  description: >-
+                    Shows an error returned when the parent field ID refers to a
+                    field in the layout's unused fields list.
+                  summary: Example of parent field in unused fields list.
+                ChildFieldUnused:
+                  value:
+                    map_dependency:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.map_dependency[0].child.id
+                        message: Child fieldid is in unused fields list of the layout
+                        status: error
+                  description: >-
+                    Shows an error returned when the child field ID refers to a
+                    field in the layout's unused fields list.
+                  summary: Example of child field in unused fields list.
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete a field dependency
+      description: >-
+        To delete a specific field dependency from a layout in your Zoho CRM
+        organization.
+      x-zs-llm-description: >-
+        Permanently deletes a picklist field dependency from a layout. After
+        deletion, the child picklist field will show all its values regardless
+        of the parent field's selection. Dependencies where internal is true
+        cannot be deleted.
+      operationId: deleteMapDependency
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.map_dependency.delete
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/LayoutId'
+        - $ref: '#/components/parameters/DependencyId'
+      responses:
+        '200':
+          description: >-
+            Returns the result of the delete operation, including the unique
+            identifier of the deleted field dependency.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: DeleteMapDependencySuccessResponse
+                description: >-
+                  Represents the success response returned after the field
+                  dependency is successfully deleted.
+                additionalProperties: false
+                properties:
+                  map_dependency:
+                    type: array
+                    description: 'Contains the result of the delete operation. '
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/SuccessResponse'
+                required:
+                  - map_dependency
+              examples:
+                SuccessResponse:
+                  value:
+                    map_dependency:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000058515'
+                        message: map dependency deleted
+                        status: success
+                  description: >-
+                    Shows the success response containing the unique identifier
+                    of the deleted field dependency.
+                  summary: Example of field dependency deleted successfully.
+        '400':
+          description: >
+            The request contains invalid parameters or data.
+
+            **Resolution:** Verify the dependency ID, module API name, and
+            layout ID in the request. Note that internal dependencies cannot be
+            deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: DeleteMapDependencyErrorResponse
+                description: >-
+                  Represents the error response returned when the request
+                  contains invalid parameters or data.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: 'Represents the status of the response. '
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: >
+                      Represents the error code for the request error. Possible
+                      values: **REQUIRED_PARAM_MISSING**, **INVALID_MODULE**,
+                      **INVALID_DATA**, **NOT_ALLOWED**. 
+                    enum:
+                      - REQUIRED_PARAM_MISSING
+                      - INVALID_MODULE
+                      - INVALID_DATA
+                      - NOT_ALLOWED
+                  message:
+                    type: string
+                    description: 'Describes the error that occurred. '
+                    maxLength: 500
+                  details:
+                    type: object
+                    description: 'Contains additional details about the error. '
+                    additionalProperties: true
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+              examples:
+                InternalDependencyNotModifiable:
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: 4
+                    message: Internal Map Dependency cannot be deleted
+                    status: error
+                  description: >-
+                    Shows an error returned when the specified dependency is
+                    system-defined and cannot be deleted.
+                  summary: Example of internal dependency cannot be deleted.
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    LayoutId:
+      name: layoutId
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the layout. Use the [Get Layouts
+        API](layouts.yaml#$./settings/layouts.get) to get the ID of the layout.
+      schema:
+        type: string
+        pattern: ^[0-9]+$
+        format: int64
+    DependencyId:
+      name: dependencyId
+      in: path
+      description: >-
+        Specify the unique identifier of the map dependency to retrieve, update,
+        or delete.
+      required: true
+      schema:
+        type: string
+        format: int64
+    Module:
+      name: module
+      in: query
+      required: true
+      description: >-
+        Specify the API name of the module. Use the [Get Modules
+        API](modules.yaml#$.paths./settings/modules.get) to get the valid API
+        names. 
+      schema:
+        type: string
+        pattern: ^[A-Za-z][A-Za-z0-9_]*$
+        maxLength: 50
+    Filters:
+      name: filters
+      in: query
+      required: false
+      description: >
+        Specify the filter criteria for field dependencies in JSON format.
+        Supported filters allow narrowing results by specific field attributes
+        using **comparator** and **field** attributes. Supported comparator
+        values: **equal**, **in**.
+      schema:
+        type: string
+        maxLength: 100
+    Page:
+      name: page
+      in: query
+      description: Specify the page number to retrieve in the paginated response.
+      required: false
+      schema:
+        type: integer
+        format: int32
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      description: Specify the number of records to include on each page of the response.
+      schema:
+        type: integer
+        format: int32
+        maximum: 200
+    XZcsrfToken:
+      name: X-ZCSRF-TOKEN
+      in: header
+      required: false
+      description: >-
+        Specify the CSRF token for additional request validation in server-side
+        integrations.
+      schema:
+        type: string
+        maxLength: 255
+  schemas:
+    FieldReference:
+      type: object
+      description: >-
+        Represents a reference to a field, identified by its unique ID and API
+        name.
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: 'Represents the unique identifier of the field. '
+          format: int64
+        api_name:
+          type: string
+          description: Represents the API name of the field.
+          maxLength: 50
+      required:
+        - id
+    PicklistOption:
+      type: object
+      description: >-
+        Represents a picklist option with its unique identifier, actual value,
+        and display label.
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: 'Represents the unique identifier of the picklist option. '
+          format: int64
+        actual_value:
+          type: string
+          description: Represents the actual stored value of the picklist option.
+          maxLength: 120
+        display_value:
+          type: string
+          description: >-
+            Represents the display label of the picklist option as shown in the
+            CRM interface. 
+          maxLength: 120
+      required:
+        - id
+        - actual_value
+        - display_value
+    PicklistMappingCreate:
+      type: object
+      description: >-
+        Represents a parent picklist option and its mapped child picklist values
+        for dependency creation.
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: >-
+            Represents the unique identifier of the parent picklist option. Use
+            the [Get Fields API](fields.yaml#$.paths./settings/fields.get) to
+            get the ID of the picklist. 
+          format: int64
+        actual_value:
+          type: string
+          description: Represents the actual stored value of the parent picklist option.
+          maxLength: 120
+        display_value:
+          type: string
+          description: >-
+            Represents the display label of the parent picklist option as shown
+            in the CRM interface.
+          maxLength: 120
+        maps:
+          type: array
+          description: >-
+            Lists the child picklist options associated with this parent
+            picklist value.
+          maxItems: 2000
+          items:
+            type: object
+            description: >-
+              Each object represents a child picklist option mapped to this
+              parent value.
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+                description: >-
+                  Represents the unique identifier of the child picklist option.
+                  Use the [Get Fields
+                  API](fields.yaml#$.paths./settings/fields.get) to get the
+                  details of the picklist. 
+                format: int64
+              actual_value:
+                type: string
+                description: >-
+                  Represents the actual stored value of the child picklist
+                  option.
+                maxLength: 120
+              display_value:
+                type: string
+                description: >-
+                  Represents the display label of the child picklist option as
+                  shown in the CRM interface.
+                maxLength: 120
+            required:
+              - id
+      required:
+        - id
+        - maps
+    PicklistMappingRead:
+      type: object
+      description: >-
+        Represents a parent picklist option with its complete set of mapped
+        child picklist values, as returned in GET responses.
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: 'Represents the unique identifier of the parent picklist option. '
+          format: int64
+        actual_value:
+          type: string
+          description: 'Represents the actual stored value of the parent picklist option. '
+          maxLength: 120
+        display_value:
+          type: string
+          description: >-
+            Represents the display label of the parent picklist option as shown
+            in the CRM interface. 
+          maxLength: 120
+        maps:
+          type: array
+          description: >-
+            Lists the child picklist options associated with this parent
+            picklist value. 
+          maxItems: 2000
+          items:
+            $ref: '#/components/schemas/PicklistOption'
+      required:
+        - id
+        - actual_value
+        - display_value
+        - maps
+    PicklistMappingUpdate:
+      type: object
+      description: >-
+        Represents a parent picklist option and its mapped child picklist values
+        for dependency updates. Supports removal of individual child mappings
+        using the **_delete** property.
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: Represents the unique identifier of the parent picklist option.
+          format: int64
+        actual_value:
+          type: string
+          description: Represents the actual stored value of the parent picklist option.
+          maxLength: 120
+        display_value:
+          type: string
+          description: >-
+            Represents the display label of the parent picklist option as shown
+            in the CRM interface.
+          maxLength: 120
+        maps:
+          type: array
+          description: >-
+            Lists the child picklist options associated with this parent
+            picklist value.
+          maxItems: 2000
+          items:
+            type: object
+            description: >-
+              Represents a child picklist option in the dependency update.
+              Supports deletion using the **_delete** property.
+            additionalProperties: true
+            properties:
+              id:
+                type: string
+                description: Represents the unique identifier of the child picklist option.
+                format: int64
+              actual_value:
+                type: string
+                description: >-
+                  Represents the actual stored value of the child picklist
+                  option.
+                maxLength: 120
+              display_value:
+                type: string
+                description: >-
+                  Represents the display label of the child picklist option as
+                  shown in the CRM interface.
+                maxLength: 120
+              _delete:
+                type: 'null'
+                description: >-
+                  Indicates that this child option mapping should be deleted.
+                  Set to **null** to remove the mapping.
+            required:
+              - id
+      required:
+        - id
+        - maps
+    SuccessResponse:
+      type: object
+      description: >-
+        Represents the success response returned after a create, update, or
+        delete operation.
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: >
+            Represents the status of the operation. Possible values:
+            **success**. 
+          enum:
+            - success
+        code:
+          type: string
+          description: >
+            Represents the success code for the operation. Possible values:
+            **SUCCESS**. 
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          description: Describes the result of the operation.
+          maxLength: 500
+        details:
+          type: object
+          description: 'Contains the result details for the operation. '
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              description: >-
+                Represents the unique identifier of the dependency the operation
+                created, updated, or deleted. 
+              format: int64
+          required:
+            - id
+      required:
+        - status
+        - code
+        - message
+        - details
+  responses:
+    ForbiddenError:
+      description: >
+        The user does not have the required permission to perform this
+        operation.
+
+        **Resolution:** The CRM administrator must grant the user's profile the
+        required permissions listed in the **details.permissions** array.
+      content:
+        application/json:
+          schema:
+            type: object
+            x-zs-$id: ForbiddenErrorResponse
+            description: >-
+              Represents the error response returned when the user does not have
+              the required permissions to perform this operation.
+            additionalProperties: false
+            properties:
+              status:
+                type: string
+                description: >
+                  Represents the status of the response. Possible values:
+                  **error**. 
+                enum:
+                  - error
+              code:
+                type: string
+                description: >
+                  Represents the error code for the response. Possible values:
+                  **NO_PERMISSION**. 
+                enum:
+                  - NO_PERMISSION
+              message:
+                type: string
+                description: 'Describes the reason for the permission error. '
+                maxLength: 500
+              details:
+                type: object
+                description: 'Contains additional details about the missing permissions. '
+                additionalProperties: true
+                properties:
+                  permissions:
+                    description: 'Lists the permissions required to perform this operation. '
+                required:
+                  - permissions
+            required:
+              - status
+              - code
+              - message
+              - details
+    NotFoundError:
+      description: >
+        The request URL does not match a valid endpoint pattern.
+
+        **Resolution:** Verify the request URL and ensure all path parameter IDs
+        are valid.
+      content:
+        application/json:
+          schema:
+            type: object
+            x-zs-$id: NotFoundErrorResponse
+            description: >-
+              Represents the error response returned when the request URL does
+              not match a valid endpoint pattern.
+            additionalProperties: false
+            properties:
+              status:
+                type: string
+                description: >
+                  Represents the status of the response. Possible values:
+                  **error**.
+                enum:
+                  - error
+              code:
+                type: string
+                description: 'Represents the error code for this response. '
+                enum:
+                  - INVALID_URL_PATTERN
+              message:
+                type: string
+                description: >-
+                  Describes the reason the requested resource could not be
+                  found. 
+                maxLength: 500
+              details:
+                type: object
+                description: 'Contains additional details about the error. '
+                additionalProperties: true
+            required:
+              - status
+              - code
+              - message
+              - details
+    InternalServerError:
+      description: >
+        An unexpected error occurred on the server.
+
+        **Resolution:** Retry the request. If the error persists, contact Zoho
+        CRM support.
+      content:
+        application/json:
+          schema:
+            type: object
+            x-zs-$id: InternalServerErrorResponse
+            description: >-
+              Represents the error response returned when an unexpected
+              server-side error occurs.
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: >-
+                  Represents the error code indicating the type of internal
+                  server error. 
+                maxLength: 500
+              message:
+                type: string
+                description: 'Describes the internal server error that occurred. '
+                maxLength: 500
+              details:
+                type: object
+                description: 'Contains additional details about the internal server error. '
+                additionalProperties: true
+              status:
+                type: string
+                description: >
+                  Represents the status of the response. Possible values:
+                  **error**. 
+                enum:
+                  - error
+            required:
+              - code
+              - message
+              - details
+              - status
+          examples:
+            ErrorExample:
+              value:
+                code: INTERNAL_ERROR
+                message: Internal Server Error
+                details: {}
+                status: error
+              description: >-
+                Shows the standard error response returned when an unexpected
+                server-side error occurs.
+              summary: Example of an internal server error.
+  headers: {}
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.map_dependency.all: >-
+              Grants permission to perform all operations on map dependency
+              settings, including read, create, update, and delete.
+            ZohoCRM.settings.map_dependency.create: >-
+              Grants permission to create map dependency configurations in a
+              layout.
+            ZohoCRM.settings.map_dependency.read: Grants permission to retrieve map dependency fields for a layout.
+            ZohoCRM.settings.map_dependency.delete: >-
+              Grants permission to delete map dependency configurations from a
+              layout.
+            ZohoCRM.settings.map_dependency.update: >-
+              Grants permission to update map dependency configurations in a
+              layout.
