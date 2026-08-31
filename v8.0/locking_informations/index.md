@@ -1,18 +1,18 @@
 # Locking Information
 
 - [OpenAPI specification](locking_informations.yaml)
-- [Get record locking information](mds/getRecordLockingInformationOfTheRecord.md)
+- [Get record locking information](operations/getRecordLockingInformationOfTheRecord/operation.md)
   - To retrieve the locking information details of a locked record in your Zoho CRM account, including the user who locked the record, the lock source, reason, and timestamp.
-  - [Examples](mds/examples/getRecordLockingInformationOfTheRecord.md)
-- [Lock a record](mds/lockRecord.md)
+  - [Examples](operations/getRecordLockingInformationOfTheRecord/examples/)
+- [Lock a record](operations/lockRecord/operation.md)
   - To lock a record in the specified module of your Zoho CRM account with a reason for locking.
-  - [Examples](mds/examples/lockRecord.md)
-- [Get record locking information by ID](mds/getRecordLockingInformationById.md)
+  - [Examples](operations/lockRecord/examples/)
+- [Get record locking information by ID](operations/getRecordLockingInformationById/operation.md)
   - To retrieve the locking information details of a specific locked record in your Zoho CRM account using its locking information ID, including the user who locked the record, the lock source, reason, and timestamp.
-  - [Examples](mds/examples/getRecordLockingInformationById.md)
-- [Update locking reason of a locked record](mds/updateReasonofLockedRecord.md)
+  - [Examples](operations/getRecordLockingInformationById/examples/)
+- [Update locking reason of a locked record](operations/updateReasonofLockedRecord/operation.md)
   - To update the locking reason of a locked record in the specified module of your Zoho CRM account.
-  - [Examples](mds/examples/updateReasonofLockedRecord.md)
-- [Remove lock from a locked record](mds/removeLockFromLockedRecord.md)
+  - [Examples](operations/updateReasonofLockedRecord/examples/)
+- [Remove lock from a locked record](operations/removeLockFromLockedRecord/operation.md)
   - To remove the lock from a locked record in the specified module of your Zoho CRM account.
-  - [Examples](mds/examples/removeLockFromLockedRecord.md)
+  - [Examples](operations/removeLockFromLockedRecord/examples/)

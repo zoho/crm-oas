@@ -1,21 +1,21 @@
 # Field Updates API
 
 - [OpenAPI specification](field_updates.yaml)
-- [Get Field Updates](mds/getFieldUpdates.md)
+- [Get Field Updates](operations/getFieldUpdates/operation.md)
   - Retrieves a paginated list of field update actions. OPTIONAL FILTERS: module (string — filter by module API name), related_module (string — filter by related module API name), feature_type ('workflow'), sort_by, sort_order, page, per_page. Use the Fields metadata API to get field IDs and API names, and the Modules metadata API to get module API names and IDs. Use the [Get Field Updates API](field_updates.yaml#$.paths./settings/automation/field_updates.get) before associating them with workflow rules via the associate action.
-  - [Examples](mds/examples/getFieldUpdates.md)
-- [Create Field Update](mds/createFieldUpdates.md)
+  - [Examples](operations/getFieldUpdates/examples/)
+- [Create Field Update](operations/createFieldUpdates/operation.md)
   - Creates a field update action that assigns a static value to a field, triggered by a workflow rule. For single-value fields, use a string for value. For multi-select and multi-user field types, use an array for value (for example, ['Call', 'Advertisement']). update_type (mandatory for multi-select and multi-user fields) specifies how to update the field and is supported only for multi-select fields: overwrite replaces existing values, append adds to existing values. dependent_fields specifies fields affected when the target field changes — primarily used for picklist dependencies, where one field's value controls another's valid options. For example, updating Country to India restricts the dependent State field to Indian states.
-  - [Examples](mds/examples/createFieldUpdates.md)
-- [To delete multiple field update actions](mds/deleteFieldUpdates.md)
+  - [Examples](operations/createFieldUpdates/examples/)
+- [To delete multiple field update actions](operations/deleteFieldUpdates/operation.md)
   - Deletes multiple Field Update actions specified by their IDs. Specify the action IDs as a comma-separated list using the ids query parameter. You can delete a maximum of 10 actions in a single request. Field Update actions associated with active automation rules or marked as read-only cannot be deleted. Use the Get Field Updates API to retrieve the Field Update IDs. The response includes the success or failure status for each specified ID. Use the [Get Field Updates API](field_updates.yaml#$.paths./settings/automation/field_updates.get) to get the Field Update IDs.
-  - [Examples](mds/examples/deleteFieldUpdates.md)
-- [Get Field Update By Id](mds/getFieldUpdateById.md)
+  - [Examples](operations/deleteFieldUpdates/examples/)
+- [Get Field Update By Id](operations/getFieldUpdateById/operation.md)
   - Retrieves the details of the specified Field Update action, including its field configuration, module details, configured value, dependent fields, and audit information. Specify the Field Update ID in the path parameter. To retrieve additional field metadata, set the 'include_inner_details' query parameter to one or more of field_label, enable_colour_code, pick_list_values.colour_code, data_type, or display_value. Use the [Get Fields Metadata API](fields.yaml#$.paths./settings/fields.get) to retrieve the field IDs and the [Get Modules API](modules.yaml#$.paths./settings/modules.get) to retrieve the module IDs. This API is useful for inspecting the current configuration of a Field Update action before updating it.
-  - [Examples](mds/examples/getFieldUpdateById.md)
-- [Update Field Update](mds/updateFieldUpdateById.md)
+  - [Examples](operations/getFieldUpdateById/examples/)
+- [Update Field Update](operations/updateFieldUpdateById/operation.md)
   - Updates an existing field update action identified by the path ID. Use the [Get Field Updates API](field_updates.yaml#$.paths./settings/automation/field_updates.get) to find the field update ID. Locked actions require the appropriate privilege, and read-only actions cannot be modified. For single-value fields, use a string for value. For multi-select and multi-user field types, use an array for value (for example, ['Call', 'Advertisement']). update_type (mandatory for multi-select and multi-user fields) specifies how to update the field and is supported only for multi-select fields: overwrite replaces existing values, append adds to existing values. dependent_fields specifies fields affected when the target field changes — primarily used for picklist dependencies. For example, updating Country to India restricts the dependent State field to Indian states.
-  - [Examples](mds/examples/updateFieldUpdateById.md)
-- [Delete Field Update](mds/deleteFieldUpdateById.md)
+  - [Examples](operations/updateFieldUpdateById/examples/)
+- [Delete Field Update](operations/deleteFieldUpdateById/operation.md)
   - Deletes a single field update action identified by the path ID. Use the [Get Field Updates API](field_updates.yaml#$.paths./settings/automation/field_updates.get) to retrieve the field update ID. Actions associated with active automation rules return a `NOT_ALLOWED` error, and read-only actions cannot be deleted.
-  - [Examples](mds/examples/deleteFieldUpdateById.md)
+  - [Examples](operations/deleteFieldUpdateById/examples/)

@@ -1,21 +1,21 @@
 # Territory Users
 
 - [OpenAPI specification](territory_users.yaml)
-- [Territory Users](mds/getTerritoryUsers.md)
+- [Territory Users](operations/getTerritoryUsers/operation.md)
   - To retrieve the list of users associated with a territory in your Zoho CRM organization.
-  - [Examples](mds/examples/getTerritoryUsers.md)
-- [Territory Users](mds/associateUsersToTerritory.md)
+  - [Examples](operations/getTerritoryUsers/examples/)
+- [Territory Users](operations/associateUsersToTerritory/operation.md)
   - To associate one or more users with a territory in your Zoho CRM organization.
-  - [Examples](mds/examples/associateUsersToTerritory.md)
-- [Territory Users](mds/deassociateUsersFromTerritories.md)
+  - [Examples](operations/associateUsersToTerritory/examples/)
+- [Territory Users](operations/deassociateUsersFromTerritories/operation.md)
   - To disassociate one or more users from a territory in your Zoho CRM organization.
-  - [Examples](mds/examples/deassociateUsersFromTerritories.md)
-- [Specific Territory User](mds/getUserDetailsFromTerritory.md)
+  - [Examples](operations/deassociateUsersFromTerritories/examples/)
+- [Specific Territory User](operations/getUserDetailsFromTerritory/operation.md)
   - To retrieve the details of a specific user associated with a territory in your Zoho CRM organization.
-  - [Examples](mds/examples/getUserDetailsFromTerritory.md)
-- [Territory User](mds/associateUserToSpecificTerritory.md)
+  - [Examples](operations/getUserDetailsFromTerritory/examples/)
+- [Territory User](operations/associateUserToSpecificTerritory/operation.md)
   - To associate a specific user with a territory in your Zoho CRM organization.
-  - [Examples](mds/examples/associateUserToSpecificTerritory.md)
-- [Territory User](mds/deassociateUserFromSpecificTerritory.md)
+  - [Examples](operations/associateUserToSpecificTerritory/examples/)
+- [Territory User](operations/deassociateUserFromSpecificTerritory/operation.md)
   - To disassociate a specific user from a territory in your Zoho CRM organization.
-  - [Examples](mds/examples/deassociateUserFromSpecificTerritory.md)
+  - [Examples](operations/deassociateUserFromSpecificTerritory/examples/)

@@ -1,24 +1,24 @@
 # Notes
 
 - [OpenAPI specification](notes.yaml)
-- [Notes](mds/getNotesModule.md)
+- [Notes](operations/getNotesModule/operation.md)
   - Retrieves a list of notes.
-  - [Examples](mds/examples/getNotesModule.md)
-- [Create Notes](mds/createNotesModule.md)
+  - [Examples](operations/getNotesModule/examples/)
+- [Create Notes](operations/createNotesModule/operation.md)
   - Creates one or more note records.
-  - [Examples](mds/examples/createNotesModule.md)
-- [Update Notes](mds/updateNotesModule.md)
+  - [Examples](operations/createNotesModule/examples/)
+- [Update Notes](operations/updateNotesModule/operation.md)
   - Updates one or more existing note records. Either note content or note title must be provided (at least one is mandatory) for each note.
-  - [Examples](mds/examples/updateNotesModule.md)
-- [Notes](mds/deleteNotesModule.md)
+  - [Examples](operations/updateNotesModule/examples/)
+- [Notes](operations/deleteNotesModule/operation.md)
   - Permanently deletes one or more notes using comma-separated note IDs.
-  - [Examples](mds/examples/deleteNotesModule.md)
-- [Get a Specific Note](mds/getNoteById.md)
+  - [Examples](operations/deleteNotesModule/examples/)
+- [Get a Specific Note](operations/getNoteById/operation.md)
   - Retrieves details of a specific note by its ID.
-  - [Examples](mds/examples/getNoteById.md)
-- [Update a Specific Note](mds/updateNoteById.md)
+  - [Examples](operations/getNoteById/examples/)
+- [Update a Specific Note](operations/updateNoteById/operation.md)
   - Updates a specific note by its ID. Either note content or note title must be provided (at least one is mandatory).
-  - [Examples](mds/examples/updateNoteById.md)
-- [Delete a Specific Note](mds/deleteNoteById.md)
+  - [Examples](operations/updateNoteById/examples/)
+- [Delete a Specific Note](operations/deleteNoteById/operation.md)
   - Permanently deletes a specific note by its ID.
-  - [Examples](mds/examples/deleteNoteById.md)
+  - [Examples](operations/deleteNoteById/examples/)

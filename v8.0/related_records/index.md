@@ -1,24 +1,24 @@
 # Zoho CRM Related Records API
 
 - [OpenAPI specification](related_records.yaml)
-- [Related Records](mds/getRelatedRecords.md)
+- [Related Records](operations/getRelatedRecords/operation.md)
   - To retrieve the list of records associated with a parent record from a specified related list in your Zoho CRM organization.
-  - [Examples](mds/examples/getRelatedRecords.md)
-- [Update related records](mds/updateRelatedRecords.md)
+  - [Examples](operations/getRelatedRecords/examples/)
+- [Update related records](operations/updateRelatedRecords/operation.md)
   - To update multiple records associated with a parent record in a specified related list in your Zoho CRM organization.
-  - [Examples](mds/examples/updateRelatedRecords.md)
-- [Delink related records](mds/delinkRelatedRecords.md)
+  - [Examples](operations/updateRelatedRecords/examples/)
+- [Delink related records](operations/delinkRelatedRecords/operation.md)
   - To delink multiple records from a parent record's related list in your Zoho CRM organization. This operation removes only the relationship links - the related records themselves remain intact in their respective modules.
-  - [Examples](mds/examples/delinkRelatedRecords.md)
-- [Get a related record](mds/getRelatedRecord.md)
+  - [Examples](operations/delinkRelatedRecords/examples/)
+- [Get a related record](operations/getRelatedRecord/operation.md)
   - To retrieve the details of a specific related record from a specified related list of a parent record in your Zoho CRM organization.
-  - [Examples](mds/examples/getRelatedRecord.md)
-- [Update a related record](mds/updateSpecificRelatedRecord.md)
+  - [Examples](operations/getRelatedRecord/examples/)
+- [Update a related record](operations/updateSpecificRelatedRecord/operation.md)
   - To update the properties of a specific record associated with a parent record in your Zoho CRM organization.
-  - [Examples](mds/examples/updateSpecificRelatedRecord.md)
-- [Delink a related record](mds/delinkSpecificRelatedRecord.md)
+  - [Examples](operations/updateSpecificRelatedRecord/examples/)
+- [Delink a related record](operations/delinkSpecificRelatedRecord/operation.md)
   - To delink a specific related record from a parent record in your Zoho CRM organization. This operation removes only the relationship link - the related record itself remains intact in its module.
-  - [Examples](mds/examples/delinkSpecificRelatedRecord.md)
-- [List deleted related records](mds/getDeletedRelatedRecord.md)
+  - [Examples](operations/delinkSpecificRelatedRecord/examples/)
+- [List deleted related records](operations/getDeletedRelatedRecord/operation.md)
   - To retrieve the list of records that were previously associated with a parent record but have since been deleted from the related list in your Zoho CRM organization.
-  - [Examples](mds/examples/getDeletedRelatedRecord.md)
+  - [Examples](operations/getDeletedRelatedRecord/examples/)

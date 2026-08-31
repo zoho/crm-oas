@@ -1,24 +1,24 @@
 # Related Notes
 
 - [OpenAPI specification](related_notes.yaml)
-- [Related Notes](mds/getNotes.md)
+- [Related Notes](operations/getNotes/operation.md)
   - Retrieves a paginated list of notes associated with a specific parent record in a CRM module.
-  - [Examples](mds/examples/getNotes.md)
-- [Related Notes](mds/createNotes.md)
+  - [Examples](operations/getNotes/examples/)
+- [Related Notes](operations/createNotes/operation.md)
   - Creates one or more notes associated with a specific parent record. Either note content or note title must be provided (at least one is mandatory).
-  - [Examples](mds/examples/createNotes.md)
-- [Related Notes](mds/updateBulkNotes.md)
+  - [Examples](operations/createNotes/examples/)
+- [Related Notes](operations/updateBulkNotes/operation.md)
   - Updates one or more notes associated with a specific CRM record in your Zoho CRM organization. Either note content or note title must be provided (at least one is mandatory) for each note.
-  - [Examples](mds/examples/updateBulkNotes.md)
-- [Related Notes](mds/deleteBulkNotes.md)
+  - [Examples](operations/updateBulkNotes/examples/)
+- [Related Notes](operations/deleteBulkNotes/operation.md)
   - Deletes one or more notes associated with a specific parent record using comma-separated note IDs in the query parameter.
-  - [Examples](mds/examples/deleteBulkNotes.md)
-- [Specific Related Note](mds/getNotesById.md)
+  - [Examples](operations/deleteBulkNotes/examples/)
+- [Specific Related Note](operations/getNotesById/operation.md)
   - Retrieves details of a specific note record associated with a CRM record in your Zoho CRM organization.
-  - [Examples](mds/examples/getNotesById.md)
-- [Related Note](mds/updateRelatedNoteById.md)
+  - [Examples](operations/getNotesById/examples/)
+- [Related Note](operations/updateRelatedNoteById/operation.md)
   - Updates an existing note associated with a specific parent record. Either note content or note title must be provided (at least one is mandatory).
-  - [Examples](mds/examples/updateRelatedNoteById.md)
-- [Related Note](mds/deleteRelatedNoteById.md)
+  - [Examples](operations/updateRelatedNoteById/examples/)
+- [Related Note](operations/deleteRelatedNoteById/operation.md)
   - Deletes a specific note record associated with a parent record using the note ID in the path.
-  - [Examples](mds/examples/deleteRelatedNoteById.md)
+  - [Examples](operations/deleteRelatedNoteById/examples/)

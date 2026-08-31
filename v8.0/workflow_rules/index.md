@@ -1,39 +1,39 @@
 # Workflow Rules
 
 - [OpenAPI specification](workflow_rules.yaml)
-- [Create a workflow rule for a module](mds/postWorkflowRule.md)
+- [Create a workflow rule for a module](operations/postWorkflowRule/operation.md)
   - To create a workflow rule for a specified module in your Zoho CRM organization. Each request accepts exactly one rule, defined within the workflow_rules array.
-  - [Examples](mds/examples/postWorkflowRule.md)
-- [Update workflow rules by ID in the request body ](mds/updateWorkflowRule.md)
+  - [Examples](operations/postWorkflowRule/examples/)
+- [Update workflow rules by ID in the request body ](operations/updateWorkflowRule/operation.md)
   - To update one or more existing workflow rules in your Zoho CRM organization, submit a `workflow_rules` array in the request body with each entry containing the rule's `id`. You can modify a rule's name, description, criteria, conditions, actions, and active status. Triggers may be updated only within the same trigger type — changing from one trigger category to another (for example, from a Record Action trigger to a Score-based trigger) is not supported. The module associated with a workflow rule cannot be changed after creation. To remove an existing condition or action, include it in the request with `_delete` set to `null`. Use the [Get Workflow Rules API](workflow_rules.yaml#$.paths./settings/automation/workflow_rules.get) to retrieve rule IDs before calling this operation.
-  - [Examples](mds/examples/updateWorkflowRule.md)
-- [List Workflow Rules in your Zoho CRM Organization ](mds/getWorkflowRules.md)
+  - [Examples](operations/updateWorkflowRule/examples/)
+- [List Workflow Rules in your Zoho CRM Organization ](operations/getWorkflowRules/operation.md)
   - To retrieve the list of workflow rules configured in your Zoho CRM organization, including their trigger conditions, module associations, and action configurations. By default, each rule includes only summary-level data; set the `include_inner_details` parameter to `true` to include full condition criteria and action configurations in the response. Results are paginated and can be filtered by module, activation status, trigger type, or rule name.
-  - [Examples](mds/examples/getWorkflowRules.md)
-- [Delete One or More Workflow Rules](mds/deleteWorkflowRules.md)
+  - [Examples](operations/getWorkflowRules/examples/)
+- [Delete One or More Workflow Rules](operations/deleteWorkflowRules/operation.md)
   - To delete one or more workflow rules from your Zoho CRM organization. You can delete up to ten workflow rules in a single API call; when some deletions succeed and others fail, the API responds with a 207 Multi-Status.
-  - [Examples](mds/examples/deleteWorkflowRules.md)
-- [Update Workflow Rule by ID ](mds/updateWorkflowRuleById.md)
+  - [Examples](operations/deleteWorkflowRules/examples/)
+- [Update Workflow Rule by ID ](operations/updateWorkflowRuleById/operation.md)
   - To update an existing workflow rule in your Zoho CRM organization, use this operation with the rule's unique ID. You can modify the rule's name, description, triggers, criteria, conditions, and actions, or activate and deactivate the rule. Use the [Get Workflow Rules API](workflow_rules.yaml#$.paths./settings/automation/workflow_rules.get) to retrieve available rule IDs. Only include the fields you want to change; existing actions not specified in the request are preserved. To remove an existing condition or action, set its `_delete` key to null. You cannot change the module or trigger module of a workflow rule, and the trigger type cannot be changed across categories.
-  - [Examples](mds/examples/updateWorkflowRuleById.md)
-- [Retrieve Workflow Rule by ID ](mds/getWorkflowRuleById.md)
+  - [Examples](operations/updateWorkflowRuleById/examples/)
+- [Retrieve Workflow Rule by ID ](operations/getWorkflowRuleById/operation.md)
   - To retrieve the complete configuration of a specific workflow rule in your Zoho CRM organization, including its trigger type, execution criteria, conditions, instant actions, scheduled actions, and lock status. Use the [Get All Workflow Rules](workflow_rules.yaml#$.paths./settings/automation/workflow_rules.get) operation to obtain the unique ID of the workflow rule to retrieve.
-  - [Examples](mds/examples/getWorkflowRuleById.md)
-- [Delete a workflow rule by ID](mds/deleteWorkflowRuleById.md)
+  - [Examples](operations/getWorkflowRuleById/examples/)
+- [Delete a workflow rule by ID](operations/deleteWorkflowRuleById/operation.md)
   - To delete a workflow rule from your Zoho CRM organization by its unique ID. Locked workflow rules cannot be deleted.
-  - [Examples](mds/examples/deleteWorkflowRuleById.md)
-- [Get Workflow Rule Action Counts](mds/getWorkflowRulesActionsCount.md)
+  - [Examples](operations/deleteWorkflowRuleById/examples/)
+- [Get Workflow Rule Action Counts](operations/getWorkflowRulesActionsCount/operation.md)
   - To retrieve the total number of actions configured in the specified workflow rules in your Zoho CRM organization, including counts categorized by action type across both instant and scheduled actions.
-  - [Examples](mds/examples/getWorkflowRulesActionsCount.md)
-- [Get Active and Total Workflow Rule Counts by Module ](mds/getModuleSpecificActionsCount.md)
+  - [Examples](operations/getWorkflowRulesActionsCount/examples/)
+- [Get Active and Total Workflow Rule Counts by Module ](operations/getModuleSpecificActionsCount/operation.md)
   - To retrieve the count of active and total workflow rules configured for each module in your Zoho CRM organization.
-  - [Examples](mds/examples/getModuleSpecificActionsCount.md)
-- [Get Workflow Rule Quota and Usage Counts ](mds/getWorkflowRulesCount.md)
+  - [Examples](operations/getModuleSpecificActionsCount/examples/)
+- [Get Workflow Rule Quota and Usage Counts ](operations/getWorkflowRulesCount/operation.md)
   - To retrieve the organization-level quota and current usage counts for workflow rules and actions in your Zoho CRM organization. The response includes the total and active rule limits (both organization-wide and per module), the number of rules currently configured, and the per-rule limits for actions and scheduled action groups.
-  - [Examples](mds/examples/getWorkflowRulesCount.md)
-- [Retrieve Action Usage for a Workflow Rule](mds/getWorkflowRuleUsage.md)
+  - [Examples](operations/getWorkflowRulesCount/examples/)
+- [Retrieve Action Usage for a Workflow Rule](operations/getWorkflowRuleUsage/operation.md)
   - To retrieve the action usage report for a specific workflow rule in your Zoho CRM organization, including trigger count and per-action success, failure, and queue metrics, as well as email engagement statistics. Results are scoped to a configurable date range.
-  - [Examples](mds/examples/getWorkflowRuleUsage.md)
-- [Update Workflow Rule Execution Order for Module](mds/reorderWorkflowRules.md)
+  - [Examples](operations/getWorkflowRuleUsage/examples/)
+- [Update Workflow Rule Execution Order for Module](operations/reorderWorkflowRules/operation.md)
   - To update the execution order of workflow rules for a specific module in your Zoho CRM organization. By default, rules execute in the order in which they were created. If any of the specified rule IDs are invalid, the entire request fails and no partial updates are applied.
-  - [Examples](mds/examples/reorderWorkflowRules.md)
+  - [Examples](operations/reorderWorkflowRules/examples/)

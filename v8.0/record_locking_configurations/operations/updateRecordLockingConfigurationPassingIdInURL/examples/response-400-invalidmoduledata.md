@@ -1,0 +1,10 @@
+Invalid module name provided
+
+```json
+{
+  "code": "INVALID_MODULE",
+  "details": {},
+  "message": "the module name given seems to be invalid",
+  "status": "error"
+}
+```

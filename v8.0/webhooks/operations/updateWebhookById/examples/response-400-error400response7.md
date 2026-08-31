@@ -1,0 +1,16 @@
+Field value is not valid in webhook update
+
+```json
+{
+  "webhooks": {
+    "code": "INVALID_DATA",
+    "message": "Invalid data",
+    "details": {
+      "api_name": "api_name",
+      "maximum_length": 5,
+      "json_path": "$.webhooks[*].module.api_name"
+    },
+    "status": "error"
+  }
+}
+```

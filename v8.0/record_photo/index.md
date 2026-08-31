@@ -1,12 +1,12 @@
 # Record Photo
 
 - [OpenAPI specification](record_photo.yaml)
-- [Get a record photo](mds/getRecordPhoto.md)
+- [Get a record photo](operations/getRecordPhoto/operation.md)
   - To retrieve the photo associated with a specific record in your Zoho CRM organization.
-  - [Examples](mds/examples/getRecordPhoto.md)
-- [Upload a record photo](mds/uploadRecordPhoto.md)
+  - [Examples](operations/getRecordPhoto/examples/)
+- [Upload a record photo](operations/uploadRecordPhoto/operation.md)
   - To upload a photo for a specific record in your Zoho CRM organization.
-  - [Examples](mds/examples/uploadRecordPhoto.md)
-- [Delete a record photo](mds/deleteRecordPhoto.md)
+  - [Examples](operations/uploadRecordPhoto/examples/)
+- [Delete a record photo](operations/deleteRecordPhoto/operation.md)
   - To delete the photo associated with a specific record in your Zoho CRM organization.
-  - [Examples](mds/examples/deleteRecordPhoto.md)
+  - [Examples](operations/deleteRecordPhoto/examples/)

@@ -1,0 +1,17 @@
+Example of a missing required field error response.
+
+```json
+{
+  "send_mail_merge": [
+    {
+      "code": "MANDATORY_NOT_FOUND",
+      "details": {
+        "api_name": "mail_merge_template",
+        "json_path": "$.send_mail_merge[0].mail_merge_template"
+      },
+      "message": "Required field is missing",
+      "status": "error"
+    }
+  ]
+}
+```

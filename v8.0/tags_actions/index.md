@@ -1,21 +1,21 @@
 # Tag Actions API
 
 - [OpenAPI specification](tags_actions.yaml)
-- [Add Tags to Records](mds/postAddTags.md)
+- [Add Tags to Records](operations/postAddTags/operation.md)
   - Associates tags to one or more records in the specified module.
-  - [Examples](mds/examples/postAddTags.md)
-- [Remove Tags from Records](mds/postRemoveTags.md)
+  - [Examples](operations/postAddTags/examples/)
+- [Remove Tags from Records](operations/postRemoveTags/operation.md)
   - Removes tags from one or more records in the specified module.
-  - [Examples](mds/examples/postRemoveTags.md)
-- [Add Tags to a Record](mds/postAddTagsWithId.md)
+  - [Examples](operations/postRemoveTags/examples/)
+- [Add Tags to a Record](operations/postAddTagsWithId/operation.md)
   - Adds tags to a specific record in the specified module.
-  - [Examples](mds/examples/postAddTagsWithId.md)
-- [Remove Tags from a Record](mds/postRemoveTagsWithId.md)
+  - [Examples](operations/postAddTagsWithId/examples/)
+- [Remove Tags from a Record](operations/postRemoveTagsWithId/operation.md)
   - Removes tags from a specific record in the specified module.
-  - [Examples](mds/examples/postRemoveTagsWithId.md)
-- [Get Tag Records Count](mds/getTagRecordsCount.md)
+  - [Examples](operations/postRemoveTagsWithId/examples/)
+- [Get Tag Records Count](operations/getTagRecordsCount/operation.md)
   - Retrieves the number of records associated with a specific tag, including workflow, blueprint, and orchestration usage details.
-  - [Examples](mds/examples/getTagRecordsCount.md)
-- [Merge Tags](mds/mergeTags.md)
+  - [Examples](operations/getTagRecordsCount/examples/)
+- [Merge Tags](operations/mergeTags/operation.md)
   - Merges two tags into one, combining their associated records and metadata. The tag specified in the path parameter (id) is the master tag that will remain after the merge. The conflict_id in the request body specifies the tag to be merged into the master tag.
-  - [Examples](mds/examples/mergeTags.md)
+  - [Examples](operations/mergeTags/examples/)

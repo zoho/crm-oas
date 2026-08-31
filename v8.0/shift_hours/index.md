@@ -1,21 +1,21 @@
 # Shift Hours
 
 - [OpenAPI specification](shift_hours.yaml)
-- [Get shift hours](mds/getShifts.md)
+- [Get shift hours](operations/getShifts/operation.md)
   - Retrieves every shift hour configured for the organization, along with the timing, break hours, holidays, time zone, and assigned users of each shift, and an aggregate count of shifts that have at least one user assigned.
-  - [Examples](mds/examples/getShifts.md)
-- [Add shift hours](mds/createShifts.md)
+  - [Examples](operations/getShifts/examples/)
+- [Add shift hours](operations/createShifts/operation.md)
   - Creates one or more shift hour configurations for the organization. Each shift hour specifies the name, time zone, active days, timing, optional break windows, optional holidays, and optional user assignments. The shift hour timing must fall within the configured business hours, and the request is rejected if business hours are not enabled for the org.
-  - [Examples](mds/examples/createShifts.md)
-- [Update shift hours](mds/updateShiftHours.md)
+  - [Examples](operations/createShifts/examples/)
+- [Update shift hours](operations/updateShiftHours/operation.md)
   - Updates one or more shift hour configurations for the organization. Each entry in `shift_hours` identifies the shift hour to update and the fields to change, such as the time zone, active days, timing, break windows, holidays, or user assignments. The updated timing must fall within the configured business hours.
-  - [Examples](mds/examples/updateShiftHours.md)
-- [Get a shift hour](mds/getSingleShiftHour.md)
+  - [Examples](operations/updateShiftHours/examples/)
+- [Get a shift hour](operations/getSingleShiftHour/operation.md)
   - Retrieves the configuration of the shift hour identified by the `shift` path parameter, including its timing, break hours, holidays, time zone, and the users assigned to it.
-  - [Examples](mds/examples/getSingleShiftHour.md)
-- [Update a shift hour](mds/updateSingleShiftHour.md)
+  - [Examples](operations/getSingleShiftHour/examples/)
+- [Update a shift hour](operations/updateSingleShiftHour/operation.md)
   - Updates the configuration of the shift hour identified by the `shift` path parameter. The request body specifies the fields to change, such as the time zone, active days, timing, break windows, holidays, or user assignments. The updated timing must fall within the configured business hours.
-  - [Examples](mds/examples/updateSingleShiftHour.md)
-- [Delete a shift hour](mds/deleteSingleShiftHour.md)
+  - [Examples](operations/updateSingleShiftHour/examples/)
+- [Delete a shift hour](operations/deleteSingleShiftHour/operation.md)
   - Deletes the shift hour identified by the `shift` path parameter. Once deleted, the shift hour configuration and all of its user assignments are removed.
-  - [Examples](mds/examples/deleteSingleShiftHour.md)
+  - [Examples](operations/deleteSingleShiftHour/examples/)

@@ -1,12 +1,12 @@
 # Org photo
 
 - [OpenAPI specification](org_photo.yaml)
-- [Organization photo](mds/getOrgPhoto.md)
+- [Organization photo](operations/getOrgPhoto/operation.md)
   - To retrieve the organization photo for your Zoho CRM organization.
-  - [Examples](mds/examples/getOrgPhoto.md)
-- [Upload Organization Photo](mds/uploadOrganizationPhoto.md)
+  - [Examples](operations/getOrgPhoto/examples/)
+- [Upload Organization Photo](operations/uploadOrganizationPhoto/operation.md)
   - To upload a photo for your Zoho CRM organization.
-  - [Examples](mds/examples/uploadOrganizationPhoto.md)
-- [Delete the organization photo](mds/deleteOrgPhoto.md)
+  - [Examples](operations/uploadOrganizationPhoto/examples/)
+- [Delete the organization photo](operations/deleteOrgPhoto/operation.md)
   - To delete the organization photo from your Zoho CRM organization.
-  - [Examples](mds/examples/deleteOrgPhoto.md)
+  - [Examples](operations/deleteOrgPhoto/examples/)

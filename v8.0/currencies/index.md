@@ -1,24 +1,24 @@
 # Currencies
 
 - [OpenAPI specification](currencies.yaml)
-- [List currencies](mds/getCurrencies.md)
+- [List currencies](operations/getCurrencies/operation.md)
   - Retrieves all added currencies in the organization.
-  - [Examples](mds/examples/getCurrencies.md)
-- [Create currencies](mds/createCurrencies.md)
+  - [Examples](operations/getCurrencies/examples/)
+- [Create currencies](operations/createCurrencies/operation.md)
   - Creates one or more new currencies for the organization.
-  - [Examples](mds/examples/createCurrencies.md)
-- [Update currencies](mds/updateCurrencies.md)
+  - [Examples](operations/createCurrencies/examples/)
+- [Update currencies](operations/updateCurrencies/operation.md)
   - Updates one or more currencies other than the base currency.
-  - [Examples](mds/examples/updateCurrencies.md)
-- [Specific Currency](mds/getCurrencyById.md)
+  - [Examples](operations/updateCurrencies/examples/)
+- [Specific Currency](operations/getCurrencyById/operation.md)
   - Retrieves details of a specific currency via its unique currency ID.
-  - [Examples](mds/examples/getCurrencyById.md)
-- [Currency](mds/updateCurrencyById.md)
+  - [Examples](operations/getCurrencyById/examples/)
+- [Currency](operations/updateCurrencyById/operation.md)
   - Update a specific currency by its unique ID.
-  - [Examples](mds/examples/updateCurrencyById.md)
-- [Enable multi-currency](mds/enableCurrency.md)
+  - [Examples](operations/updateCurrencyById/examples/)
+- [Enable multi-currency](operations/enableCurrency/operation.md)
   - Enable multi-currency for the organization and set the base currency.
-  - [Examples](mds/examples/enableCurrency.md)
-- [Update base currency](mds/updateBaseCurrency.md)
+  - [Examples](operations/enableCurrency/examples/)
+- [Update base currency](operations/updateBaseCurrency/operation.md)
   - Update existing base currency details.
-  - [Examples](mds/examples/updateBaseCurrency.md)
+  - [Examples](operations/updateBaseCurrency/examples/)

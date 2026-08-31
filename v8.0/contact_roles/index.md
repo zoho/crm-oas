@@ -1,24 +1,24 @@
 # Contact Roles
 
 - [OpenAPI specification](contact_roles.yaml)
-- [List Contact Roles](mds/getContactRoles.md)
+- [List Contact Roles](operations/getContactRoles/operation.md)
   - Retrieves the list of contact roles available in your Zoho CRM organization.
-  - [Examples](mds/examples/getContactRoles.md)
-- [Create Contact Roles](mds/createContactRoles.md)
+  - [Examples](operations/getContactRoles/examples/)
+- [Create Contact Roles](operations/createContactRoles/operation.md)
   - Creates one or more contact roles in your Zoho CRM organization.
-  - [Examples](mds/examples/createContactRoles.md)
-- [Update Contact Roles](mds/updateContactRoles.md)
+  - [Examples](operations/createContactRoles/examples/)
+- [Update Contact Roles](operations/updateContactRoles/operation.md)
   - Updates the properties of one or more existing contact roles in your Zoho CRM organization.
-  - [Examples](mds/examples/updateContactRoles.md)
-- [Delete Contact Roles](mds/deleteContactRoles.md)
+  - [Examples](operations/updateContactRoles/examples/)
+- [Delete Contact Roles](operations/deleteContactRoles/operation.md)
   - Deletes one or more contact roles by their unique identifiers in your Zoho CRM organization.
-  - [Examples](mds/examples/deleteContactRoles.md)
-- [Get a Contact Role](mds/getContactRole.md)
+  - [Examples](operations/deleteContactRoles/examples/)
+- [Get a Contact Role](operations/getContactRole/operation.md)
   - Retrieves the details of a specific contact role by its unique identifier in your Zoho CRM organization.
-  - [Examples](mds/examples/getContactRole.md)
-- [Update a Contact Role](mds/updateContactRole.md)
+  - [Examples](operations/getContactRole/examples/)
+- [Update a Contact Role](operations/updateContactRole/operation.md)
   - Updates a specific contact role by its unique identifier in your Zoho CRM organization.
-  - [Examples](mds/examples/updateContactRole.md)
-- [Delete a Contact Role](mds/deleteContactRole.md)
+  - [Examples](operations/updateContactRole/examples/)
+- [Delete a Contact Role](operations/deleteContactRole/operation.md)
   - Deletes a specific contact role by its unique identifier in your Zoho CRM organization.
-  - [Examples](mds/examples/deleteContactRole.md)
+  - [Examples](operations/deleteContactRole/examples/)

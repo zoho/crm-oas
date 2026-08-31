@@ -1,21 +1,21 @@
 # Roles
 
 - [OpenAPI specification](roles.yaml)
-- [Get all roles](mds/getRoles.md)
+- [Get all roles](operations/getRoles/operation.md)
   - Returns the list of all roles configured in your Zoho CRM organization.
-  - [Examples](mds/examples/getRoles.md)
-- [Create a role](mds/createRoles.md)
+  - [Examples](operations/getRoles/examples/)
+- [Create a role](operations/createRoles/operation.md)
   - Creates a new role in your Zoho CRM organization.
-  - [Examples](mds/examples/createRoles.md)
-- [Update a role](mds/updateRoles.md)
+  - [Examples](operations/createRoles/examples/)
+- [Update a role](operations/updateRoles/operation.md)
   - Updates an existing role in your Zoho CRM organization.
-  - [Examples](mds/examples/updateRoles.md)
-- [Get a role](mds/getRole.md)
+  - [Examples](operations/updateRoles/examples/)
+- [Get a role](operations/getRole/operation.md)
   - Returns the details of a single role, specified by its ID in the URL.
-  - [Examples](mds/examples/getRole.md)
-- [Update a role](mds/updateRole.md)
+  - [Examples](operations/getRole/examples/)
+- [Update a role](operations/updateRole/operation.md)
   - Updates a single role, specified by its ID in the URL.
-  - [Examples](mds/examples/updateRole.md)
-- [Delete a role](mds/deleteRole.md)
+  - [Examples](operations/updateRole/examples/)
+- [Delete a role](operations/deleteRole/operation.md)
   - Deletes a role in your Zoho CRM organization and moves its users to another role.
-  - [Examples](mds/examples/deleteRole.md)
+  - [Examples](operations/deleteRole/examples/)

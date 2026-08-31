@@ -1,21 +1,21 @@
 # Holidays
 
 - [OpenAPI specification](holidays.yaml)
-- [Holidays](mds/getHolidays.md)
+- [Holidays](operations/getHolidays/operation.md)
   - To retrieve the list of holidays configured in Zoho CRM. Business holidays apply to all users, while shift holidays are specific to configured shift schedules. Returns paginated results.
-  - [Examples](mds/examples/getHolidays.md)
-- [Holidays](mds/createHolidays.md)
+  - [Examples](operations/getHolidays/examples/)
+- [Holidays](operations/createHolidays/operation.md)
   - To create one or more business or shift holidays in Zoho CRM. Business holidays apply to all users, while shift holidays must specify a valid shift_hour identifier.
-  - [Examples](mds/examples/createHolidays.md)
-- [Multiple Holidays](mds/updateHolidays.md)
+  - [Examples](operations/createHolidays/examples/)
+- [Multiple Holidays](operations/updateHolidays/operation.md)
   - To update one or more existing holiday records in Zoho CRM by providing each holiday ID with the updated field values.
-  - [Examples](mds/examples/updateHolidays.md)
-- [A specific holiday](mds/updateHoliday.md)
+  - [Examples](operations/updateHolidays/examples/)
+- [A specific holiday](operations/updateHoliday/operation.md)
   - To update the name or date of a specific holiday record in Zoho CRM using its unique identifier.
-  - [Examples](mds/examples/updateHoliday.md)
-- [A specific holiday](mds/getHoliday.md)
+  - [Examples](operations/updateHoliday/examples/)
+- [A specific holiday](operations/getHoliday/operation.md)
   - To retrieve the complete details of a specific holiday record from Zoho CRM using its unique identifier.
-  - [Examples](mds/examples/getHoliday.md)
-- [Holiday](mds/deleteHoliday.md)
+  - [Examples](operations/getHoliday/examples/)
+- [Holiday](operations/deleteHoliday/operation.md)
   - To permanently delete a holiday from Zoho CRM using its unique identifier. The deletion cannot be undone.
-  - [Examples](mds/examples/deleteHoliday.md)
+  - [Examples](operations/deleteHoliday/examples/)

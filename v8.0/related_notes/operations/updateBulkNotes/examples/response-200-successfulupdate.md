@@ -1,0 +1,44 @@
+Success response for status 200
+
+```json
+{
+  "data": [
+    {
+      "code": "SUCCESS",
+      "details": {
+        "Modified_Time": "2023-12-19T17:30:15+05:30",
+        "Modified_By": {
+          "name": "Patricia Boyle",
+          "id": "4876876000000327001"
+        },
+        "Created_Time": "2023-12-19T16:45:07+05:30",
+        "id": "4876876000006021002",
+        "Created_By": {
+          "name": "Patricia Boyle",
+          "id": "4876876000000327001"
+        }
+      },
+      "message": "record updated",
+      "status": "success"
+    },
+    {
+      "code": "SUCCESS",
+      "details": {
+        "Modified_Time": "2023-12-19T17:30:16+05:30",
+        "Modified_By": {
+          "name": "Patricia Boyle",
+          "id": "4876876000000327001"
+        },
+        "Created_Time": "2023-12-19T16:45:08+05:30",
+        "id": "4876876000006021003",
+        "Created_By": {
+          "name": "Patricia Boyle",
+          "id": "4876876000000327001"
+        }
+      },
+      "message": "record updated",
+      "status": "success"
+    }
+  ]
+}
+```

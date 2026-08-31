@@ -1,6 +1,6 @@
 # Convert Inventory Records
 
 - [OpenAPI specification](inventory_convert.yaml)
-- [Convert Inventory Record](mds/convertInventory.md)
+- [Convert Inventory Record](operations/convertInventory/operation.md)
   - To convert an inventory record in your Zoho CRM organization from one module to another. Supported conversion paths are: Quotes to Sales Orders or Invoices, and Sales Orders to Invoices.
-  - [Examples](mds/examples/convertInventory.md)
+  - [Examples](operations/convertInventory/examples/)

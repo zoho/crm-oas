@@ -1,21 +1,21 @@
 # Email Drafts
 
 - [OpenAPI specification](email_drafts.yaml)
-- [List Email Drafts for a Record](mds/getEmailDrafts.md)
+- [List Email Drafts for a Record](operations/getEmailDrafts/operation.md)
   - Retrieves the list of email drafts associated with the specified record in the given module.
-  - [Examples](mds/examples/getEmailDrafts.md)
-- [Create Email Drafts for a Record](mds/createEmailDrafts.md)
+  - [Examples](operations/getEmailDrafts/examples/)
+- [Create Email Drafts for a Record](operations/createEmailDrafts/operation.md)
   - Creates one or more email drafts associated with the specified record in the given module.
-  - [Examples](mds/examples/createEmailDrafts.md)
-- [Update Email Drafts for a Record](mds/updateEmailDraftsForRecord.md)
+  - [Examples](operations/createEmailDrafts/examples/)
+- [Update Email Drafts for a Record](operations/updateEmailDraftsForRecord/operation.md)
   - Updates one or more email drafts associated with the specified record in the given module.
-  - [Examples](mds/examples/updateEmailDraftsForRecord.md)
-- [Get an Email Draft](mds/getEmailDraft.md)
+  - [Examples](operations/updateEmailDraftsForRecord/examples/)
+- [Get an Email Draft](operations/getEmailDraft/operation.md)
   - Retrieves the specified email draft for the given record in the module.
-  - [Examples](mds/examples/getEmailDraft.md)
-- [Update an Email Draft](mds/updateEmailDrafts.md)
+  - [Examples](operations/getEmailDraft/examples/)
+- [Update an Email Draft](operations/updateEmailDrafts/operation.md)
   - Updates the specified email draft for the given record in the module.
-  - [Examples](mds/examples/updateEmailDrafts.md)
-- [Delete an Email Draft](mds/deleteEmailDrafts.md)
+  - [Examples](operations/updateEmailDrafts/examples/)
+- [Delete an Email Draft](operations/deleteEmailDrafts/operation.md)
   - Deletes the specified email draft for the given record.
-  - [Examples](mds/examples/deleteEmailDrafts.md)
+  - [Examples](operations/deleteEmailDrafts/examples/)

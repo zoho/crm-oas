@@ -1,27 +1,27 @@
 # Portal Users
 
 - [OpenAPI specification](portal_users.yaml)
-- [List portal users](mds/getPortalUsers.md)
+- [List portal users](operations/getPortalUsers/operation.md)
   - To retrieve the list of portal users in your Zoho CRM organization for the specified portal and user type, with optional filtering by source.
-  - [Examples](mds/examples/getPortalUsers.md)
-- [delete portal users](mds/deletePortalUsers.md)
+  - [Examples](operations/getPortalUsers/examples/)
+- [delete portal users](operations/deletePortalUsers/operation.md)
   - To delete one or more portal users from your Zoho CRM organization for the specified portal and user type.
-  - [Examples](mds/examples/deletePortalUsers.md)
-- [Invite portal users](mds/inviteUsers.md)
+  - [Examples](operations/deletePortalUsers/examples/)
+- [Invite portal users](operations/inviteUsers/operation.md)
   - To send portal invitations in bulk to CRM records in your Zoho CRM organization for the specified module, scheduling them as asynchronous invitation jobs.
-  - [Examples](mds/examples/inviteUsers.md)
-- [Invite portal users](mds/getScheduledInviteUsersInfo.md)
+  - [Examples](operations/inviteUsers/examples/)
+- [Invite portal users](operations/getScheduledInviteUsersInfo/operation.md)
   - To retrieve the status of a scheduled portal invitation job in your Zoho CRM organization using the job identifier returned when invitations were scheduled.
-  - [Examples](mds/examples/getScheduledInviteUsersInfo.md)
-- [Invite portal users](mds/singleInviteUser.md)
+  - [Examples](operations/getScheduledInviteUsersInfo/examples/)
+- [Invite portal users](operations/singleInviteUser/operation.md)
   - To send a portal invitation to a single CRM record in your Zoho CRM organization, inviting or re-inviting the record as a portal user for the specified user type.
-  - [Examples](mds/examples/singleInviteUser.md)
-- [Transfer portal users from one user group to another](mds/transferPortalUsers.md)
+  - [Examples](operations/singleInviteUser/examples/)
+- [Transfer portal users from one user group to another](operations/transferPortalUsers/operation.md)
   - To transfer one or more portal users from one user type group to another within the same portal in your Zoho CRM organization.
-  - [Examples](mds/examples/transferPortalUsers.md)
-- [Change status of portal users](mds/changePortalUsersStatus.md)
+  - [Examples](operations/transferPortalUsers/examples/)
+- [Change status of portal users](operations/changePortalUsersStatus/operation.md)
   - Changing portal users status.
-  - [Examples](mds/examples/changePortalUsersStatus.md)
-- [Portal User Status](mds/changePortalUsersStatusBulk.md)
+  - [Examples](operations/changePortalUsersStatus/examples/)
+- [Portal User Status](operations/changePortalUsersStatusBulk/operation.md)
   - To activate or deactivate multiple portal users in bulk in your Zoho CRM organization for the specified portal and user type.
-  - [Examples](mds/examples/changePortalUsersStatusBulk.md)
+  - [Examples](operations/changePortalUsersStatusBulk/examples/)

@@ -1,9 +1,9 @@
 # Wizards
 
 - [OpenAPI specification](wizards.yaml)
-- [Get all wizard configurations](mds/getAllWizards.md)
+- [Get all wizard configurations](operations/getAllWizards/operation.md)
   - To retrieve the wizard configurations available in your Zoho CRM organization. The response can be filtered by module using the `**module**` query parameter. When you set up conditional rules for a wizard, the response contains the keys execute_on and type. execute_on represents when the conditional rule is executed. The values are create, edit, and create_edit. type represents the action you want to take when the condition is met. The values are set_values, set_lock, show_component, and show_widget. When type=set_lock, the response contains the key exempted_profiles. This array contains the list of profiles that allow edits even after locking specific fields. The color_palette key is added that displays the colors available for a button on a screen. Note that this key is available in the response only if you have chosen at least one custom color for the button on a screen. Changes made to this API from version 5 when you fetch a specific wizard in a layout: - A new JSON array portal_user_types is added to the response that displays the list of portal user types that have access to the wizard. - A new JSON array exempted_portal_user_types is added to the response that represents the list of portal user types that have access to wizards that are blocked for other user types. - Under the segments, for buttons, the Profiles JSON array is added. This indicates the profiles that have access to that button in that screen. - In the Screens JSON array, the "type" of segments JSON object is changed from fields to composite. - In the segments JSON array, the fields JSON array is renamed to elements. - Each object in the elements JSON array contains the sequence number, resource, and type keys. Resource includes the "name" and "id" of the field or the query component on the screen. type indicates whether the resource is a field or query component. From V6, you can get the list of available screens in Wizards. See the sample response for reference.
-  - [Examples](mds/examples/getAllWizards.md)
-- [Get wizard details](mds/getWizardDetails.md)
+  - [Examples](operations/getAllWizards/examples/)
+- [Get wizard details](operations/getWizardDetails/operation.md)
   - To retrieve the complete configuration of a single wizard in your Zoho CRM organization, including its containers, screens, segments, buttons, and conditional rules.
-  - [Examples](mds/examples/getWizardDetails.md)
+  - [Examples](operations/getWizardDetails/examples/)

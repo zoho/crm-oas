@@ -1,33 +1,33 @@
 # Webhooks
 
 - [OpenAPI specification](webhooks.yaml)
-- [Get webhooks](mds/getWebhooks.md)
+- [Get webhooks](operations/getWebhooks/operation.md)
   - To retrieve the list of all webhook action configurations available in your Zoho CRM organization. The response contains summary-level data for each webhook, including the module, URL, HTTP method, feature type, and audit metadata. Use the [Get Webhooks API using ID](webhooks.yaml#$.paths./settings/automation/webhooks/{webhook_ID}.get) to retrieve the full configuration of a specific webhook.
-  - [Examples](mds/examples/getWebhooks.md)
-- [Update webhooks](mds/updateWebhooks.md)
+  - [Examples](operations/getWebhooks/examples/)
+- [Update webhooks](operations/updateWebhooks/operation.md)
   - To update the configuration of an existing webhook in your Zoho CRM organization. The module field cannot be changed after creation. The request body must contain a webhooks array with exactly one webhook object. To retrieve valid module API names, refer to the [Get Modules](modules.yaml#$.paths./settings/modules.get) resource.
-  - [Examples](mds/examples/updateWebhooks.md)
-- [Webhooks](mds/createWebhooks.md)
+  - [Examples](operations/updateWebhooks/examples/)
+- [Webhooks](operations/createWebhooks/operation.md)
   - To create a webhook action that fires an HTTP request to an external URL in your Zoho CRM organization when an automation trigger fires. The `http_method` value controls which optional request fields are accepted. - POST and PUT accept `headers` and `body` - GET and DELETE methods accept `url_parameters` - DELETE also accepts `headers` To retrieve valid module API names, refer to the [Get Modules](modules.yaml#$.paths./settings/modules.get) resource.
-  - [Examples](mds/examples/createWebhooks.md)
-- [Delete one or more webhooks](mds/deleteWebhooks.md)
+  - [Examples](operations/createWebhooks/examples/)
+- [Delete one or more webhooks](operations/deleteWebhooks/operation.md)
   - To delete one or more webhook actions configured in your Zoho CRM account. Up to 10 webhooks can be deleted in a single API call using the **ids** query parameter. Read-only webhooks created by Zoho extensions cannot be deleted. Webhooks associated with active Workflow Rules, Approval Processes, or Blueprints cannot be deleted.
-  - [Examples](mds/examples/deleteWebhooks.md)
-- [Get webhook by ID](mds/getWebhookById.md)
+  - [Examples](operations/deleteWebhooks/examples/)
+- [Get webhook by ID](operations/getWebhookById/operation.md)
   - To retrieve the configuration of a specific webhook in your Zoho CRM organization using its ID. Use the [Get Webhooks API](webhooks.yaml#$.paths./settings/automation/webhooks.get) first to discover webhook IDs.
-  - [Examples](mds/examples/getWebhookById.md)
-- [Update webhook by ID](mds/updateWebhookById.md)
+  - [Examples](operations/getWebhookById/examples/)
+- [Update webhook by ID](operations/updateWebhookById/operation.md)
   - To update the configuration of a specific webhook in your Zoho CRM organization using its ID. The module field cannot be changed after webhook creation. Read-only webhooks created by Marketplace extensions cannot be updated.
-  - [Examples](mds/examples/updateWebhookById.md)
-- [Delete a webhook by ID](mds/deleteWebhooksById.md)
+  - [Examples](operations/updateWebhookById/examples/)
+- [Delete a webhook by ID](operations/deleteWebhooksById/operation.md)
   - To delete a specific webhook configured in your Zoho CRM organization using its unique ID. Read-only webhooks created by Marketplace extensions cannot be deleted. Webhooks associated with active Workflow Rules, Approval Processes, Blueprints, or Command Center also cannot be deleted.
-  - [Examples](mds/examples/deleteWebhooksById.md)
-- [Get webhook execution failure records ](mds/getWebhookFailures.md)
+  - [Examples](operations/deleteWebhooksById/examples/)
+- [Get webhook execution failure records ](operations/getWebhookFailures/operation.md)
   - To retrieve detailed information about webhook execution failures in your Zoho CRM organization. Optionally filter results by module, webhook ID, and date range. If the **from** and **to** parameters are not specified, the API returns webhook failures from the last 30 days by default. The maximum allowed span between **from** and **to** is 90 days.
-  - [Examples](mds/examples/getWebhookFailures.md)
-- [Get webhook-associated modules](mds/getWebhookAssociatedModules.md)
+  - [Examples](operations/getWebhookFailures/examples/)
+- [Get webhook-associated modules](operations/getWebhookAssociatedModules/operation.md)
   - To retrieve the list of CRM modules that have at least one webhook currently associated in your Zoho CRM organization. Results are filtered based on the requesting user's module access permissions. Use these module API names as valid values for the module filter when querying webhook failures.
-  - [Examples](mds/examples/getWebhookAssociatedModules.md)
-- [Get webhook action usage reports ](mds/getWebhookUsageReports.md)
+  - [Examples](operations/getWebhookAssociatedModules/examples/)
+- [Get webhook action usage reports ](operations/getWebhookUsageReports/operation.md)
   - To retrieve usage statistics for webhook actions executed in your Zoho CRM organization. Specify the **group_by** parameter to control the granularity of results; optionally filter by automation feature type and date range.
-  - [Examples](mds/examples/getWebhookUsageReports.md)
+  - [Examples](operations/getWebhookUsageReports/examples/)

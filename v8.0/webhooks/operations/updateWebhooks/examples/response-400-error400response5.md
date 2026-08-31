@@ -1,0 +1,16 @@
+INVALID_DATA length error for headers.custom_parameters field
+
+```json
+{
+  "webhooks": {
+    "code": "INVALID_DATA",
+    "message": "Invalid data",
+    "details": {
+      "api_name": "custom_parameters",
+      "maximum_length": 2,
+      "json_path": "$.webhooks[*].headers.custom_parameters"
+    },
+    "status": "error"
+  }
+}
+```

@@ -1,0 +1,16 @@
+Successful response for creating a record locking configuration
+
+```json
+{
+  "record_locking_configurations": [
+    {
+      "code": "SUCCESS",
+      "details": {
+        "id": "431525000001114019"
+      },
+      "message": "record locking configuration created successfully",
+      "status": "success"
+    }
+  ]
+}
+```
