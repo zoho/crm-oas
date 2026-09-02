@@ -39,10 +39,10 @@ paths:
         Fetches a paginated list of webhook definitions; narrow results using
         filters for module, feature_type, related_module, or name. page defaults
         to 1, per_page max is 200; sort_by accepts only Modified_Time with
-        asc/desc sort_order. The response carries summary-level data only 
+        asc/desc sort_order. The response carries summary-level data only
         headers, body, authentication, url_parameters, and date_time_format are
-        omitted; call GET /settings/automation/webhooks/{webhookId} for the full
-        config. Run this before PUT/DELETE to discover webhook IDs.
+        omitted; call `getWebhookById` for the full config. Run this before
+        PUT/DELETE to discover webhook IDs.
       operationId: getWebhooks
       parameters:
         - $ref: '#/components/parameters/ParamQueryModule'
@@ -305,12 +305,11 @@ paths:
         Modules](modules.yaml#$.paths./settings/modules.get) resource.
       x-zs-llm-description: >-
         Replaces one webhook in a single call. Before submitting: (1) list
-        webhook IDs via GET /settings/automation/webhooks; (2) confirm valid
-        module api_names via GET /settings/modules. Full-replacement semantics
-        apply  include every field you want to keep, since omitted fields revert
-        to defaults or null. The webhook object must carry its id field. Module
-        and kiosk names cannot be changed; read-only or marketplace/extension
-        webhooks return NOT_ALLOWED.
+        webhook IDs via `getWebhooks`; (2) confirm valid module api_names via
+        `getModules`. Full-replacement semantics apply include every field you
+        want to keep, since omitted fields revert to defaults or null. The
+        webhook object must carry its id field. Module and kiosk names cannot be
+        changed; read-only or marketplace/extension webhooks return NOT_ALLOWED.
       x-zs-llm-examples:
         - SamplePutRequest
       operationId: updateWebhooks
@@ -1659,14 +1658,14 @@ paths:
         Modules](modules.yaml#$.paths./settings/modules.get) resource.
       x-zs-llm-description: >-
         Adds a new webhook action that fires when automation triggers. Before
-        calling: GET /settings/modules to look up valid module api_names. Send a
-        webhooks array with exactly one entry; required fields are name, module,
-        url, http_method, authentication, and feature_type. http_method
-        determines which keys are allowed: POST/PUT accept headers and body;
-        GET/DELETE accept url_parameters; DELETE also accepts headers. Sending
-        keys not allowed for the chosen method returns DEPENDENT_MISMATCH. The
-        URL must begin with http://, https://, www., or ${...}; SSRF-protected
-        hosts are rejected. The response contains the new webhook ID.
+        calling: `getModules` to look up valid module api_names. Send a webhooks
+        array with exactly one entry; required fields are name, module, url,
+        http_method, authentication, and feature_type. http_method determines
+        which keys are allowed: POST/PUT accept headers and body; GET/DELETE
+        accept url_parameters; DELETE also accepts headers. Sending keys not
+        allowed for the chosen method returns DEPENDENT_MISMATCH. The URL must
+        begin with http://, https://, www., or ${...}; SSRF-protected hosts are
+        rejected. The response contains the new webhook ID.
       x-zs-llm-examples:
         - SamplePostRequest
       operationId: createWebhooks
@@ -3172,8 +3171,7 @@ paths:
         query parameter (up to 10). Read-only webhooks created by extensions and
         webhooks tied to active workflow rules, approval processes, or
         blueprints all return NOT_ALLOWED. Returns 200 when all succeed or 207
-        (Multi-Status) for mixed results. Use GET /settings/automation/webhooks
-        to find IDs first.
+        (Multi-Status) for mixed results. Use `getWebhooks` to find IDs first.
       operationId: deleteWebhooks
       parameters:
         - $ref: '#/components/parameters/ParamQueryIds'
@@ -3387,7 +3385,7 @@ paths:
         discover webhook IDs.
       x-zs-llm-description: >-
         Retrieves the complete configuration of one webhook including headers,
-        body, url_parameters, authentication, and date_time_format  fields that
+        body, url_parameters, authentication, and date_time_format fields that
         the list endpoint omits. Supply the webhook ID as the webhookId path
         param. Returns 204 if the webhook does not exist. Run this before a PUT
         to see what is currently stored.
@@ -3517,10 +3515,9 @@ paths:
         webhooks created by Marketplace extensions cannot be updated.
       x-zs-llm-description: >-
         Replaces the configuration of an existing webhook identified by its path
-        parameter ID. Before calling: (1) GET
-        /settings/automation/webhooks/{webhookId} to read the current structure;
-        (2) GET /settings/modules to verify valid module api_names.
-        Full-replacement semantics  every field you want to retain must be
+        parameter ID. Before calling: (1) `getWebhookById` to read the current
+        structure; (2) `getModules` to verify valid module api_names.
+        Full-replacement semantics every field you want to retain must be
         present, omitted fields reset to defaults or null. Module and kiosk
         names are locked after creation; read-only or marketplace/extension
         webhooks return NOT_ALLOWED.
@@ -5796,7 +5793,7 @@ components:
         Represents the lock status of the webhook. Locked webhooks cannot be
         edited or deleted.
       x-zs-llm-description: >-
-        Lock status. Locked webhooks cannot be edited or deleted  typically
+        Lock status. Locked webhooks cannot be edited or deleted typically
         locked by an active process.
       properties:
         locked:
@@ -6423,7 +6420,7 @@ components:
         all variants. For type=form_data: supply form_data_content with
         module_parameters and custom_parameters sub-arrays; format may be null.
         For type=raw: supply raw_data_content (a string) and a format value of
-        JSON, XML, Text, or HTML  note the field is raw_data_content, not data,
+        JSON, XML, Text, or HTML note the field is raw_data_content, not data,
         and format, not content_type. For type=none: the body carries no content
         and format may be null, but the field must still be present. Example
         form_data:
@@ -6527,7 +6524,7 @@ components:
         results are mixed, indicating that at least one webhook was deleted and
         at least one deletion failed.
       x-zs-llm-description: >-
-        Partial-success (207)  some webhooks deleted, others failed. Check each
+        Partial-success (207) some webhooks deleted, others failed. Check each
         item's status.
       properties:
         webhooks:
@@ -7817,7 +7814,7 @@ components:
       description: >-
         Represents the error returned when the module api_name provided in a
         query parameter does not match an existing CRM module.
-      x-zs-llm-description: The module in the request is invalid. Verify via GET /settings/modules.
+      x-zs-llm-description: The module in the request is invalid. Verify via `getModules`.
       properties:
         code:
           type: string
@@ -8035,7 +8032,7 @@ components:
         Represents the error returned when more than 10 webhook IDs are provided
         in a bulk DELETE request.
       x-zs-llm-description: >-
-        Too many IDs  maximum is 10 per bulk delete request. Split into multiple
+        Too many IDs maximum is 10 per bulk delete request. Split into multiple
         calls.
       properties:
         code:
@@ -8337,8 +8334,8 @@ components:
         Represents the error returned when the module ID in the request body
         does not correspond to an existing CRM module.
       x-zs-llm-description: >-
-        The module ID does not correspond to an existing module. Verify via GET
-        /settings/modules.
+        The module ID does not correspond to an existing module. Verify via
+        `getModules`.
       properties:
         code:
           type: string
@@ -8604,7 +8601,7 @@ components:
         webhook that is associated with at least one active Workflow Rule,
         Approval Process, or Blueprint.
       x-zs-llm-description: >-
-        Cannot delete  the webhook is associated with active Workflow Rules,
+        Cannot delete the webhook is associated with active Workflow Rules,
         Approval Processes, or Blueprints.
       properties:
         code:
@@ -9598,11 +9595,11 @@ components:
         valid module API names.
       x-zs-llm-description: >-
         Defines the writable fields when creating a webhook. Before submitting:
-        GET /settings/modules to confirm valid module api_names. Required: name,
-        module, url, http_method, authentication, and feature_type.
-        System-managed fields (id, created_time, modified_time, created_by,
-        modified_by, lock_status, editable, deletable, associated, source,
-        category) must not be included.
+        `getModules` to confirm valid module api_names. Required: name, module,
+        url, http_method, authentication, and feature_type. System-managed
+        fields (id, created_time, modified_time, created_by, modified_by,
+        lock_status, editable, deletable, associated, source, category) must not
+        be included.
       properties:
         name:
           type: string
@@ -9743,11 +9740,10 @@ components:
         NOT_ALLOWED. System-managed read-only fields must be omitted.
       x-zs-llm-description: >-
         Defines the writable fields when updating a webhook. Start by calling
-        GET /settings/automation/webhooks/{webhookId} to read the current state.
-        All required fields (name, module, url, http_method, authentication,
-        feature_type) must be included  partial updates are not supported.
-        Module is immutable and returns NOT_ALLOWED if changed. System-managed
-        read-only fields must be omitted.
+        `getWebhookById` to read the current state. All required fields (name,
+        module, url, http_method, authentication, feature_type) must be included
+        partial updates are not supported. Module is immutable and returns
+        NOT_ALLOWED if changed. System-managed read-only fields must be omitted.
       properties:
         id:
           type: string
@@ -9924,9 +9920,7 @@ components:
       description: >-
         Represents the error entry in a bulk delete response when a webhook in
         the request is read-only and cannot be deleted.
-      x-zs-llm-description: >-
-        Bulk delete entry failed  the webhook is read-only and cannot be
-        deleted.
+      x-zs-llm-description: Bulk delete entry failed the webhook is read-only and cannot be deleted.
       properties:
         code:
           type: string
@@ -9982,8 +9976,8 @@ components:
         the request is associated with active automation rules and cannot be
         deleted.
       x-zs-llm-description: >-
-        Bulk delete entry failed  the webhook is associated with rules and
-        cannot be deleted.
+        Bulk delete entry failed the webhook is associated with rules and cannot
+        be deleted.
       properties:
         code:
           type: string
