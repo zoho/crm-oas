@@ -1,0 +1,21 @@
+# Profiles API
+
+- [OpenAPI specification](profiles.yaml)
+- [Profiles](operations/getProfiles/operation.md)
+  - Retrieves the paginated list of all profiles in the organization, including each profile's name, type, permission details, and section groupings. Use the `type` query parameter to filter by profile type, and `include_types` to include Lite or Support profiles alongside the default set. See [Get Profiles](https://www.zoho.com/crm/developer/docs/api/v8/get-profiles.html). **Scopes:** * ZohoCRM.settings.profiles.ALL * ZohoCRM.settings.profiles.READ
+  - [Examples](operations/getProfiles/examples/)
+- [Clone a CRM profile](operations/cloneProfile/operation.md)
+  - Creates a new profile by cloning the existing profile identified by `{id}`. The request body must include the new profile's `name`, which must be unique within the organization and must not exceed 50 characters. See [Create a Profile](https://www.zoho.com/crm/developer/docs/api/v8/create-profile.html).
+  - [Examples](operations/cloneProfile/examples/)
+- [Specific Profile](operations/updateProfile/operation.md)
+  - Replaces the name, description, and permission enablement for the profile identified by `{id}`. System profiles (Administrator, Standard) cannot be updated. See [Update Profile Permission](https://www.zoho.com/crm/developer/docs/api/v8/update-profile-permission.html).
+  - [Examples](operations/updateProfile/examples/)
+- [Profile](operations/patchProfile/operation.md)
+  - Partially updates the name, description, and permission enablement for the profile identified by `{id}`. System profiles (Administrator, Standard) cannot be updated. See [Update Profile Permission](https://www.zoho.com/crm/developer/docs/api/v8/update-profile-permission.html).
+  - [Examples](operations/patchProfile/examples/)
+- [Profile](operations/getProfile/operation.md)
+  - Retrieves the full details of the CRM profile identified by `{id}`, including its complete permission tree organized by sections and categories. See [Get Profiles](https://www.zoho.com/crm/developer/docs/api/v8/get-profiles.html).
+  - [Examples](operations/getProfile/examples/)
+- [Profile](operations/deleteProfile/operation.md)
+  - Transfers all users of the profile identified by `{id}` to the profile specified by the `transfer_to` query parameter, then permanently deletes the source profile. System profiles (Administrator, Standard) cannot be deleted. See [Transfer Users and Delete a Profile](https://www.zoho.com/crm/developer/docs/api/v8/transfer-delete-profile.html).
+  - [Examples](operations/deleteProfile/examples/)

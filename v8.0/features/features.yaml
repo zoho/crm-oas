@@ -1,0 +1,1094 @@
+openapi: 3.1.0
+info:
+  title: Features
+  description: >-
+    The Features API allows you to fetch information about the features in your
+    org, and its limits. These limits may vary depending on your org's edition
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Represents the API Server URL
+    variables:
+      dc:
+        description: Represents the API Server URL TLD
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: Represents the API Version
+        default: v8
+paths:
+  /__features:
+    get:
+      operationId: getFeatureDetails
+      summary: Features
+      description: >-
+        To retrieve the list of all features available in your Zoho CRM
+        organization for the current subscription edition, along with their
+        usage limits and component details.
+      x-zs-llm-description: >-
+        Retrieves all available features for the current edition with their
+        limits and usage details. Supports filtering by module and api_names.
+      security:
+        - OAuth2:
+            - ZohoCRM.features.READ
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/ApiNames'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Page'
+      responses:
+        '200':
+          description: >-
+            Returns the list of features available for the current
+            organization's edition.
+          content:
+            application/json:
+              examples:
+                SuccessResponse:
+                  summary: List all features with usage limits and component details
+                  value:
+                    __features:
+                      - components:
+                          - api_name: global_picklist_per_module
+                            module_supported: false
+                            details:
+                              limits:
+                                edition_limit: 15
+                                total: 15
+                            feature_label: Global Picklist Per Module
+                        api_name: global_picklists
+                        parent_feature: null
+                        module_supported: false
+                        details:
+                          available_count:
+                            total: 3
+                          used_count:
+                            total: 0
+                          limits:
+                            edition_limit: 30
+                            total: 30
+                        feature_label: Global Picklists
+                      - components: null
+                        api_name: team_spaces
+                        parent_feature: null
+                        module_supported: false
+                        details:
+                          limits:
+                            edition_limit: 25
+                            total: 25
+                        feature_label: Teamspace
+                    info:
+                      per_page: 200
+                      count: 200
+                      page: 1
+                      more_records: true
+              x-zs-llm-examples:
+                - SuccessResponse
+              schema:
+                x-zs-$id: FeatureDetailsResponse
+                additionalProperties: true
+                type: object
+                description: >-
+                  Represents the response structure for a successful feature
+                  list retrieval, containing the array of available features and
+                  pagination metadata.
+                properties:
+                  __features:
+                    description: >-
+                      Represents the list of feature objects available for the
+                      current edition. Always returned in the response.
+                    maxItems: 200
+                    type: array
+                    items:
+                      additionalProperties: true
+                      description: >-
+                        Represents a single feature object, including its API
+                        name, module support status, usage limits, consumption
+                        details, and sub-feature components.
+                      type: object
+                      properties:
+                        api_name:
+                          maxLength: 255
+                          description: >-
+                            Represents the unique API identifier for the
+                            feature, such as **custom_field** or
+                            **encrypt_field**. Always returned in the response.
+                          type:
+                            - string
+                            - 'null'
+                        parent_feature:
+                          description: >-
+                            Represents the parent feature of the current
+                            feature, when applicable. Always returned in the
+                            response.
+                          type:
+                            - object
+                            - 'null'
+                          properties:
+                            api_name:
+                              maxLength: 255
+                              description: >-
+                                Represents the API name of the parent feature.
+                                Always returned in the response.
+                              type: string
+                          required:
+                            - api_name
+                        details:
+                          description: >-
+                            Represents the limits and usage details for the
+                            feature, including available count, usage limits,
+                            and current consumption. Always returned in the
+                            response.
+                          type:
+                            - object
+                            - 'null'
+                          properties:
+                            available_count:
+                              description: >-
+                                Represents the number of feature instances
+                                available for use in the organization.
+                              additionalProperties: false
+                              type: object
+                              properties:
+                                total:
+                                  description: >-
+                                    Represents the total number of available
+                                    instances for the feature. Always returned
+                                    in the response.
+                                  type: integer
+                                  format: int32
+                              required:
+                                - total
+                            limits:
+                              description: >-
+                                Represents the maximum usage limits for the
+                                feature, including the absolute total limit and
+                                the edition-level ceiling.
+                              additionalProperties: false
+                              type: object
+                              properties:
+                                total:
+                                  description: >-
+                                    Represents the absolute maximum count for
+                                    the feature across all editions. Always
+                                    returned in the response.
+                                  type: integer
+                                  format: int32
+                                edition_limit:
+                                  description: >-
+                                    Represents the maximum count for the feature
+                                    allowed by the current subscription edition.
+                                  type: integer
+                                  format: int32
+                              required:
+                                - total
+                            used_count:
+                              description: Represents the used count of the feature
+                              oneOf:
+                                - description: Represents the used count of the feature
+                                  additionalProperties: true
+                                  x-zs-$id: UsedCountObject
+                                  type: object
+                                  properties:
+                                    total:
+                                      description: Represents the total count
+                                      type: integer
+                                      format: int32
+                                  required:
+                                    - total
+                                - description: Represents the used count of the feature
+                                  type: integer
+                                  format: int32
+                                  x-zs-$id: UsedCountInteger
+                        components:
+                          description: >-
+                            Represents the list of sub-feature components for
+                            the feature. Each component includes its own API
+                            name, module support flag, and usage limit details.
+                            Always returned in the response.
+                          type:
+                            - array
+                            - 'null'
+                          maxItems: 200
+                          items:
+                            description: >-
+                              Represents a single component of the feature,
+                              including its API name, per-module support status,
+                              and usage limit details.
+                            additionalProperties: true
+                            type: object
+                            properties:
+                              api_name:
+                                maxLength: 255
+                                description: >-
+                                  Represents the API name of the component
+                                  within the feature. Always returned in the
+                                  response.
+                                type: string
+                              module_supported:
+                                description: >-
+                                  Indicates whether the component is supported
+                                  for the specified module. Possible values:
+                                  true - The component is supported for the
+                                  module. false - The component is not supported
+                                  for the module. Always returned in the
+                                  response.
+                                type: boolean
+                              details:
+                                description: >-
+                                  Represents the usage limits and consumption
+                                  details for the component. Always returned in
+                                  the response.
+                                type:
+                                  - object
+                                  - 'null'
+                                properties:
+                                  limits:
+                                    description: >-
+                                      Represents the usage limits configured for
+                                      the component. Always returned in the
+                                      response.
+                                    additionalProperties: true
+                                    type: object
+                                    properties:
+                                      total:
+                                        description: >-
+                                          Represents the absolute maximum count
+                                          for the component, independent of the
+                                          subscription edition. Always returned in
+                                          the response.
+                                        type: integer
+                                        format: int32
+                                      edition_limit:
+                                        description: >-
+                                          Represents the maximum count for the
+                                          component allowed by the current
+                                          subscription edition.
+                                        type: integer
+                                        format: int32
+                                    required:
+                                      - total
+                                  used_count:
+                                    description: Represents theused count of the feature
+                                    oneOf:
+                                      - description: Represents the used count of the feature
+                                        additionalProperties: true
+                                        x-zs-$id: UsedCountObject3
+                                        type: object
+                                        properties:
+                                          total:
+                                            description: Represents the total count
+                                            type: integer
+                                            format: int32
+                                        required:
+                                          - total
+                                      - description: Represents the used count of the feature
+                                        type: integer
+                                        format: int32
+                                        x-zs-$id: UsedCountInteger3
+                              feature_label:
+                                maxLength: 255
+                                description: >-
+                                  Represents the display label of the component
+                                  for presentation in the CRM interface. Always
+                                  returned in the response.
+                                type: string
+                            required:
+                              - api_name
+                              - module_supported
+                              - details
+                              - feature_label
+                        module_supported:
+                          description: >-
+                            Indicates whether the feature is supported for the
+                            CRM module specified in the request. Possible
+                            values: true - The feature is supported for the
+                            specified module. false - The feature is not
+                            supported for the specified module. Always returned
+                            in the response.
+                          type: boolean
+                        feature_label:
+                          maxLength: 255
+                          description: >-
+                            Represents the display label of the feature for
+                            presentation in the CRM interface. Always returned
+                            in the response.
+                          type:
+                            - string
+                            - 'null'
+                      required:
+                        - api_name
+                        - parent_feature
+                        - details
+                        - components
+                        - module_supported
+                        - feature_label
+                  info:
+                    description: >-
+                      Represents the pagination metadata for the response,
+                      including the current page number, page size, total
+                      feature count, and whether more records are available.
+                    additionalProperties: true
+                    type: object
+                    properties:
+                      per_page:
+                        description: >-
+                          Represents the number of feature records included per
+                          page in the response. Always returned in the response.
+                        type: integer
+                        format: int32
+                      count:
+                        description: >-
+                          Represents the number of feature records returned in
+                          the current page. Always returned in the response.
+                        type: integer
+                        format: int32
+                      page:
+                        description: >-
+                          Represents the current page number in the paginated
+                          response. Always returned in the response.
+                        type: integer
+                        format: int32
+                      more_records:
+                        description: >-
+                          Indicates whether additional feature records are
+                          available beyond the current page. Possible values:
+                          true - More feature records are available on
+                          subsequent pages. false - The current page contains
+                          the last set of feature records. Always returned in
+                          the response.
+                        type: boolean
+                    required:
+                      - per_page
+                      - count
+                      - page
+                      - more_records
+                required:
+                  - __features
+        '204':
+          description: >-
+            Indicates that no features are available for the current
+            organization's edition, or the specified feature does not exist.
+        '400':
+          description: >-
+            The module API name in the request is invalid, or the request
+            contains invalid data. **Resolution**: The request parameters must
+            include a valid module API name and properly formatted values.
+          content:
+            application/json:
+              examples:
+                SuccessResponse:
+                  summary: Invalid module API name in the request
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the module name given seems to be invalid
+                    status: error
+              schema:
+                x-zs-$id: InvalidDataErrorResponse
+                additionalProperties: true
+                type: object
+                description: >-
+                  Represents the error response structure returned when the
+                  request contains an invalid module name or invalid data.
+                properties:
+                  status:
+                    description: >-
+                      Represents the status of the request. Possible values:
+                      error - The request resulted in a validation error. Always
+                      returned in the response.
+                    type: string
+                    enum:
+                      - error
+                  code:
+                    description: >-
+                      Represents the error code indicating the type of
+                      validation failure. Possible values: INVALID_MODULE - The
+                      module API name in the request is not valid. INVALID_DATA
+                      - The request contains invalid data. Always returned in
+                      the response.
+                    type: string
+                    enum:
+                      - INVALID_MODULE
+                      - INVALID_DATA
+                  message:
+                    maxLength: 255
+                    description: >-
+                      Represents the error message describing the validation
+                      failure. Always returned in the response.
+                    type: string
+                  details:
+                    additionalProperties: false
+                    description: >-
+                      Represents additional details about the validation error.
+                      Always returned in the response.
+                    type: object
+                    properties:
+                      param_name:
+                        maxLength: 25
+                        description: >-
+                          Represents the name of the parameter that caused the
+                          validation error.
+                        type: string
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+  /__features/{feature}:
+    get:
+      operationId: getFeatureSpecificDetails
+      summary: Specific Feature
+      description: >-
+        To retrieve the detailed information for a specific feature in your Zoho
+        CRM organization, including its usage limits, consumption details, and
+        sub-feature components.
+      x-zs-llm-description: >-
+        Retrieves specific feature details including components, usage counts,
+        and limits for the current edition. Supports module filtering.
+      security:
+        - OAuth2:
+            - ZohoCRM.features.READ
+      parameters:
+        - $ref: '#/components/parameters/Feature'
+        - $ref: '#/components/parameters/Module'
+      responses:
+        '200':
+          description: >-
+            Returns the detailed information for the requested feature,
+            including its usage limits, consumption details, and sub-feature
+            components.
+          content:
+            application/json:
+              examples:
+                SuccessResponse:
+                  summary: >-
+                    Retrieve a specific feature with its limits and component
+                    details
+                  value:
+                    __features:
+                      - components:
+                          - api_name: global_picklist_per_module
+                            module_supported: false
+                            details:
+                              limits:
+                                edition_limit: 15
+                                total: 15
+                            feature_label: Global Picklist Per Module
+                          - api_name: association_per_global_field
+                            module_supported: false
+                            details:
+                              limits:
+                                edition_limit: 30
+                                total: 30
+                            feature_label: Association Per Global Set
+                          - api_name: used_option_count
+                            module_supported: false
+                            details:
+                              limits:
+                                edition_limit: 1000
+                                total: 1000
+                            feature_label: Used Option Count
+                          - api_name: inc_used_option_count
+                            module_supported: false
+                            details: null
+                            feature_label: Increased Used Option Count
+                          - api_name: unused_option_count
+                            module_supported: false
+                            details:
+                              limits:
+                                edition_limit: 500
+                                total: 500
+                            feature_label: Unused Option Count
+                          - api_name: large_global_set
+                            module_supported: false
+                            details: null
+                            feature_label: Large Global Set
+                          - api_name: colourcode_option_count
+                            module_supported: false
+                            details:
+                              limits:
+                                edition_limit: 100
+                                total: 100
+                            feature_label: colourcode Option Count
+                        api_name: global_picklists
+                        parent_feature: null
+                        module_supported: false
+                        details:
+                          limits:
+                            edition_limit: 50
+                            total: 50
+                        feature_label: Global Picklists
+              x-zs-llm-examples:
+                - SuccessResponse
+              schema:
+                x-zs-$id: FeatureSpecificDetailsResponse
+                additionalProperties: true
+                type: object
+                description: >-
+                  Represents the response structure for a successful single
+                  feature retrieval, containing the detailed information for the
+                  requested feature.
+                properties:
+                  __features:
+                    description: >-
+                      Represents the list containing the detailed information
+                      for the requested feature. Always returned in the
+                      response.
+                    maxItems: 1
+                    type: array
+                    items:
+                      additionalProperties: true
+                      description: >-
+                        Represents the detailed information for a single
+                        feature, including its API name, module support status,
+                        usage limits, consumption details, and sub-feature
+                        components.
+                      type: object
+                      properties:
+                        api_name:
+                          maxLength: 255
+                          description: >-
+                            Represents the unique API identifier for the
+                            feature, such as **custom_field** or
+                            **encrypt_field**. Always returned in the response.
+                          type: string
+                        parent_feature:
+                          description: >-
+                            Represents the parent feature of the current
+                            feature, when applicable. Always returned in the
+                            response.
+                          type:
+                            - object
+                            - 'null'
+                          properties:
+                            api_name:
+                              maxLength: 255
+                              description: >-
+                                Represents the API name of the parent feature.
+                                Always returned in the response.
+                              type: string
+                          required:
+                            - api_name
+                        details:
+                          description: >-
+                            Represents the limits and usage details for the
+                            feature, including available count, usage limits,
+                            and current consumption. Always returned in the
+                            response.
+                          type:
+                            - object
+                            - 'null'
+                          properties:
+                            available_count:
+                              description: >-
+                                Represents the number of feature instances
+                                available for use in the organization.
+                              additionalProperties: false
+                              type: object
+                              properties:
+                                total:
+                                  description: >-
+                                    Represents the total number of available
+                                    instances for the feature. Always returned
+                                    in the response.
+                                  type: integer
+                                  format: int32
+                              required:
+                                - total
+                            limits:
+                              description: >-
+                                Represents the maximum usage limits for the
+                                feature, including the absolute total limit and
+                                the edition-level ceiling. Always returned in
+                                the response.
+                              additionalProperties: false
+                              type: object
+                              properties:
+                                total:
+                                  description: >-
+                                    Represents the absolute maximum count for
+                                    the feature across all editions. Always
+                                    returned in the response.
+                                  type: integer
+                                  format: int32
+                                edition_limit:
+                                  description: >-
+                                    Represents the maximum count for the feature
+                                    allowed by the current subscription edition.
+                                  type: integer
+                                  format: int32
+                              required:
+                                - total
+                            used_count:
+                              description: >-
+                                Represents the current usage counts for the
+                                feature in the organization.
+                              additionalProperties: true
+                              type: object
+                              properties:
+                                total:
+                                  description: >-
+                                    Represents the total number of feature
+                                    instances currently in use. Always returned
+                                    in the response.
+                                  type: integer
+                                  format: int32
+                              required:
+                                - total
+                          required:
+                            - limits
+                        components:
+                          description: >-
+                            Represents the list of sub-feature components for
+                            the feature. Each component includes its own API
+                            name, module support flag, and usage limit details.
+                            Always returned in the response.
+                          type:
+                            - array
+                            - 'null'
+                          maxItems: 200
+                          items:
+                            description: >-
+                              Represents a single component of the feature,
+                              including its API name, per-module support status,
+                              and usage limit details.
+                            additionalProperties: true
+                            type: object
+                            properties:
+                              api_name:
+                                maxLength: 255
+                                description: >-
+                                  Represents the API name of the component
+                                  within the feature. Always returned in the
+                                  response.
+                                type: string
+                              module_supported:
+                                description: >-
+                                  Indicates whether the component is supported
+                                  for the specified module. Possible values:
+                                  true - The component is supported for the
+                                  module. false - The component is not supported
+                                  for the module. Always returned in the
+                                  response.
+                                type: boolean
+                              details:
+                                description: >-
+                                  Represents the usage limits and consumption
+                                  details for the component. Always returned in
+                                  the response.
+                                type:
+                                  - object
+                                  - 'null'
+                                properties:
+                                  limits:
+                                    description: >-
+                                      Represents the usage limits configured for
+                                      the component. Always returned in the
+                                      response.
+                                    additionalProperties: true
+                                    type: object
+                                    properties:
+                                      total:
+                                        description: >-
+                                          Represents the absolute maximum count
+                                          for the component, independent of the
+                                          subscription edition. Always returned in
+                                          the response.
+                                        type: integer
+                                        format: int32
+                                      edition_limit:
+                                        description: >-
+                                          Represents the maximum count for the
+                                          component allowed by the current
+                                          subscription edition.
+                                        type: integer
+                                        format: int32
+                                    required:
+                                      - total
+                                  used_count:
+                                    description: >-
+                                      Represents the current usage counts for
+                                      the component.
+                                    oneOf:
+                                      - description: >-
+                                          Represents the total count of component
+                                          instances currently in use.
+                                        additionalProperties: true
+                                        x-zs-$id: UsedCountObject2
+                                        type: object
+                                        properties:
+                                          total:
+                                            description: total count
+                                            type: integer
+                                            format: int32
+                                        required:
+                                          - total
+                                      - description: used count of the feature
+                                        type: integer
+                                        format: int32
+                                        x-zs-$id: UsedCountInteger2
+                              feature_label:
+                                maxLength: 255
+                                description: >-
+                                  Represents the display label of the component
+                                  for presentation in the CRM interface. Always
+                                  returned in the response.
+                                type: string
+                            required:
+                              - api_name
+                              - module_supported
+                              - details
+                              - feature_label
+                        module_supported:
+                          description: >-
+                            Indicates whether the feature is supported for the
+                            CRM module specified in the request. Possible
+                            values: true - The feature is supported for the
+                            specified module. false - The feature is not
+                            supported for the specified module. Always returned
+                            in the response.
+                          type: boolean
+                        feature_label:
+                          maxLength: 255
+                          description: >-
+                            Represents the display label of the feature for
+                            presentation in the CRM interface. Always returned
+                            in the response.
+                          type:
+                            - string
+                            - 'null'
+                      required:
+                        - api_name
+                        - parent_feature
+                        - details
+                        - components
+                        - module_supported
+                        - feature_label
+                required:
+                  - __features
+        '204':
+          description: >-
+            Indicates that the specified feature is not available for the
+            current organization's edition.
+        '400':
+          description: >-
+            The module API name in the request is invalid, or the request
+            contains invalid data. Resolution: The request parameters must
+            include a valid module API name and properly formatted values.
+          content:
+            application/json:
+              examples:
+                SuccessResponse:
+                  summary: Invalid module API name for specific feature request
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the module name given seems to be invalid
+                    status: error
+              schema:
+                x-zs-$id: FeatureSpecificDetailsInvalidModuleErrorResponse
+                additionalProperties: true
+                type: object
+                description: >-
+                  Represents the error response structure returned when the
+                  request contains an invalid module name or invalid data.
+                properties:
+                  status:
+                    description: >-
+                      Represents the status of the request. Possible values:
+                      error - The request resulted in a validation error. Always
+                      returned in the response.
+                    type: string
+                    enum:
+                      - error
+                  code:
+                    description: >-
+                      Represents the error code indicating the type of
+                      validation failure. Possible values: INVALID_MODULE - The
+                      module API name in the request is not valid. INVALID_DATA
+                      - The request contains invalid data. Always returned in
+                      the response.
+                    type: string
+                    enum:
+                      - INVALID_MODULE
+                      - INVALID_DATA
+                  message:
+                    maxLength: 255
+                    description: >-
+                      Represents the error message describing the validation
+                      failure. Always returned in the response.
+                    type: string
+                  details:
+                    additionalProperties: false
+                    description: >-
+                      Represents additional details about the validation error.
+                      Always returned in the response.
+                    type: object
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+  /__features/user_licenses:
+    get:
+      operationId: getUserLicenseFeatureDetails
+      summary: User Licenses Feature
+      description: To get the user licenses feature details for the current edition
+      x-zs-llm-description: >-
+        Retrieves user license feature details including available count, used
+        count, and limits for the current edition.
+      security:
+        - OAuth2:
+            - ZohoCRM.features.READ
+      responses:
+        '200':
+          description: Response of user licenses feature details for the current edition
+          content:
+            application/json:
+              examples:
+                SuccessResponse:
+                  summary: Get User License Feature Details
+                  value:
+                    __features:
+                      - components: null
+                        api_name: user_licenses
+                        parent_feature: null
+                        module_supported: false
+                        details:
+                          available_count:
+                            total: 3
+                          used_count:
+                            total: 7
+                          limits:
+                            total: 10
+                        feature_label: UserLicenses
+              x-zs-llm-examples:
+                - SuccessResponse
+              schema:
+                x-zs-$id: UserLicenseFeatureDetailsResponse
+                additionalProperties: true
+                type: object
+                description: User licenses feature details for the current edition
+                properties:
+                  __features:
+                    description: User licenses feature details for the current edition
+                    maxItems: 1
+                    type: array
+                    items:
+                      additionalProperties: true
+                      description: User licenses feature details
+                      type: object
+                      properties:
+                        api_name:
+                          maxLength: 255
+                          description: API name of the feature
+                          type: string
+                        parent_feature:
+                          description: Parent feature details
+                          type:
+                            - object
+                            - 'null'
+                        details:
+                          description: This object will have limits and usage details
+                          type:
+                            - object
+                            - 'null'
+                          properties:
+                            available_count:
+                              description: Available count details for the feature
+                              additionalProperties: false
+                              type: object
+                              properties:
+                                total:
+                                  description: Total available count
+                                  type: integer
+                                  format: int32
+                              required:
+                                - total
+                            used_count:
+                              description: used count of the feature
+                              oneOf:
+                                - description: used count of the feature
+                                  additionalProperties: true
+                                  x-zs-$id: UsedCountObject1
+                                  type: object
+                                  properties:
+                                    total:
+                                      description: total count
+                                      type: integer
+                                      format: int32
+                                  required:
+                                    - total
+                                - description: used count of the feature
+                                  type: integer
+                                  format: int32
+                                  x-zs-$id: UsedCountInteger1
+                            limits:
+                              description: Limit details for the feature
+                              additionalProperties: false
+                              type: object
+                              properties:
+                                total:
+                                  description: Total limit
+                                  type: integer
+                                  format: int32
+                              required:
+                                - total
+                          required:
+                            - limits
+                        components:
+                          description: Components of the feature
+                          type: 'null'
+                        module_supported:
+                          description: Module wise feature supported or not
+                          type: boolean
+                        feature_label:
+                          maxLength: 255
+                          description: Label of the feature
+                          type: string
+                      required:
+                        - api_name
+                        - parent_feature
+                        - details
+                        - components
+                        - module_supported
+                        - feature_label
+                required:
+                  - __features
+        '204':
+          description: User licenses feature not available for the current edition
+        '400':
+          description: Invalid request error response
+          content:
+            application/json:
+              examples:
+                SuccessResponse:
+                  summary: Error response
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the module name given seems to be invalid
+                    status: error
+              schema:
+                x-zs-$id: UserLicenseFeatureDetailsInvalidDataErrorResponse
+                additionalProperties: true
+                type: object
+                description: Invalid request error response schema
+                properties:
+                  status:
+                    description: Status of request
+                    type: string
+                    enum:
+                      - error
+                  code:
+                    description: Error code
+                    type: string
+                    enum:
+                      - INVALID_MODULE
+                      - INVALID_DATA
+                  message:
+                    maxLength: 255
+                    description: Error message
+                    type: string
+                  details:
+                    additionalProperties: false
+                    description: Extra details
+                    type: object
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+components:
+  parameters:
+    Module:
+      description: >-
+        Specify the API name of the CRM module to filter features that are
+        specific to that module. Refer to the [Get
+        Modules](modules.json#$.paths./settings/modules.get) resource for valid
+        values.
+      name: module
+      in: query
+      required: false
+      schema:
+        maxLength: 25
+        type: string
+    ApiNames:
+      description: >-
+        Specify the feature API names to filter the response. To retrieve
+        details of more than one feature, provide the names in comma-separated
+        format. Possible values: custom_field - Feature API name for the custom
+        field feature.
+        custom_field,encrypt_field,unique_field,private_fields,external_field,personal_health_fields
+        - Feature API names for multiple features specified together.
+        encrypt_field - Feature API name for the encrypt field feature.
+        external_field - Feature API name for the external field feature.
+        personal_health_fields - Feature API name for the personal health fields
+        feature. private_fields - Feature API name for the private fields
+        feature. unique_field - Feature API name for the unique field feature.
+      name: api_names
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - custom_field
+          - >-
+            custom_field,encrypt_field,unique_field,private_fields,external_field,personal_health_fields
+          - personal_health_fields
+          - encrypt_field
+          - external_field
+          - unique_field
+          - private_fields
+    Page:
+      description: >-
+        Specify the page number to retrieve features from the corresponding
+        results page. Possible values: 1 - Retrieves features from page one. 2 -
+        Retrieves features from page two.
+      name: page
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - '1'
+          - '2'
+    PerPage:
+      description: >-
+        Specify the number of features to return per page. Possible values: 10 -
+        Returns ten features per page.
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - '10'
+    Feature:
+      description: >-
+        Specify the API name of the feature for which you want to retrieve
+        detailed information.
+      name: feature
+      in: path
+      required: true
+      schema:
+        maxLength: 25
+        type: string
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.features.READ: READ feature access

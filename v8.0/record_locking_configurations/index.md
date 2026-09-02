@@ -1,0 +1,24 @@
+# Record Locking Configuration
+
+- [OpenAPI specification](record_locking_configurations.yaml)
+- [Create record locking configuration](operations/createRecordLockingConfiguration/operation.md)
+  - Creates a new record locking configuration for the specified module. You can define locking rules, restricted actions, excluded fields, and other settings.
+  - [Examples](operations/createRecordLockingConfiguration/examples/)
+- [Update record locking configuration](operations/updateRecordLockingConfiguration/operation.md)
+  - Updates an existing record locking configuration for the specified module. You can modify any of the configuration settings.
+  - [Examples](operations/updateRecordLockingConfiguration/examples/)
+- [Get record locking configuration](operations/getRecordLockingConfiguration/operation.md)
+  - Retrieves the existing record locking configuration for the specified module.
+  - [Examples](operations/getRecordLockingConfiguration/examples/)
+- [Delete record locking configuration](operations/deleteRecordLockingConfiguration/operation.md)
+  - Deletes the record locking configuration(s) for the specified module using the provided configuration IDs.
+  - [Examples](operations/deleteRecordLockingConfiguration/examples/)
+- [Update specific record locking configuration](operations/updateRecordLockingConfigurationPassingIdInURL/operation.md)
+  - Updates an existing record locking configuration for the specified module using the configuration ID provided in the URL path.
+  - [Examples](operations/updateRecordLockingConfigurationPassingIdInURL/examples/)
+- [Get specific record locking configuration](operations/getRecordLockingConfigurationPassingIdInURL/operation.md)
+  - Retrieves a specific record locking configuration using the configuration ID provided in the URL path.
+  - [Examples](operations/getRecordLockingConfigurationPassingIdInURL/examples/)
+- [Delete specific record locking configuration](operations/deleteRecordLockingConfigurationPassingIdInURL/operation.md)
+  - Deletes a specific record locking configuration using the configuration ID provided in the URL path.
+  - [Examples](operations/deleteRecordLockingConfigurationPassingIdInURL/examples/)

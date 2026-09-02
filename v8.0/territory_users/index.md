@@ -1,0 +1,21 @@
+# Territory Users
+
+- [OpenAPI specification](territory_users.yaml)
+- [Territory Users](operations/getTerritoryUsers/operation.md)
+  - To retrieve the list of users associated with a territory in your Zoho CRM organization.
+  - [Examples](operations/getTerritoryUsers/examples/)
+- [Territory Users](operations/associateUsersToTerritory/operation.md)
+  - To associate one or more users with a territory in your Zoho CRM organization.
+  - [Examples](operations/associateUsersToTerritory/examples/)
+- [Territory Users](operations/deassociateUsersFromTerritories/operation.md)
+  - To disassociate one or more users from a territory in your Zoho CRM organization.
+  - [Examples](operations/deassociateUsersFromTerritories/examples/)
+- [Specific Territory User](operations/getUserDetailsFromTerritory/operation.md)
+  - To retrieve the details of a specific user associated with a territory in your Zoho CRM organization.
+  - [Examples](operations/getUserDetailsFromTerritory/examples/)
+- [Territory User](operations/associateUserToSpecificTerritory/operation.md)
+  - To associate a specific user with a territory in your Zoho CRM organization.
+  - [Examples](operations/associateUserToSpecificTerritory/examples/)
+- [Territory User](operations/deassociateUserFromSpecificTerritory/operation.md)
+  - To disassociate a specific user from a territory in your Zoho CRM organization.
+  - [Examples](operations/deassociateUserFromSpecificTerritory/examples/)

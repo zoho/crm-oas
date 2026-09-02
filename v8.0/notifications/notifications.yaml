@@ -1,0 +1,1963 @@
+openapi: 3.1.0
+info:
+  title: Notifications
+  description: >+
+    Notification APIs allow you to get instant notifications whenever an action
+    is performed on the records of a module. The system notifies you of the
+    event on the URL you provide.
+
+
+    You can also enable notifications for specific operations, such as
+    **create**, **update**, or **delete**.
+
+
+    ## Key Features of Notification APIs
+
+
+    - **Instant notifications** - Receive immediate alerts whenever records are
+    created, updated, or deleted. This helps keep your data synchronized between
+    your application and Zoho CRM.
+
+
+    - **Field-specific notifications** - Starting from **Version 6**, you can
+    receive notifications only when an event occurs on specific fields in a
+    module. For example, you can raise an alert when a Deal's **Stage** field is
+    updated.
+      - Specify the criteria for triggering notifications using the `notification_condition` array.
+
+    - **Unique Channel ID** - Create a unique channel ID for each module to
+    ensure that the notification originates from a specific channel.
+
+
+    - **Expiry time** - Set an expiry time for each channel to control how long
+    notifications remain active.
+
+
+    - **Disable notifications** - Disable notifications at any time when they
+    are no longer required.
+
+
+    ## Advantages of Using Notification APIs
+
+
+    - Get near real-time updates on record events.
+
+    - Customize notification settings based on your workflows and business
+    requirements.
+
+    - Easily synchronize data between your application and Zoho CRM.
+
+
+    ## Supported Operations
+
+
+    With Notification APIs, you can:
+
+
+    - Enable Notifications
+
+    - Get Notification Details
+
+    - Update Notification Details
+
+    - Update Specific Information of a Notification
+
+    - Disable Notifications
+
+    - Disable Specific Notification
+
+  version: "8"
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Production API server for Zoho CRM.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: |-
+          The top-level domain of the Zoho CRM API server.
+          Possible values:
+          com - Global (United States).
+          eu - Europe.
+          in - India.
+          cn - China.
+          au - Australia.
+      version:
+        default: v8
+        description: The API version for the request.
+paths:
+  /actions/watch:
+    get:
+      operationId: getNotifications
+      summary: List active notification channels
+      description: To retrieve the list of active notification channels configured for
+        your Zoho CRM organization.
+      security:
+        - OAuth2:
+            - ZohoCRM.notifications.READ
+      parameters:
+        - $ref: "#/components/parameters/Module"
+        - $ref: "#/components/parameters/ChannelId"
+      responses:
+        "200":
+          description: Returns the list of active notification channels configured for the
+            user.
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                x-zs-$id: GetNotificationsResponse
+                type: object
+                description: Contains the list of active notification channels and pagination
+                  information for the response.
+                properties:
+                  watch:
+                    type: array
+                    description: Represents the list of active notification channels for the
+                      authenticated user.
+                    maxItems: 200
+                    items:
+                      additionalProperties: false
+                      description: Represents the details of a single active notification channel.
+                      type: object
+                      properties:
+                        notify_on_related_action:
+                          description: >-
+                            Indicates whether the notification channel is
+                            triggered by actions on records related to the
+                            subscribed module.
+
+                            Possible values:
+
+                            true - Notifications are sent for related record
+                            actions.
+
+                            false - Notifications are sent only for direct
+                            record actions.
+                          type: boolean
+                        channel_expiry:
+                          type: string
+                          format: date-time
+                          description: Represents the expiry date and time of the notification channel.
+                        return_affected_field_values:
+                          description: >-
+                            Indicates whether the notification payload includes
+                            the changed field values from the affected record.
+
+                            Possible values:
+
+                            true - The notification payload includes the updated
+                            field values.
+
+                            false - The notification payload does not include
+                            field values.
+                          type: boolean
+                        resource_uri:
+                          maxLength: 255
+                          description: Represents the URI of the CRM resource associated with the
+                            notification channel.
+                          type: string
+                        resource_id:
+                          maxLength: 64
+                          description: Represents the unique identifier of the CRM resource associated
+                            with the notification channel.
+                          type: string
+                        notify_url:
+                          maxLength: 255
+                          description: Represents the callback URL to which notifications are delivered
+                            when subscribed events occur.
+                          type: string
+                        resource_name:
+                          maxLength: 128
+                          description: Represents the name of the CRM resource associated with the
+                            notification channel.
+                          type: string
+                        fields:
+                          description: Represents the list of record fields included in the notification
+                            payload.
+                          type:
+                            - array
+                            - "null"
+                          items: {}
+                          maxItems: 100
+                        notification_condition:
+                          description: Represents the list of field-selection conditions that determine
+                            which record changes trigger a notification on this
+                            channel.
+                          type:
+                            - array
+                            - "null"
+                          maxItems: 2
+                          items:
+                            additionalProperties: false
+                            description: Represents a single field-selection condition associated with the
+                              notification channel.
+                            type: object
+                            properties:
+                              field_selection:
+                                additionalProperties: false
+                                description: Represents the field selection configuration, including the
+                                  grouping operator and the list of field
+                                  criteria.
+                                type: object
+                                properties:
+                                  group_operator:
+                                    maxLength: 3
+                                    description: Represents the logical operator applied to the field condition
+                                      groups within the field selection
+                                      configuration.
+                                    type: string
+                                  group:
+                                    maxItems: 2
+                                    description: Represents the list of field condition groups used to filter which
+                                      record field changes trigger the
+                                      notification.
+                                    type: array
+                                    items:
+                                      additionalProperties: false
+                                      description: Represents a single field condition entry, including the field
+                                        reference, grouping operator, and
+                                        optional sub-groups.
+                                      type: object
+                                      properties:
+                                        field:
+                                          additionalProperties: false
+                                          description: Represents the CRM field that the condition monitors for changes.
+                                          type: object
+                                          properties:
+                                            api_name:
+                                              maxLength: 128
+                                              description: Represents the API name of the CRM field being monitored in the
+                                                condition.
+                                              type: string
+                                              x-zs-$id: NotificationsFieldApiName
+                                            id:
+                                              maxLength: 64
+                                              description: Represents the unique identifier of the CRM field being monitored
+                                                in the condition.
+                                              type: string
+                                        group_operator:
+                                          description: >-
+                                            Represents the logical operator
+                                            applied to the conditions within
+                                            this sub-group.
+
+                                            Possible values:
+
+                                            and - All conditions in the
+                                            sub-group must be satisfied.
+
+                                            or - Any condition in the sub-group
+                                            must be satisfied.
+
+                                            null - No grouping operator is
+                                            applied.
+                                          type:
+                                            - string
+                                            - "null"
+                                          enum:
+                                            - and
+                                            - or
+                                            - null
+                                        group:
+                                          description: Represents an optional nested sub-group of field conditions within
+                                            the parent group.
+                                          type:
+                                            - array
+                                            - "null"
+                                          items: {}
+                                          maxItems: 10
+                              module:
+                                additionalProperties: false
+                                description: Represents the CRM module context associated with the
+                                  field-selection condition.
+                                type: object
+                                properties:
+                                  api_name:
+                                    maxLength: 255
+                                    description: Represents the API name of the CRM module associated with the
+                                      condition.
+                                    type: string
+                                  id:
+                                    maxLength: 64
+                                    description: Represents the unique identifier of the CRM module associated with
+                                      the condition.
+                                    type: string
+                              type:
+                                maxLength: 32
+                                description: Represents the type of notification condition.
+                                type: string
+                        channel_id:
+                          maxLength: 64
+                          description: Represents the unique identifier of the notification channel.
+                          type: string
+                        events:
+                          maxItems: 10
+                          description: Represents the list of CRM module events for which notifications
+                            are triggered on this channel.
+                          type: array
+                          items:
+                            maxLength: 128
+                            description: Represents a CRM module event name that triggers a notification on
+                              this channel.
+                            type: string
+                        token:
+                          type:
+                            - string
+                            - "null"
+                          maxLength: 255
+                          description: Represents the verification token used to authenticate
+                            notifications sent to the callback URL.
+                  info:
+                    additionalProperties: false
+                    description: Represents the pagination metadata for the notification channel
+                      list, including the current page, record count per page,
+                      and whether additional pages are available.
+                    type: object
+                    properties:
+                      per_page:
+                        maximum: 200
+                        description: Represents the number of notification channel records returned per
+                          page.
+                        type: integer
+                        format: int32
+                      count:
+                        maximum: 100
+                        description: Represents the number of notification channel records included in
+                          the current response.
+                        type: integer
+                        format: int32
+                      page:
+                        maximum: 100
+                        description: >-
+                          Represents the current page number in the paginated
+                          response.
+
+
+                          **Note**
+
+                          Use the page and per_page parameter to fetch records
+                          according to their position in the CRM. Let's assume
+                          that the user has to fetch 400 records. The maximum
+                          number of records that one can get for an API call is
+                          200. So, for records above the 200th position, they
+                          cannot be fetched. By using the page (1, 2, 3 and 4)
+                          and per_page (100) parameter, the user can fetch all
+                          400 records using 4 API calls.
+                        type: integer
+                        format: int32
+                      more_records:
+                        description: >-
+                          Indicates whether more notification channel records
+                          are available beyond the current page.
+
+                          Possible values:
+
+                          true - Additional notification channels are available.
+
+                          false - No additional notification channels are
+                          available.
+                        type: boolean
+              examples:
+                Sample:
+                  summary: Successful response listing active notification channels
+                  value:
+                    watch:
+                      - notify_on_related_action: false
+                        channel_expiry: 2023-08-02T16:51:03-11:00
+                        return_affected_field_values: false
+                        resource_uri: https://www.zohoapis.com/crm/v8/Leads
+                        resource_id: "554023000000000125"
+                        notify_url: https://webhook.site/2c9xxx0fa9
+                        resource_name: Leads
+                        fields: null
+                        notification_condition:
+                          - field_selection:
+                              group_operator: and
+                              group:
+                                - field:
+                                    api_name: Last_Name
+                                    id: "554023000000000559"
+                                  group_operator: null
+                                  group: null
+                                - field:
+                                    api_name: Full_Name
+                                    id: "554023000000000597"
+                                  group_operator: null
+                                  group: null
+                            module:
+                              api_name: Leads
+                              id: "554023000000000125"
+                            type: field_selection
+                        channel_id: "1000000068001"
+                        events:
+                          - Leads.edit
+                          - Leads.create
+                          - Leads.delete
+                        token: xyz
+                      - notify_on_related_action: false
+                        channel_expiry: 2023-08-11T02:12:33-11:00
+                        return_affected_field_values: false
+                        resource_uri: https://www.zohoapis.com/crm/v8/Contacts
+                        resource_id: "554023000000000129"
+                        notify_url: https://webhook.site/2c9axx20fa9
+                        resource_name: Contacts
+                        fields: null
+                        notification_condition: null
+                        channel_id: "10000"
+                        events:
+                          - Contacts.create
+                        token: deals.all.notif
+                      - notify_on_related_action: false
+                        channel_expiry: 2023-08-11T02:13:01-11:00
+                        return_affected_field_values: false
+                        resource_uri: https://www.zohoapis.com/crm/v8/Deals
+                        resource_id: "554023000000000131"
+                        notify_url: https://webhook.site/2c9a0xx20fa9
+                        resource_name: Deals
+                        fields: null
+                        notification_condition:
+                          - field_selection:
+                              group_operator: or
+                              group:
+                                - field:
+                                    api_name: Stage
+                                    id: "554023000000000525"
+                                  group_operator: null
+                                  group: null
+                                - group_operator: or
+                                  group:
+                                    - field:
+                                        api_name: Account_Name
+                                        id: "554023000000000523"
+                                      group_operator: null
+                                      group: null
+                                    - field:
+                                        api_name: Lead_Source
+                                        id: "554023000000000535"
+                                      group_operator: null
+                                      group: null
+                            module:
+                              api_name: Deals
+                              id: "554023000000000131"
+                            type: field_selection
+                        channel_id: "10000"
+                        events:
+                          - Deals.edit
+                          - Deals.create
+                          - Deals.delete
+                        token: deals.all.notif
+                    info:
+                      per_page: 200
+                      count: 3
+                      page: 1
+                      more_records: false
+                  description: Shows the response for a successful GET request, including active
+                    notification channel details and pagination information.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      x-zs-llm-description: This tool is used to get the notification details that are subscribed
+    post:
+      operationId: createNotifications
+      summary: Create notification channels
+      description: To create one or more notification channels in your Zoho CRM
+        organization.
+      security:
+        - OAuth2:
+            - ZohoCRM.notifications.CREATE
+        - OAuth2:
+            - ZohoCRM.notifications.ALL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: The request body must contain a watch array. You can include a
+                maximum of **50** objects per request.
+              additionalProperties: false
+              properties:
+                watch:
+                  type: array
+                  description: Specify the list of notification channels to create.
+                  maxItems: 50
+                  items:
+                    type: object
+                    description: Specify the configuration for a single notification channel.
+                    additionalProperties: false
+                    properties:
+                      notify_url:
+                        type: string
+                        description: Specify the callback URL to which notifications are delivered when
+                          subscribed events occur.
+                        maxLength: 255
+                      channel_id:
+                        type: string
+                        description: Specify a client-defined identifier for the notification channel.
+                        maxLength: 64
+                      channel_expiry:
+                        type: string
+                        description: Specify the expiry date and time for the notification channel.
+                        format: date-time
+                      events:
+                        type: array
+                        description: Specify the list of CRM module events to subscribe to on this
+                          channel.
+                        maxItems: 50
+                        items:
+                          type: string
+                          description: Specify a CRM module event name (for example, Leads.create or
+                            Contacts.edit).
+                          maxLength: 128
+                      token:
+                        type: string
+                        description: Specify an optional verification token that is included in
+                          notification callbacks.
+                        maxLength: 256
+                    required:
+                      - notify_url
+                      - events
+              required:
+                - watch
+            examples:
+              Sample:
+                summary: Create two notification channels with event subscriptions
+                value:
+                  watch:
+                    - channel_id: "1000000068001"
+                      notify_url: https://www.example.com/notify
+                      events:
+                        - Leads.create
+                        - Contacts.edit
+                      channel_expiry: 2024-12-31T23:59:59Z
+                      token: TOKEN_FOR_VERIFICATION_1
+                    - channel_id: "1000000068002"
+                      notify_url: https://www.example.com/notify2
+                      events:
+                        - Deals.delete
+                      channel_expiry: 2024-12-31T23:59:59Z
+                      token: TOKEN_FOR_VERIFICATION_2
+                description: Shows a request body with two notification channel configurations,
+                  each including a callback URL, channel ID, event list, and
+                  verification token.
+        description: The request body must contain a watch array. You can include a
+          maximum of 50 objects per request.
+      responses:
+        "201":
+          description: Returns the creation results for each notification channel
+            submitted in the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreateNotificationsResponse
+                type: object
+                description: Contains the creation results for each submitted notification
+                  channel.
+                additionalProperties: false
+                properties:
+                  watch:
+                    type: array
+                    description: Represents the list of creation results, one entry per channel
+                      submitted in the request.
+                    maxItems: 50
+                    items:
+                      type: object
+                      description: Represents the creation result for a single notification channel.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Represents the result code for the channel creation attempt.
+                          maxLength: 32
+                        details:
+                          type: object
+                          description: Contains the event channel details for the successfully created
+                            notification channel.
+                          additionalProperties: false
+                          properties:
+                            events:
+                              type: array
+                              description: Represents the list of event-channel subscriptions created for the
+                                notification channel.
+                              maxItems: 50
+                              items:
+                                type: object
+                                description: Represents the details of a single event-channel subscription for
+                                  the notification channel.
+                                additionalProperties: false
+                                properties:
+                                  channel_expiry:
+                                    type: string
+                                    format: date-time
+                                    description: Represents the expiry date and time of the created notification
+                                      channel. Always returned in the response.
+                                  resource_uri:
+                                    type: string
+                                    description: Represents the URI of the CRM resource subscribed to in this event
+                                      channel. Always returned in the response.
+                                    maxLength: 255
+                                  resource_id:
+                                    type: string
+                                    description: Represents the unique identifier of the CRM resource subscribed to
+                                      in this event channel. Always returned in
+                                      the response.
+                                    maxLength: 64
+                                  resource_name:
+                                    type: string
+                                    description: Represents the name of the CRM resource subscribed to in this event
+                                      channel. Always returned in the response.
+                                    maxLength: 128
+                                  channel_id:
+                                    type: string
+                                    description: Represents the identifier of the notification channel. Always
+                                      returned in the response.
+                                    maxLength: 64
+                                required:
+                                  - channel_expiry
+                                  - resource_uri
+                                  - resource_id
+                                  - resource_name
+                                  - channel_id
+                          required:
+                            - events
+                        message:
+                          type: string
+                          description: Represents the status message for the channel creation result.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: Represents the status of the channel creation result.
+                          maxLength: 32
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - watch
+              examples:
+                Sample:
+                  summary: Successful notification channel creation response
+                  value:
+                    watch:
+                      - code: SUCCESS
+                        details:
+                          events:
+                            - channel_expiry: 2023-08-02T16:59:50-11:00
+                              resource_uri: https://www.zohoapis.com/crm/v8/Deals
+                              resource_id: "554023000000000131"
+                              resource_name: Deals
+                              channel_id: "10000"
+                        message: Successfully subscribed for actions-watch of the given module
+                        status: success
+                  description: Shows the successful creation result for a notification channel,
+                    including the subscribed event details, resource
+                    information, and status.
+        "207":
+          $ref: "#/components/responses/MultiStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      operationId: updateNotificationDetails
+      summary: Update full notification details
+      description: To replace all properties of an existing notification channel in
+        your Zoho CRM organization.
+      security:
+        - OAuth2:
+            - ZohoCRM.notifications.UPDATE
+        - OAuth2:
+            - ZohoCRM.notifications.ALL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Contains the complete notification channel configurations that will
+                replace the existing settings.
+              additionalProperties: false
+              properties:
+                watch:
+                  type: array
+                  description: Specify the list of notification channel replacements.
+                  maxItems: 50
+                  items:
+                    type: object
+                    description: Specify the complete replacement configuration for a single
+                      notification channel.
+                    additionalProperties: false
+                    properties:
+                      channel_id:
+                        type: string
+                        description: Specify the identifier of the notification channel to update.
+                          Always returned in the response.
+                        maxLength: 64
+                      notify_url:
+                        type: string
+                        description: Specify the callback URL for the notification channel.
+                        maxLength: 255
+                      channel_expiry:
+                        type: string
+                        format: date-time
+                        description: Specify the expiry date and time for the notification channel.
+                      events:
+                        type: array
+                        description: Specify the complete list of CRM module events to subscribe to,
+                          replacing the current event list.
+                        maxItems: 50
+                        items:
+                          type: string
+                          description: Specify a CRM module event name (for example, Leads.create or
+                            Contacts.edit).
+                          maxLength: 128
+                      notification_condition:
+                        type: array
+                        description: Specify the field-selection conditions to replace the existing
+                          conditions for the notification channel.
+                        maxItems: 2
+                        items:
+                          type: object
+                          description: Specify the configuration for a single field-selection condition.
+                          additionalProperties: false
+                          properties:
+                            type:
+                              type: string
+                              description: >-
+                                Specify the condition type.
+
+                                Possible values:
+
+                                field_selection - The condition uses field
+                                selection criteria.
+                              enum:
+                                - field_selection
+                          required:
+                            - type
+                      notify_on_related_action:
+                        type: boolean
+                        description: >-
+                          Indicate whether the notification channel should be
+                          triggered by actions on records related to the
+                          subscribed module.
+
+                          Possible values:
+
+                          true - Notifications are sent for related record
+                          actions.
+
+                          false - Notifications are sent only for direct record
+                          actions.
+                      return_affected_field_values:
+                        type: boolean
+                        description: >-
+                          Indicate whether the notification payload should
+                          include the changed field values from the affected
+                          record.
+
+                          Possible values:
+
+                          true - The notification payload includes updated field
+                          values.
+
+                          false - The notification payload does not include
+                          field values.
+                      token:
+                        type: string
+                        description: Specify the verification token to be included in notification
+                          callbacks.
+                        maxLength: 256
+                    required:
+                      - channel_id
+                      - notify_url
+                      - events
+            examples:
+              Sample:
+                summary: Replace all details of a notification channel
+                value:
+                  watch:
+                    - channel_id: "1000000068001"
+                      notify_url: https://www.example.com/callback
+                      channel_expiry: 2025-11-25T12:00:00Z
+                      events:
+                        - Leads.create
+                        - Contacts.edit
+                        - Deals.delete
+                      notification_condition:
+                        - type: field_selection
+                      notify_on_related_action: true
+                      token: TOKEN_FOR_VERIFICATION_OF_1000000068001
+                description: Shows a PUT request body that replaces all properties of a
+                  notification channel, including the callback URL, event list,
+                  conditions, and verification token.
+        description: The request body must contain a watch array. You can include a
+          maximum of 50 objects per request.
+      responses:
+        "200":
+          description: Returns the replacement results for each notification channel
+            submitted in the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateNotificationDetailsResponse
+                type: object
+                description: Contains the results of the full notification channel replacement.
+                additionalProperties: false
+                properties:
+                  watch:
+                    type: array
+                    description: Represents the list of replacement results, one entry per channel
+                      submitted in the request.
+                    maxItems: 50
+                    items:
+                      type: object
+                      description: Represents the replacement result for a single notification
+                        channel.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Represents the result code for the channel replacement operation.
+                          maxLength: 32
+                        details:
+                          type: object
+                          description: Contains the event channel details for the replaced notification
+                            channel.
+                          additionalProperties: false
+                          properties:
+                            events:
+                              type: array
+                              description: Represents the list of event-channel subscriptions for the replaced
+                                notification channel.
+                              maxItems: 50
+                              items:
+                                type: object
+                                description: Represents the details of a single event-channel subscription after
+                                  the replacement.
+                                additionalProperties: false
+                                properties:
+                                  channel_expiry:
+                                    type: string
+                                    format: date-time
+                                    description: Represents the expiry date and time of the replaced notification
+                                      channel. Always returned in the response.
+                                  resource_uri:
+                                    type: string
+                                    description: Represents the URI of the CRM resource for the replaced event
+                                      channel subscription. Always returned in
+                                      the response.
+                                    maxLength: 255
+                                  resource_id:
+                                    type: string
+                                    description: Represents the unique identifier of the CRM resource for the
+                                      replaced event channel subscription.
+                                      Always returned in the response.
+                                    maxLength: 64
+                                  resource_name:
+                                    type: string
+                                    description: Represents the name of the CRM resource for the replaced event
+                                      channel subscription. Always returned in
+                                      the response.
+                                    maxLength: 128
+                                  channel_id:
+                                    type: string
+                                    description: Represents the identifier of the notification channel after
+                                      replacement. Always returned in the
+                                      response.
+                                    maxLength: 64
+                                required:
+                                  - channel_expiry
+                                  - resource_uri
+                                  - resource_id
+                                  - resource_name
+                                  - channel_id
+                          required:
+                            - events
+                        message:
+                          type: string
+                          description: Represents the status message for the channel replacement result.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: Represents the status of the channel replacement result.
+                          maxLength: 32
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - watch
+              examples:
+                Sample:
+                  summary: Successful notification channel full replacement response
+                  value:
+                    watch:
+                      - code: SUCCESS
+                        details:
+                          events:
+                            - channel_expiry: 2023-08-11T02:04:14-11:00
+                              resource_uri: https://www.zohoapis.com/crm/v8/Contacts
+                              resource_id: "554023000000000129"
+                              resource_name: Contacts
+                              channel_id: "10000"
+                            - channel_expiry: 2023-08-11T02:04:14-11:00
+                              resource_uri: https://www.zohoapis.com/crm/v8/Deals
+                              resource_id: "554023000000000131"
+                              resource_name: Deals
+                              channel_id: "10000"
+                        message: Successfully subscribed for actions-watch of the given module
+                        status: success
+                  description: Shows the successful replacement result for a notification channel,
+                    including the event subscriptions, resource details, and
+                    status.
+        "207":
+          $ref: "#/components/responses/MultiStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      operationId: updateNotificationInfo
+      summary: Update notification channel information
+      description: To partially update the properties of a notification channel in
+        your Zoho CRM organization.
+      parameters:
+        - $ref: "#/components/parameters/ChannelId"
+      security:
+        - OAuth2:
+            - ZohoCRM.notifications.UPDATE
+        - OAuth2:
+            - ZohoCRM.notifications.ALL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Contains the notification channel fields to be partially updated.
+              additionalProperties: false
+              properties:
+                channel_id:
+                  type: string
+                  description: Specify the identifier of the notification channel to update.
+                  maxLength: 64
+                notify_url:
+                  type: string
+                  description: Specify the destination callback URL for the notification channel.
+                  maxLength: 255
+                channel_expiry:
+                  type: string
+                  format: date-time
+                  description: Specify the new expiry date and time for the notification channel.
+                events:
+                  type: array
+                  description: Specify the updated list of CRM module events to subscribe to on
+                    this channel.
+                  maxItems: 50
+                  items:
+                    type: string
+                    description: Specify a CRM module event name (for example, Leads.create or
+                      Contacts.edit).
+                    maxLength: 128
+                notification_condition:
+                  type: array
+                  description: Specify the field selection conditions that determine which record
+                    field changes trigger a notification.
+                  maxItems: 2
+                  items:
+                    type: object
+                    description: Specify the configuration for a single field-selection notification
+                      condition.
+                    additionalProperties: false
+                    properties:
+                      type:
+                        type: string
+                        description: Specify the condition type.
+                        enum:
+                          - field_selection
+                      module:
+                        type: object
+                        description: Specify the CRM module context for the field-selection condition.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: Specify the API name of the CRM module. Refer to the [Get
+                              Modules](modules.json#$.paths./settings/modules.get)
+                              resource for valid values.
+                            maxLength: 64
+                          id:
+                            type: string
+                            description: Specify the unique identifier of the CRM module.
+                            maxLength: 32
+                        required:
+                          - api_name
+                      field_selection:
+                        type: object
+                        description: Specify the field selection criteria, including the grouping
+                          operator and field references.
+                        additionalProperties: false
+                        properties:
+                          group_operator:
+                            type: string
+                            description: >-
+                              Specify the logical operator to apply to the field
+                              condition groups.
+
+                              Possible values:
+
+                              and - All conditions in the group must be
+                              satisfied.
+
+                              or - Any condition in the group must be satisfied.
+                            enum:
+                              - and
+                              - or
+                          group:
+                            type: array
+                            description: Specify the list of field references to use as notification
+                              conditions.
+                            maxItems: 10
+                            items:
+                              type: object
+                              description: Specify a single CRM field reference to include as a notification
+                                condition.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: Specify the API name of the CRM field to monitor for changes.
+                                  maxLength: 64
+                                id:
+                                  type: string
+                                  description: Specify the unique identifier of the CRM field to monitor for
+                                    changes.
+                                  maxLength: 32
+                              required:
+                                - api_name
+                        required:
+                          - group_operator
+                          - group
+                    required:
+                      - type
+                      - module
+                      - field_selection
+                notify_on_related_action:
+                  type: boolean
+                  description: >-
+                    Indicate whether the notification channel should be
+                    triggered by actions on records related to the subscribed
+                    module.
+
+                    Possible values:
+
+                    true - Notifications are sent for related record actions.
+
+                    false - Notifications are sent only for direct record
+                    actions.
+
+
+                    **Note**
+
+
+                    On trigger of any notification-enabled event in a module,
+                    Zoho CRM sends a notification to the user through the notify
+                    URL
+                return_affected_field_values:
+                  type: boolean
+                  description: >-
+                    Indicate whether the notification payload should include the
+                    changed field values from the affected record.
+
+                    Possible values:
+
+                    true - The notification payload includes updated field
+                    values.
+
+                    false - The notification payload does not include field
+                    values.
+                token:
+                  type: string
+                  description: Specify the verification token to be included in notification
+                    callbacks.
+                  maxLength: 256
+              required:
+                - channel_id
+                - notify_url
+                - events
+            examples:
+              Sample:
+                summary: Update a notification channel URL, events, and field-selection
+                  conditions
+                value:
+                  channel_id: "1000000068001"
+                  notify_url: https://www.example.com/callback
+                  channel_expiry: 2025-11-25T12:00:00Z
+                  events:
+                    - Leads.create
+                    - Contacts.edit
+                    - Deals.delete
+                  notify_on_related_action: true
+                  return_affected_field_values: false
+                  notification_condition:
+                    - type: field_selection
+                      module:
+                        api_name: Leads
+                      field_selection:
+                        group_operator: and
+                        group:
+                          - api_name: Company
+                          - api_name: Email
+                  token: TOKEN_FOR_VERIFICATION_OF_1000000068001
+                description: Shows a PATCH request body updating the callback URL, event
+                  subscriptions, and field-selection conditions for a
+                  notification channel.
+        description: The request body must contain the notification channel fields to
+          update.
+      responses:
+        "200":
+          description: Returns the update results for each notification channel modified
+            in the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateNotificationInfoResponse
+                type: object
+                description: Contains the results of the partial notification channel update.
+                additionalProperties: false
+                properties:
+                  watch:
+                    type: array
+                    maxItems: 50
+                    description: Represents the list of update results, one entry per channel
+                      updated.
+                    items:
+                      type: object
+                      description: Represents the update result for a single notification channel.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Represents the result code for the channel update operation.
+                          maxLength: 32
+                        details:
+                          type: object
+                          description: Contains the event channel details for the updated notification
+                            channel.
+                          additionalProperties: false
+                          properties:
+                            events:
+                              type: array
+                              description: Represents the list of event-channel subscriptions for the updated
+                                notification channel.
+                              maxItems: 50
+                              items:
+                                type: object
+                                description: Represents the details of a single event-channel subscription after
+                                  the update.
+                                additionalProperties: false
+                                properties:
+                                  channel_expiry:
+                                    type: string
+                                    format: date-time
+                                    description: Represents the expiry date and time of the updated notification
+                                      channel. Always returned in the response.
+                                  resource_uri:
+                                    type: string
+                                    description: Represents the URI of the CRM resource for the updated event
+                                      channel subscription. Always returned in
+                                      the response.
+                                    maxLength: 255
+                                  resource_id:
+                                    type: string
+                                    description: Represents the unique identifier of the CRM resource for the
+                                      updated event channel subscription. Always
+                                      returned in the response.
+                                    maxLength: 64
+                                  resource_name:
+                                    type: string
+                                    description: Represents the name of the CRM resource for the updated event
+                                      channel subscription. Always returned in
+                                      the response.
+                                    maxLength: 128
+                                  channel_id:
+                                    type: string
+                                    description: Represents the identifier of the updated notification channel.
+                                      Always returned in the response.
+                                    maxLength: 64
+                                required:
+                                  - channel_expiry
+                                  - resource_uri
+                                  - resource_id
+                                  - resource_name
+                                  - channel_id
+                          required:
+                            - events
+                        message:
+                          type: string
+                          description: Represents the status message for the channel update result.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: Represents the status of the channel update result.
+                          maxLength: 32
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - watch
+              examples:
+                Sample:
+                  summary: Successful notification channel partial update response
+                  value:
+                    watch:
+                      - code: SUCCESS
+                        details:
+                          events:
+                            - channel_expiry: 2023-08-02T16:59:50-11:00
+                              resource_uri: https://www.zohoapis.com.com/crm/v2/Deals
+                              resource_id: "554023000000000131"
+                              resource_name: Deals
+                              channel_id: "10000"
+                        message: Successfully updated the subscribe details
+                        status: success
+        "207":
+          $ref: "#/components/responses/MultiStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      operationId: disableNotifications
+      summary: Disable notification channels
+      description: To disable one or more notification channels in your Zoho CRM
+        organization.
+      parameters:
+        - $ref: "#/components/parameters/ChannelIds"
+      security:
+        - OAuth2:
+            - ZohoCRM.notifications.DELETE
+        - OAuth2:
+            - ZohoCRM.notifications.ALL
+      responses:
+        "200":
+          description: Returns the disable results for each notification channel processed
+            in the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DisableNotificationsResponse
+                type: object
+                description: Contains the disable results for each notification channel
+                  processed in the request.
+                additionalProperties: false
+                properties:
+                  watch:
+                    type: array
+                    description: Represents the list of results for each disabled notification
+                      channel.
+                    maxItems: 200
+                    items:
+                      type: object
+                      description: Represents the result for a single notification channel disable
+                        operation.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Represents the result code for the channel disable operation.
+                          maxLength: 32
+                        details:
+                          type: object
+                          description: Contains the resource details of the disabled notification channel.
+                          additionalProperties: false
+                          properties:
+                            resource_uri:
+                              type: string
+                              description: Represents the URI of the CRM resource associated with the disabled
+                                notification channel.
+                              maxLength: 255
+                            resource_id:
+                              type: string
+                              description: Represents the unique identifier of the CRM resource associated
+                                with the disabled notification channel.
+                              maxLength: 64
+                            channel_id:
+                              type: string
+                              description: Represents the identifier of the notification channel that was
+                                disabled.
+                              maxLength: 64
+                          required:
+                            - resource_uri
+                            - resource_id
+                            - channel_id
+                        message:
+                          type: string
+                          description: Represents the status message for the channel disable result.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: Represents the status of the channel disable result.
+                          maxLength: 32
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - watch
+              examples:
+                Sample:
+                  summary: Successful notification channel disable response
+                  value:
+                    watch:
+                      - code: SUCCESS
+                        details:
+                          resource_uri: https://www.zohoapis.com/crm/v8/Contacts
+                          resource_id: "554023000000000129"
+                          channel_id: "10000"
+                        message: Successfully un-subscribed from actions-watch
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          resource_uri: https://www.zohoapis.com/crm/v8/Deals
+                          resource_id: "554023000000000131"
+                          channel_id: "10000"
+                        message: Successfully un-subscribed from actions-watch
+                        status: success
+        "207":
+          $ref: "#/components/responses/MultiStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  parameters:
+    Module:
+      name: module
+      in: query
+      required: false
+      description: Specify the API name of the CRM module to filter the notification
+        channel list. Refer to the [Get
+        Modules](https://www.zoho.com/crm/developer/docs/api/v8/modules-api.html)
+        resource for valid values.
+      schema:
+        type: string
+        maxLength: 64
+    ChannelId:
+      name: channel_id
+      in: query
+      required: false
+      description: Specify the unique identifier of a single notification channel to
+        filter the results.
+      schema:
+        type: string
+        maxLength: 64
+    ChannelIds:
+      name: channel_ids
+      in: query
+      required: false
+      description: Specify a comma-separated list of channel IDs identifying the
+        notification channels to disable.
+      schema:
+        type: string
+        maxLength: 512
+  responses:
+    MultiStatus:
+      description: Returns a mix of success and error results when some notification
+        channels were created successfully and others failed.
+      content:
+        application/json:
+          schema:
+            type: object
+            description: Contains the partial create results, where each entry in the watch
+              array is either a success or an error.
+            x-zs-$id: CreateNotificationsPartialResponse
+            additionalProperties: false
+            properties:
+              watch:
+                type: array
+                description: Represents the list of result entries, where each item is either a
+                  successful create result or an error response.
+                maxItems: 50
+                items:
+                  oneOf:
+                    - x-zs-$id: SuccessResponse
+                      type: object
+                      description: Represents a successful create result for a single notification
+                        channel.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the result code for a successful
+                            operation.
+
+                            **Possible values:**
+
+                            **SUCCESS** - The operation completed successfully.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: Created event channel details.
+                          additionalProperties: true
+                        message:
+                          type: string
+                          description: Result message.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: Status string.
+                          enum:
+                            - success
+                    - $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            MultiStatusResponse:
+              value:
+                watch:
+                  - code: SUCCESS
+                    details:
+                      events:
+                        - channel_expiry: 2025-12-18T20:33:55+05:30
+                          resource_uri: https://www.zohoapis.com/crm/v2/Leads
+                          resource_id: "4794080000000000125"
+                          resource_name: Leads
+                          channel_id: "175720435875"
+                    message: Successfully subscribed for actions-watch of the given module
+                    status: success
+                  - code: MANDATORY_NOT_FOUND
+                    details:
+                      api_name: channel_id
+                      json_path: $.watch[1].channel_id
+                    message: required field not found
+                    status: error
+    BadRequest:
+      description: One or more request parameters are invalid or missing.
+      content:
+        application/json:
+          schema:
+            x-zs-$id: ErrorResponses
+            oneOf:
+              - $ref: "#/components/schemas/ErrorResponse"
+              - type: object
+                x-zs-$id: WatchErrorResponse
+                description: Represents a batch error response containing a list of validation
+                  errors.
+                additionalProperties: false
+                properties:
+                  watch:
+                    type: array
+                    description: Represents the list of error entries returned when a batch
+                      operation encounters validation errors.
+                    maxItems: 50
+                    items:
+                      $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            MandatoryNotFound:
+              summary: Required field notify_url missing from the request
+              value:
+                code: MANDATORY_NOT_FOUND
+                message: required field not found
+                details:
+                  api_name: notify_url
+                status: error
+              description: Shows a MANDATORY_NOT_FOUND error response indicating the required
+                notify_url field is missing from the request body.
+            ModuleNotSupported:
+              summary: Unsupported module referenced in the events field
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: events
+                status: error
+              description: Shows an INVALID_DATA error response indicating the events field
+                references a CRM module that is not supported for notifications.
+            InvalidFieldInFields:
+              summary: Invalid field reference in the fields parameter
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: fields
+                  json_path: $.watch[0].fields[1]
+                status: error
+              description: Shows an INVALID_DATA error response indicating an invalid field
+                name was specified in the fields parameter of the notification
+                channel.
+            InvalidNotificationConditionDataType:
+              summary: Invalid data type for the notification_condition field
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: notification_condition
+                  json_path: $.watch[0].notification_condition
+                status: error
+              description: Shows an INVALID_DATA error response indicating the
+                notification_condition field contains a value of an incorrect
+                data type.
+            InvalidDataTypeForUnderscoreDelete:
+              summary: Invalid data type for the _delete field
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: _delete
+                  expected_data_type: boolean
+                  json_path: $.watch[0]._delete
+                status: error
+              description: Shows an INVALID_DATA error response indicating the _delete field
+                must be a Boolean value.
+            RequestFieldModuleNotAvailableInNotificationCondition:
+              summary: Specified module is not available in the notification condition
+              value:
+                code: INVALID_DATA
+                message: required field not found
+                details:
+                  api_name: module
+                  json_path: $.watch[0].notification_condition[0].module
+                status: error
+              description: Shows an INVALID_DATA error response indicating the module
+                referenced in notification_condition is not available for use as
+                a field-selection condition.
+            InvalidDataTypeForModuleInNotificationCondition:
+              summary: Invalid data type for the module field in the notification condition
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: module
+                  expected_data_type: jsonobject
+                  json_path: $.watch[0].notification_condition[0].module
+                status: error
+              description: Shows an INVALID_DATA error response indicating the module field
+                inside notification_condition must be a JSON object.
+            InvalidDataTypeForApiNameInModuleOfNotificationCondition:
+              summary: Invalid data type for api_name in the notification condition module
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: api_name
+                  expected_data_type: string
+                  json_path: $.watch[0].notification_condition[0].module.api_name
+                status: error
+              description: Shows an INVALID_DATA error response indicating the api_name field
+                inside the notification condition module must be a string.
+            InvalidDataTypeForIdInModuleOfNotificationCondition:
+              summary: Invalid data type for the module ID field in the notification condition
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: id
+                  expected_data_type: string
+                  json_path: $.watch[0].notification_condition[0].module.api_name
+                status: error
+              description: Shows an INVALID_DATA error response indicating the ID field inside
+                the notification condition module must be a string.
+            BothApiNameAndIdIsMissingInModuleOfNotificationCondition:
+              summary: Both api_name and module ID missing from the notification condition
+              value:
+                code: EXPECTED_FIELD_MISSING
+                message: Specify atleast one field
+                details:
+                  expected_fields:
+                    - api_name: api_name
+                      json_path: $.watch[0].notification_condition[0].module.api_name
+                    - api_name: id
+                      json_path: $.watch[0].notification_condition[0].module.id
+                status: error
+              description: Shows an EXPECTED_FIELD_MISSING error response indicating that at
+                least one of api_name or module ID must be present in the
+                notification condition module.
+            AmbiguityWhileProcessingModuleApiNameAndIdInNotificationCondition:
+              summary: Ambiguity between api_name and module ID in the notification condition
+              value:
+                code: AMBIGUITY_DURING_PROCESSING
+                message: AMBIGUITY_DURING_PROCESSING
+                details:
+                  ambiguity_due_to:
+                    - api_name: api_name
+                      json_path: $.watch[0].notification_condition[0].module.api_name
+                    - api_name: id
+                      json_path: $.watch[0].notification_condition[0].module.id
+                status: error
+              description: Shows an AMBIGUITY_DURING_PROCESSING error response indicating both
+                api_name and the module ID were provided in the notification
+                condition, creating ambiguity.
+            DependentFieldMissingInModuleOfNotificationCondition:
+              summary: Dependent field field_selection missing from the notification condition
+              value:
+                code: DEPENDENT_FIELD_MISSING
+                message: DEPENDENT_FIELD_MISSING
+                details:
+                  api_name: field_selection
+                  json_path: $.watch[0].notification_condition[0].field_selection
+                  dependee:
+                    api_name: type
+                    json_path: $.watch[0].notification_condition[0].type
+                status: error
+              description: Shows a DEPENDENT_FIELD_MISSING error response indicating the
+                field_selection field is required in the notification condition
+                when the type field is present.
+            InvalidDataTypeForFieldSelection:
+              summary: Invalid data type for the field_selection field
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: field_selection
+                  json_path: $.watch[0].notification_condition[0].field_selection
+                  expected_data_type: jsonobject
+                status: error
+              description: Shows an INVALID_DATA error response indicating the field_selection
+                field in notification_condition must be a JSON object.
+            MandatoryGroupOperatorNotFound:
+              summary: Required group_operator field missing from the field_selection
+              value:
+                code: MANDATORY_NOT_FOUND
+                message: required field not found
+                details:
+                  api_name: group_operator
+                  json_path: $.watch[0].notification_condition[0].field_selection.group_operator
+                status: error
+              description: Shows a MANDATORY_NOT_FOUND error response indicating the
+                group_operator field is required in the field_selection object
+                of a notification condition.
+            InvalidDataTypeForGroupOperator:
+              summary: Invalid data type for the group_operator field
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: group_operator
+                  json_path: $.watch[0].notification_condition[0].field_selection.group_operator
+                  expected_data_type: text
+                status: error
+              description: Shows an INVALID_DATA error response indicating the group_operator
+                field in field_selection must be a string value.
+            UnsupportedValueForGroupOperator:
+              summary: Unsupported value for the group_operator field
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: group_operator
+                  json_path: $.watch[0].notification_condition[0].field_selection.group_operator
+                  supported_values:
+                    - or
+                    - and
+                status: error
+              description: Shows an INVALID_DATA error response indicating the group_operator
+                field contains an unsupported value. The valid values are and
+                and or.
+            MandatoryFieldOrGroupNotFound:
+              summary: Required field or group array missing from the notification condition
+              value:
+                code: MANDATORY_NOT_FOUND
+                message: required field not found
+                details:
+                  api_name: field
+                  json_path: $.watch[0].notification_condition.field_selection.field
+                status: error
+              description: Shows a MANDATORY_NOT_FOUND error response indicating the field
+                array is required in the field_selection object of the
+                notification condition.
+            NotificationCriteriaLimitExceeded:
+              summary: Field reference limit exceeded in the field_selection
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: field_selection
+                  json_path: $.watch[0].notification_condition.field_selection
+                  maximum_length: 10
+                status: error
+              description: Shows an INVALID_DATA error response indicating the number of field
+                references in field_selection exceeds the maximum allowed limit
+                of 10.
+            MandatoryTypeNotFound:
+              summary: Required type field missing from the notification condition
+              value:
+                code: MANDATORY_NOT_FOUND
+                message: required field not found
+                details:
+                  api_name: type
+                  json_path: $.watch[0].notification_condition[0].type
+                status: error
+              description: Shows a MANDATORY_NOT_FOUND error response indicating the type
+                field is required in each notification_condition entry.
+            InvalidDataTypeForType:
+              summary: Invalid data type for the type field
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: type
+                  json_path: $.watch[0].notification_condition[0].type
+                  expected_data_type: text
+                status: error
+              description: Shows an INVALID_DATA error response indicating the type field in
+                notification_condition must be a string.
+            UnsupportedValueForType:
+              summary: Unsupported value for the type field
+              value:
+                code: INVALID_DATA
+                message: invalid data
+                details:
+                  api_name: type
+                  json_path: $.watch[0].notification_condition[0].type
+                  supported_values:
+                    - field_selection
+                status: error
+              description: Shows an INVALID_DATA error response indicating the type field
+                contains an unsupported value. The only valid value is
+                field_selection.
+    Unauthorized:
+      description: The access token is missing, invalid, or does not have the required
+        OAuth scope.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            OauthScopeMismatch:
+              summary: Missing required OAuth scope
+              value:
+                code: OAUTH_SCOPE_MISMATCH
+                message: Unauthorized
+                status: error
+              description: Shows an OAUTH_SCOPE_MISMATCH error response indicating the access
+                token does not have the required scope for this operation.
+    TooManyRequests:
+      description: The request rate limit has been exceeded.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            RateLimitExceeded:
+              summary: API rate limit exceeded
+              value:
+                code: RATE_LIMIT_EXCEEDED
+                message: Too many requests. Please try again later.
+                status: error
+              description: Shows a RATE_LIMIT_EXCEEDED error response indicating the number of
+                requests has exceeded the allowed rate limit for the API.
+    InternalServerError:
+      description: An unexpected error occurred while processing the request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            Sample:
+              summary: Unexpected internal server error
+              value:
+                code: INTERNAL_ERROR
+                message: An unexpected error occurred.
+                status: error
+              description: Shows an INTERNAL_ERROR response indicating an unexpected error
+                occurred on the server while processing the request.
+  schemas:
+    ErrorDetails:
+      type: object
+      description: Represents the detailed error information associated with a
+        specific parameter or field that caused the request to fail.
+      additionalProperties: false
+      properties:
+        api_name:
+          type: string
+          description: Represents the API name of the parameter or field that caused the
+            error.
+          maxLength: 64
+        expected_data_type:
+          type: string
+          description: Represents the expected data type for the parameter or field that
+            caused the error.
+          maxLength: 64
+        json_path:
+          type: string
+          description: Represents the JSON path indicating the location of the error in
+            the request payload.
+          maxLength: 256
+        ambiguity_due_to:
+          maxItems: 2
+          type: array
+          description: Represents the list of fields that caused ambiguity during request
+            processing.
+          items:
+            type: object
+            description: Represents a field that contributed to the ambiguity during
+              processing.
+            additionalProperties: false
+            properties:
+              api_name:
+                type: string
+                description: Represents the API name of the field that caused ambiguity.
+                maxLength: 64
+              json_path:
+                type: string
+                description: Represents the JSON path indicating the location of the ambiguous
+                  field in the request payload.
+                maxLength: 256
+            required:
+              - api_name
+              - json_path
+        expected_fields:
+          maxItems: 2
+          type: array
+          description: Represents the list of fields required when at least one of several
+            expected fields is missing.
+          items:
+            type: object
+            description: Represents a field that is required but was not found in the
+              request.
+            additionalProperties: false
+            properties:
+              api_name:
+                type: string
+                description: Represents the API name of the required field.
+                maxLength: 64
+              json_path:
+                type: string
+                description: Represents the JSON path indicating the location of the required
+                  field in the request payload.
+                maxLength: 256
+            required:
+              - api_name
+              - json_path
+        dependee:
+          type: object
+          description: Represents the details of a required dependent field that was
+            missing from the request.
+          additionalProperties: false
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the missing dependent field.
+              maxLength: 64
+            json_path:
+              type: string
+              description: Represents the JSON path indicating the location of the missing
+                dependent field in the request payload.
+              maxLength: 256
+          required:
+            - api_name
+            - json_path
+        supported_values:
+          type: array
+          description: Represents the list of supported values for the parameter or field
+            that caused the error.
+          maxItems: 2
+          items:
+            type: string
+            description: Represents a single supported value for the parameter or field.
+            maxLength: 64
+        maximum_length:
+          type: integer
+          format: int32
+          description: Represents the maximum allowed length for the parameter or field
+            that caused the error.
+    ErrorResponse:
+      type: object
+      description: Represents the standard error response structure returned when a
+        request fails.
+      x-zs-$id: ErrorResponse
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Represents the specific error code identifying the type of failure.
+          enum:
+            - INVALID_DATA
+            - INVALID_QUERY
+            - NOT_SUBSCRIBED
+            - EXPECTED_PARAM_MISSING
+            - LIMIT_REACHED
+            - NOT_SUPPORTED
+            - INVALID_REQUEST_METHOD
+            - AUTHORIZATION_FAILED
+            - OAUTH_SCOPE_MISMATCH
+            - NO_PERMISSION
+            - INVALID_URL_PATTERN
+            - INTERNAL_ERROR
+            - RATE_LIMIT_EXCEEDED
+            - SERVICE_UNAVAILABLE
+            - INVALID_MODULE
+            - MANDATORY_NOT_FOUND
+            - EXPECTED_FIELD_MISSING
+            - AMBIGUITY_DURING_PROCESSING
+            - DEPENDENT_FIELD_MISSING
+        details:
+          $ref: "#/components/schemas/ErrorDetails"
+        message:
+          type: string
+          description: Represents the error message describing the issue.
+          maxLength: 1000
+        status:
+          type: string
+          description: |-
+            Represents the response status.
+            **Possible values:**
+            **error** - Indicates an error response.
+          enum:
+            - error
+          default: error
+      required:
+        - code
+        - message
+        - status
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.notifications.ALL: Grants permission to perform all notification channel
+              operations in Zoho CRM, including creating, retrieving, updating,
+              and deleting channels.
+            ZohoCRM.notifications.READ: Grants permission to retrieve notification channel
+              details from Zoho CRM.
+            ZohoCRM.notifications.CREATE: Grants permission to create notification channels in Zoho CRM.
+            ZohoCRM.notifications.UPDATE: Grants permission to update notification channel
+              configurations in Zoho CRM.
+            ZohoCRM.notifications.DELETE: Grants permission to disable notification channels in Zoho CRM.

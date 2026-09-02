@@ -1,0 +1,720 @@
+openapi: 3.1.0
+info:
+  title: Convert Inventory Records
+  description: >-
+    Inventory conversion enables records to progress through the Zoho CRM sales
+    cycle by converting Quotes to Sales Orders or Invoices, and Sales Orders to
+    Invoices. This API enables developers to trigger inventory record
+    conversions programmatically for a specified source record.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Production API server for Zoho CRM.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: The data center domain for the API server.
+      version:
+        default: v8
+        description: The API version.
+paths:
+  /{moduleApiName}/{id}/actions/convert:
+    post:
+      operationId: convertInventory
+      summary: Convert Inventory Record
+      description: >-
+        To convert an inventory record in your Zoho CRM organization from one
+        module to another. Supported conversion paths are: Quotes to Sales
+        Orders or Invoices, and Sales Orders to Invoices.
+      parameters:
+        - $ref: '#/components/parameters/ModuleApiName'
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request payload for the inventory record
+                conversion.
+              additionalProperties: false
+              properties:
+                data:
+                  type: array
+                  description: Specify the inventory record conversion details.
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: Specify the details for the inventory record to convert.
+                    additionalProperties: false
+                    properties:
+                      convert_to:
+                        type: array
+                        description: Specify the target module details for the conversion.
+                        maxItems: 1
+                        items:
+                          type: object
+                          description: >-
+                            Specify the target module name and ID for the
+                            converted record.
+                          additionalProperties: false
+                          properties:
+                            module:
+                              type: object
+                              description: >-
+                                Specify the target inventory module to which the
+                                record is to be converted.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  maxLength: 50
+                                  description: >-
+                                    Specify the API name of the target inventory
+                                    module. Possible values: **Invoices**,
+                                    **Sales_Orders**. Use the [Get Modules
+                                    API](modules.yaml#$.paths./settings/modules.get)
+                                    to retrieve module IDs and API names.
+                                  x-zs-$ref:
+                                    resource: modules
+                                    origins:
+                                      - operationId: getModules
+                                        propertyId: ModulesApiName
+                                id:
+                                  type: string
+                                  maxLength: 255
+                                  description: >-
+                                    Unique ID of the target module. Use the [Get
+                                    Modules
+                                    API](modules.yaml#$.paths./settings/modules.get)
+                                    to retrieve module ID.
+                                  x-zs-$ref:
+                                    resource: modules
+                                    origins:
+                                      - operationId: getModules
+                                        propertyId: ModulesId
+                                  format: int64
+                              required:
+                                - api_name
+                                - id
+                            carry_over_tags:
+                              type: boolean
+                              description: >-
+                                Specifies whether the tags from the source
+                                record are carried over to the converted target
+                                record. Must be set to true or omitted; setting
+                                this to false returns a NOT_ALLOWED error.
+                          required:
+                            - module
+                    required:
+                      - convert_to
+            examples:
+              Success:
+                summary: Convert a Quotes record to a Sales Order
+                value:
+                  data:
+                    - convert_to:
+                        - module:
+                            id: '111111000000002469'
+                            api_name: Sales_Orders
+                description: >-
+                  Shows a request to convert a Quotes record to a Sales Order,
+                  specifying the target module API name and unique ID.
+        required: true
+        description: The request body must contain a data array with one object.
+      responses:
+        '200':
+          description: >-
+            Returns the conversion result, including the unique ID and display
+            name of the converted record in the target module.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InventoryConvertSuccessResponse
+                type: object
+                description: >-
+                  Represents the successful response returned when the inventory
+                  record is converted.
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Represents the list of conversion results returned by the
+                      operation.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Represents the conversion result for the inventory
+                        record.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the result code of the conversion
+                            operation. Possible values: **SUCCESS**.
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the result of the
+                            conversion operation.
+                          enum:
+                            - The record has been converted successfully
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the conversion operation.
+                            Possible values: **success**.
+                          enum:
+                            - success
+                        details:
+                          type: object
+                          description: >-
+                            Represents the details of the converted record,
+                            organized by the target module API name.
+                          additionalProperties: false
+                          properties:
+                            Sales_Orders:
+                              type: object
+                              description: >-
+                                Represents the details of the converted Sales
+                                Order record.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  maxLength: 255
+                                  description: >-
+                                    Represents the unique ID of the converted
+                                    Sales Order record.
+                                name:
+                                  type: string
+                                  maxLength: 50
+                                  description: >-
+                                    Represents the display name of the converted
+                                    Sales Order record.
+                            Invoices:
+                              type: object
+                              description: >-
+                                Represents the details of the converted Invoice
+                                record.
+                              additionalProperties: false
+                              properties:
+                                id:
+                                  type: string
+                                  maxLength: 255
+                                  description: >-
+                                    Represents the unique ID of the converted
+                                    Invoice record.
+                                name:
+                                  type: string
+                                  maxLength: 50
+                                  description: >-
+                                    Represents the display name of the converted
+                                    Invoice record.
+              examples:
+                Success:
+                  summary: Successful conversion of a Quotes record to a Sales Order
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Sales_Orders:
+                            name: TestQ4
+                            id: '111111000000072039'
+                        message: The record has been converted successfully
+                        status: success
+                  description: >-
+                    Shows a successful conversion response with the converted
+                    Sales Order record ID and display name.
+        '400':
+          description: >-
+            Returns a validation error when the request data is invalid or a
+            required field is missing.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InventoryConvert400ErrorResponse
+                oneOf:
+                  - x-zs-$id: InventoryConvertValidationErrorResponse
+                    type: object
+                    description: >-
+                      Represents a flat error response returned when a single
+                      validation failure occurs at the request or record level.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for the validation
+                          failure. Possible values: **INVALID_DATA**,
+                          **MANDATORY_NOT_FOUND**, **ID_ALREADY_CONVERTED**,
+                          **NO_PERMISSION**, **AMBIGUITY_DURING_PROCESSING**,
+                          **EXPECTED_FIELD_MISSING**,
+                          **INVALID_REQUEST_METHOD**, **NOT_APPROVED**,
+                          **NOT_REVIEWED**, **RECORD_LOCKED**. Always returned
+                          in the response.
+                        enum:
+                          - INVALID_DATA
+                          - MANDATORY_NOT_FOUND
+                          - ID_ALREADY_CONVERTED
+                          - NO_PERMISSION
+                          - AMBIGUITY_DURING_PROCESSING
+                          - EXPECTED_FIELD_MISSING
+                          - INVALID_REQUEST_METHOD
+                          - NOT_APPROVED
+                          - NOT_REVIEWED
+                          - RECORD_LOCKED
+                        maxLength: 100
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the issue.
+                          Always returned in the response.
+                        maxLength: 512
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. Possible
+                          values: **error**. Always returned in the response.
+                        enum:
+                          - error
+                        maxLength: 50
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the error, such as
+                          the field name, JSON path, or expected data type.
+                          Always returned in the response.
+                        additionalProperties: true
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - x-zs-$id: InventoryConvertValidationErrorResponsewithRoot
+                    type: object
+                    description: >-
+                      Represents an error response containing a data array
+                      returned when validation failures are associated with
+                      specific request fields.
+                    additionalProperties: false
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Represents the list of validation error details
+                          returned for the failed conversion.
+                        items:
+                          type: object
+                          description: >-
+                            Represents the error detail for a single validation
+                            failure in the conversion request.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the error code for the validation
+                                failure. Possible values:
+                                **AMBIGUITY_DURING_PROCESSING**,
+                                **EXPECTED_FIELD_MISSING**, **NOT_ALLOWED**,
+                                **INVALID_DATA**, **DUPLICATE_DATA**. Always
+                                returned in the response.
+                              enum:
+                                - AMBIGUITY_DURING_PROCESSING
+                                - EXPECTED_FIELD_MISSING
+                                - NOT_ALLOWED
+                                - INVALID_DATA
+                                - DUPLICATE_DATA
+                              maxLength: 100
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message describing the
+                                validation issue. Always returned in the
+                                response.
+                              maxLength: 512
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status of the response. Possible
+                                values: **error**. Always returned in the
+                                response.
+                              enum:
+                                - error
+                              maxLength: 50
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the
+                                validation error, such as the field name, JSON
+                                path, or expected data type. Always returned in
+                                the response.
+                              additionalProperties: true
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                        maxItems: 4
+                    required:
+                      - data
+                description: >-
+                  Represents the possible error response shapes returned for
+                  validation failures in the conversion request.
+              examples:
+                MandatoryIdsMissing:
+                  summary: Missing mandatory convert_to field
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    message: required field not found
+                    status: error
+                    details:
+                      api_name: convert_to
+                      json_path: $.data[0].convert_to
+                  description: >-
+                    Shows a MANDATORY_NOT_FOUND error returned when the required
+                    convert_to field is absent from the request body.
+                NoPermission:
+                  summary: Permission denied to access the source module
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      resource_path_index: 0
+                    message: permission denied to access the module
+                    status: error
+                  description: >-
+                    Shows a NO_PERMISSION error returned when the caller lacks
+                    access to the source inventory module.
+                InvalidRequestMethod:
+                  summary: Invalid HTTP request method
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The http request method type is not a valid one
+                    status: error
+                  description: >-
+                    Shows an INVALID_REQUEST_METHOD error returned when the
+                    request specifies an unsupported HTTP method for the
+                    conversion endpoint.
+                InvalidParentId:
+                  summary: Invalid or mismatched source record ID
+                  value:
+                    code: INVALID_DATA
+                    message: invalid data
+                    status: error
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Shows an INVALID_DATA error returned when the source record
+                    ID does not belong to the specified source module.
+                AmbiguityDuringProcessing:
+                  summary: API name and ID do not match
+                  value:
+                    data:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: api_name
+                              json_path: $.data[0].convert_to[0].module.api_name
+                            - api_name: id
+                              json_path: $.data[0].convert_to[0].module.id
+                        message: Ambiguity while processing the request
+                        status: error
+                  description: >-
+                    Shows an AMBIGUITY_DURING_PROCESSING error returned when the
+                    provided module API name and ID refer to different modules.
+                ExpectedFieldMissing:
+                  summary: Required field missing from convert_to array
+                  value:
+                    data:
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_fields:
+                            - api_name: api_name
+                              json_path: $.data[0].convert_to[0].module.api_name
+                            - api_name: id
+                              json_path: $.data[0].convert_to[0].module.id
+                        message: Specify atleast one field
+                        status: error
+                  description: >-
+                    Shows an EXPECTED_FIELD_MISSING error returned when neither
+                    the module API name nor the ID is provided in the request
+                    body.
+                IdAlreadyConverted:
+                  summary: Source record has already been converted
+                  value:
+                    code: ID_ALREADY_CONVERTED
+                    details:
+                      resource_path_index: 1
+                    message: id already converted
+                    status: error
+                  description: >-
+                    Shows an ID_ALREADY_CONVERTED error returned when the
+                    specified source record has already been converted to
+                    another module.
+                NotApproved:
+                  summary: Source record is pending approval
+                  value:
+                    code: NOT_APPROVED
+                    details:
+                      resource_path_index: 1
+                    message: record not approved
+                    status: error
+                  description: >-
+                    Shows a NOT_APPROVED error returned when the source record
+                    has not been approved and cannot be converted.
+                NotReviewed:
+                  summary: Source record is pending review
+                  value:
+                    code: NOT_REVIEWED
+                    details:
+                      resource_path_index: 1
+                    message: record in review
+                    status: error
+                  description: >-
+                    Shows a NOT_REVIEWED error returned when the source record
+                    is still under review and cannot be converted.
+                NotAllowed:
+                  summary: carry_over_tags must be set to true
+                  value:
+                    data:
+                      - code: NOT_ALLOWED
+                        details:
+                          reason: Carry over tags will be automatically converted
+                          api_name: carry_over_tags
+                          json_path: $.data[0].convert_to[0].carry_over_tags
+                        message: carry over tags must be given as true
+                        status: error
+                  description: >-
+                    Shows a NOT_ALLOWED error returned when the carry_over_tags
+                    field is explicitly set to false, as tags are always carried
+                    over during conversion.
+                DuplicateData:
+                  summary: Duplicate unique field value in the target module
+                  value:
+                    data:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: Billing_Street
+                          duplicate_record:
+                            Owner:
+                              name: Poovi MBUser2
+                              id: '111111000000058229'
+                              zuid: '44653171'
+                            module:
+                              api_name: Sales_Orders
+                              id: '111111000000002766'
+                            id: '111111000000536282'
+                          json_path: $.data[0].Billing_Street
+                          more_records: false
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Shows a DUPLICATE_DATA error returned when the converted
+                    record's unique field value already exists in the target
+                    module.
+        '403':
+          description: >-
+            Returns a permission denied error when the caller lacks access to
+            the source or target inventory module.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PermissionDeniedErrorResponse
+                oneOf:
+                  - x-zs-$id: PermissionDeniedForSourceModule
+                    type: object
+                    description: >-
+                      Represents a permission denied response containing a data
+                      array, returned when access to the target module is
+                      denied.
+                    additionalProperties: false
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Represents the list of permission error details
+                          returned by the operation.
+                        maxItems: 4
+                        items:
+                          type: object
+                          description: >-
+                            Represents a single permission error detail for the
+                            conversion operation.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the error code for the permission
+                                failure. Possible values: **NO_PERMISSION**.
+                                Always returned in the response.
+                              enum:
+                                - NO_PERMISSION
+                            details:
+                              type: object
+                              description: >-
+                                Represents additional details about the
+                                permission error, such as the required
+                                permissions or the resource path index. Always
+                                returned in the response.
+                              additionalProperties: true
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message describing the
+                                permission denial. Always returned in the
+                                response.
+                              maxLength: 512
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status of the response. Possible
+                                values: **error**. Always returned in the
+                                response.
+                              enum:
+                                - error
+                              maxLength: 50
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                    required:
+                      - data
+                  - type: object
+                    x-zs-$id: PermissionDeniedForTargetModule
+                    description: >-
+                      Represents a flat permission denied response returned when
+                      access to the source module is denied.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the permission failure.
+                          Possible values: **NO_PERMISSION**. Always returned in
+                          the response.
+                        enum:
+                          - NO_PERMISSION
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the permission
+                          denial, such as the required permissions. Always
+                          returned in the response.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the permission
+                          denial. Always returned in the response.
+                        maxLength: 512
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. Possible
+                          values: **error**. Always returned in the response.
+                        enum:
+                          - error
+                        maxLength: 50
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: >-
+                  Represents the permission denied response returned when the
+                  caller lacks access to the source or target inventory module.
+              examples:
+                PermissionDeniedForTargetModule:
+                  summary: Permission denied for target module
+                  value:
+                    data:
+                      - code: NO_PERMISSION
+                        details:
+                          api_name: module
+                          permissions:
+                            - Crm_Implied_Create_Invoices
+                            - Crm_Implied_View_Invoices
+                          json_path: $.data[0].convert_to[0].module
+                        message: permission denied
+                        status: error
+                  description: >-
+                    Shows a NO_PERMISSION error returned when the caller lacks
+                    permission to create records in the target module.
+                NoPermissionForSourceModule:
+                  summary: Permission denied for source module
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_View_Quotes
+                        - Crm_Implied_Convert_Quotes
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Shows a NO_PERMISSION error returned when the caller lacks
+                    permission to convert records from the source module.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.CREATE
+            - ZohoCRM.modules.SalesOrders.CREATE
+components:
+  parameters:
+    ModuleApiName:
+      name: moduleApiName
+      description: >-
+        Specify the API name of the source inventory module. Use the [Get
+        Modules API](modules.yaml#$.paths./settings/modules.get) to retrieve the
+        module's API name.
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - Quotes
+          - Sales_Orders
+    Id:
+      name: id
+      description: >
+        Specify the unique ID of the source inventory record to convert. Use the
+        [Get Modules API](modules.yaml#$.paths./settings/modules.get) to
+        retrieve the module's ID. 
+
+        **Possible values:** Quotes, Sales_Orders.
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.ALL: >-
+              Grants permission to access all inventory modules for conversion
+              operations in Zoho CRM. 
+            ZohoCRM.modules.Quotes.CREATE: >-
+              Grants permission to convert records from the Quotes module in
+              Zoho CRM.
+            ZohoCRM.modules.SalesOrders.CREATE: >-
+              Grants permission to convert records from the Sales Orders module
+              in Zoho CRM.

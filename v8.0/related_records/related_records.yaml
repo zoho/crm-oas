@@ -1,0 +1,4248 @@
+openapi: 3.1.0
+info:
+  title: Zoho CRM Related Records API
+  description: >-
+    Related records are records from other modules that are associated with a
+    parent CRM record through its configured related lists. This API enables
+    developers to retrieve, update, delink, and inspect deleted related records
+    for any parent record across all standard Zoho CRM modules.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`
+    variables:
+      dc:
+        description: >-
+          The top-level domain suffix for the Zoho CRM API endpoint. Possible
+          values: **com**, **eu**, **in**, **cn**, **au**. Default: **com**.
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+      version:
+        description: 'The API version for the request. Default: **v8**.'
+        default: v8
+paths:
+  /{parentRecordModule}/{parentRecord}/{relatedList}:
+    get:
+      summary: Related Records
+      description: >-
+        To retrieve the list of records associated with a parent record from a
+        specified related list in your Zoho CRM organization.
+      operationId: getRelatedRecords
+      parameters:
+        - $ref: '#/components/parameters/ParentRecordModule'
+        - $ref: '#/components/parameters/ParentRecord'
+        - $ref: '#/components/parameters/RelatedList'
+        - $ref: '#/components/parameters/Fields'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/IfModifiedSince'
+        - $ref: '#/components/parameters/PageToken'
+        - $ref: '#/components/parameters/IdsOptional'
+        - $ref: '#/components/parameters/SortOrder'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Converted'
+        - $ref: '#/components/parameters/Approved'
+        - $ref: '#/components/parameters/ApprovalState'
+        - $ref: '#/components/parameters/Filters'
+      responses:
+        '200':
+          description: >-
+            Returns the list of related records for the specified parent record,
+            along with pagination metadata.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: SuccessResponse
+                type: object
+                description: >-
+                  Represents the response for a list of related records,
+                  including the record fields and pagination metadata.
+                additionalProperties: false
+                required:
+                  - data
+                  - info
+                properties:
+                  data:
+                    type: array
+                    description: Array of related record objects with requested fields.
+                    maxItems: 200
+                    items:
+                      type: object
+                      description: Individual related record with dynamic CRM fields.
+                      additionalProperties: true
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier of the related record.
+                          pattern: ^[0-9]+$
+                          maxLength: 20
+                          x-zs-$id: RelatedRecordsId2
+                        Created_Time:
+                          type: string
+                          description: >-
+                            Represents the creation date and time of the related
+                            record.
+                          format: date-time
+                        Modified_Time:
+                          type: string
+                          description: Timestamp when the record was last modified.
+                          format: date-time
+                        Moved_To__s:
+                          type: string
+                          description: >-
+                            Stage value to which the record was moved (stage
+                            history / picklist movement).
+                          maxLength: 255
+                  info:
+                    type: object
+                    description: Pagination and response metadata.
+                    additionalProperties: false
+                    required:
+                      - page
+                      - per_page
+                      - count
+                      - more_records
+                    properties:
+                      page:
+                        type: integer
+                        format: int32
+                        description: Current page number.
+                        minimum: 1
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: Number of records per page.
+                        minimum: 1
+                        maximum: 200
+                      count:
+                        type: integer
+                        format: int32
+                        description: Number of records in current response.
+                        minimum: 0
+                      more_records:
+                        type: boolean
+                        description: Indicates if more pages are available.
+                      next_page_token:
+                        type:
+                          - string
+                          - 'null'
+                        description: Token to retrieve the next page of results.
+                        maxLength: 500
+                      page_token_expiry:
+                        type:
+                          - string
+                          - 'null'
+                        format: date-time
+                        description: Expiration timestamp for the page token.
+                      previous_page_token:
+                        type:
+                          - string
+                          - 'null'
+                        description: Token to retrieve the previous page of results.
+                        maxLength: 500
+              examples:
+                ContactProductsSuccess:
+                  summary: Contact with related Products
+                  value:
+                    data:
+                      - id: '3652397000001234001'
+                        Product_Name: Premium Widget
+                        Unit_Price: 99.99
+                        Created_Time: '2024-01-15T10:30:00Z'
+                        Modified_Time: '2024-01-20T14:45:00Z'
+                    info:
+                      page: 1
+                      per_page: 200
+                      count: 1
+                      more_records: false
+                      next_page_token: null
+                      page_token_expiry: null
+                      previous_page_token: null
+                  description: Shows contact with related Products.
+                DealContactsPaginated:
+                  summary: Deal with multiple related Contacts (paginated)
+                  value:
+                    data:
+                      - id: '3652397000000624001'
+                        First_Name: John
+                        Last_Name: Doe
+                        Email: john.doe@example.com
+                        Created_Time: '2024-01-10T09:00:00Z'
+                        Modified_Time: '2024-01-15T11:20:00Z'
+                    info:
+                      page: 1
+                      per_page: 200
+                      count: 1
+                      more_records: true
+                      next_page_token: abc123
+                      page_token_expiry: '2024-01-25T10:00:00Z'
+                      previous_page_token: null
+                  description: Shows deal with multiple related Contacts (paginated).
+        '204':
+          description: >-
+            No related records were found for the specified parent record in the
+            given related list.
+        '400':
+          description: >-
+            The request contains invalid input, an unsupported module, or an
+            invalid request method.
+
+            **Resolution:** Review the error code and message in the response to
+            identify the specific issue.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetRelatedRecords400ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidModuleError'
+                  - $ref: '#/components/schemas/NotSupportedError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/AuthorizationFailedError'
+                  - $ref: '#/components/schemas/RequiredParamMissingError'
+                description: >-
+                  Contains one of the possible client error responses for
+                  invalid module name, unsupported module, invalid data, invalid
+                  request method, or authorization failure. May also indicate a
+                  missing required parameter.
+              examples:
+                InvalidModule:
+                  summary: Invalid module name provided
+                  value:
+                    code: INVALID_MODULE
+                    message: The given module is not supported
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows an error response when the module name in the request
+                    URL is not a valid Zoho CRM module.
+                NotSupported:
+                  summary: Module not supported in API
+                  value:
+                    code: NOT_SUPPORTED
+                    message: The given module is not supported in API
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: Shows module not supported in API.
+                InvalidDataError:
+                  summary: Invalid data or related ID
+                  value:
+                    code: INVALID_DATA
+                    message: The related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Shows an invalid data error response when a related record
+                    ID in the request is invalid.
+                InvalidDataRelationNameError:
+                  summary: Invalid data or related name
+                  value:
+                    code: INVALID_DATA
+                    message: The related name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 2
+                  description: >-
+                    Shows an invalid data error response when the related list
+                    name in the request is invalid.
+                InvalidRequestMethod:
+                  summary: Invalid HTTP request method
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    message: The http request method type is not a valid one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an error response when the HTTP method used does not
+                    match the supported method for this endpoint.
+                AuthorizationFailed:
+                  summary: Insufficient privilege to read related records data
+                  value:
+                    code: AUTHORIZATION_FAILED
+                    message: >-
+                      User does not have sufficient privilege to read related
+                      records data
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an authorization failure response when the access
+                    token lacks the required read privilege.
+                RequiredParamMissing:
+                  summary: A required parameter is missing
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    message: One of the expected parameter is missing
+                    status: error
+                    details:
+                      param_name: fields
+                  description: Shows a required parameter is missing.
+        '401':
+          description: >-
+            Authentication failed due to an invalid or expired token.
+
+            **Resolution:** A valid access token must be provided in the
+            Authorization header.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetRelatedRecords401ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidTokenError'
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+                description: >-
+                  Contains one of the possible unauthorized access error
+                  responses for invalid token or OAuth scope mismatch.
+              examples:
+                InvalidToken:
+                  summary: Invalid authentication token
+                  value:
+                    code: INVALID_TOKEN
+                    details: {}
+                    message: Invalid OAuth token
+                    status: error
+                  description: Shows invalid authentication token.
+                OAuthScopeMismatch:
+                  summary: Missing READ scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: >-
+                      The access token you have used to make this API call does
+                      not have the required scope.
+                    status: error
+                    details: {}
+                  description: Shows missing READ scope.
+        '403':
+          description: >-
+            The access token does not have permission to read related records in
+            this module.
+
+            **Resolution:** The CRM administrator must grant the required read
+            permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NoPermissionError
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermission:
+                  summary: No permission to read related records
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_View_Leads
+                    message: Permission denied to read related records
+                    status: error
+                  description: Shows no permission to read related records.
+        '404':
+          description: >-
+            The specified parent record or related list does not exist.
+
+            **Resolution:** The **parentRecord** and **relatedList** path
+            parameter values must refer to existing resources.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordNotFoundAndInvalidUrlPatternErrorForGetRelatedRecords
+                oneOf:
+                  - $ref: '#/components/schemas/RecordNotFoundError'
+                  - $ref: '#/components/schemas/InvalidUrlPatternError'
+                description: >-
+                  Contains one of the possible not-found error responses for
+                  record not found or invalid URL pattern.
+              examples:
+                RecordNotFound:
+                  summary: Parent record not found
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: The record does not exist
+                    status: error
+                  description: >-
+                    Shows a not-found error response when the specified parent
+                    record does not exist.
+                InvalidURLPattern:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: Shows invalid URL pattern.
+        '500':
+          description: >-
+            An internal server error occurred.
+
+            **Resolution:** Retry the request after a brief delay. If the issue
+            persists, contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InternalError
+                $ref: '#/components/schemas/InternalError'
+              examples:
+                InternalError:
+                  summary: Unexpected server error
+                  value:
+                    code: INTERNAL_ERROR
+                    details: {}
+                    message: Unexpected and unhandled exception in Server
+                    status: error
+                  description: Shows unexpected server error.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.READ
+    put:
+      summary: Update related records
+      description: >-
+        To update multiple records associated with a parent record in a
+        specified related list in your Zoho CRM organization.
+      operationId: updateRelatedRecords
+      parameters:
+        - $ref: '#/components/parameters/ParentRecordModule'
+        - $ref: '#/components/parameters/ParentRecord'
+        - $ref: '#/components/parameters/RelatedList'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request payload for updating multiple related
+                records in a related list.
+              additionalProperties: false
+              required:
+                - data
+              properties:
+                data:
+                  type: array
+                  description: Array of records to update with their IDs and field values.
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: Individual record update with ID and fields to modify.
+                    additionalProperties: true
+                    required:
+                      - id
+                    properties:
+                      id:
+                        description: Unique identifier of the record to update.
+                        type: string
+                        format: int64
+                        x-zs-$ref:
+                          resource: record
+                          origins:
+                            - operationId: getRecords
+                              propertyId: RecordsId
+            examples:
+              UpdateMultipleProducts:
+                summary: Update prices for multiple products
+                value:
+                  data:
+                    - id: '3652397000001234001'
+                      Unit_Price: 109.99
+                      Discount: 10
+                    - id: '3652397000001234002'
+                      Unit_Price: 79.99
+                      Discount: 5
+                description: Shows update prices for multiple products.
+        description: >-
+          The request body must contain a **data** array with one or more
+          objects. You can include a maximum of 100 objects per request.
+      responses:
+        '200':
+          description: >-
+            Returns the bulk operation response indicating the status of each
+            update request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+              examples:
+                SuccessfulUpdate:
+                  summary: All records updated successfully
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '3652397000001234001'
+                        message: record updated
+                        status: success
+                  description: Shows all records updated successfully.
+        '207':
+          description: >-
+            Returns a mixed-status bulk operation response when some records
+            update successfully and others fail. Each item in the **data** array
+            indicates whether the record update succeeded or provides the reason
+            for failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+              examples:
+                PartialSuccessUpdate:
+                  summary: Some records updated, some records failed
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '4732219000018885044'
+                        message: record updated
+                        status: success
+                      - code: INVALID_DATA
+                        details:
+                          id: '99999999'
+                        message: invalid data
+                        status: error
+                  description: Shows some records updated, some records failed.
+        '400':
+          description: >-
+            The request contains invalid input, an unsupported module, mandatory
+            field missing, or an invalid request method.
+
+            **Resolution:** Review the error code and message in the response to
+            identify the specific issue.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateSpecificRelatedRecord400ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidModuleError'
+                  - $ref: '#/components/schemas/NotSupportedError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/AuthorizationFailedError'
+                  - $ref: '#/components/schemas/MandatoryNotFoundError'
+                  - $ref: '#/components/schemas/RelationNotFoundBulkError'
+                  - $ref: '#/components/schemas/MandatoryNotFoundBulkError'
+                description: >-
+                  Contains one of the possible client error responses for
+                  invalid module name, unsupported module, invalid data, invalid
+                  request method, authorization failure, mandatory field not
+                  found, relation not found, or mandatory field missing in bulk
+                  data.
+              examples:
+                InvalidModule:
+                  summary: Invalid module name provided
+                  value:
+                    code: INVALID_MODULE
+                    message: The given module is not supported
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows an error response when the module name in the request
+                    URL is not a valid Zoho CRM module.
+                NotSupported:
+                  summary: Module not supported in API
+                  value:
+                    code: INVALID_MODULE
+                    message: The given module is not supported in API
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: Shows module not supported in API.
+                InvalidDataError:
+                  summary: Invalid data or related ID
+                  value:
+                    code: INVALID_DATA
+                    message: The related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Shows an invalid data error response when a related record
+                    ID in the request is invalid.
+                InvalidDataRelationNameError:
+                  summary: Invalid data or related name
+                  value:
+                    code: INVALID_DATA
+                    message: The related name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 2
+                  description: >-
+                    Shows an invalid data error response when the related list
+                    name in the request is invalid.
+                InvalidRequestMethod:
+                  summary: Invalid HTTP request method
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    message: The http request method type is not a valid one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an error response when the HTTP method used does not
+                    match the supported method for this endpoint.
+                AuthorizationFailed:
+                  summary: Insufficient privilege to update related records data
+                  value:
+                    code: AUTHORIZATION_FAILED
+                    message: >-
+                      User does not have sufficient privilege to update related
+                      records data
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an authorization failure response when the access
+                    token lacks the required update privilege.
+                MandatoryNotFound:
+                  summary: Required field not found
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    message: Required field not found
+                    status: error
+                    details:
+                      api_name: list_price
+                      json_path: $.data[0].list_price
+                  description: Shows required field not found.
+                RelationNotFoundBulk:
+                  summary: Relation not found error
+                  value:
+                    data:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.data[0].id
+                        message: the id given seems to be invalid
+                        status: error
+                  description: Shows relation not found error.
+                MandatoryNotFoundBulk:
+                  summary: Required field not found in bulk operation
+                  value:
+                    data:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: list_price
+                          json_path: $.data[0].list_price
+                        message: required field not found
+                        status: error
+                  description: Shows required field not found in bulk operation.
+        '401':
+          description: >-
+            Authentication failed due to an invalid or expired token.
+
+            **Resolution:** A valid access token must be provided in the
+            Authorization header.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateRelatedRecords401ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidTokenError'
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+                description: >-
+                  Contains one of the possible unauthorized access error
+                  responses for invalid token or OAuth scope mismatch.
+              examples:
+                InvalidToken:
+                  summary: Invalid authentication token
+                  value:
+                    code: INVALID_TOKEN
+                    details: {}
+                    message: Invalid OAuth token
+                    status: error
+                  description: Shows invalid authentication token.
+                OAuthScopeMismatch:
+                  summary: Missing READ scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: >-
+                      The access token you have used to make this API call does
+                      not have the required scope.
+                    status: error
+                    details: {}
+                  description: Shows missing READ scope.
+        '403':
+          description: >-
+            The access token does not have permission to update related records
+            in this module.
+
+            **Resolution:** The CRM administrator must grant the required update
+            permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NoPermissionError
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermission:
+                  summary: No permission to read related records
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_View_Leads
+                    message: Permission denied to read related records
+                    status: error
+                  description: Shows no permission to read related records.
+        '404':
+          description: >-
+            The request URL does not match a valid API endpoint pattern.
+
+            **Resolution:** The URL must follow the pattern
+            `{api-domain}/crm/{version}/{parentRecordModule}/{parentRecord}/{relatedList}`.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordNotFoundAndInvalidUrlPatternErrorForUpdateRelatedRecords
+                oneOf:
+                  - $ref: '#/components/schemas/RecordNotFoundError'
+                  - $ref: '#/components/schemas/InvalidUrlPatternError'
+                description: >-
+                  Contains one of the possible not-found error responses for
+                  record not found or invalid URL pattern.
+              examples:
+                RecordNotFound:
+                  summary: Related record not found
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: The record does not exist
+                    status: error
+                  description: >-
+                    Shows a not-found error response when the specified related
+                    record does not exist.
+                InvalidURLPattern:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: Shows invalid URL pattern.
+        '500':
+          description: >-
+            An internal server error occurred.
+
+            **Resolution:** Retry the request after a brief delay. If the issue
+            persists, contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InternalError
+                $ref: '#/components/schemas/InternalError'
+              examples:
+                InternalError:
+                  summary: Unexpected server error
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected and unhandled exception in Server
+                    status: error
+                    details: {}
+                  description: Shows unexpected server error.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.UPDATE
+    delete:
+      summary: Delink related records
+      description: >-
+        To delink multiple records from a parent record's related list in your
+        Zoho CRM organization. This operation removes only the relationship
+        links - the related records themselves remain intact in their respective
+        modules.
+      operationId: delinkRelatedRecords
+      parameters:
+        - $ref: '#/components/parameters/ParentRecordModule'
+        - $ref: '#/components/parameters/ParentRecord'
+        - $ref: '#/components/parameters/RelatedList'
+        - $ref: '#/components/parameters/Ids'
+      responses:
+        '200':
+          description: >-
+            Returns the bulk operation response indicating the status of each
+            delink request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+              examples:
+                SuccessfulDelink:
+                  summary: Records delinked successfully
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '3652397000001234001'
+                        message: record deleted
+                        status: success
+                  description: >-
+                    Shows a successful response when all specified record IDs
+                    are delinked from the parent record.
+        '207':
+          description: >-
+            Returns a bulk operation response when some records are delinked and
+            others fail. Each item in the **data** array indicates whether the
+            delink succeeded or the reason for failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+              examples:
+                PartialSuccessDelink:
+                  summary: Some relations removed, some relation IDs invalid/not found
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '4732219000018885044'
+                        message: relation removed
+                        status: success
+                      - code: INVALID_DATA
+                        details:
+                          id: '99999999'
+                        message: relation not found
+                        status: error
+                  description: >-
+                    Shows a mixed-status response when some record IDs are
+                    delinked and others are invalid or not found.
+        '400':
+          description: >-
+            The request contains invalid input, an unsupported module, an
+            invalid request method, or exceeds the record limit.
+
+            **Resolution:** Review the error code and message in the response to
+            identify the specific issue.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DelinkRelatedRecords400ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidModuleError'
+                  - $ref: '#/components/schemas/NotSupportedError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/AuthorizationFailedError'
+                  - $ref: '#/components/schemas/MandatoryNotFoundError'
+                  - $ref: '#/components/schemas/UnableToParseDataTypeError'
+                  - $ref: '#/components/schemas/RelationNotFoundBulkError'
+                  - $ref: '#/components/schemas/LimitExceededError'
+                description: >-
+                  Contains one of the possible client error responses for
+                  invalid module name, unsupported module, invalid data, invalid
+                  request method, authorization failure, mandatory field not
+                  found, unable to parse data type, relation not found, or
+                  record limit exceeded.
+              examples:
+                InvalidModule:
+                  summary: Invalid module name provided
+                  value:
+                    code: INVALID_MODULE
+                    message: The module name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows an error response when the module name in the request
+                    URL is not a valid Zoho CRM module.
+                NotSupported:
+                  summary: Module not supported in API
+                  value:
+                    code: NOT_SUPPORTED
+                    message: The given module is not supported in API
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: Shows module not supported in API.
+                InvalidDataError:
+                  summary: Invalid data or related ID
+                  value:
+                    code: INVALID_DATA
+                    message: The related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Shows an invalid data error response when a related record
+                    ID in the request is invalid.
+                InvalidDataRelationNameError:
+                  summary: Invalid data or related name
+                  value:
+                    code: INVALID_DATA
+                    message: The related name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 2
+                  description: >-
+                    Shows an invalid data error response when the related list
+                    name in the request is invalid.
+                InvalidRequestMethod:
+                  summary: Invalid HTTP request method
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    message: The http request method type is not a valid one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an error response when the HTTP method used does not
+                    match the supported method for this endpoint.
+                AuthorizationFailed:
+                  summary: Insufficient privilege to delete related records data
+                  value:
+                    code: AUTHORIZATION_FAILED
+                    message: >-
+                      User does not have sufficient privilege to delete related
+                      records data
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an authorization failure response when the access
+                    token lacks the required delete privilege.
+                MandatoryNotFound:
+                  summary: A required parameter is missing
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    message: One of the expected parameter is missing
+                    status: error
+                    details:
+                      param_name: ids
+                  description: Shows a required parameter is missing.
+                UnableToParseDataType:
+                  summary: Request body or parameters in wrong format
+                  value:
+                    code: UNABLE_TO_PARSE_DATA_TYPE
+                    message: Either the request body or parameters is in wrong format
+                    status: error
+                    details: {}
+                  description: Shows request body or parameters in wrong format.
+                RelationNotFound:
+                  summary: Relation not found for the given record
+                  value:
+                    data:
+                      - code: INVALID_DATA
+                        details:
+                          id: '36547'
+                        message: relation not found
+                        status: error
+                  description: Shows relation not found for the given record.
+                LimitExceeded:
+                  summary: Too many record IDs provided
+                  value:
+                    code: LIMIT_EXCEEDED
+                    details:
+                      limit: '100'
+                      param_name: ids
+                    message: Limit Exceeded, You cannot give more than 100 record ids
+                    status: error
+                  description: >-
+                    Shows an error response when the number of record IDs in the
+                    request exceeds the allowed limit.
+        '401':
+          description: >-
+            Authentication failed due to an invalid or expired token.
+
+            **Resolution:** A valid access token must be provided in the
+            Authorization header.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeleteRelatedRecords401ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidTokenError'
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+                description: >-
+                  Contains one of the possible unauthorized access error
+                  responses for invalid token or OAuth scope mismatch.
+              examples:
+                InvalidToken:
+                  summary: Invalid authentication token
+                  value:
+                    code: INVALID_TOKEN
+                    message: Invalid OAuth token
+                    status: error
+                    details: {}
+                  description: Shows invalid authentication token.
+                OAuthScopeMismatch:
+                  summary: Missing DELETE scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: >-
+                      The access token you have used to make this API call does
+                      not have the required scope.
+                    status: error
+                    details: {}
+                  description: Shows missing DELETE scope.
+        '403':
+          description: >-
+            The access token does not have permission to delete related records
+            in this module.
+
+            **Resolution:** The CRM administrator must grant the required delete
+            permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NoPermissionError
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermission:
+                  summary: No permission to delete related records
+                  value:
+                    code: NO_PERMISSION
+                    message: Permission denied to delete records
+                    status: error
+                    details:
+                      permissions:
+                        - Crm_Implied_View_Leads
+                  description: Shows no permission to delete related records.
+        '404':
+          description: >-
+            The specified parent record or related list does not exist.
+
+            **Resolution:** The **parentRecord** and **relatedList** path
+            parameter values must refer to existing resources.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordNotFoundAndInvalidUrlPatternErrorForDeleteRecordByIds
+                oneOf:
+                  - $ref: '#/components/schemas/RecordNotFoundError'
+                  - $ref: '#/components/schemas/InvalidUrlPatternError'
+                description: >-
+                  Contains one of the possible not-found error responses for
+                  record not found or invalid URL pattern.
+              examples:
+                RecordNotFound:
+                  summary: Parent or related record not found
+                  value:
+                    code: INVALID_DATA
+                    message: The record does not exist
+                    status: error
+                    details: {}
+                  description: Shows parent or related record not found.
+                InvalidURLPattern:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: Shows invalid URL pattern.
+        '500':
+          description: >-
+            An internal server error occurred.
+
+            **Resolution:** Retry the request after a brief delay. If the issue
+            persists, contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InternalError
+                $ref: '#/components/schemas/InternalError'
+              examples:
+                InternalError:
+                  summary: Unexpected server error
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected and unhandled exception in Server
+                    status: error
+                    details: {}
+                  description: Shows unexpected server error.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.DELETE
+  /{parentRecordModule}/{parentRecord}/{relatedList}/{record}:
+    get:
+      summary: Get a related record
+      description: >-
+        To retrieve the details of a specific related record from a specified
+        related list of a parent record in your Zoho CRM organization.
+      operationId: getRelatedRecord
+      parameters:
+        - $ref: '#/components/parameters/ParentRecordModule'
+        - $ref: '#/components/parameters/ParentRecord'
+        - $ref: '#/components/parameters/RelatedList'
+        - $ref: '#/components/parameters/Record'
+        - $ref: '#/components/parameters/Fields'
+      responses:
+        '200':
+          description: Returns the details of the specified related record.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: SuccessResponseContainingSingleRelatedRecordWithMetadata
+                type: object
+                description: >-
+                  Represents the response for a single related record, including
+                  the record fields and metadata.
+                additionalProperties: false
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    description: Array containing the single related record.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: Related record object with requested fields.
+                      additionalProperties: true
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier of the related record.
+                          pattern: ^[0-9]+$
+                          maxLength: 20
+                          x-zs-$id: RelatedRecordId
+                        Created_Time:
+                          type: string
+                          description: >-
+                            Represents the creation date and time of the related
+                            record.
+                          format: date-time
+                        Modified_Time:
+                          type: string
+                          description: Timestamp when the record was last modified.
+                          format: date-time
+                        Moved_To__s:
+                          type: string
+                          description: >-
+                            Stage value to which the record was moved (stage
+                            history / picklist movement).
+                          maxLength: 255
+              examples:
+                SingleProductRecord:
+                  summary: Single product related to a contact
+                  value:
+                    data:
+                      - id: '3652397000001234001'
+                        Product_Name: Premium Widget
+                        Unit_Price: 99.99
+                        Created_Time: '2024-01-15T10:30:00Z'
+                        Modified_Time: '2024-01-20T14:45:00Z'
+                  description: Shows single product related to a contact.
+        '204':
+          description: >-
+            The specified related record was not found for the given parent
+            record.
+        '400':
+          description: >-
+            The request contains invalid input, an unsupported module, or an
+            invalid request method.
+
+            **Resolution:** Review the error code and message in the response to
+            identify the specific issue.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetRelatedRecord400ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidModuleError'
+                  - $ref: '#/components/schemas/NotSupportedError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/AuthorizationFailedError'
+                  - $ref: '#/components/schemas/RequiredParamMissingError'
+                description: >-
+                  Contains one of the possible client error responses for
+                  invalid module name, unsupported module, invalid data, invalid
+                  request method, or authorization failure. May also indicate a
+                  missing required parameter.
+              examples:
+                InvalidModule:
+                  summary: Invalid module name provided
+                  value:
+                    code: INVALID_MODULE
+                    message: The given module is not supported
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows an error response when the module name in the request
+                    URL is not a valid Zoho CRM module.
+                NotSupported:
+                  summary: Module not supported in API
+                  value:
+                    code: NOT_SUPPORTED
+                    message: The given module is not supported in API
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: Shows module not supported in API.
+                InvalidDataError:
+                  summary: Invalid data or related ID
+                  value:
+                    code: INVALID_DATA
+                    message: The related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Shows an invalid data error response when a related record
+                    ID in the request is invalid.
+                InvalidDataRelationNameError:
+                  summary: Invalid data or related name
+                  value:
+                    code: INVALID_DATA
+                    message: The related name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 2
+                  description: >-
+                    Shows an invalid data error response when the related list
+                    name in the request is invalid.
+                InvalidRequestMethod:
+                  summary: Invalid HTTP request method
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    message: The http request method type is not a valid one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an error response when the HTTP method used does not
+                    match the supported method for this endpoint.
+                AuthorizationFailed:
+                  summary: Insufficient privilege to read related records data
+                  value:
+                    code: AUTHORIZATION_FAILED
+                    message: >-
+                      User does not have sufficient privilege to read related
+                      records data
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an authorization failure response when the access
+                    token lacks the required read privilege.
+                RequiredParamMissing:
+                  summary: A required parameter is missing
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    message: One of the expected parameter is missing
+                    status: error
+                    details:
+                      param_name: fields
+                  description: Shows a required parameter is missing.
+        '401':
+          description: >-
+            Authentication failed due to an invalid or expired token.
+
+            **Resolution:** A valid access token must be provided in the
+            Authorization header.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetSpecificRelatedRecords401ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidTokenError'
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+                description: >-
+                  Contains one of the possible unauthorized access error
+                  responses for invalid token or OAuth scope mismatch.
+              examples:
+                InvalidToken:
+                  summary: Invalid authentication token
+                  value:
+                    code: INVALID_TOKEN
+                    details: {}
+                    message: Invalid OAuth token
+                    status: error
+                  description: Shows invalid authentication token.
+                OAuthScopeMismatch:
+                  summary: Missing READ scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: >-
+                      The access token you have used to make this API call does
+                      not have the required scope.
+                    status: error
+                    details: {}
+                  description: Shows missing READ scope.
+        '403':
+          description: >-
+            The access token does not have permission to read related records in
+            this module.
+
+            **Resolution:** The CRM administrator must grant the required read
+            permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NoPermissionError
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermission:
+                  summary: No permission to read related records
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_View_Leads
+                    message: Permission denied to read related records
+                    status: error
+                  description: Shows no permission to read related records.
+        '404':
+          description: >-
+            The specified related record does not exist.
+
+            **Resolution:** The **parentRecord**, **relatedList**, and
+            **record** path parameter values must refer to existing resources.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordNotFoundAndInvalidUrlPatternErrorForGetRelatedRecord
+                oneOf:
+                  - $ref: '#/components/schemas/RecordNotFoundError'
+                  - $ref: '#/components/schemas/InvalidUrlPatternError'
+                description: >-
+                  Contains one of the possible not-found error responses for
+                  record not found or invalid URL pattern.
+              examples:
+                RecordNotFound:
+                  summary: Related record not found
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: The record does not exist
+                    status: error
+                  description: >-
+                    Shows a not-found error response when the specified related
+                    record does not exist.
+                InvalidURLPattern:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: Shows invalid URL pattern.
+        '500':
+          description: >-
+            An internal server error occurred.
+
+            **Resolution:** Retry the request after a brief delay. If the issue
+            persists, contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InternalError
+                $ref: '#/components/schemas/InternalError'
+              examples:
+                InternalError:
+                  summary: Unexpected server error
+                  value:
+                    code: INTERNAL_ERROR
+                    details: {}
+                    message: Unexpected and unhandled exception in Server
+                    status: error
+                  description: Shows unexpected server error.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.READ
+    put:
+      summary: Update a related record
+      description: >-
+        To update the properties of a specific record associated with a parent
+        record in your Zoho CRM organization.
+      operationId: updateSpecificRelatedRecord
+      parameters:
+        - $ref: '#/components/parameters/ParentRecordModule'
+        - $ref: '#/components/parameters/ParentRecord'
+        - $ref: '#/components/parameters/RelatedList'
+        - $ref: '#/components/parameters/Record'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request payload for updating a specific related
+                record.
+              additionalProperties: false
+              properties:
+                data:
+                  type: array
+                  description: Array containing the record to update.
+                  minItems: 1
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: Record update with ID and fields to modify.
+                    additionalProperties: true
+                    required:
+                      - id
+                    properties:
+                      id:
+                        description: Unique identifier of the record to update.
+                        type: string
+                        format: int64
+                        x-zs-$ref:
+                          resource: record
+                          origins:
+                            - operationId: getRecords
+                              propertyId: RecordsId
+              required:
+                - data
+            examples:
+              UpdateSingleProduct:
+                summary: Update price for a single product
+                value:
+                  data:
+                    - id: '3652397000001234001'
+                      Unit_Price: 109.99
+                      Discount: 10
+                description: Shows update price for a single product.
+        description: >-
+          The request body must contain a **data** array with exactly one
+          object.
+      responses:
+        '200':
+          description: >-
+            Returns the bulk operation response indicating the status of the
+            update request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+              examples:
+                SuccessfulUpdate:
+                  summary: Record updated successfully
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '3652397000001234001'
+                        message: record updated
+                        status: success
+                  description: Shows record updated successfully.
+        '400':
+          description: >-
+            The request contains invalid input, an unsupported module, mandatory
+            field missing, or an invalid request method.
+
+            **Resolution:** Review the error code and message in the response to
+            identify the specific issue.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateRelatedRecords400ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidModuleError'
+                  - $ref: '#/components/schemas/NotSupportedError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/AuthorizationFailedError'
+                  - $ref: '#/components/schemas/MandatoryNotFoundError'
+                  - $ref: '#/components/schemas/MandatoryNotFoundBulkError'
+                description: >-
+                  Contains one of the possible client error responses for
+                  invalid module name, unsupported module, invalid data, invalid
+                  request method, authorization failure, or mandatory field not
+                  found.
+              examples:
+                InvalidModule:
+                  summary: Invalid module name provided
+                  value:
+                    code: INVALID_MODULE
+                    message: The given module is not supported
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows an error response when the module name in the request
+                    URL is not a valid Zoho CRM module.
+                NotSupported:
+                  summary: Module not supported in API
+                  value:
+                    code: INVALID_MODULE
+                    message: The given module is not supported in API
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: Shows module not supported in API.
+                InvalidDataError:
+                  summary: Invalid data or related ID
+                  value:
+                    code: INVALID_DATA
+                    message: The related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Shows an invalid data error response when a related record
+                    ID in the request is invalid.
+                InvalidDataRelationNameError:
+                  summary: Invalid data or related name
+                  value:
+                    code: INVALID_DATA
+                    message: The related name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 2
+                  description: >-
+                    Shows an invalid data error response when the related list
+                    name in the request is invalid.
+                InvalidRequestMethod:
+                  summary: Invalid HTTP request method
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    message: The http request method type is not a valid one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an error response when the HTTP method used does not
+                    match the supported method for this endpoint.
+                AuthorizationFailed:
+                  summary: Insufficient privilege to update related records data
+                  value:
+                    code: AUTHORIZATION_FAILED
+                    message: >-
+                      User does not have sufficient privilege to update related
+                      records data
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an authorization failure response when the access
+                    token lacks the required update privilege.
+                MandatoryNotFound:
+                  summary: Required field not found
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    message: Required field not found
+                    status: error
+                    details:
+                      api_name: list_price
+                      json_path: $.data[0].list_price
+                  description: Shows required field not found.
+                MandatoryNotFoundBulk:
+                  summary: Required field not found in bulk operation
+                  value:
+                    data:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: list_price
+                          json_path: $.data[0].list_price
+                        message: required field not found
+                        status: error
+                  description: Shows required field not found in bulk operation.
+        '401':
+          description: >-
+            Authentication failed due to an invalid or expired token.
+
+            **Resolution:** A valid access token must be provided in the
+            Authorization header.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateRelatedRecord401ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidTokenError'
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+                description: >-
+                  Contains one of the possible unauthorized access error
+                  responses for invalid token or OAuth scope mismatch.
+              examples:
+                InvalidToken:
+                  summary: Invalid authentication token
+                  value:
+                    code: INVALID_TOKEN
+                    details: {}
+                    message: Invalid OAuth token
+                    status: error
+                  description: Shows invalid authentication token.
+                OAuthScopeMismatch:
+                  summary: Missing READ scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: >-
+                      The access token you have used to make this API call does
+                      not have the required scope.
+                    status: error
+                    details: {}
+                  description: Shows missing READ scope.
+        '403':
+          description: >-
+            The access token does not have permission to update related records
+            in this module.
+
+            **Resolution:** The CRM administrator must grant the required update
+            permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NoPermissionError
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermission:
+                  summary: No permission to read related records
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_View_Leads
+                    message: Permission denied to read related records
+                    status: error
+                  description: Shows no permission to read related records.
+        '404':
+          description: >-
+            The specified related record does not exist.
+
+            **Resolution:** The **parentRecord**, **relatedList**, and
+            **record** path parameter values must refer to existing resources.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordNotFoundAndInvalidUrlPatternErrorForUpdateRelatedRecord
+                oneOf:
+                  - $ref: '#/components/schemas/RecordNotFoundError'
+                  - $ref: '#/components/schemas/InvalidUrlPatternError'
+                description: >-
+                  Contains one of the possible not-found error responses for
+                  record not found or invalid URL pattern.
+              examples:
+                RecordNotFound:
+                  summary: Related record not found
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: The record does not exist
+                    status: error
+                  description: >-
+                    Shows a not-found error response when the specified related
+                    record does not exist.
+                InvalidURLPattern:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: Shows invalid URL pattern.
+        '500':
+          description: >-
+            An internal server error occurred.
+
+            **Resolution:** Retry the request after a brief delay. If the issue
+            persists, contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InternalError
+                $ref: '#/components/schemas/InternalError'
+              examples:
+                InternalError:
+                  summary: Unexpected server error
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected and unhandled exception in Server
+                    status: error
+                    details: {}
+                  description: Shows unexpected server error.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.UPDATE
+    delete:
+      summary: Delink a related record
+      description: >-
+        To delink a specific related record from a parent record in your Zoho
+        CRM organization. This operation removes only the relationship link -
+        the related record itself remains intact in its module.
+      operationId: delinkSpecificRelatedRecord
+      parameters:
+        - $ref: '#/components/parameters/ParentRecordModule'
+        - $ref: '#/components/parameters/ParentRecord'
+        - $ref: '#/components/parameters/RelatedList'
+        - $ref: '#/components/parameters/Record'
+      responses:
+        '200':
+          description: >-
+            Returns the bulk operation response indicating the status of the
+            delink request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+              examples:
+                SuccessfulDelink:
+                  summary: Record delinked successfully
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '3652397000001234001'
+                        message: record deleted
+                        status: success
+                  description: Shows record delinked successfully.
+        '400':
+          description: >-
+            The request contains invalid input, an unsupported module, or an
+            invalid request method.
+
+            **Resolution:** Review the error code and message in the response to
+            identify the specific issue.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DelinkSpecificRelatedRecord400ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidModuleError'
+                  - $ref: '#/components/schemas/NotSupportedError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/AuthorizationFailedError'
+                  - $ref: '#/components/schemas/MandatoryNotFoundError'
+                  - $ref: '#/components/schemas/UnableToParseDataTypeError'
+                description: >-
+                  Contains one of the possible client error responses for
+                  invalid module name, unsupported module, invalid data, invalid
+                  request method, authorization failure, mandatory field not
+                  found, or unable to parse data type.
+              examples:
+                InvalidModule:
+                  summary: Invalid module name provided
+                  value:
+                    code: INVALID_MODULE
+                    message: The module name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows an error response when the module name in the request
+                    URL is not a valid Zoho CRM module.
+                NotSupported:
+                  summary: Module not supported in API
+                  value:
+                    code: NOT_SUPPORTED
+                    message: The given module is not supported in API
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: Shows module not supported in API.
+                InvalidDataError:
+                  summary: Invalid data or related ID
+                  value:
+                    code: INVALID_DATA
+                    message: The related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Shows an invalid data error response when a related record
+                    ID in the request is invalid.
+                InvalidDataRelationNameError:
+                  summary: Invalid data or related name
+                  value:
+                    code: INVALID_DATA
+                    message: The related name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 2
+                  description: >-
+                    Shows an invalid data error response when the related list
+                    name in the request is invalid.
+                InvalidRequestMethod:
+                  summary: Invalid HTTP request method
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    message: The http request method type is not a valid one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an error response when the HTTP method used does not
+                    match the supported method for this endpoint.
+                AuthorizationFailed:
+                  summary: Insufficient privilege to delete related records data
+                  value:
+                    code: AUTHORIZATION_FAILED
+                    message: >-
+                      User does not have sufficient privilege to delete related
+                      records data
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an authorization failure response when the access
+                    token lacks the required delete privilege.
+                MandatoryNotFound:
+                  summary: A required parameter is missing
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    message: One of the expected parameter is missing
+                    status: error
+                    details:
+                      api_name: list_price
+                      json_path: $.data[0].list_price
+                  description: Shows a required parameter is missing.
+                UnableToParseDataType:
+                  summary: Request body or parameters in wrong format
+                  value:
+                    code: UNABLE_TO_PARSE_DATA_TYPE
+                    message: Either the request body or parameters is in wrong format
+                    status: error
+                    details: {}
+                  description: Shows request body or parameters in wrong format.
+        '401':
+          description: >-
+            Authentication failed due to an invalid or expired token.
+
+            **Resolution:** A valid access token must be provided in the
+            Authorization header.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeleteRelatedRecord401ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidTokenError'
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+                description: >-
+                  Contains one of the possible unauthorized access error
+                  responses for invalid token or OAuth scope mismatch.
+              examples:
+                InvalidToken:
+                  summary: Invalid authentication token
+                  value:
+                    code: INVALID_TOKEN
+                    message: Invalid OAuth token
+                    status: error
+                    details: {}
+                  description: Shows invalid authentication token.
+                OAuthScopeMismatch:
+                  summary: Missing DELETE scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: >-
+                      The access token you have used to make this API call does
+                      not have the required scope.
+                    status: error
+                    details: {}
+                  description: Shows missing DELETE scope.
+        '403':
+          description: >-
+            The access token does not have permission to delete related records
+            in this module.
+
+            **Resolution:** The CRM administrator must grant the required delete
+            permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NoPermissionError
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermission:
+                  summary: No permission to delete related records
+                  value:
+                    code: NO_PERMISSION
+                    message: Permission denied to delete records
+                    status: error
+                    details:
+                      permissions:
+                        - Crm_Implied_View_Leads
+                  description: Shows no permission to delete related records.
+        '404':
+          description: >-
+            The specified parent record, related record, or relationship does
+            not exist.
+
+            **Resolution:** The **parentRecord**, **relatedList**, and
+            **record** path parameter values must refer to existing resources.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordNotFoundAndInvalidUrlPatternErrorForDeleteRecordById
+                oneOf:
+                  - $ref: '#/components/schemas/RecordNotFoundError'
+                  - $ref: '#/components/schemas/InvalidUrlPatternError'
+                description: >-
+                  Contains one of the possible not-found error responses for
+                  record not found or invalid URL pattern.
+              examples:
+                RecordNotFound:
+                  summary: Related record not found
+                  value:
+                    code: INVALID_DATA
+                    message: The record does not exist
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows a not-found error response when the specified related
+                    record does not exist.
+                InvalidURLPattern:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: Shows invalid URL pattern.
+        '500':
+          description: >-
+            An internal server error occurred.
+
+            **Resolution:** Retry the request after a brief delay. If the issue
+            persists, contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InternalError
+                $ref: '#/components/schemas/InternalError'
+              examples:
+                InternalError:
+                  summary: Unexpected server error
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected and unhandled exception in Server
+                    status: error
+                    details: {}
+                  description: Shows unexpected server error.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.DELETE
+  /{parentRecordModule}/deleted/{parentRecord}/{relatedList}:
+    get:
+      summary: List deleted related records
+      description: >-
+        To retrieve the list of records that were previously associated with a
+        parent record but have since been deleted from the related list in your
+        Zoho CRM organization.
+      operationId: getDeletedRelatedRecord
+      parameters:
+        - $ref: '#/components/parameters/ParentRecordModule'
+        - $ref: '#/components/parameters/ParentRecord'
+        - $ref: '#/components/parameters/RelatedList'
+        - $ref: '#/components/parameters/Fields'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: >-
+            Returns the list of deleted related records for the specified parent
+            record, along with pagination metadata.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: SuccessResponseForDeletedRelatedRecords
+                type: object
+                description: >-
+                  Represents the response for deleted related records, including
+                  the record references and pagination metadata.
+                additionalProperties: false
+                required:
+                  - data
+                  - info
+                properties:
+                  data:
+                    type: array
+                    description: Array of deleted related record references.
+                    maxItems: 200
+                    items:
+                      type: object
+                      description: >-
+                        Represents a deleted related record reference, including
+                        its identifier and associated metadata.
+                      additionalProperties: true
+                      required:
+                        - id
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier of the deleted record.
+                          pattern: ^[0-9]+$
+                          maxLength: 20
+                          x-zs-$id: RelatedRecordsId
+                        $member_info:
+                          type: object
+                          description: Metadata about the related record.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: ID of the member info.
+                              pattern: ^[0-9]+$
+                              maxLength: 20
+                            Created_Time:
+                              type: string
+                              description: >-
+                                Represents the creation date and time of the
+                                record.
+                              format: date-time
+                            Modified_Time:
+                              type: string
+                              description: Timestamp when the record was last modified.
+                              format: date-time
+                        Moved_To__s:
+                          type: string
+                          description: >-
+                            Stage value to which the record was moved (stage
+                            history / picklist movement).
+                          maxLength: 255
+                  info:
+                    type: object
+                    description: Pagination metadata for deleted records.
+                    additionalProperties: false
+                    required:
+                      - page
+                      - per_page
+                      - count
+                      - more_records
+                    properties:
+                      page:
+                        type: integer
+                        format: int32
+                        description: Current page number.
+                        minimum: 1
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: Number of records per page.
+                        minimum: 1
+                        maximum: 200
+                      count:
+                        type: integer
+                        format: int32
+                        description: Number of records in current response.
+                        minimum: 0
+                      more_records:
+                        type: boolean
+                        description: Indicates if more pages are available.
+                      next_page_token:
+                        type:
+                          - string
+                          - 'null'
+                        description: Token to retrieve the next page of results.
+                        maxLength: 500
+                      page_token_expiry:
+                        type:
+                          - string
+                          - 'null'
+                        format: date-time
+                        description: Expiration timestamp for the page token.
+                      previous_page_token:
+                        type:
+                          - string
+                          - 'null'
+                        description: Token to retrieve the previous page of results.
+                        maxLength: 500
+              examples:
+                DeletedProducts:
+                  summary: List of deleted product records
+                  value:
+                    data:
+                      - id: '2423488000000552158'
+                        Owner:
+                          name: Patricia
+                          id: '2423488000000483001'
+                          email: patricia@zoho.com
+                        $member_info:
+                          Created_Time: '2023-10-31T18:10:23+05:30'
+                          Modified_Time: '2023-10-31T18:10:23+05:30'
+                          id: '2423488000000558116'
+                    info:
+                      page: 1
+                      per_page: 200
+                      count: 1
+                      more_records: false
+                      next_page_token: null
+                      page_token_expiry: null
+                      previous_page_token: null
+                  description: Shows list of deleted product records.
+        '204':
+          description: >-
+            No deleted related records were found for the specified parent
+            record.
+        '400':
+          description: >-
+            The request contains invalid input, an unsupported module, or an
+            invalid request method.
+
+            **Resolution:** Review the error code and message in the response to
+            identify the specific issue.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetDeletedRelatedRecord400ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidModuleError'
+                  - $ref: '#/components/schemas/NotSupportedError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - $ref: '#/components/schemas/AuthorizationFailedError'
+                  - $ref: '#/components/schemas/RequiredParamMissingError'
+                description: >-
+                  Contains one of the possible client error responses for
+                  invalid module name, unsupported module, invalid data, invalid
+                  request method, or authorization failure. May also indicate a
+                  missing required parameter.
+              examples:
+                InvalidModule:
+                  summary: Invalid module name provided
+                  value:
+                    code: INVALID_MODULE
+                    message: The given module is not supported
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows an error response when the module name in the request
+                    URL is not a valid Zoho CRM module.
+                NotSupported:
+                  summary: Module not supported in API
+                  value:
+                    code: NOT_SUPPORTED
+                    message: The given module is not supported in API
+                    status: error
+                    details:
+                      resource_path_index: 0
+                  description: Shows module not supported in API.
+                InvalidDataError:
+                  summary: Invalid data or related ID
+                  value:
+                    code: INVALID_DATA
+                    message: The related id given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 2
+                  description: >-
+                    Shows an invalid data error response when a related record
+                    ID in the request is invalid.
+                InvalidDataRelationNameError:
+                  summary: Invalid data or related name
+                  value:
+                    code: INVALID_DATA
+                    message: The related name given seems to be invalid
+                    status: error
+                    details:
+                      resource_path_index: 2
+                  description: >-
+                    Shows an invalid data error response when the related list
+                    name in the request is invalid.
+                InvalidRequestMethod:
+                  summary: Invalid HTTP request method
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    message: The http request method type is not a valid one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an error response when the HTTP method used does not
+                    match the supported method for this endpoint.
+                AuthorizationFailed:
+                  summary: Insufficient privilege to read related records data
+                  value:
+                    code: AUTHORIZATION_FAILED
+                    message: >-
+                      User does not have sufficient privilege to read related
+                      records data
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an authorization failure response when the access
+                    token lacks the required read privilege.
+                RequiredParamMissing:
+                  summary: A required parameter is missing
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    message: One of the expected parameter is missing
+                    status: error
+                    details:
+                      param_name: fields
+                  description: Shows a required parameter is missing.
+        '401':
+          description: >-
+            Authentication failed due to an invalid or expired token.
+
+            **Resolution:** A valid access token must be provided in the
+            Authorization header.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetDeletedRelatedRecords401ErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidTokenError'
+                  - $ref: '#/components/schemas/OAuthScopeMismatchError'
+                description: >-
+                  Contains one of the possible unauthorized access error
+                  responses for invalid token or OAuth scope mismatch.
+              examples:
+                InvalidToken:
+                  summary: Invalid authentication token
+                  value:
+                    code: INVALID_TOKEN
+                    details: {}
+                    message: Invalid OAuth token
+                    status: error
+                  description: Shows invalid authentication token.
+                OAuthScopeMismatch:
+                  summary: Missing DELETE scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: >-
+                      The access token you have used to make this API call does
+                      not have the required scope.
+                    status: error
+                    details: {}
+                  description: Shows missing DELETE scope.
+        '403':
+          description: >-
+            The access token does not have permission to read related records in
+            this module.
+
+            **Resolution:** The CRM administrator must grant the required read
+            permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NoPermissionError
+                $ref: '#/components/schemas/NoPermissionError'
+              examples:
+                NoPermission:
+                  summary: No permission to read related records
+                  value:
+                    code: NO_PERMISSION
+                    message: Permission denied to read related records
+                    status: error
+                    details:
+                      permissions:
+                        - Crm_Implied_View_Leads
+                  description: Shows no permission to read related records.
+        '404':
+          description: >-
+            The specified parent record does not exist.
+
+            **Resolution:** The **parentRecord** path parameter value must refer
+            to an existing record.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordNotFoundErrorForDeletedRecords
+                oneOf:
+                  - $ref: '#/components/schemas/RecordNotFoundError'
+                  - $ref: '#/components/schemas/InvalidUrlPatternError'
+                description: >-
+                  Contains one of the possible not-found error responses for
+                  record not found or invalid URL pattern.
+              examples:
+                RecordNotFound:
+                  summary: Parent record not found
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: The record does not exist
+                    status: error
+                  description: >-
+                    Shows a not-found error response when the specified parent
+                    record does not exist.
+                InvalidURLPattern:
+                  summary: Invalid URL pattern
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: Shows invalid URL pattern.
+        '500':
+          description: >-
+            An internal server error occurred.
+
+            **Resolution:** Retry the request after a brief delay. If the issue
+            persists, contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InternalError
+                $ref: '#/components/schemas/InternalError'
+              examples:
+                InternalError:
+                  summary: Unexpected server error
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected and unhandled exception in Server
+                    status: error
+                    details: {}
+                  description: Shows unexpected server error.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.READ
+components:
+  parameters:
+    ParentRecordModule:
+      name: parentRecordModule
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the module the parent record belongs to. Refer
+        to the [Get
+        Modules](https://www.zoho.com/crm/developer/docs/api/v8/modules-api.html)
+        resource for valid values.
+      schema:
+        type: string
+        pattern: ^[A-Za-z_][A-Za-z0-9_]*$
+        maxLength: 100
+      examples:
+        Contacts:
+          value: Contacts
+          summary: Contacts module
+        Deals:
+          value: Deals
+          summary: Deals module
+        CustomModule:
+          value: Services__s
+          summary: Custom Services module
+    ParentRecord:
+      name: parentRecord
+      in: path
+      required: true
+      description: Specify the unique numeric identifier of the parent record.
+      schema:
+        type: string
+        pattern: ^[0-9]+$
+        maxLength: 20
+      examples:
+        ContactId:
+          value: '3652397000000624001'
+          summary: Contact record ID
+        DealId:
+          value: '3652397000000789001'
+          summary: Deal record ID
+    RelatedList:
+      name: relatedList
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the related list containing the records to
+        retrieve or modify. Refer to the [Get Related
+        Lists](https://www.zoho.com/crm/developer/docs/api/v8/related-list-meta.html)
+        resource for valid values.
+      schema:
+        type: string
+        pattern: ^[A-Za-z_][A-Za-z0-9_]*$
+        maxLength: 100
+      examples:
+        Products:
+          value: Products
+          summary: Products related list
+        Notes:
+          value: Notes
+          summary: Notes related list
+        Attachments:
+          value: Attachments
+          summary: Attachments related list
+    Record:
+      name: record
+      in: path
+      required: true
+      description: Specify the unique numeric identifier of the specific related record.
+      schema:
+        type: string
+        pattern: ^[0-9]+$
+        maxLength: 20
+      examples:
+        ProductId:
+          value: '3652397000001234001'
+          summary: Product record ID
+        NoteId:
+          value: '3652397000001567001'
+          summary: Note record ID
+    Ids:
+      name: ids
+      in: query
+      required: true
+      description: >-
+        Specify the unique identifiers of the records to delink from the parent
+        record as a comma-separated list.
+      schema:
+        type: string
+        pattern: ^[0-9]+(,[0-9]+)*$
+        maxLength: 2000
+      examples:
+        SingleId:
+          value: '3652397000001234001'
+          summary: Single record ID
+        MultipleIds:
+          value: 3652397000001234001,3652397000001234002,3652397000001234003
+          summary: Multiple record IDs
+    Fields:
+      name: fields
+      in: query
+      required: true
+      description: >-
+        Specify the API names of the fields to include in the response as a
+        comma-separated list.
+      schema:
+        type: string
+        pattern: ^[A-Za-z_][A-Za-z0-9_]*(,[A-Za-z_][A-Za-z0-9_]*)*$
+        maxLength: 1000
+      examples:
+        BasicFields:
+          value: First_Name,Last_Name,Email
+          summary: Basic contact fields
+        ExtendedFields:
+          value: Account_Name,Phone,Lead_Source,Custom_Field__c
+          summary: Extended fields including custom field
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Specify the page number for paginating results.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 10000
+        default: 1
+      examples:
+        FirstPage:
+          value: 1
+          summary: First page
+        SecondPage:
+          value: 2
+          summary: Second page
+    PerPage:
+      name: perPage
+      in: query
+      required: false
+      description: >-
+        Specify the number of records to return per page.
+
+
+        The page and per_page parameter is used to fetch records according to
+        their position in the CRM. Let us assume that the user has to fetch 400
+        records. The maximum number of records that one can get for an API call
+        is 200. So, for records above the 200th position, they cannot be
+        fetched. By using the page (1 and 2) and per_page (200) parameter, the
+        user can fetch all 400 records using 2 API calls.
+
+        If the requested related list is not present or hidden in a layout, the
+        system will return an INVALID_DATA response.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 200
+        default: 200
+      examples:
+        DefaultPageSize:
+          value: 200
+          summary: Default page size
+        SmallPageSize:
+          value: 50
+          summary: Smaller page size for limited data
+    IfModifiedSince:
+      name: If-Modified-Since
+      in: header
+      required: false
+      description: >-
+        Specify the date and time in RFC 2822 format. The response includes only
+        records modified after this timestamp.
+      schema:
+        type: string
+        format: date-time
+      examples:
+        RecentChanges:
+          value: '2024-01-20T10:00:00Z'
+          summary: Get records modified since January 20, 2024
+    PageToken:
+      name: page_token
+      in: query
+      required: false
+      description: >-
+        Specify the token to retrieve the next set of records beyond the first
+        2,000 results. Use the **next_page_token** value from the previous
+        response.
+      schema:
+        type: string
+        maxLength: 500
+    IdsOptional:
+      name: ids
+      in: query
+      required: false
+      description: >-
+        Specify the unique identifiers of the records to retrieve as a
+        comma-separated list.
+      schema:
+        type: string
+        pattern: ^[0-9]+(,[0-9]+)*$
+        maxLength: 2000
+    SortOrder:
+      name: sort_order
+      in: query
+      required: false
+      description: >-
+        Specify the sort direction for the related records. Possible values:
+        **asc**, **desc**.
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+    SortBy:
+      name: sort_by
+      in: query
+      required: false
+      description: >-
+        Specify the field to sort the related records by. Possible values:
+        **ID**, **Created_Time**, **Modified_Time**.
+      schema:
+        type: string
+        enum:
+          - id
+          - Created_Time
+          - Modified_Time
+        default: id
+    Converted:
+      name: converted
+      in: query
+      required: false
+      description: >-
+        Specify whether to filter records by conversion status. Possible values:
+        **true**, **false**, **both**.
+      schema:
+        type: string
+        enum:
+          - 'true'
+          - 'false'
+          - both
+        default: 'false'
+    Approved:
+      name: approved
+      in: query
+      required: false
+      description: >-
+        Filter records by approval status. When set to true, returns only
+        approved records; when false, returns only unapproved records.
+      schema:
+        type: string
+        enum:
+          - 'true'
+          - 'false'
+          - both
+        default: 'true'
+    ApprovalState:
+      name: approval_state
+      in: query
+      required: false
+      description: Filter records by their current approval state.
+      schema:
+        type: string
+        enum:
+          - webform_unapproved
+          - approved
+          - approval_process_pending
+          - approval_process_rejected
+          - webform_invalid
+          - webform_invalid_approval
+          - webform_double_optin
+          - review_process_pending
+          - review_process_rejected
+          - merge_pending
+          - zia_vision_pending
+          - zia_vision_rejected
+          - zia_vision_validation
+          - email_parser_waiting
+          - email_parser_rejected
+          - approval_process_recalled
+    Filters:
+      name: filters
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/FilterCriterionRequest'
+      description: Filter for fetching specific related records based on criteria
+  schemas:
+    InvalidModuleError:
+      x-zs-$id: InvalidModuleError
+      type: object
+      description: >-
+        Represents an error response returned when the module name in the
+        request is not a valid Zoho CRM module API name.
+      properties:
+        code:
+          type: string
+          description: Error code indicating the type of error.
+          enum:
+            - INVALID_MODULE
+        message:
+          type: string
+          description: Detailed error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: Index of the path parameter that caused the error (0-based).
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    InvalidDataError:
+      x-zs-$id: InvalidDataError
+      type: object
+      description: >-
+        Represents an error response returned when the request contains invalid
+        data, such as an invalid record ID, invalid related list name, or
+        invalid input format.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details. Can be empty depending on the error.
+          properties:
+            id:
+              type: string
+              description: Record/related record ID involved in the error (if applicable).
+              pattern: ^[0-9]+$
+              maxLength: 20
+            api_name:
+              type: string
+              description: >-
+                API name of the field/module/related list involved (if
+                applicable).
+              maxLength: 100
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                Index/position in the request resource path or payload where the
+                error occurred (if applicable).
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    NoPermissionError:
+      x-zs-$id: NoPermissionError
+      type: object
+      description: >-
+        Represents an error response returned when the authenticated user does
+        not have the required module-level permission for the requested
+        operation.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - NO_PERMISSION
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          properties:
+            permissions:
+              type: array
+              description: Missing/required permissions for the requested operation.
+              maxItems: 100
+              items:
+                type: string
+                description: Permission identifier string.
+                maxLength: 200
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    InternalError:
+      x-zs-$id: InternalError
+      type: object
+      description: >-
+        Represents an error response returned when an unexpected internal server
+        error occurs.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - INTERNAL_ERROR
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    InvalidTokenError:
+      x-zs-$id: InvalidTokenError
+      type: object
+      description: >-
+        Represents an error response returned when the access token in the
+        request is invalid or expired.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - INVALID_TOKEN
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    RecordNotFoundError:
+      x-zs-$id: RecordNotFoundError
+      type: object
+      description: >-
+        Represents an error response returned when the specified record does not
+        exist or cannot be found.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    InvalidRequestMethodError:
+      x-zs-$id: InvalidRequestMethodError
+      type: object
+      description: >-
+        Represents an error response returned when the HTTP request method is
+        not valid for this endpoint.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - INVALID_REQUEST_METHOD
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    AuthorizationFailedError:
+      x-zs-$id: AuthorizationFailedError
+      type: object
+      description: >-
+        Represents an error response returned when the access token does not
+        have sufficient privileges for the requested operation.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - AUTHORIZATION_FAILED
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    NotSupportedError:
+      x-zs-$id: NotSupportedError
+      type: object
+      description: >-
+        Represents an error response returned when the specified module is not
+        supported by this API.
+      properties:
+        code:
+          type: string
+          description: Error code indicating the type of error.
+          enum:
+            - NOT_SUPPORTED
+        message:
+          type: string
+          description: Detailed error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: Index of the path parameter that caused the error (0-based).
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    UnableToParseDataTypeError:
+      x-zs-$id: UnableToParseDataTypeError
+      type: object
+      description: >-
+        Represents an error response returned when the request body or a
+        parameter contains a value that cannot be parsed to the expected data
+        type.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - UNABLE_TO_PARSE_DATA_TYPE
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    MandatoryNotFoundError:
+      x-zs-$id: MandatoryNotFoundError
+      type: object
+      description: >-
+        Represents an error response returned when a required field is missing
+        from the request.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - MANDATORY_NOT_FOUND
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          properties:
+            param_name:
+              type: string
+              description: Name of the missing mandatory parameter (if applicable).
+              maxLength: 100
+            api_name:
+              type: string
+              description: API name of the missing mandatory field (if applicable).
+              maxLength: 100
+            json_path:
+              type: string
+              description: >-
+                JSONPath to the missing field in request payload (if
+                applicable).
+              maxLength: 500
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    RequiredParamMissingError:
+      x-zs-$id: RequiredParamMissingError
+      type: object
+      description: >-
+        Represents an error response returned when a required request parameter
+        is missing.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - REQUIRED_PARAM_MISSING
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          properties:
+            param_name:
+              type: string
+              description: Name of the missing required parameter.
+              maxLength: 100
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    BulkOperationResponse:
+      type: object
+      x-zs-$id: ResponseStructureForBulkOperations
+      description: >-
+        Represents the response structure for bulk operations, containing
+        per-record result codes and operation details.
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          description: Array of operation results per record.
+          maxItems: 100
+          items:
+            type: object
+            description: Individual operation result.
+            additionalProperties: false
+            required:
+              - code
+              - status
+            properties:
+              code:
+                type: string
+                description: Result code for the operation.
+                enum:
+                  - SUCCESS
+                  - INVALID_DATA
+                  - DUPLICATE_DATA
+                  - MANDATORY_NOT_FOUND
+              details:
+                type: object
+                description: Operation details including affected record ID.
+                additionalProperties: true
+                properties:
+                  id:
+                    type: string
+                    description: ID of the affected record.
+                    pattern: ^[0-9]+$
+                    maxLength: 20
+                  api_name:
+                    type: string
+                    description: >-
+                      API name of the field that caused the error (if
+                      applicable).
+                    maxLength: 100
+                  json_path:
+                    type: string
+                    description: JSONPath to the field in request payload (if applicable).
+                    maxLength: 500
+                  param_name:
+                    type: string
+                    description: Parameter name that caused the error (if applicable).
+                    maxLength: 100
+              message:
+                type: string
+                description: Represents the operation result message for the record.
+                maxLength: 500
+              status:
+                type: string
+                description: Operation status.
+                enum:
+                  - success
+                  - error
+    InvalidUrlPatternError:
+      x-zs-$id: InvalidUrlPatternError
+      type: object
+      description: >-
+        Represents an error response returned when the request URL does not
+        match a valid API endpoint pattern.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - INVALID_URL_PATTERN
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    OAuthScopeMismatchError:
+      x-zs-$id: OAuthScopeMismatchError
+      type: object
+      description: >-
+        Represents an error response returned when the access token does not
+        include the required OAuth scope for the requested operation.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - OAUTH_SCOPE_MISMATCH
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details.
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    RelationNotFoundBulkError:
+      x-zs-$id: RelationNotFoundBulkError
+      type: object
+      description: >-
+        Represents an error response returned in bulk operations when the
+        relationship between the parent record and the related record cannot be
+        found, with the result wrapped in a **data** array.
+      properties:
+        data:
+          type: array
+          description: Array of error results.
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            description: Individual error result.
+            additionalProperties: false
+            required:
+              - code
+              - status
+              - message
+              - details
+            properties:
+              code:
+                type: string
+                description: Error code.
+                enum:
+                  - INVALID_DATA
+              details:
+                type: object
+                description: Error details with field information.
+                additionalProperties: true
+                properties:
+                  id:
+                    type: string
+                    description: ID of the record for which relation was not found.
+                    pattern: ^[0-9]+$
+                    maxLength: 20
+                  api_name:
+                    type: string
+                    description: API name of the field that caused the error.
+                    maxLength: 100
+                  json_path:
+                    type: string
+                    description: JSONPath to the field in request payload.
+                    maxLength: 500
+              message:
+                type: string
+                description: Error message.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the error.
+                enum:
+                  - error
+      required:
+        - data
+      additionalProperties: false
+    MandatoryNotFoundBulkError:
+      x-zs-$id: MandatoryNotFoundBulkError
+      type: object
+      description: >-
+        Represents an error response returned in bulk operations when a
+        mandatory field is missing from the request data, with the result
+        wrapped in a **data** array.
+      properties:
+        data:
+          type: array
+          description: Array of error results.
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            description: Individual error result.
+            additionalProperties: false
+            required:
+              - code
+              - status
+              - message
+              - details
+            properties:
+              code:
+                type: string
+                description: Error code.
+                enum:
+                  - MANDATORY_NOT_FOUND
+              details:
+                type: object
+                description: Error details with field information.
+                additionalProperties: true
+                properties:
+                  api_name:
+                    type: string
+                    description: API name of the mandatory field that is missing.
+                    maxLength: 100
+                  json_path:
+                    type: string
+                    description: JSONPath to the missing field in request payload.
+                    maxLength: 500
+              message:
+                type: string
+                description: Error message.
+                maxLength: 500
+              status:
+                type: string
+                description: Status of the error.
+                enum:
+                  - error
+      required:
+        - data
+      additionalProperties: false
+    LimitExceededError:
+      x-zs-$id: LimitExceededError
+      type: object
+      description: >-
+        Represents an error response returned when the number of items in the
+        request exceeds the allowed limit.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - LIMIT_EXCEEDED
+        message:
+          type: string
+          description: Error message.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the error.
+          enum:
+            - error
+        details:
+          type: object
+          description: Additional error details including limit information.
+          properties:
+            limit:
+              type: string
+              description: Maximum allowed limit value.
+              maxLength: 10
+            param_name:
+              type: string
+              description: Name of the parameter that exceeded the limit.
+              maxLength: 100
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+      additionalProperties: false
+    FilterFieldBase:
+      type: object
+      x-zs-$id: FilterFieldBase
+      description: >-
+        Represents the base field reference used in filter operations,
+        containing minimal required properties. The field's data_type is not
+        part of this object; resolve it from the corresponding FieldSchema. For
+        formula fields, use formula.return_type as the effective data_type; for
+        rollup_summary fields, use rollup_summary.return_type.
+      properties:
+        id:
+          type: string
+          format: int64
+          description: Represents the unique ID of the field used for filter operations.
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the field used for filter application.
+            Supports relationship notation, for example, Deals__r.Stage.
+      additionalProperties: true
+    SimpleFilterCriterionValueString:
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueString
+      description: >-
+        Represents a string filter criterion value applicable to fields with a
+        data_type of text, textarea, email, phone, website, autonumber,
+        picklist, multiselectpicklist, date, or datetime, as well as any
+        data_type not explicitly covered by SimpleFilterCriterionValueNumber,
+        SimpleFilterCriterionValueBoolean,
+        SimpleFilterCriterionValueObjectRequest,
+        SimpleFilterCriterionValueObjectResponse, or the multiselect lookup
+        value schemas.
+      maxLength: 255
+    SimpleFilterCriterionValueNumber:
+      type: number
+      x-zs-$id: SimpleFilterCriterionValueNumber
+      description: >-
+        Represents a numeric filter criterion value applicable to fields with a
+        data_type of integer, currency, or double.
+    SimpleFilterCriterionValueObjectBase:
+      type: object
+      description: >-
+        Represents the base minified record structure of a lookup module,
+        containing the record's unique identifier and display name.
+      properties:
+        id:
+          type: string
+          format: int64
+          description: Represents the unique ID of the lookup module record.
+        name:
+          type: string
+          maxLength: 255
+          description: Represents the display name of the lookup module record.
+      additionalProperties: true
+    SimpleFilterCriterionValueObjectRequest:
+      x-zs-$id: SimpleFilterCriterionValueObjectRequest
+      allOf:
+        - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectBase'
+        - type: object
+          additionalProperties: true
+          description: >-
+            Represents the constraint that the ID property is required for the
+            lookup object filter criterion value in request bodies.
+          required:
+            - id
+          properties:
+            id: {}
+      unevaluatedProperties: false
+      description: >-
+        Represents a lookup object filter criterion value for request bodies,
+        applicable when the field's data_type is lookup, ownerlookup, or
+        userlookup. The ID property is required.
+    SimpleFilterCriterionValueObjectPredefined:
+      x-zs-$id: SimpleFilterCriterionValueObjectPredefined
+      description: >-
+        Represents a predefined placeholder object filter criterion value for
+        lookup fields, applicable with equal or not_equal comparators when the
+        field's data_type is ownerlookup or userlookup. Two forms are supported:
+        (1) the currently logged-in user, represented by passing only the name
+        property with the predefined value ${CURRENTUSER} and no ID property;
+        and (2) the logged-in user's role, represented by passing the ID
+        property with the predefined value ${CURRENTUSERROLE} and an optional
+        display label in the name property. For specific real users or roles
+        that are not predefined, use SimpleFilterCriterionValueObjectRequest,
+        which requires the ID property.
+      oneOf:
+        - type: object
+          x-zs-$id: SimpleFilterCriterionValueObjectPredefinedCurrentUser
+          description: >-
+            Represents the predefined object form for the currently logged-in
+            user, in which only the name property carries the predefined value
+            ${CURRENTUSER} and no ID property is included.
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              enum:
+                - ${CURRENTUSER}
+              description: >-
+                Represents the predefined placeholder for the currently
+                logged-in user.
+
+                Possible values:
+
+                ${CURRENTUSER} - Represents the currently logged-in user.
+          additionalProperties: false
+        - type: object
+          x-zs-$id: SimpleFilterCriterionValueObjectPredefinedCurrentUserRole
+          description: >-
+            Represents the predefined object form for the currently logged-in
+            user's role, in which the ID property carries the predefined value
+            ${CURRENTUSERROLE} and the name property is an optional display
+            label.
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              enum:
+                - ${CURRENTUSERROLE}
+              description: >-
+                Represents the predefined placeholder for the logged-in user's
+                role record ID.
+
+                Possible values:
+
+                ${CURRENTUSERROLE} - Represents the role of the currently
+                logged-in user.
+            name:
+              type: string
+              maxLength: 255
+              description: >-
+                Represents an optional display label for the predefined role,
+                such as Logged in User Role.
+          additionalProperties: true
+    SimpleFilterCriterionValueBoolean:
+      type: boolean
+      x-zs-$id: SimpleFilterCriterionValueBoolean
+      description: >-
+        Represents a Boolean filter criterion value. Applicable only when the
+        field has a Boolean data type (checkbox field).
+    SimpleFilterCriterionValueGeneralPredefined:
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueGeneralPredefined
+      description: >-
+        Represents a predefined placeholder value applicable to any field
+        data_type with the equal comparator.
+
+        Possible values:
+
+        ${EMPTY} - Matches records where the field has no value.
+
+        ${NOTEMPTY} - Matches records where the field has any non-empty value.
+      enum:
+        - ${EMPTY}
+        - ${NOTEMPTY}
+      x-enumDescriptions:
+        ${EMPTY}: Matches records where the field has no value (null or empty string).
+        ${NOTEMPTY}: Matches records where the field has any non-empty value.
+    SimpleFilterCriterionValueDateTimePredefined:
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueDateTimePredefined
+      description: >-
+        Represents a predefined placeholder value applicable only when the
+        field's data_type is date or datetime, with the equal comparator.
+      enum:
+        - ${TODAY}
+        - ${TOMORROW}
+        - ${TOMORROWPLUS}
+        - ${YESTERDAY}
+        - ${YESTERDAYMINUS}
+        - ${LASTMONTH}
+        - ${THISMONTH}
+        - ${NEXTMONTH}
+        - ${LASTWEEK}
+        - ${THISWEEK}
+        - ${NEXTWEEK}
+        - ${THISYEAR}
+        - ${THISFY}
+        - ${THISFQ}
+        - ${LASTYEAR}
+        - ${PREVFY}
+        - ${PREVFQ}
+        - ${NEXTYEAR}
+        - ${NEXTFY}
+        - ${NEXTFQ}
+        - ${EMPTY}
+        - ${NOTEMPTY}
+      x-enumDescriptions:
+        ${TODAY}: >-
+          Matches records where the date field falls on the current calendar
+          day.
+        ${TOMORROW}: Matches records where the date field falls on the next calendar day.
+        ${TOMORROWPLUS}: >-
+          Matches records where the date field is on tomorrow or any later date
+          (tomorrow onwards).
+        ${YESTERDAY}: >-
+          Matches records where the date field falls on the previous calendar
+          day.
+        ${YESTERDAYMINUS}: >-
+          Matches records where the date field is on yesterday or any earlier
+          date (up to and including yesterday).
+        ${LASTMONTH}: >-
+          Matches records where the date field falls within the entire previous
+          calendar month.
+        ${THISMONTH}: >-
+          Matches records where the date field falls within the current calendar
+          month.
+        ${NEXTMONTH}: >-
+          Matches records where the date field falls within the next calendar
+          month.
+        ${LASTWEEK}: >-
+          Matches records where the date field falls within the previous
+          calendar week (Monday–Sunday).
+        ${THISWEEK}: >-
+          Matches records where the date field falls within the current calendar
+          week.
+        ${NEXTWEEK}: >-
+          Matches records where the date field falls within the next calendar
+          week.
+        ${THISYEAR}: >-
+          Matches records where the date field falls within the current calendar
+          year.
+        ${THISFY}: >-
+          Matches records where the date field falls within the current fiscal
+          year.
+        ${THISFQ}: >-
+          Matches records where the date field falls within the current fiscal
+          quarter.
+        ${LASTYEAR}: >-
+          Matches records where the date field falls within the previous
+          calendar year.
+        ${PREVFY}: >-
+          Matches records where the date field falls within the previous fiscal
+          year.
+        ${PREVFQ}: >-
+          Matches records where the date field falls within the previous fiscal
+          quarter.
+        ${NEXTYEAR}: >-
+          Matches records where the date field falls within the next calendar
+          year.
+        ${NEXTFY}: >-
+          Matches records where the date field falls within the next fiscal
+          year.
+        ${NEXTFQ}: >-
+          Matches records where the date field falls within the next fiscal
+          quarter.
+        ${EMPTY}: Matches records where the date field has no value set.
+        ${NOTEMPTY}: Matches records where the date field has a value set.
+    SimpleFilterCriterionValueNDaysPredefined:
+      maxLength: 255
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueNDaysPredefined
+      description: >-
+        Represents a predefined N-period range placeholder value applicable only
+        when the field's data_type is date or datetime, with the equal
+        comparator. Follows the pattern ${NEXT_N_<PERIOD>:<n>} or
+        ${LAST_N_<PERIOD>:<n>}, where PERIOD is DAYS, WEEKS, MONTHS, or YEARS
+        and n is a positive integer. The current period is always excluded from
+        the range.
+      pattern: ^\$\{(LAST_N_|NEXT_N_)(DAYS|WEEKS|MONTHS|YEARS):([0-9]+)\}$
+    SimpleFilterCriterionValueAgeDuePredefined:
+      maxLength: 255
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueAgeDuePredefined
+      description: >-
+        Represents a predefined age or due-in-days placeholder value applicable
+        only when the field's data_type is date or datetime. Follows the pattern
+        ${AGEINDAYS}+<n> for records where the date field was exactly n days in
+        the past, or ${DUEINDAYS}+<n> for records where the date field is
+        exactly n days in the future. Supported comparators are equal,
+        not_equal, less_than, greater_than, less_equal, and greater_equal.
+      pattern: ^\$\{(AGEINDAYS|DUEINDAYS)\}\+[0-9]+$
+    EqualFilterCriterionRequest:
+      type: object
+      x-zs-$id: EqualFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the equal comparator. The value type
+        is determined by the field's data_type: use
+        SimpleFilterCriterionValueString for text, textarea, email, phone,
+        website, autonumber, picklist, multiselectpicklist, date, or datetime
+        fields; SimpleFilterCriterionValueNumber for integer, currency, or
+        double fields; SimpleFilterCriterionValueBoolean for Boolean fields;
+        SimpleFilterCriterionValueObjectRequest for lookup, ownerlookup, or
+        userlookup fields; and SimpleFilterCriterionValueObjectPredefined for
+        predefined user or role object placeholders. Accepts scalar or array
+        values. Resolve the data_type from the field's FieldSchema.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the equal filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the equal filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - equal
+          description: >-
+            Represents the equal comparison operator applied to the criterion.
+
+            Possible values:
+
+            equal - Matches records where the field value equals the specified
+            filter value.
+        value:
+          anyOf:
+            - type: array
+              x-zs-$id: EqualFilterCriterionRequestValueArray
+              description: Contains an array of filter values for the equal comparator.
+              minItems: 1
+              maxItems: 500
+              items:
+                x-zs-$id: EqualFilterCriterionRequestValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+                  - x-zs-$id: EqualFilterCriterionRequestValueArrayItemsObject
+                    anyOf:
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectRequest
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectPredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueBoolean'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectRequest'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueGeneralPredefined'
+            - $ref: >-
+                #/components/schemas/SimpleFilterCriterionValueDateTimePredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNDaysPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the filter value used in the equal comparator. Accepts a
+            scalar or an array of values, depending on the field's data_type.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    NotEqualFilterCriterionRequest:
+      type: object
+      x-zs-$id: NotEqualFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the not_equal comparator. The value
+        type is determined by the field's data_type: use
+        SimpleFilterCriterionValueString for text, textarea, email, phone,
+        website, autonumber, picklist, multiselectpicklist, date, or datetime
+        fields; SimpleFilterCriterionValueNumber for integer, currency, or
+        double fields; SimpleFilterCriterionValueBoolean for Boolean fields;
+        SimpleFilterCriterionValueObjectRequest for lookup, ownerlookup, or
+        userlookup fields; and SimpleFilterCriterionValueObjectPredefined for
+        predefined user or role object placeholders.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the not-equal filter
+                criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the not-equal filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - not_equal
+          description: >-
+            Represents the not-equal comparison operator applied to the
+            criterion.
+
+            Possible values:
+
+            not_equal - Matches records where the field value does not equal the
+            specified filter value.
+        value:
+          anyOf:
+            - type: array
+              maxItems: 500
+              x-zs-$id: NotEqualFilterCriterionRequestValueArray
+              description: Contains an array of filter values for the not_equal comparator.
+              minItems: 1
+              items:
+                x-zs-$id: NotEqualFilterCriterionRequestValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+                  - x-zs-$id: NotEqualFilterCriterionRequestValueArrayItemsObject
+                    anyOf:
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectRequest
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectPredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueBoolean'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectRequest'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the filter value used in the not_equal comparator.
+            Accepts a scalar or an array of values, depending on the field's
+            data_type.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    EqualityFilterCriterionRequest:
+      x-zs-$id: EqualityFilterCriterionRequest
+      description: >-
+        Represents an equality filter criterion that dispatches to either the
+        EqualFilterCriterionRequest or NotEqualFilterCriterionRequest schema
+        based on the comparator value.
+      oneOf:
+        - $ref: '#/components/schemas/EqualFilterCriterionRequest'
+        - $ref: '#/components/schemas/NotEqualFilterCriterionRequest'
+    TextFilterCriterionRequest:
+      type: object
+      x-zs-$id: TextFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the like, not_like, starts_with,
+        ends_with, contains, and not_contains comparators. The value must be a
+        string scalar or array; use SimpleFilterCriterionValueString for
+        text-based field types. Object and Boolean values are not supported.
+        Resolve the data_type from the field's FieldSchema.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the text filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the text filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - like
+            - not_like
+            - starts_with
+            - ends_with
+            - contains
+            - not_contains
+          description: >-
+            Represents the text comparison operator applied to the criterion.
+
+            Possible values:
+
+            like - Matches records where the field value contains the specified
+            pattern.
+
+            not_like - Matches records where the field value does not contain
+            the specified pattern.
+
+            starts_with - Matches records where the field value begins with the
+            specified string.
+
+            ends_with - Matches records where the field value ends with the
+            specified string.
+
+            contains - Matches records where the field value contains the
+            specified string.
+
+            not_contains - Matches records where the field value does not
+            contain the specified string.
+        value:
+          description: >-
+            Represents the string filter value used in the text comparator.
+            Accepts a scalar string or an array of string values.
+          oneOf:
+            - type: array
+              x-zs-$id: TextFilterCriterionRequestValueArray
+              description: >-
+                Contains an array of primitive string values for the text filter
+                comparator.
+              minItems: 1
+              maxItems: 500
+              items:
+                x-zs-$id: TextFilterCriterionRequestValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    OrderingFilterCriterionRequest:
+      type: object
+      x-zs-$id: OrderingFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the less_than, less_equal,
+        greater_than, and greater_equal comparators. The value must be a scalar;
+        arrays and objects are not supported. The value type is determined by
+        the field's data_type: use SimpleFilterCriterionValueString for date or
+        datetime fields, and SimpleFilterCriterionValueNumber for integer,
+        currency, or double fields.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the ordering filter
+                criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the ordering filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - less_than
+            - less_equal
+            - greater_than
+            - greater_equal
+          description: >-
+            Represents the ordering comparison operator applied to the
+            criterion.
+
+            Possible values:
+
+            less_than - Matches records where the field value is less than the
+            specified filter value.
+
+            less_equal - Matches records where the field value is less than or
+            equal to the specified filter value.
+
+            greater_than - Matches records where the field value is greater than
+            the specified filter value.
+
+            greater_equal - Matches records where the field value is greater
+            than or equal to the specified filter value.
+        value:
+          anyOf:
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the scalar filter value used in the ordering comparator.
+            Arrays and objects are not supported for ordering comparators.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    BetweenFilterCriterionRequest:
+      type: object
+      x-zs-$id: BetweenFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the between and not_between
+        comparators. The value must be an array of exactly two elements —
+        [lower_bound, upper_bound]. The value type is determined by the field's
+        data_type: use SimpleFilterCriterionValueString for date or datetime
+        fields, and SimpleFilterCriterionValueNumber for integer, currency, or
+        double fields. Resolve the data_type from the field's FieldSchema. For
+        formula fields, use formula.return_type as the effective data_type; for
+        rollup_summary fields, use rollup_summary.return_type.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the range filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the range filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - between
+            - not_between
+          description: >-
+            Represents the range comparison operator applied to the criterion,
+            indicating whether the field value falls within or outside the
+            specified bounds.
+
+            Possible values:
+
+            between - Matches records where the field value falls within the
+            specified range.
+
+            not_between - Matches records where the field value falls outside
+            the specified range.
+        value:
+          type: array
+          x-zs-$id: BetweenFilterCriterionRequestValueArray
+          description: >-
+            Contains the two boundary values — [lower_bound, upper_bound] —
+            against which the field is evaluated for the between or not_between
+            comparator.
+          minItems: 2
+          maxItems: 2
+          items:
+            x-zs-$id: BetweenFilterCriterionRequestValueArrayItems
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    SetFilterCriterionRequest:
+      type: object
+      x-zs-$id: SetFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the in and not_in comparators. The
+        value must be an array of primitive values. The value type is determined
+        by the field's data_type: use SimpleFilterCriterionValueString for
+        text-based types, and SimpleFilterCriterionValueNumber for integer,
+        currency, or double fields.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the set filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the set filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - in
+            - not_in
+          description: >-
+            Represents the set membership comparison operator applied to the
+            criterion.
+
+            Possible values:
+
+            in - Matches records where the field value is in the specified set
+            of values.
+
+            not_in - Matches records where the field value is not in the
+            specified set of values.
+        value:
+          type: array
+          x-zs-$id: SetFilterCriterionRequestValueArray
+          description: >-
+            Contains an array of primitive filter values used in the set
+            comparison.
+          minItems: 1
+          maxItems: 500
+          items:
+            x-zs-$id: SetFilterCriterionRequestValueArrayItems
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    MultiSelectLookupFilterCriterionRequest:
+      type: object
+      x-zs-$id: MultiSelectLookupFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the include_all, include_any,
+        exclude_all, and exclude_any comparators. Applicable only when the
+        field's data_type is multiuserlookup or multiselectlookup. The value
+        must be an array of SimpleFilterCriterionValueObjectRequest lookup
+        objects.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the multi-select lookup
+                filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the multi-select
+            lookup filter criterion is applied. The field must have a data_type
+            of multiuserlookup or multiselectlookup.
+        comparator:
+          type: string
+          enum:
+            - include_all
+            - include_any
+            - exclude_all
+            - exclude_any
+          description: >-
+            Represents the multi-select lookup comparison operator applied to
+            the criterion. Applicable only when the field's data_type is
+            multiuserlookup or multiselectlookup.
+
+            Possible values:
+
+            include_all - Matches records that include all specified lookup
+            values.
+
+            include_any - Matches records that include at least one of the
+            specified lookup values.
+
+            exclude_all - Matches records that exclude all specified lookup
+            values.
+
+            exclude_any - Matches records that exclude at least one of the
+            specified lookup values.
+        value:
+          maxItems: 5
+          type: array
+          x-zs-$id: MultiSelectLookupFilterCriterionRequestValueArray
+          description: >-
+            Contains an array of lookup object references used in the
+            multi-select comparison.
+          minItems: 1
+          items:
+            x-zs-$id: MultiSelectLookupFilterCriterionRequestValueArrayItems
+            $ref: '#/components/schemas/SimpleFilterCriterionValueObjectRequest'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    SimpleFilterCriterionRequest:
+      x-zs-$id: SimpleFilterCriterionRequest
+      description: >-
+        Represents a simple field-based filter criterion that dispatches to the
+        appropriate comparator-specific schema. The equal and not_equal
+        comparators support scalar or array values; text comparators support
+        scalar or array strings; ordering comparators require a scalar; between
+        and not_between comparators require a two-element array; in and not_in
+        comparators require an array of primitives; and include_all,
+        include_any, exclude_all, and exclude_any comparators require an array
+        of lookup objects and apply only when the field's data_type is
+        multiuserlookup or multiselectlookup.
+      oneOf:
+        - $ref: '#/components/schemas/EqualityFilterCriterionRequest'
+        - $ref: '#/components/schemas/TextFilterCriterionRequest'
+        - $ref: '#/components/schemas/OrderingFilterCriterionRequest'
+        - $ref: '#/components/schemas/BetweenFilterCriterionRequest'
+        - $ref: '#/components/schemas/SetFilterCriterionRequest'
+        - $ref: '#/components/schemas/MultiSelectLookupFilterCriterionRequest'
+    GroupedFilterCriterionRequest:
+      type: object
+      x-zs-$id: GroupedFilterCriterionRequest
+      description: >-
+        Represents a grouped filter criterion containing multiple filter
+        conditions evaluated with a logical operator. Supports recursive nesting
+        for complex filtering logic.
+      properties:
+        group:
+          type: array
+          description: >-
+            Contains an array of filter conditions grouped together and
+            evaluated with the specified logical operator.
+          minItems: 2
+          maxItems: 25
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionRequest'
+              - $ref: '#/components/schemas/GroupedFilterCriterionRequest'
+        group_operator:
+          type: string
+          enum:
+            - AND
+            - OR
+            - and
+            - or
+          description: >-
+            Represents the logical operator applied between the filter
+            conditions in the group.
+
+            Possible values:
+
+            AND - All conditions in the group must be satisfied.
+
+            OR - At least one condition in the group must be satisfied.
+
+            and - Equivalent to AND; all conditions in the group must be
+            satisfied.
+
+            or - Equivalent to OR; at least one condition in the group must be
+            satisfied.
+      required:
+        - group
+        - group_operator
+      additionalProperties: false
+    FilterCriterionRequest:
+      x-zs-$id: FilterCriterionRequest
+      description: >-
+        Represents the top-level filter criterion for data selection, supporting
+        both simple field-based filters and complex grouped filters with logical
+        operators.
+      oneOf:
+        - $ref: '#/components/schemas/SimpleFilterCriterionRequest'
+        - $ref: '#/components/schemas/GroupedFilterCriterionRequest'
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth 2.0 authentication for Zoho CRM APIs
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.READ: Read access to CRM modules
+            ZohoCRM.modules.UPDATE: Update access to CRM modules
+            ZohoCRM.modules.DELETE: Delete access to CRM modules

@@ -1,0 +1,1621 @@
+openapi: 3.1.0
+info:
+  title: Mail Merge APIs
+  description: >
+    You can use the Mail Merge APIs to generate documents from mail merge
+    templates, send them as emails with attachments or inline images, route them
+    for signing and approval, or download the merged documents.
+
+
+    Before using the Sign Mail Merge API, you must access the [Merge and Sign
+    dialog](https://help.zoho.com/portal/en/kb/writer/for-developer/custom-functions-dashboard/articles/prerequisites-for-mergeandemail-mergeandsign-sign-combineandstore-apis-in-writer)
+    from the Writer UI at least once.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Represents the API Server URL
+    variables:
+      dc:
+        description: Represents the API Server URL TLD
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: Represents the API Version
+        default: v8
+paths:
+  /{moduleApiName}/{recordId}/actions/send_mail_merge:
+    post:
+      summary: Send mail merge email
+      description: >-
+        To send a personalized email to one or more recipients using a mail
+        merge template associated with a specific record in your Zoho CRM
+        organization. You can include recipients in the To, CC, and BCC fields,
+        and optionally attach the merged document either as an inline image or a
+        separate file.
+      operationId: postSendMailMerge
+      parameters:
+        - $ref: '#/components/parameters/ParamPathModuleApiName'
+        - $ref: '#/components/parameters/ParamPathRecordId'
+      requestBody:
+        description: >-
+          The request body must contain a **send_mail_merge** array with one
+          object specifying the mail merge template, recipient addresses, and
+          optional email content settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostsendmailmergeRequest'
+            examples:
+              SamplePostRequest:
+                summary: Send mail merge request body
+                value:
+                  send_mail_merge:
+                    - mail_merge_template:
+                        name: mailmergename
+                      from_address:
+                        type: email
+                        value: p.boyle@gmail.com
+                      to_address:
+                        - type: email
+                          value: smith@abc.com
+                        - type: email
+                          value: john@abc.com
+                      subject: Hi there
+                      cc_email:
+                        - type: email
+                          value: brie.c@gmail.com
+                      bcc_email:
+                        - type: email
+                          value: ceo.zylker@gmail.com
+                      type: attachment
+                      attachment_name: testdocument
+                      message: Big Deal
+                description: >-
+                  Shows a send mail merge request using a named template with
+                  recipient addresses, subject, CC, BCC, and an attachment type.
+            x-zs-llm-examples:
+              - SamplePostRequest
+      responses:
+        '200':
+          description: >-
+            Returns the result of the send mail merge operation, indicating that
+            the email sending was initiated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostsendmailmergeResponse200'
+              examples:
+                Success200:
+                  summary: Successful send mail merge response
+                  value:
+                    send_mail_merge:
+                      - code: SUCCESS
+                        details:
+                          report_link: >-
+                            https://writer.zoho.com/writer/v1/mailmerge/job/4791a19ea20e60e4a17c03f3b5feb149ef2caa18572d9587f26e041e5c47d868dca099732f2d7c6c51fed0693f066194
+                        message: send mail merge action initiated successfully
+                        status: success
+                  description: >-
+                    Shows a successful response when the send mail merge
+                    operation is initiated, with the report link in the details.
+        '400':
+          description: >
+            The send mail merge request could not be processed due to invalid
+            input. 
+
+            **Resolution**: Verify that the request body contains all required
+            fields with valid values, and that the module API name and record ID
+            in the URL are correct.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response body for an invalid send mail
+                  merge request.
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidModulePathError'
+                  - $ref: '#/components/schemas/RequiredParamMissingError'
+                  - $ref: '#/components/schemas/InvalidDataParamError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents an error response containing a list of
+                      validation errors for the send mail merge request body.
+                    properties:
+                      send_mail_merge:
+                        type: array
+                        description: >-
+                          Represents the list of error objects for the send mail
+                          merge request.
+                        items:
+                          oneOf:
+                            - $ref: '#/components/schemas/MandatoryFieldNotFoundError'
+                            - $ref: '#/components/schemas/InvalidDataTypeError'
+                            - $ref: '#/components/schemas/InvalidDataMaxLengthError'
+                          description: >-
+                            Each object represents an individual error object
+                            for the send mail merge request.
+                        maxItems: 25
+                    required:
+                      - send_mail_merge
+                    x-zs-$id: PostsendmailmergeError400Wrapper
+                x-zs-$id: PostsendmailmergeError400
+              examples:
+                Error400:
+                  summary: Example of a missing required field error response.
+                  value:
+                    send_mail_merge:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: mail_merge_template
+                          json_path: $.send_mail_merge[0].mail_merge_template
+                        message: Required field is missing
+                        status: error
+                  description: >-
+                    Shows the error response when the required mail merge
+                    template field is missing from the request body.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.mailmerge.CREATE
+            - ZohoWriter.documentEditor.ALL
+            - ZohoWriter.merge.ALL
+            - ZohoCRM.settings.emails.ALL
+  /{moduleApiName}/{recordId}/actions/sign_mail_merge:
+    post:
+      summary: Send mail merge document for signing
+      description: >-
+        To send a merged document to one or more recipients for signing or
+        approval using a mail merge template associated with a specific record
+        in your Zoho CRM organization. Before using this operation for the first
+        time, you must access the Merge and Sign dialog in the Zoho Writer UI
+        once.
+      operationId: postSignMailMerge
+      parameters:
+        - $ref: '#/components/parameters/ParamPathModuleApiName'
+        - $ref: '#/components/parameters/ParamPathRecordId'
+      requestBody:
+        description: >-
+          The request body must contain a **sign_mail_merge** array with one
+          object specifying the mail merge template, the file name, and the list
+          of signers.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostsignmailmergeRequest'
+            examples:
+              SamplePostRequest:
+                summary: Sign mail merge request body
+                value:
+                  sign_mail_merge:
+                    - mail_merge_template:
+                        name: mailmergename
+                      file_name: testdocument
+                      sign_in_order: true
+                      signers:
+                        - recipient_name: Sam
+                          action_type: sign
+                          recipient:
+                            type: email
+                            value: smith@gmail.com
+                        - recipient_name: John
+                          action_type: approve
+                          recipient:
+                            type: email
+                            value: john@gmail.com
+                        - recipient_name: John
+                          action_type: approve
+                          recipient:
+                            type: merge_field
+                            value: ${!Leads.Last_Name}
+                description: >-
+                  Shows a sign mail merge request using a named template, a file
+                  name, sequential signing order, and a list of signers with
+                  mixed sign and approve actions.
+            x-zs-llm-examples:
+              - SamplePostRequest
+      responses:
+        '200':
+          description: >-
+            Returns the result of the sign mail merge operation, indicating that
+            the document was sent for signing or approval successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostsignmailmergeResponse200'
+              examples:
+                Success200:
+                  summary: Successful sign mail merge response
+                  value:
+                    sign_mail_merge:
+                      - code: SUCCESS
+                        details:
+                          sign_resource_id: '112953000000044001'
+                          report_link: >-
+                            https://writer.zoho.com/writer/v1/mailmerge/job/e1aee66cb489b8e89f8df4c8e36847ff2c1ec12b0b945e6f41314d5ca9a0870f710d651349ecdc916fbff687b9db8b3e
+                        message: send mail merge action initiated successfully
+                        status: success
+                  description: >-
+                    Shows a successful response when the sign mail merge
+                    operation is initiated, with the sign resource ID and report
+                    link in the details.
+        '400':
+          description: >
+            The sign mail merge request could not be processed due to invalid
+            input. 
+
+            **Resolution**: Verify that the request body contains all required
+            fields with valid values, and that the module API name and record ID
+            in the URL are correct.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response body for an invalid sign mail
+                  merge request.
+                oneOf:
+                  - $ref: '#/components/schemas/ExpectedFieldMissingError'
+                  - $ref: '#/components/schemas/InvalidDataParamError'
+                  - $ref: '#/components/schemas/InvalidModulePathError'
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents an error response containing a list of
+                      validation errors for the sign mail merge request body.
+                    properties:
+                      sign_mail_merge:
+                        type: array
+                        description: >-
+                          Represents the list of error objects for the sign mail
+                          merge request.
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/MandatoryFieldNotFoundBodyError
+                            - $ref: '#/components/schemas/MandatoryFieldNotFoundError'
+                            - $ref: '#/components/schemas/InvalidDataTypeError'
+                            - $ref: '#/components/schemas/InvalidDataMaxLengthError'
+                          description: >-
+                            Represents an individual error object for the sign
+                            mail merge request.
+                        maxItems: 25
+                    required:
+                      - sign_mail_merge
+                    x-zs-$id: PostsignmailmergeError400Wrapper
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                x-zs-$id: PostsignmailmergeError400
+              examples:
+                Error400:
+                  summary: Example of missing required field error response.
+                  value:
+                    sign_mail_merge:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: mail_merge_template
+                          json_path: $.sign_mail_merge[0].mail_merge_template
+                        message: Required field is missing
+                        status: error
+                  description: >-
+                    Shows the error response when the required mail merge
+                    template field is missing from the request body.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.mailmerge.CREATE
+            - ZohoWriter.documentEditor.ALL
+            - ZohoWriter.merge.ALL
+            - ZohoSign.documents.ALL
+  /{moduleApiName}/{recordId}/actions/download_mail_merge:
+    post:
+      summary: Download mail merge document
+      description: >-
+        To download the merged document created from a mail merge template for a
+        specific record in your Zoho CRM organization. You can choose the output
+        format as **pdf**, **html**, or **docx**, and optionally set a password
+        for PDF documents.
+      operationId: postDownloadMailMerge
+      parameters:
+        - $ref: '#/components/parameters/ParamPathModuleApiName'
+        - $ref: '#/components/parameters/ParamPathRecordId'
+      requestBody:
+        description: >-
+          The request body must contain a **download_mail_merge** array with one
+          object specifying the mail merge template and its optional output
+          settings.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostdownloadmailmergeRequest'
+            examples:
+              SamplePostRequest:
+                summary: Download mail merge request body
+                value:
+                  download_mail_merge:
+                    - mail_merge_template:
+                        name: mailmergename
+                      output_format: pdf
+                      file_name: testdocument
+                      password: tester123
+                description: >-
+                  Shows a download mail merge request using a named template
+                  with PDF output format and an optional password.
+            x-zs-llm-examples:
+              - SamplePostRequest
+      responses:
+        '200':
+          description: >-
+            Returns the result of the download mail merge operation, indicating
+            that the merged document generation was initiated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                x-zs-$id: PostdownloadmailmergeResponse200
+                description: >-
+                  Represents the response body for a successful download mail
+                  merge request.
+                properties:
+                  download_mail_merge:
+                    type: array
+                    description: >-
+                      Represents the list of download mail merge response
+                      objects.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      description: >-
+                        Each object represents an individual response item for
+                        the download mail merge operation.
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the response code indicating the result
+                            of the download mail merge operation.
+                          maxLength: 255
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the result of the
+                            download mail merge operation.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the download mail merge
+                            operation.
+                          maxLength: 255
+                    maxItems: 1
+              examples:
+                Success200:
+                  summary: Example of a successful download mail merge response.
+                  value:
+                    download_mail_merge:
+                      - code: SUCCESS
+                        message: download mail merge action initiated successfully
+                        status: success
+                  description: >-
+                    Shows a successful response when the download mail merge
+                    operation is initiated.
+        '400':
+          description: >
+            The download mail merge request could not be processed due to
+            invalid input. 
+
+            **Resolution**: Verify that the request body contains all required
+            fields with valid values, and that the module API name and record ID
+            in the URL are correct.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response body for an invalid download
+                  mail merge request.
+                oneOf:
+                  - $ref: '#/components/schemas/ExpectedParamMissingError'
+                  - $ref: '#/components/schemas/InvalidDataUrlError'
+                  - $ref: '#/components/schemas/InvalidModuleParamError'
+                  - $ref: '#/components/schemas/InvalidRequestMethodError'
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents an error response containing a list of
+                      validation errors for the download mail merge request
+                      body.
+                    properties:
+                      download_mail_merge:
+                        type: array
+                        description: >-
+                          Represents the list of error objects for the download
+                          mail merge operation.
+                        items:
+                          oneOf:
+                            - $ref: '#/components/schemas/MandatoryFieldNotFoundError'
+                            - $ref: '#/components/schemas/InvalidDataTypeError'
+                            - $ref: '#/components/schemas/InvalidDataMaxLengthError'
+                          description: >-
+                            Each object represents an individual error object
+                            for the download mail merge request.
+                        maxItems: 25
+                    required:
+                      - download_mail_merge
+                    x-zs-$id: PostdownloadmailmergeError400Wrapper
+                x-zs-$id: PostdownloadmailmergeError400
+              examples:
+                Error400:
+                  summary: Example of a missing required field error response.
+                  value:
+                    download_mail_merge:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: mail_merge_template
+                          json_path: $.download_mail_merge[0].mail_merge_template
+                        message: Required field is missing
+                        status: error
+                  description: >-
+                    Shows the error response when the required mail merge
+                    template field is missing from the request body.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.mailmerge.CREATE
+            - ZohoWriter.documentEditor.ALL
+            - ZohoWriter.merge.ALL
+components:
+  schemas:
+    InvalidDataMaxLengthError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when a field value exceeds the maximum
+        allowed length.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for the failed request. '
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents the error details with field validation information.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum allowed length for the field that failed
+                validation.
+            api_name:
+              type: string
+              description: Represents the API name of the field that failed validation.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path to the field that failed validation.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: 'Represents the error message describing the failure. '
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: 'Represents the error response status. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Data Max Length Error
+      x-zs-$id: InvalidDataMaxLengthError
+    SignMailMergeNested1:
+      type: object
+      additionalProperties: false
+      description: Represents the response payload for a sign mail merge operation.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the response code indicating the result of the sign mail
+            merge operation.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/DetailsNested1'
+        message:
+          type: string
+          description: >-
+            Represents the message describing the result of the sign mail merge
+            operation.
+          maxLength: 255
+        status:
+          type: string
+          description: |
+            Represents the status of the sign mail merge operation.
+            Possible values:
+            **success** - The sign mail merge document was sent successfully.
+            **error** - The sign mail merge document failed to send.
+          enum:
+            - success
+            - error
+          maxLength: 255
+    MandatoryFieldNotFoundBodyError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when a required field is absent from the
+        request body.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for this error type. '
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the missing mandatory
+            field.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the missing mandatory field.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the missing mandatory field in the
+                request body.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: 'Represents the error message. '
+          enum:
+            - required field not found
+        status:
+          type: string
+          description: 'Represents the error response status. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Mandatory Field Not Found Body Error
+      x-zs-$id: MandatoryFieldNotFoundBodyError
+    PostsendmailmergeResponse200:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response body returned upon successful initiation of the
+        send mail merge operation.
+      properties:
+        send_mail_merge:
+          type: array
+          description: Represents the list of send mail merge response objects.
+          items:
+            $ref: '#/components/schemas/SendMailMergeNested1'
+          maxItems: 1
+      example:
+        send_mail_merge:
+          - code: SUCCESS
+            details:
+              report_link: https://example.com/report/12345
+            message: Mail merge sent successfully
+            status: success
+      x-zs-$id: PostsendmailmergeResponse200
+    DetailsNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response details returned upon successful initiation of
+        the send mail merge operation.
+      properties:
+        report_link:
+          type: string
+          description: Represents the URL of the mail merge job report.
+          format: uri
+          maxLength: 255
+    PostdownloadmailmergeRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request body schema for the download mail merge
+        operation.
+      properties:
+        download_mail_merge:
+          type: array
+          description: >-
+            Represents the list of download mail merge request objects. Contains
+            one object per request.
+          items:
+            $ref: '#/components/schemas/DownloadMailMergeNested'
+          maxItems: 1
+      required:
+        - download_mail_merge
+    BccEmailNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a BCC recipient entry for a mail merge email, containing the
+        address type and email value.
+      properties:
+        type:
+          type: string
+          description: |
+            Represents the type of the address.
+            Possible values:
+            **email** - Indicates that the value is an email address.
+          enum:
+            - email
+          maxLength: 5
+        value:
+          type: string
+          format: email
+          description: >-
+            Represents the email address to include in the BCC list for the mail
+            merge email.
+          pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+          maxLength: 255
+      required:
+        - type
+        - value
+    MailMergeTemplateNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the mail merge template reference, identified by the template
+        name.
+      properties:
+        name:
+          type: string
+          description: >-
+            Represents the name of the mail merge template to use for the
+            operation.
+          maxLength: 255
+      required:
+        - name
+    MandatoryFieldNotFoundError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when a required field is missing from the
+        request.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for this error type. '
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the missing mandatory
+            field.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the missing mandatory field.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the missing mandatory field in the
+                request.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: 'Represents the error message. '
+          enum:
+            - Required field is missing
+        status:
+          type: string
+          description: Represents the error response status.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Mandatory Field Not Found Error
+      x-zs-$id: MandatoryFieldNotFoundError
+    InvalidDataUrlError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when invalid data is provided in the
+        request URL.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for this error type. '
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the URL path segment with
+            invalid data.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                Represents the index of the URL path segment that contains
+                invalid data.
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: 'Represents the error message. '
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: 'Represents the error response status. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Data URL Error
+      x-zs-$id: InvalidDataUrlError
+    InvalidModuleParamError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when the module name provided in a request
+        parameter is invalid.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for this error type. '
+          enum:
+            - INVALID_MODULE
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the parameter with an
+            invalid module name.
+          properties:
+            param_name:
+              type: string
+              description: >-
+                Represents the name of the parameter that contains the invalid
+                module name.
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - module name given seems to be invalid
+        status:
+          type: string
+          description: 'Represents the error response status. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Module Param Error
+      x-zs-$id: InvalidModuleParamError
+    SendMailMergeNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload for a send mail merge operation,
+        including the template, recipient addresses, subject, message body, and
+        optional attachment settings.
+      properties:
+        bcc_email:
+          type: array
+          description: >-
+            Represents the list of email addresses to include in the BCC field
+            of the mail merge email.
+          items:
+            $ref: '#/components/schemas/BccEmailNested'
+          maxItems: 1
+        mail_merge_template:
+          $ref: '#/components/schemas/MailMergeTemplateNested'
+          description: Mailmerge Object to pass Template details (Required)
+        subject:
+          type: string
+          description: Represents the subject line of the mail merge email.
+          maxLength: 255
+        cc_email:
+          type: array
+          description: >-
+            Represents the list of email addresses to include in the CC field of
+            the mail merge email.
+          items:
+            $ref: '#/components/schemas/CcEmailNested'
+          maxItems: 1
+        attachment_name:
+          type: string
+          description: >-
+            Represents the name of the attachment to include in the mail merge
+            email.
+          maxLength: 255
+        to_address:
+          type: array
+          description: >-
+            Represents the list of email addresses to send the mail merge email
+            to.
+          items:
+            $ref: '#/components/schemas/ToAddressNested'
+          maxItems: 2
+        type:
+          type: string
+          description: >
+            Represents the attachment type for the mail merge email.
+
+            Possible values:
+
+            **inline** - Includes the mail merge document as an inline image in
+            the email.
+
+            **attachment** - Attaches the mail merge document as a separate file
+            in the email.
+          enum:
+            - inline
+            - attachment
+          maxLength: 10
+        message:
+          type: string
+          description: >+
+            Represents the body or content of the email you want to send. It can
+            include up to **100,000 characters**.
+
+          maxLength: 100000
+        from_address:
+          $ref: '#/components/schemas/FromAddressNested'
+          description: >-
+            The email ID you want to use to send emails from. This email address
+            must be the one of the org-verified email addresses or the current
+            user's email ID.
+      required:
+        - mail_merge_template
+    ExpectedParamMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when at least one of the expected request
+        parameters is absent.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for the failed operation. '
+          enum:
+            - EXPECTED_PARAM_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details listing the expected parameters, at
+            least one of which must be provided.
+          properties:
+            param_names:
+              type: array
+              description: >-
+                Represents the list of expected parameter names, at least one of
+                which must be included in the request.
+              items:
+                type: string
+                description: Represents the name of an expected request parameter.
+                maxLength: 255
+              maxItems: 25
+          required:
+            - param_names
+        message:
+          type: string
+          description: 'Represents the error message. '
+          enum:
+            - One of the expected parameter is missing
+        status:
+          type: string
+          description: Represents the error response status.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Expected Param Missing Error
+      x-zs-$id: ExpectedParamMissingError
+    RequiredParamMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when a required URL or query parameter is
+        not provided in the request.
+      properties:
+        code:
+          type: string
+          description: Represents the error code for this error type.
+          enum:
+            - REQUIRED_PARAM_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the missing required
+            parameter.
+          properties:
+            param_name:
+              type: string
+              description: >-
+                Represents the name of the required parameter that is missing
+                from the request.
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: 'Represents the error message. '
+          enum:
+            - mandatory param missing
+        status:
+          type: string
+          description: 'Represents the error response status. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Required Param Missing Error
+      x-zs-$id: RequiredParamMissingError
+    DownloadMailMergeNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload for a download mail merge operation,
+        including the template reference, output format, and optional file
+        settings.
+      properties:
+        mail_merge_template:
+          $ref: '#/components/schemas/MailMergeTemplateNested'
+          description: To pass template name (Required)
+        output_format:
+          type: string
+          description: |
+            Represents the output format for the downloaded document.
+            Possible values:
+            **pdf** - Downloads the document in PDF format.
+            **html** - Downloads the document in HTML format.
+            **docx** - Downloads the document in DOCX format.
+          enum:
+            - pdf
+            - html
+            - docx
+          maxLength: 4
+        file_name:
+          type: string
+          description: Represents the file name for the downloaded mail merge document.
+          maxLength: 255
+      required:
+        - mail_merge_template
+    InvalidRequestMethodError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when the HTTP request method used is not
+        supported for the endpoint.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for the failed operation. '
+          enum:
+            - INVALID_REQUEST_METHOD
+        details:
+          type: object
+          additionalProperties: false
+          description: 'Represents the error details for an invalid request method error. '
+          properties: {}
+        message:
+          type: string
+          description: 'Represents the error message. '
+          enum:
+            - The http request method type is not a valid one
+        status:
+          type: string
+          description: 'Represents the error response status. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Request Method Error
+      x-zs-$id: InvalidRequestMethodError
+    SignMailMergeNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload for a sign mail merge operation,
+        including the template reference, file name, signing order, and the list
+        of signers.
+      properties:
+        sign_in_order:
+          type: boolean
+          description: >
+            Indicates whether recipients must act on the document in a specified
+            sequence.
+
+            Possible values:
+
+            **true** - The document first goes for approval, then for signing in
+            the defined order.
+
+            **false** - Zoho Sign sends the document to all recipients
+            simultaneously.
+        signers:
+          type: array
+          description: >-
+            The details of the users you want to sign the document.
+
+            - recipient_name **string, mandatory** - the name of the user who
+            has to sign or approve the document.
+
+            - **action_type** string, mandatory - the type of action you want
+            the user to perform. The possible values are sign to **sign** the
+            document, and **approve** to approve the document.
+
+            - **recipient** JSON object, mandatory
+                - **value** string, mandatory - the email ID of the user who has to sign or approve the document.
+
+            > **Note**
+
+            > The values for the fields **recipient_name** and
+            **recipient.value** will be taken from the mail merge template. If
+            you want to override the values in the template, you must specify
+            the values of these fields in the input body.
+          items:
+            $ref: '#/components/schemas/SignersNested'
+          maxItems: 3
+        mail_merge_template:
+          $ref: '#/components/schemas/MailMergeTemplateNested'
+          description: To pass Template details (Required)
+        file_name:
+          type: string
+          description: Represents the name of the file to send for signing or approval.
+          maxLength: 255
+      required:
+        - file_name
+        - mail_merge_template
+    RecipientNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the recipient details for a signing or approval action,
+        including the identifier type and value.
+      properties:
+        type:
+          type: string
+          description: >
+            Represents the type of recipient identifier.
+
+            Possible values:
+
+            **email** - The recipient is identified by a direct email address.
+
+            **merge_field** - The recipient is identified by a mail merge field
+            reference.
+          enum:
+            - email
+            - merge_field
+          maxLength: 11
+        value:
+          type: string
+          description: >-
+            Represents the email address or mail merge field reference for the
+            recipient. When **type** is **email**, provide a valid email
+            address. When **type** is **merge_field**, provide a merge field
+            reference such as **${!Leads.Email}**.
+          maxLength: 255
+      required:
+        - type
+        - value
+    SendMailMergeNested1:
+      type: object
+      additionalProperties: false
+      description: Represents the response payload for a send mail merge operation.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the response code indicating the result of the send mail
+            merge operation.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/DetailsNested'
+        message:
+          type: string
+          description: >-
+            Represents the message describing the result of the send mail merge
+            operation.
+          maxLength: 255
+        status:
+          type: string
+          description: |
+            Represents the status of the send mail merge operation.
+            Possible values:
+            **success** - The mail merge email was initiated successfully.
+            **error** - The mail merge email failed to initiate.
+          enum:
+            - success
+            - error
+          maxLength: 255
+    CcEmailNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a CC recipient entry for a mail merge email, containing the
+        address type and email value.
+      properties:
+        type:
+          type: string
+          description: |
+            Represents the type of the address.
+            Possible values:
+            **email** - Indicates that the value is an email address.
+          enum:
+            - email
+          maxLength: 5
+        value:
+          type: string
+          format: email
+          description: >-
+            Represents the email address to include in the CC list for the mail
+            merge email.
+          pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+          maxLength: 255
+      required:
+        - type
+        - value
+    InvalidDataParamError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when invalid data is provided in a request
+        parameter.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for the failed operation. '
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the parameter with invalid
+            data.
+          properties:
+            param_name:
+              type: string
+              description: >-
+                Represents the name of the request parameter that contains
+                invalid data.
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: 'Represents the error message. '
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: Represents the error response status.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Data Param Error
+      x-zs-$id: InvalidDataParamError
+    PostsignmailmergeResponse200:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response body returned upon successful initiation of the
+        sign mail merge operation.
+      properties:
+        sign_mail_merge:
+          type: array
+          description: Represents the list of sign mail merge response objects.
+          items:
+            $ref: '#/components/schemas/SignMailMergeNested1'
+          maxItems: 1
+      example:
+        sign_mail_merge:
+          - code: SUCCESS
+            details:
+              sign_resource_id: abc123xyz
+              report_link: https://example.com/sign/abc123xyz
+            message: Document sent for signature successfully
+            status: success
+      x-zs-$id: PostsignmailmergeResponse200
+    DetailsNested1:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response details returned upon successful initiation of
+        the sign mail merge operation.
+      properties:
+        sign_resource_id:
+          type: string
+          description: >-
+            Represents the unique ID of the sign request resource created for
+            the sign mail merge operation.
+          maxLength: 255
+        report_link:
+          type: string
+          description: Represents the URL of the sign mail merge job report.
+          format: uri
+          maxLength: 255
+    ExpectedFieldMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when at least one of the expected fields is
+        absent from the request.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for the failed operation. '
+          enum:
+            - EXPECTED_FIELD_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details listing the expected fields, at least
+            one of which must be provided.
+          properties:
+            expected_fields:
+              type: array
+              description: >-
+                Represents the list of expected fields, at least one of which
+                must be included in the request.
+              items:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents an expected field entry with its API name and JSON
+                  path.
+                properties:
+                  api_name:
+                    type: string
+                    description: Represents the API name of the expected field.
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path to the expected field in the
+                      request body.
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - expected_fields
+        message:
+          type: string
+          description: 'Represents the error message. '
+          enum:
+            - specify atleast one field
+        status:
+          type: string
+          description: 'Represents the error response status. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Expected Field Missing Error
+      x-zs-$id: ExpectedFieldMissingError
+    InvalidDataTypeError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when a field value has an invalid data
+        type.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for the requested operation. '
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents the error details with field validation information.
+          properties:
+            expected_data_type:
+              type: string
+              description: >-
+                Represents the expected data type for the field that failed
+                validation.
+              maxLength: 255
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that has an invalid data
+                type.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the field that has an invalid data
+                type.
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: 'Represents the error message. '
+          enum:
+            - Invalid data type
+        status:
+          type: string
+          description: 'Represents the error response status. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Data Type Error
+      x-zs-$id: InvalidDataTypeError
+    PostsignmailmergeRequest:
+      type: object
+      additionalProperties: false
+      description: Represents the request body schema for the sign mail merge operation.
+      properties:
+        sign_mail_merge:
+          type: array
+          description: >-
+            Represents the list of sign mail merge request objects. Contains one
+            object per request.
+          items:
+            $ref: '#/components/schemas/SignMailMergeNested'
+          maxItems: 1
+      required:
+        - sign_mail_merge
+    PostsendmailmergeRequest:
+      type: object
+      additionalProperties: false
+      description: Represents the request body schema for the send mail merge operation.
+      properties:
+        send_mail_merge:
+          type: array
+          description: >-
+            Represents the list of send mail merge request objects. Contains one
+            object per request.
+          items:
+            $ref: '#/components/schemas/SendMailMergeNested'
+          maxItems: 1
+      required:
+        - send_mail_merge
+    SignersNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a signer entry for a sign mail merge operation, including the
+        recipient details, the recipient name, and the required action type.
+      properties:
+        recipient:
+          $ref: '#/components/schemas/RecipientNested'
+          description: Recipient Object (Required)
+        recipient_name:
+          type: string
+          description: >-
+            Represents the name of the recipient who must sign or approve the
+            document.
+          maxLength: 255
+        action_type:
+          type: string
+          description: >
+            Represents the action the recipient must perform on the mail merge
+            document.
+
+            Possible values:
+
+            **sign** - The recipient must sign the document.
+
+            **approve** - The recipient must approve the document.
+          enum:
+            - sign
+            - approve
+          maxLength: 7
+      required:
+        - action_type
+        - recipient
+        - recipient_name
+    InvalidModulePathError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response when the module name provided in the URL
+        path is invalid.
+      properties:
+        code:
+          type: string
+          description: 'Represents the error code for the failed operation request. '
+          enum:
+            - INVALID_MODULE
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details identifying the invalid module in the
+            request URL.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                Represents the index of the URL path segment that contains the
+                invalid module name.
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - module name given seems to be invalid
+        status:
+          type: string
+          description: 'Represents the error response status. '
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Module Path Error
+      x-zs-$id: InvalidModulePathError
+    FromAddressNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the sender address for a mail merge email, containing the
+        address type and an org-verified or current user's email address.
+      properties:
+        type:
+          type: string
+          description: |
+            Represents the type of the address.
+            Possible values:
+            **email** - Indicates the value is an email address.
+          enum:
+            - email
+          maxLength: 5
+        value:
+          type: string
+          format: email
+          description: >-
+            Represents the sender email address used to send the mail merge
+            email.
+          pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+          maxLength: 255
+      required:
+        - type
+        - value
+    ToAddressNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a recipient address entry for a mail merge email, containing
+        the address type and email value.
+      properties:
+        type:
+          type: string
+          description: |
+            Represents the type of the address.
+            Possible values:
+            **email** - Indicates the value is an email address.
+          enum:
+            - email
+          maxLength: 5
+        value:
+          type: string
+          format: email
+          description: Represents the recipient email address for the mail merge email.
+          pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+          maxLength: 255
+      required:
+        - type
+        - value
+  parameters:
+    ParamPathRecordId:
+      name: recordId
+      in: path
+      description: >-
+        Specify the unique ID of the record for which you want to perform the
+        mail merge action.
+      required: true
+      schema:
+        type: integer
+        format: int64
+        example: 5725767000000524000
+    ParamPathModuleApiName:
+      name: moduleApiName
+      in: path
+      description: >-
+        Specify the API name of the CRM module for which you want to perform the
+        mail merge action. Refer to the [Get
+        Modules](modules.yaml#$.paths./settings/modules.get) resource for valid
+        values.
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+        example: '{moduleApiName}'
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: Represents the  OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.mailmerge.CREATE: Grants permission to initiate mail merge operations in Zoho CRM.
+            ZohoWriter.documentEditor.ALL: >-
+              Grants full access to the document editor in Zoho Writer, required
+              for processing mail merge templates.
+            ZohoWriter.merge.ALL: >-
+              Grants full access to the mail merge functionality in Zoho Writer,
+              including sending, downloading, and signing merged documents.
+            ZohoSign.documents.ALL: >-
+              Grants full access to documents in Zoho Sign, including sending
+              documents for signature and approval.
+            ZohoCRM.settings.emails.ALL: >-
+              Grants full access to email settings in Zoho CRM, including
+              creating and managing email configurations.

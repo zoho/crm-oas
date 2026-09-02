@@ -1,0 +1,414 @@
+openapi: 3.1.0
+info:
+  title: List of Available APIs
+  description: >-
+    To retrieve the list of supported APIs in a specific API version, with the
+    option to filter the APIs based on their request methods or OAuth scopes.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Public Zoho CRM API Server
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        enum:
+          - v8
+        default: v8
+        description: API version
+paths:
+  /__apis:
+    get:
+      operationId: getAvailableApis
+      summary: List available REST APIs
+      description: >-
+        To retrieve the list of available REST API endpoints in your Zoho CRM
+        organization for a specific API version. You can filter the results by
+        module, OAuth scope, or request method using the filters parameter.
+      security:
+        - OAuth2:
+            - ZohoCRM.apis.READ
+      parameters:
+        - $ref: '#/components/parameters/Filters'
+      responses:
+        '200':
+          description: >-
+            Returns the list of available REST APIs with their paths, HTTP
+            methods, OAuth scopes, and credit consumption details.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: AvailableApisResponse
+                type: object
+                description: >-
+                  Contains the list of available REST APIs and their operation
+                  types.
+                additionalProperties: false
+                properties:
+                  __apis:
+                    type: array
+                    description: >-
+                      Contains the details of all the supported APIs in the API
+                      version given in the request URL.
+                    maxItems: 2000
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents an API with its path and
+                        supported HTTP operations.
+                      additionalProperties: false
+                      properties:
+                        path:
+                          type: string
+                          description: >-
+                            Represents the API endpoint for the API version in
+                            the request URL.
+                          maxLength: 512
+                        operation_types:
+                          type: array
+                          description: >
+                            Contains the supported HTTP operations for that API
+                            in that version.
+                          maxItems: 10
+                          items:
+                            type: object
+                            description: >-
+                              Each object represents the details of a single
+                              HTTP operation supported by that API.
+                            additionalProperties: false
+                            properties:
+                              method:
+                                type: string
+                                description: |
+                                  Represents the supported request method for
+                                  that API. 
+
+                                  Possible values:
+
+                                  **GET** - Retrieve data.
+
+                                  **POST** - Create data.
+
+                                  **PUT** - Update data.
+
+                                  **PATCH** - Partially update data.
+
+                                  **DELETE** - Remove data.
+                                enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                              oauth_scope:
+                                type: string
+                                description: >-
+                                  Represents the OAuth scope required to perform
+                                  this operation.
+                                maxLength: 128
+                              max_credits:
+                                type: integer
+                                format: int32
+                                description: >+
+                                  Represents the maximum credits that the API
+                                  consumes.
+
+                                minimum: 0
+                              min_credits:
+                                type: integer
+                                format: int32
+                                description: >-
+                                  Represents the minimum credits that the API
+                                  consumes.
+                                minimum: 0
+                            required:
+                              - method
+                              - oauth_scope
+                              - max_credits
+                              - min_credits
+                      required:
+                        - path
+                        - operation_types
+                required:
+                  - __apis
+              examples:
+                ApiResponse:
+                  value:
+                    __apis:
+                      - path: /crm/v8/Quotes/{{id}}/actions/send_mail
+                        operation_types:
+                          - method: POST
+                            oauth_scope: ZohoCRM.send_mail.quotes.CREATE
+                            max_credits: 20
+                            min_credits: 20
+                          - method: PUT
+                            oauth_scope: ZohoCRM.send_mail.quotes.CREATE
+                            max_credits: 20
+                            min_credits: 20
+                      - path: /crm/v8/Accounts/{{id}}/photo
+                        operation_types:
+                          - method: GET
+                            oauth_scope: ZohoCRM.modules.accounts.READ
+                            max_credits: 1
+                            min_credits: 1
+                          - method: DELETE
+                            oauth_scope: ZohoCRM.modules.accounts.DELETE
+                            max_credits: 1
+                            min_credits: 1
+                          - method: POST
+                            oauth_scope: ZohoCRM.modules.accounts.CREATE
+                            max_credits: 1
+                            min_credits: 1
+                      - path: /crm/v8/Deals/{{id}}/Attachments
+                        operation_types:
+                          - method: POST
+                            oauth_scope: ZohoCRM.modules.deals.CREATE
+                            max_credits: 1
+                            min_credits: 1
+                          - method: GET
+                            oauth_scope: ZohoCRM.modules.deals.READ
+                            max_credits: 1
+                            min_credits: 1
+                          - method: PUT
+                            oauth_scope: ZohoCRM.modules.deals.UPDATE
+                            max_credits: 1
+                            min_credits: 1
+                          - method: DELETE
+                            oauth_scope: ZohoCRM.modules.deals.DELETE
+                            max_credits: 1
+                            min_credits: 1
+                  description: >-
+                    Shows a sample of the successful response with three APIs,
+                    including their operations.
+                  summary: List of Available APIs
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    Filters:
+      name: filters
+      in: query
+      required: false
+      description: >
+        This parameter allows you to filter the supported APIs for the version
+        specified in the URL. You can filter based on three criteria: module,
+        request method, and OAuth scope. The filter syntax is a JSON object with
+        three fields: **field**, **comparator**, and **value**. The **field**
+        can be one of the following: `module`, `operation_types.method`, or
+        `operation_types.oauth_scope`. The **comparator** can be either `equals`
+        or `contains`. The **value** is the value to filter by. Encode the
+        filter while using it in any API platform.
+      schema:
+        type: string
+        maxLength: 2048
+      examples:
+        Sample:
+          summary: Filter by send_mail scope
+          value: |-
+            {
+              "field": {
+                "api_name": "operation_types.oauth_scope"
+              },
+              "comparator": "equals",
+              "value": "send_mail"
+            }
+  responses:
+    BadRequest:
+      description: |
+        The request parameter is invalid.
+
+        **Resolution:** The request must include valid filter syntax and
+        URL-encoded values.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Sample:
+              summary: You provided an invalid filter parameter.
+              description: >-
+                Shows the error response when the filters parameter contains
+                invalid syntax or references an invalid module.
+              value:
+                code: BAD_REQUEST
+                message: The request parameters are invalid.
+                status: error
+                details:
+                  field: module
+                  issue: Unknown module.
+    Unauthorized:
+      description: |
+        Authentication failed.
+
+        **Resolution:** Pass the access token in the request header of the API
+        call.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Sample:
+              summary: >-
+                Include a valid access token in the request header to authorize
+                the API call.
+              description: >-
+                Shows the error response when the access token is missing,
+                expired, or invalid.
+              value:
+                code: UNAUTHORIZED
+                message: Authentication required or token invalid.
+                status: error
+                details: {}
+    Forbidden:
+      description: |
+        Permission denied to access this resource.
+
+        **Resolution:** Contact your CRM administrator to grant the required
+        permission.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Sample:
+              summary: You do not have enough permission to access this resource.
+              description: >-
+                Shows the error response when the user lacks permission to
+                access this resource.
+              value:
+                code: FORBIDDEN
+                message: You do not have permission to access this resource.
+                status: error
+                details: {}
+    NotFound:
+      description: |
+        The requested resource does not exist.
+
+        **Resolution:** The request URL must reference a valid API version and
+        endpoint.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Sample:
+              summary: >-
+                Refer to the URL section of the API and provide a valid version
+                and endpoint. 
+              description: >-
+                Shows the error response when the requested endpoint or API
+                version does not exist.
+              value:
+                code: NOT_FOUND
+                message: The requested resource was not found.
+                status: error
+                details: {}
+    TooManyRequests:
+      description: |
+        The API rate limit has been exceeded.
+
+        **Resolution:** The request should be retried after the time specified
+        in the **retry_after** field in the response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Sample:
+              summary: >-
+                Your rate limit has been exceeded. Please try again after
+                sometime. 
+              description: >-
+                Shows the error response when the API rate limit is exceeded,
+                including retry timing and limit details.
+              value:
+                code: TOO_MANY_REQUESTS
+                message: Rate limit exceeded. Please retry after the specified time.
+                status: error
+                details:
+                  trace_id: rate-limit-trace-id-001
+                  retry_after: 60
+                  limit: 100
+                  window: 60
+    InternalServerError:
+      description: |
+        An unexpected error occurred on the server.
+
+        **Resolution:** Unexpected and unhandled exception in the server.
+        Contact support team.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Sample:
+              summary: 'Unexpected server error. Contact the support team. '
+              description: >-
+                Shows the error response when an unexpected server-side error
+                occurs.
+              value:
+                code: INTERNAL_ERROR
+                message: An unexpected error occurred.
+                status: error
+                details:
+                  trace_id: abc123def456
+  schemas:
+    ErrorResponse:
+      x-zs-$id: ErrorResponse
+      type: object
+      description: >-
+        Represents the standard error response returned by the API when a
+        request fails.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Returns the error code generated by the API.
+          maxLength: 64
+        message:
+          type: string
+          description: Represents the error message describing the issue.
+          maxLength: 512
+        details:
+          type: object
+          description: >-
+            Contains additional context about the error, such as the field or
+            JSON path of the field that caused the error.
+          additionalProperties: true
+        status:
+          type: string
+          description: status
+          maxLength: 64
+      required:
+        - code
+        - message
+        - status
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.apis.READ: >-
+              Grants permission to retrieve the list of available APIs in Zoho
+              CRM.

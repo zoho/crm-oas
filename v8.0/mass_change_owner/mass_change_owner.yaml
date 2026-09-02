@@ -1,0 +1,1577 @@
+openapi: 3.1.0
+info:
+  title: Mass Change Owner
+  description: >-
+    Mass change owner is a Zoho CRM feature that enables bulk reassignment of
+    record ownership across a module, using custom views, territories, or
+    field-based criteria. This API enables developers to schedule ownership
+    change jobs and retrieve their processing status.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /{module}/actions/mass_change_owner:
+    post:
+      summary: Submit mass change owner job
+      description: >-
+        To bulk update the ownership of records in a specified module based on a
+        Custom View, territory, or field-based criteria in your Zoho CRM
+        organization. You cannot change the owner of related records using this
+        API. You can change the owner of up to 50,000 records in a custom view.
+        This API schedules the operation as a job and returns a job ID, which
+        you can use to check the job status. Job statuses are available for up
+        to 60 days. The Mass Change Owner API is available only in the
+        Enterprise and Ultimate editions. The OAuth scope enforced is specific
+        to the target module (for example, **ZohoCRM.change_owner.leads.CREATE**
+        for Leads); modules without a dedicated scope fall back to a generic
+        custom-module scope.
+      operationId: massChangeOwner
+      parameters:
+        - $ref: '#/components/parameters/Module'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Specify the details for the mass change owner operation,
+                including the target Custom View, the new owner, an optional
+                territory, and an optional criteria filter.
+              additionalProperties: false
+              properties:
+                cvid:
+                  type: string
+                  description: >-
+                    Specify the unique ID of the Custom View whose records are
+                    to be reassigned. Refer to the [Get Custom
+                    Views](custom_views.yaml#$.paths./settings/custom_views.get)
+                    resource for valid values.
+                  maxLength: 19
+                owner:
+                  type: object
+                  description: >-
+                    Specify the details of the user to assign as the new owner
+                    of the selected records.
+                  additionalProperties: false
+                  properties:
+                    id:
+                      type: string
+                      description: >-
+                        Specify the unique ID of the user to assign as the new
+                        owner. Refer to the [Get
+                        Users](users.yaml#$.paths./users.get) resource for valid
+                        values.
+                      maxLength: 19
+                  required:
+                    - id
+                territory:
+                  type: object
+                  description: >-
+                    Specify the territory to use as the source of records for
+                    the ownership change.
+                  additionalProperties: false
+                  properties:
+                    id:
+                      type: string
+                      description: >-
+                        Specify the unique ID of the territory. Refer to the
+                        [Get
+                        Territories](territories.yaml#$.paths./settings/territories.get)
+                        resource for valid values.
+                      maxLength: 19
+                    include_child:
+                      type:
+                        - boolean
+                        - 'null'
+                      description: |
+                        Specify whether to include records from child
+                        territories of the specified territory in the ownership
+                        change.
+
+                        Possible values:
+
+                        **true** - Include records from child territories.
+
+                        **false** - Restrict to records in the specified
+                        territory only.
+                  required:
+                    - id
+                criteria:
+                  description: >-
+                    Specify the criteria to filter which records are included in
+                    the ownership change.
+                  type: object
+                  x-zs-$id: ValueBasedCriteria
+                  additionalProperties: false
+                  properties:
+                    field:
+                      description: >-
+                        Specify the module field on which the criteria condition
+                        applies.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        api_name:
+                          description: >-
+                            Specify the API name of the field. Refer to the [Get
+                            Fields](fields.yaml#$.paths./settings/fields.get)
+                            resource for valid values.
+                          type: string
+                          maxLength: 255
+                        id:
+                          description: >-
+                            Specify the unique ID of the field. Refer to the
+                            [Get
+                            Fields](fields.yaml#$.paths./settings/fields.get)
+                            resource for valid values.
+                          type: string
+                          maxLength: 19
+                      required:
+                        - api_name
+                    comparator:
+                      description: |
+                        Specify the comparison operator for the criteria.
+
+                        Possible values:
+
+                        **equal** - Matches records where the field equals the
+                        specified value.
+
+                        **not_equal** - Matches records where the field does not
+                        equal the specified value.
+
+                        **starts_with** - Matches records where the field starts
+                        with the specified value.
+
+                        **ends_with** - Matches records where the field ends
+                        with the specified value.
+
+                        **greater_than** - Matches records where the field is
+                        greater than the specified value.
+
+                        **less_than** - Matches records where the field is less
+                        than the specified value.
+
+                        **greater_equal** - Matches records where the field is
+                        greater than or equal to the specified value.
+
+                        **less_equal** - Matches records where the field is less
+                        than or equal to the specified value.
+
+                        **between** - Matches records where the field value
+                        falls within a specified range.
+
+                        **not_between** - Matches records where the field value
+                        falls outside a specified range.
+                      type: string
+                      enum:
+                        - equal
+                        - ends_with
+                        - not_equal
+                        - greater_than
+                        - less_than
+                        - not_between
+                        - starts_with
+                        - between
+                        - less_equal
+                        - greater_equal
+                    value:
+                      description: >-
+                        Specify the value to compare against the field using the
+                        criteria comparator.
+                      type: string
+                      maxLength: 255
+                  required:
+                    - field
+                    - comparator
+                    - value
+              required:
+                - cvid
+                - owner
+            examples:
+              MassChangeOwnerExample:
+                value:
+                  cvid: '2423488000000091545'
+                  owner:
+                    id: '2423488000000483001'
+                  territory:
+                    id: '2423488000000780003'
+                    include_child: true
+                  criteria:
+                    field:
+                      api_name: Stage
+                      id: '2423488000000000525'
+                    comparator: equal
+                    value: Qualification
+                description: >-
+                  Shows a mass change owner request that reassigns records in
+                  the Deals module matching the **Stage = Qualification**
+                  criteria within a territory and its child territories.
+                summary: >-
+                  An example of mass change owner request with territory and
+                  criteria filter.
+        required: true
+        description: The request body contains the data required to perform the operation.
+      responses:
+        '202':
+          description: >-
+            Returns the job details after the mass change owner request is
+            accepted and scheduled for processing.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: ErrorResponse202
+                description: Contains the details of the scheduled ownership change job.
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Contains the job scheduling details returned when the mass
+                      change owner request is accepted.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Represents the details of the scheduled mass change
+                        owner job.
+                      additionalProperties: false
+                      properties:
+                        status:
+                          type: string
+                          description: |
+                            Represents the status of the mass change owner
+                            operation.
+
+                            Possible values:
+
+                            **success** - The mass change owner job was
+                            successfully scheduled.
+                          enum:
+                            - success
+                        code:
+                          type: string
+                          description: |
+                            Represents the response code for the scheduled job.
+
+                            Possible values:
+
+                            **SCHEDULED** - The mass change owner job is
+                            successfully scheduled.
+                          enum:
+                            - SCHEDULED
+                        message:
+                          type: string
+                          description: >-
+                            Represents the response message for the scheduled
+                            job.
+                          enum:
+                            - change owner is successfully scheduled
+                        details:
+                          type: object
+                          description: >-
+                            Represents the additional details about the
+                            scheduled mass change owner job. 
+                          additionalProperties: false
+                          properties:
+                            job_id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the scheduled mass
+                                change owner job.
+                              maxLength: 19
+                          required:
+                            - job_id
+                      required:
+                        - status
+                        - code
+                        - message
+                        - details
+                required:
+                  - data
+              examples:
+                SuccessResponse:
+                  value:
+                    data:
+                      - status: success
+                        code: SCHEDULED
+                        message: change owner is successfully scheduled
+                        details:
+                          job_id: '2423488000001234567'
+                  description: >-
+                    Shows the successful response when the mass change owner
+                    request is accepted and a job is scheduled.
+                  summary: Example of a successful mass change owner job scheduling.
+        '400':
+          description: |
+            The mass change owner request failed due to invalid or missing
+            input. Resolution: Review the error details in the response to
+            identify and correct the specific validation issue.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MultiResponse400
+                oneOf:
+                  - type: object
+                    x-zs-$id: Errorresponseformissingmandatoryfields
+                    description: >-
+                      Represents the error response returned when a required
+                      field is missing from the request.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: Represents the error code for the failed request.
+                        enum:
+                          - MANDATORY_NOT_FOUND
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the missing
+                          required field.
+                        maxLength: 255
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request failed due to an error.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional error details about the
+                          missing field.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the missing required
+                              field.
+                            maxLength: 255
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the missing required
+                              field in the request body.
+                            maxLength: 255
+                        required:
+                          - api_name
+                          - json_path
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: Errorresponseforinvaliddataormodule
+                    description: >-
+                      Represents the error response returned when the provided
+                      data is invalid or the operation is not supported for the
+                      specified module.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code for the failed request.
+
+                          Possible values:
+
+                          **INVALID_DATA** - The provided data is invalid.
+
+                          **NOT_SUPPORTED** - The operation is not supported for
+                          this module.
+                        enum:
+                          - INVALID_DATA
+                          - NOT_SUPPORTED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          data or unsupported module.
+                        maxLength: 255
+                      details:
+                        oneOf:
+                          - type: object
+                            x-zs-$id: Detailsabouttheinvalidfield
+                            description: >-
+                              Represents the error detail containing the API
+                              name of the invalid field.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: Represents the API name of the invalid field.
+                                maxLength: 255
+                            required:
+                              - api_name
+                          - type: object
+                            x-zs-$id: DetailsabouttheinvalidfieldJson
+                            description: >-
+                              Represents the error detail containing the JSON
+                              path to the invalid field.
+                            additionalProperties: false
+                            properties:
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the invalid field
+                                  in the request body.
+                                maxLength: 255
+                            required:
+                              - json_path
+                          - type: object
+                            x-zs-$id: Detailsaboutinvalidresourcepath
+                            description: >-
+                              Represents the error detail containing the index
+                              of the invalid segment in the request URL path.
+                            additionalProperties: false
+                            properties:
+                              resource_path_index:
+                                type: integer
+                                description: >-
+                                  Represents the index of the invalid segment in
+                                  the request URL path.
+                                format: int32
+                            required:
+                              - resource_path_index
+                          - type: object
+                            x-zs-$id: Whenthegivenowneridisnotvalid
+                            description: >-
+                              Represents the error detail returned when the
+                              specified owner user is invalid, deleted, or
+                              inactive.
+                            additionalProperties: false
+                            properties:
+                              owner_status:
+                                type: string
+                                description: |
+                                  Represents the status of the specified owner
+                                  user.
+
+                                  Possible values:
+
+                                  **not_crm_user** - The specified user is not a
+                                  CRM user.
+
+                                  **deleted** - The specified user account is
+                                  deleted.
+
+                                  **inactive** - The specified user account is
+                                  inactive.
+                                enum:
+                                  - not_crm_user
+                                  - deleted
+                                  - inactive
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field in which
+                                  the invalid owner ID was provided.
+                                maxLength: 255
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field in which
+                                  the invalid owner ID was provided.
+                                maxLength: 255
+                            required:
+                              - owner_status
+                              - api_name
+                              - json_path
+                          - type: object
+                            x-zs-$id: Detailsaboutexpecteddatatypemismatch
+                            description: >-
+                              Represents the error detail returned when a field
+                              value has an unexpected data type.
+                            additionalProperties: false
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: >-
+                                  Represents the expected data type for the
+                                  field.
+                                maxLength: 255
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field with the
+                                  data type mismatch.
+                                maxLength: 255
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field with the
+                                  data type mismatch.
+                                maxLength: 255
+                            required:
+                              - expected_data_type
+                              - api_name
+                              - json_path
+                        description: >-
+                          Represents the additional error details about the
+                          invalid data or unsupported operation.
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request failed due to an error.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                  - type: object
+                    x-zs-$id: Errorresponsewhenrecordlimitisexceeded
+                    description: >-
+                      Represents the error response returned when the number of
+                      records in the Custom View exceeds the allowed limit.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request failed due to an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code for the failed request.
+
+                          Possible values:
+
+                          **RECORD_LIMIT_EXCEEDED** - The number of records in
+                          the Custom View exceeds the allowed limit.
+                        enum:
+                          - RECORD_LIMIT_EXCEEDED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the record
+                          count limit exceeded.
+                        maxLength: 255
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional error details about the
+                          exceeded record limit.
+                        additionalProperties: false
+                        properties:
+                          limit:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the maximum number of records allowed
+                              per ownership change request.
+                        required:
+                          - limit
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: Errorresponsewhencombinedcriterialimitisexceeded
+                    description: >-
+                      Represents the error response returned when the combined
+                      number of criteria across the Custom View and the request
+                      body exceeds the allowed limit.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request failed due to an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code for the failed request.
+
+                          Possible values:
+
+                          **COMBINED_CRITERIA_LIMIT_EXCEEDED** - The combined
+                          number of criteria in the Custom View and the request
+                          **criteria** exceeds the allowed limit of 25.
+                        enum:
+                          - COMBINED_CRITERIA_LIMIT_EXCEEDED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the exceeded
+                          combined criteria limit.
+                        maxLength: 255
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional error details about the
+                          exceeded combined criteria limit.
+                        additionalProperties: false
+                        properties:
+                          limit:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the maximum combined criteria count
+                              allowed across the Custom View and the request
+                              body.
+                        required:
+                          - limit
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: Errorresponsewhenownerisaserviceprovideruser
+                    description: >-
+                      Represents the error response returned when the specified
+                      new owner is a Service Provider user who cannot own
+                      records in this module.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code for the failed request.
+
+                          Possible values:
+
+                          **NOT_ALLOWED** - The specified owner is a Service
+                          Provider user who can only own records in the Tasks,
+                          Events, Calls, and Appointments modules.
+                        enum:
+                          - NOT_ALLOWED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the disallowed
+                          ownership assignment.
+                        maxLength: 255
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request failed due to an error.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional error details about the
+                          disallowed owner assignment.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field carrying the
+                              disallowed owner.
+                            maxLength: 255
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the disallowed owner
+                              field.
+                            maxLength: 255
+                        required:
+                          - api_name
+                          - json_path
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: Errorresponsewhenexpectedfieldsaremissingincriteria
+                    description: >-
+                      Represents the error response returned when required
+                      fields are missing from the criteria object.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code for the failed request.
+
+                          Possible values:
+
+                          **EXPECTED_FIELD_MISSING** - A required field is
+                          missing from the criteria object.
+                        enum:
+                          - EXPECTED_FIELD_MISSING
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the missing
+                          criteria fields.
+                        maxLength: 255
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request failed due to an error.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional error details about the
+                          missing criteria fields.
+                        additionalProperties: false
+                        properties:
+                          expected_fields:
+                            type: array
+                            description: >-
+                              Represents the list of expected fields that are
+                              missing from the criteria object.
+                            maxItems: 2
+                            items:
+                              type: object
+                              description: >-
+                                Represents an expected field that is missing
+                                from the criteria object.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the missing
+                                    expected field.
+                                  maxLength: 255
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    Represents the JSON path to the missing
+                                    expected field.
+                                  maxLength: 255
+                        required:
+                          - expected_fields
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: Errorresponsewhenambiguousfieldsareprovided
+                    description: >-
+                      Represents the error response returned when both the field
+                      ID and API name are provided, causing ambiguity.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code for the failed request.
+
+                          Possible values:
+
+                          **AMBIGUITY_DURING_PROCESSING** - Both the field ID
+                          and API name were provided, causing ambiguity.
+                        enum:
+                          - AMBIGUITY_DURING_PROCESSING
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the ambiguity
+                          in the field specification.
+                        maxLength: 255
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request failed due to an error.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional error details about the
+                          ambiguous field specification.
+                        additionalProperties: false
+                        properties:
+                          ambiguity_due_to:
+                            type: array
+                            description: >-
+                              Represents the list of fields that caused the
+                              ambiguity.
+                            maxItems: 2
+                            items:
+                              type: object
+                              description: >-
+                                Represents a field that contributed to the
+                                ambiguous specification.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the field that
+                                    caused ambiguity.
+                                  maxLength: 255
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    Represents the JSON path to the field that
+                                    caused ambiguity.
+                                  maxLength: 255
+                        required:
+                          - ambiguity_due_to
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: Errorresponseformissingdependentfields
+                    description: >-
+                      Represents the error response returned when a required
+                      dependent field is missing or does not match the expected
+                      value.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code for the failed request.
+
+                          Possible values:
+
+                          **DEPENDENT_FIELD_MISSING** - A required dependent
+                          field is missing from the criteria.
+
+                          **DEPENDENT_MISMATCH** - A dependent field value does
+                          not match the expected value.
+                        enum:
+                          - DEPENDENT_FIELD_MISSING
+                          - DEPENDENT_MISMATCH
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the missing or
+                          mismatched dependent field.
+                        maxLength: 255
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request failed due to an error.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional error details about the
+                          missing or mismatched dependent field.
+                        additionalProperties: false
+                        properties:
+                          dependee:
+                            type: object
+                            description: >-
+                              Represents the details of the field that requires
+                              the missing dependent field.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field that
+                                  requires the dependent field.
+                                maxLength: 255
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path to the field that
+                                  requires the dependent field.
+                                maxLength: 255
+                            required:
+                              - api_name
+                              - json_path
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the missing or
+                              mismatched dependent field.
+                            maxLength: 255
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the missing or
+                              mismatched dependent field.
+                            maxLength: 255
+                        required:
+                          - api_name
+                          - json_path
+                          - dependee
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: Errorresponsefornonsubordinateuserownerchange
+                    description: >-
+                      Represents the error response returned when the specified
+                      owner is not a valid subordinate of the current user.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: |
+                          Represents the error code for the failed request.
+
+                          Possible values:
+
+                          **INVALID_DATA** - The specified owner is not a valid
+                          subordinate user.
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional error details about the
+                          invalid owner parameter.
+                        additionalProperties: false
+                        properties:
+                          param_name:
+                            type: string
+                            description: >-
+                              Represents the name of the parameter that
+                              triggered the validation error.
+                            maxLength: 255
+                        required:
+                          - param_name
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          subordinate user validation failure.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: |
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request failed due to an error.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: >-
+                  Represents one of the possible error responses returned when
+                  the mass change owner request fails due to invalid or missing
+                  parameters.
+              examples:
+                MandatoryNotFound:
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    message: Required field is missing
+                    status: error
+                    details:
+                      api_name: cvid
+                      json_path: $.cvid
+                  description: >-
+                    Shows the error returned when the required **cvid**
+                    parameter is missing from the request.
+                  summary: An example of missing required cvid parameter.
+                InvalidDataOwnerStatus:
+                  value:
+                    code: INVALID_DATA
+                    message: Invalid data provided
+                    status: error
+                    details:
+                      api_name: owner
+                      json_path: $.owner.id
+                      owner_status: not_crm_user
+                  description: >-
+                    Shows the error returned when the specified owner ID belongs
+                    to a user who is not a CRM user.
+                  summary: An example of a specified owner not being a CRM user.
+                InvalidDataExpectedField:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: field
+                      json_path: $.criteria.field
+                      expected_data_type: jsonobject
+                    message: the value given is invalid
+                    status: error
+                  description: >-
+                    Shows the error returned when **criteria.field** is not
+                    provided as a JSON object.
+                  summary: Example of criteria field value provided as wrong data type.
+                RecordLimitExceeded:
+                  value:
+                    status: error
+                    code: RECORD_LIMIT_EXCEEDED
+                    message: The number of records exceeds the limit
+                    details:
+                      limit: 50000
+                  description: >-
+                    Shows the error returned when the number of records in the
+                    Custom View exceeds the limit of 50,000.
+                  summary: >-
+                    Example of custom view record count exceeding the 50,000
+                    limit.
+                CombinedCriteriaLimitExceeded:
+                  value:
+                    status: error
+                    code: COMBINED_CRITERIA_LIMIT_EXCEEDED
+                    message: >-
+                      Given CVID has more than 25 criteria, so change owner not
+                      done.
+                    details:
+                      limit: 25
+                  description: >-
+                    Shows the error returned when the combined number of
+                    criteria conditions in the Custom View and the request
+                    **criteria** exceeds the limit of 25.
+                  summary: >-
+                    Example of combined criteria count exceeding the limit of
+                    25.
+                ExpectedFieldMissing:
+                  value:
+                    code: EXPECTED_FIELD_MISSING
+                    details:
+                      expected_fields:
+                        - api_name: group
+                          json_path: $.criteria.group
+                        - api_name: field
+                          json_path: $.criteria.field
+                    message: Specify atleast one field
+                    status: error
+                  description: >-
+                    Shows the error returned when the criteria object does not
+                    include a required **group** or **field** property.
+                  summary: >-
+                    Example of missing required field or group in criteria
+                    object.
+                AmbiguityDuringProcessing:
+                  value:
+                    code: AMBIGUITY_DURING_PROCESSING
+                    details:
+                      ambiguity_due_to:
+                        - api_name: id
+                          json_path: $.criteria.field.id
+                        - api_name: api_name
+                          json_path: $.criteria.field.api_name
+                    message: required field not found
+                    status: error
+                  description: >-
+                    Shows the error returned when both **criteria.field.id** and
+                    **criteria.field.api_name** are provided, creating an
+                    ambiguity in the field specification.
+                  summary: >-
+                    Example of ambiguous criteria field with both id and
+                    api_name provided.
+                DependentFieldMissing:
+                  value:
+                    code: DEPENDENT_FIELD_MISSING
+                    details:
+                      dependee:
+                        api_name: field
+                        json_path: $.criteria.field
+                      api_name: field|comparator|value
+                      json_path: $.<field|comparator|value>
+                    message: Dependent Field missing
+                    status: error
+                  description: >-
+                    Shows the error returned when the criteria object includes a
+                    field reference but is missing the required **comparator**
+                    or **value** property.
+                  summary: >-
+                    Example of missing dependent comparator or value in
+                    criteria.
+                NonSubordinateUser:
+                  summary: Example of a non-subordinate user assigned as new owner.
+                  description: >-
+                    Shows the error returned when the target owner is not a
+                    valid subordinate of the current user. This can occur when
+                    the 'List subordinates only' (role-based) or 'Territories
+                    and Sub-Territory Users Only' (territory-based) permission
+                    setting is enabled.
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      param_name: owner_id
+                    message: >-
+                      The user to whom you are trying to transfer the records
+                      is  not a subordinate user.
+                    status: error
+                NotAllowedServiceProviderOwner:
+                  value:
+                    code: NOT_ALLOWED
+                    message: >-
+                      Service Provider User can only be assigned to tasks,
+                      meetings, calls, and appointments
+                    status: error
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                  description: >-
+                    Shows the error returned when the new owner specified is a
+                    Service Provider user, who can only be assigned ownership of
+                    Tasks, Meetings, Calls, and Appointments records.
+                  summary: >-
+                    Example of assigning ownership to a Service Provider user
+                    outside allowed modules.
+        '403':
+          description: >
+            The current user does not have permission to change record ownership
+            in the specified module.
+
+            Resolution: Request the Mass Transfer (change owner) permission for
+            this module from your CRM administrator.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: Errorresponsewhenusermissingmasstransferpermission
+                description: >-
+                  Represents the error response returned when the current user
+                  lacks the Mass Transfer permission required to change
+                  ownership in the specified module.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: |
+                      Represents the error code for the failed request.
+
+                      Possible values:
+
+                      **NO_PERMISSION** - The current user does not have
+                      permission to change ownership of records in this
+                      module.
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the missing
+                      permission.
+                    enum:
+                      - permission denied
+                  status:
+                    type: string
+                    description: |
+                      Represents the status of the response.
+                      Possible values:
+                      **error** - The request failed due to an error.
+                    enum:
+                      - error
+                  details:
+                    type: object
+                    description: >-
+                      Represents the additional error details about the missing
+                      permission.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of permission keys required to
+                          perform this operation.
+                        maxItems: 1
+                        items:
+                          type: string
+                          description: >-
+                            Represents a permission key required to perform this
+                            operation.
+                          maxLength: 255
+                    required:
+                      - permissions
+                required:
+                  - code
+                  - message
+                  - status
+                  - details
+              examples:
+                NoPermission:
+                  value:
+                    code: NO_PERMISSION
+                    message: permission denied
+                    status: error
+                    details:
+                      permissions:
+                        - MASSTRANSFER_Leads
+                  description: >-
+                    Shows the error returned when the current user lacks the
+                    Mass Transfer permission for the module.
+                  summary: Example of missing mass-transfer permission for the module.
+      security:
+        - OAuth2:
+            - ZohoCRM.change_owner.CREATE
+    get:
+      summary: Get mass change owner job status
+      description: >-
+        To retrieve the status of a previously scheduled mass change owner job
+        in your Zoho CRM organization. The OAuth scope enforced is specific to
+        the target module (for example, **ZohoCRM.change_owner.leads.READ** for
+        Leads); modules without a dedicated scope fall back to a generic
+        custom-module scope.
+      operationId: getMassChangeOwnerStatus
+      parameters:
+        - name: module
+          in: path
+          description: >-
+            Specify the API name of the CRM module. Refer to the [Get
+            Modules](modules.yaml#$.paths./settings/modules.get) resource for
+            valid values. **Deals** and **Meetings** are normalized internally
+            to **Potentials** and **Events** respectively before the job's
+            module is checked.
+          required: true
+          schema:
+            type: string
+            maxLength: 255
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: >-
+            Returns the status details of the mass change owner job identified
+            by the specified job ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Contains the job status data returned for a successful
+                  retrieval request.
+                x-zs-$id: JobStatusResponse
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Contains the job status details for the mass change owner
+                      job.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Represents the status and record counts for a mass
+                        change owner job.
+                      additionalProperties: false
+                      properties:
+                        Status:
+                          type: string
+                          description: |
+                            Represents the current status of the mass change
+                            owner job.
+
+                            Possible values:
+
+                            **COMPLETED** - The job is finished successfully.
+
+                            **SCHEDULED** - The job is queued and has not
+                            started processing yet.
+
+                            **FAILED** - The job did not complete successfully.
+                          enum:
+                            - COMPLETED
+                            - SCHEDULED
+                            - FAILED
+                        Failed_Count:
+                          type: integer
+                          description: >-
+                            Represents the number of records for which the
+                            ownership change operation failed. 
+                          format: int32
+                        Not_Updated_Count:
+                          type: integer
+                          description: >-
+                            Represents the number of records for which the
+                            ownership has not yet been updated. 
+                          format: int32
+                        Updated_Count:
+                          type: integer
+                          description: >-
+                            Represents the number of records for which the
+                            ownership was successfully updated. 
+                          format: int32
+                        Total_Count:
+                          type: integer
+                          description: >-
+                            Represents the total number of records that were
+                            processed by the mass change owner job.
+                          format: int32
+                      required:
+                        - Status
+                        - Failed_Count
+                        - Not_Updated_Count
+                        - Updated_Count
+                        - Total_Count
+                required:
+                  - data
+              examples:
+                JobStatusResponse:
+                  value:
+                    data:
+                      - Status: COMPLETED
+                        Failed_Count: 0
+                        Not_Updated_Count: 0
+                        Updated_Count: 10
+                        Total_Count: 10
+                  description: >-
+                    Shows a **COMPLETED** mass change owner job where all 10
+                    records were successfully updated.
+                  summary: >-
+                    An example of a completed mass change owner job with all
+                    records updated.
+        '204':
+          description: >-
+            Returned when the specified job ID does not correspond to any mass
+            change owner job, whether currently scheduled or aged out of the
+            live job store (jobs older than 60 days are looked up from the audit
+            log). Despite the 204 status, the response carries a JSON error
+            body.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: Errorresponsewhennocontentfoundforjob
+                description: >-
+                  Represents the error response returned when no job data could
+                  be found for the specified job ID.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: |
+                      Represents the error code for the response.
+
+                      Possible values:
+
+                      **NO_DATA** - No job data was found for the specified
+                      job ID.
+                    enum:
+                      - NO_DATA
+                  message:
+                    type: string
+                    description: Represents the message describing the absence of job data.
+                    maxLength: 255
+                required:
+                  - code
+                  - message
+              examples:
+                NoDataFound:
+                  value:
+                    code: NO_DATA
+                    message: there is no data to show
+                  description: >-
+                    Shows the error body returned when no job data could be
+                    found for the specified job ID.
+                  summary: Example of no job data found for the specified job ID.
+        '400':
+          description: >
+            The **job_id** query parameter is missing from the request. 
+
+            Resolution: The request must include a valid **job_id** obtained
+            from the response of the previous [Mass Change Owner
+            API](mass_change_owner.yaml#$.paths./{module}/actions/mass_change_owner.post)
+            call.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: Errorresponseformissingrequiredqueryparamete
+                description: >-
+                  Represents the error response returned when the **job_id**
+                  query parameter is missing from the request.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: |
+                      Represents the error code for the failed request.
+
+                      Possible values:
+
+                      **REQUIRED_PARAM_MISSING** - A required query parameter is
+                      missing.
+                    enum:
+                      - REQUIRED_PARAM_MISSING
+                  message:
+                    type: string
+                    description: 'Represents the error message describing the issue. '
+                    maxLength: 255
+                  status:
+                    type: string
+                    description: |
+                      Represents the status of the response.
+                      Possible values:
+                      **error** - The request failed due to an error.
+                    enum:
+                      - error
+                  details:
+                    type: object
+                    description: >-
+                      Represents the additional error details about the missing
+                      parameter. 
+                    additionalProperties: false
+                    properties:
+                      param_name:
+                        type: string
+                        description: >-
+                          Represents the name of the missing required query
+                          parameter. 
+                        maxLength: 255
+                    required:
+                      - param_name
+                required:
+                  - code
+                  - message
+                  - status
+                  - details
+              examples:
+                RequiredParamMissing:
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    message: Required parameter is missing
+                    status: error
+                    details:
+                      param_name: job_id
+                  description: >-
+                    Shows the error returned when the required **job_id** query
+                    parameter is missing from the request.
+                  summary: An example of the missing job_id query parameter in request.
+        '404':
+          description: >-
+            Returned when the specified job ID corresponds to a mass change
+            owner job that was scheduled for a different module than the one
+            specified in the **module** path parameter. This module check is
+            only performed while the job is still tracked by the live job
+            scheduler; once a job ages out of the live store (see the 60-day
+            retention note above), a module mismatch on an older job instead
+            returns **204** with the **NO_DATA** body, not this 404.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: Errorresponsewhenjobbelongstoanothermodule
+                description: >-
+                  Represents the error response returned when the job ID belongs
+                  to a mass change owner job scheduled for a different module
+                  than the one specified in the request.
+                additionalProperties: false
+                properties:
+                  code:
+                    type:
+                      - string
+                      - 'null'
+                    description: >-
+                      Represents the error code for the failed request. May be
+                      absent when the underlying exception does not populate an
+                      error code.
+                    maxLength: 255
+                  message:
+                    type:
+                      - string
+                      - 'null'
+                    description: >-
+                      Represents the error message describing the module
+                      mismatch. May be absent when the underlying exception does
+                      not populate an error message.
+                    maxLength: 255
+                  status:
+                    type: string
+                    description: |
+                      Represents the status of the response.
+                      Possible values:
+                      **error** - The request failed due to an error.
+                    enum:
+                      - error
+                  details:
+                    type: object
+                    description: Represents the additional error details, if any.
+                    additionalProperties: false
+                required:
+                  - status
+              examples:
+                JobBelongsToAnotherModule:
+                  value:
+                    code: NOT_FOUND
+                    message: The specified job does not belong to this module
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows the error returned when the job ID was scheduled for a
+                    different module than the one specified in the request. The
+                    exact **code**/**message** values are illustrative and
+                    should be confirmed against the live response before relying
+                    on them.
+                  summary: Example of a job ID belonging to a different module.
+      security:
+        - OAuth2:
+            - ZohoCRM.change_owner.READ
+components:
+  parameters:
+    Module:
+      name: module
+      in: path
+      description: >-
+        Specify the API name of the CRM module. Refer to the [Get
+        Modules](modules.yaml#$.paths./settings/modules.get) resource for valid
+        values.
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+    JobId:
+      name: job_id
+      in: query
+      description: >-
+        Specify the unique ID of the mass change owner job returned in the
+        response of [Mass Change Owner
+        API](mass_change_owner.yaml#$.paths./{module}/actions/mass_change_owner.post).
+      required: true
+      schema:
+        type: string
+        maxLength: 19
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.change_owner.CREATE: Grants permission to create mass change owner jobs in Zoho CRM.
+            ZohoCRM.change_owner.READ: >-
+              Grants permission to retrieve the status of mass change owner jobs
+              in Zoho CRM.

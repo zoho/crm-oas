@@ -1,0 +1,2980 @@
+openapi: 3.1.0
+info:
+  title: Transfer And Delete User
+  description: |
+    To delete a user from CRM and transfer the records to a new user. You can
+    replace the user at the following places:
+
+
+    - Ownership: You can transfer all open records of the old user to the new
+    user.
+
+    - Assignment: You can replace the old user with new at places like
+    assignment rules, escalation rules, field updates, automation actions etc.
+
+    - Configuration/criteria: You can replace the user where the old user is
+    used in criteria for custom views, automation, reports etc.
+
+
+    When you delete a user through this API, a scheduler schedules a job and
+    returns the job ID in the response. Use the Status API to check the
+    [status](users_transfer.yaml#$.paths./users/actions/transfer_and_delete.get)
+    of the job.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /users/{userId}/actions/transfer_and_delete:
+    post:
+      security:
+        - OAuth2:
+            - ZohoCRM.users.UPDATE
+      summary: Transfer and delete a user
+      description: Transfer user records, assignments, and criteria to another user
+      operationId: userTransfer
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for transferring and deleting user data
+              additionalProperties: false
+              properties:
+                transfer_and_delete:
+                  type: array
+                  description: >-
+                    Specify the list of transfer and delete operations. The
+                    array accepts a maximum of one object.
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: >-
+                      Each object specifies the details for the transfer and
+                      delete operation.
+                    additionalProperties: false
+                    properties:
+                      move_subordinate:
+                        type: object
+                        description: >-
+                          Specify the details of the user to whom the
+                          subordinates of the deleted user are moved.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              Specify the unique identifier of the user to whom
+                              the subordinates are moved. Use the [Get Users
+                              API](users.yaml#$.paths./users.get) API to get the
+                              valid values.
+                            maxLength: 19
+                        required:
+                          - id
+                      transfer:
+                        type: object
+                        description: >-
+                          Specify the transfer settings for records,
+                          assignments, and criteria of the deleted user.
+                        additionalProperties: false
+                        properties:
+                          records:
+                            type: boolean
+                            description: >-
+                              Specify whether to transfer the open records of
+                              the deleted user to the new user. 
+                          assignment:
+                            type: boolean
+                            description: >-
+                              Specify whether to replace the user in assignment
+                              rules, escalation rules, field updates, and
+                              automation actions. 
+                          criteria:
+                            type: boolean
+                            description: >-
+                              Specify whether to replace the user in criteria
+                              for custom views, automation, and reports. 
+                          id:
+                            type: string
+                            description: >-
+                              Specify the unique identifier of the user to whom
+                              the records are transferred. Use the [Get Users
+                              API](users.yaml#$.paths./users.get) API to get the
+                              valid values.
+                            maxLength: 19
+                        required:
+                          - id
+                    required:
+                      - move_subordinate
+                      - transfer
+              required:
+                - transfer_and_delete
+            examples:
+              TransferAndDeleteExample:
+                value:
+                  transfer_and_delete:
+                    - move_subordinate:
+                        id: '5725767000000411001'
+                      transfer:
+                        records: true
+                        assignment: true
+                        criteria: false
+                        id: '5725767000000411002'
+                description: >-
+                  Shows a request to transfer records and assignments to one
+                  user and move subordinates to another user, with criteria
+                  transfer disabled.
+                summary: >-
+                  An example response of Transfer and delete request with
+                  records and assignments.
+        required: true
+        description: >-
+          The request body to transfer the records, assignments, criteria, and
+          subordinates of the specified user before deletion.
+      responses:
+        '200':
+          description: >-
+            Shows the user transfer and delete operation is scheduled
+            successfully.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserTransferResponse
+                type: object
+                description: >
+                  Provides the response body for successful user transfer and
+                  delete operation.
+                additionalProperties: false
+                properties:
+                  transfer_and_delete:
+                    type: array
+                    description: >-
+                      Represents the list of transfer and delete operation
+                      results. The array contains a maximum of one object.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Represents the result of a single transfer and delete
+                        operation.
+                      additionalProperties: false
+                      properties:
+                        status:
+                          type: string
+                          description: Represents the status of the operation.
+                          maxLength: 100
+                        code:
+                          type: string
+                          description: 'Represents the response code of the operation. '
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the result of the
+                            operation.
+                          maxLength: 500
+                        details:
+                          type: object
+                          description: >-
+                            Represents additional details about the scheduled
+                            transfer and delete operation, including the job ID.
+                          additionalProperties: false
+                          properties:
+                            job_id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the
+                                scheduled transfer and delete job. Use this ID
+                                with the
+                                [status](users_transfer.yaml#$.paths./users/actions/transfer_and_delete.get)
+                                endpoint to track the progress of the job.
+                              maxLength: 50
+                          required:
+                            - job_id
+                      required:
+                        - status
+                        - code
+                        - message
+                        - details
+                required:
+                  - transfer_and_delete
+              examples:
+                SuccessResponse:
+                  value:
+                    transfer_and_delete:
+                      - status: success
+                        code: SUCCESS
+                        message: User is deleted successfully
+                        details:
+                          job_id: '5725767000000498001'
+                  description: >-
+                    Shows a successful response where the system deletes the
+                    user and returns a job ID for tracking the transfer
+                    progress.
+                  summary: An example of successful transfer and delete operation.
+        '400':
+          description: >-
+            Represents the error response when the request has invalid data or
+            any missing required fields.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserTransferInvalidDataResponse
+                oneOf:
+                  - x-zs-$id: UserTransferErrorWithArray
+                    type: object
+                    description: >-
+                      Represents an error scenario where the response contains
+                      validation errors wrapped inside the transfer_and_delete
+                      array.
+                    additionalProperties: false
+                    properties:
+                      transfer_and_delete:
+                        type: array
+                        description: >-
+                          Represents the array of error results from the user
+                          transfer and delete operation.
+                        maxItems: 1
+                        items:
+                          oneOf:
+                            - x-zs-$id: UserTransferValidationError
+                              type: object
+                              additionalProperties: false
+                              description: >-
+                                Represents a validation error indicating that
+                                the request contains invalid data or a
+                                disallowed operation.
+                              properties:
+                                status:
+                                  type: string
+                                  description: 'Represents the status of the API request. '
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >-
+                                    Represents the error code for the validation
+                                    failure. 
+                                  enum:
+                                    - INVALID_DATA
+                                    - NOT_ALLOWED
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    validation failure.
+                                  maxLength: 500
+                                details:
+                                  oneOf:
+                                    - x-zs-$id: UserTransferNotAllowedPathDetails
+                                      type: object
+                                      description: >-
+                                        Represents error details returned when
+                                        the user is not allowed to transfer
+                                        (e.g. Super Admin cannot be deleted).
+                                      additionalProperties: false
+                                      properties:
+                                        resource_path_index:
+                                          type: integer
+                                          description: >-
+                                            Represents the index of the resource
+                                            path that caused the validation error.
+                                          format: int32
+                                      required:
+                                        - resource_path_index
+                                    - x-zs-$id: UserTransferInvalidIdDetails
+                                      type: object
+                                      description: >-
+                                        Represents error details returned when
+                                        the provided user ID is invalid or does
+                                        not exist in the system.
+                                      additionalProperties: false
+                                      properties:
+                                        id:
+                                          type: string
+                                          description: >-
+                                            Represents the identifier value that
+                                            failed validation in the request.
+                                          maxLength: 19
+                                      required:
+                                        - id
+                                    - x-zs-$id: UserTransferInvalidFieldDetails
+                                      type: object
+                                      description: >-
+                                        Represents error details returned when a
+                                        specified field name or JSON path is
+                                        invalid in the transfer request.
+                                      additionalProperties: false
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: >-
+                                            Represents the API name of the field
+                                            that failed validation.
+                                          maxLength: 100
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the field
+                                            that failed validation in the request
+                                            body.
+                                          maxLength: 200
+                                      required:
+                                        - api_name
+                                        - json_path
+                                    - x-zs-$id: InvalidDataTypeDetails
+                                      type: object
+                                      description: >-
+                                        Represents error details returned when a
+                                        field value does not match the expected
+                                        data type in the transfer request.
+                                      additionalProperties: false
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: >-
+                                            Represents the API name of the field
+                                            that contains an incorrect data type.
+                                          maxLength: 100
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the field
+                                            that contains an incorrect data type.
+                                          maxLength: 200
+                                        expected_data_type:
+                                          type: string
+                                          description: >-
+                                            Represents the data type that the field
+                                            expects for a valid request.
+                                          maxLength: 50
+                                      required:
+                                        - api_name
+                                        - json_path
+                                        - expected_data_type
+                                    - x-zs-$id: InvalidOwnerStatusDetails
+                                      type: object
+                                      description: >-
+                                        Represents error details returned when
+                                        the target user has an invalid owner
+                                        status such as not being a CRM user,
+                                        deleted, or inactive.
+                                      additionalProperties: false
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: >-
+                                            Represents the API name of the field
+                                            associated with an invalid owner status.
+                                          maxLength: 100
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the field
+                                            associated with an invalid owner status.
+                                          maxLength: 200
+                                        owner_status:
+                                          type: string
+                                          description: |
+                                            Represents the current status of the
+                                            user that prevents the transfer. 
+
+                                            **Possible values**: 
+
+                                            - no_crm_user
+
+                                            - deleted
+
+                                            - inactive
+                                          enum:
+                                            - no_crm_user
+                                            - deleted
+                                            - inactive
+                                      required:
+                                        - api_name
+                                        - json_path
+                                        - owner_status
+                                    - x-zs-$id: InvalidArrayElementDetails
+                                      type: object
+                                      description: >-
+                                        Represents error details returned when
+                                        an array element contains invalid data
+                                        or does not match the expected data
+                                        type.
+                                      additionalProperties: false
+                                      properties:
+                                        index:
+                                          type: integer
+                                          description: >-
+                                            Represents the zero-based index of the
+                                            array element that contains invalid
+                                            data.
+                                          format: int32
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the array
+                                            element that contains invalid data.
+                                          maxLength: 200
+                                        expected_data_type:
+                                          type: string
+                                          description: >-
+                                            Represents the data type that the array
+                                            element expects for a valid request.
+                                          maxLength: 50
+                                      required:
+                                        - index
+                                        - json_path
+                                        - expected_data_type
+                                  description: >-
+                                    Represents the contextual details of the
+                                    validation error, varying based on the type
+                                    of invalid data encountered.
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                            - x-zs-$id: UserTransferExpectedFieldMissingError
+                              type: object
+                              additionalProperties: false
+                              description: >-
+                                Represents the error response body for a request
+                                where required fields are missing. 
+                              properties:
+                                status:
+                                  type: string
+                                  description: 'Represents the status of the API request. '
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >-
+                                    Represents the error code when required
+                                    fields are missing. 
+                                  enum:
+                                    - EXPECTED_FIELD_MISSING
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    missing required fields.
+                                  maxLength: 500
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the details of the missing
+                                    required fields in the request.
+                                  additionalProperties: false
+                                  properties:
+                                    expected_data:
+                                      type: array
+                                      description: >-
+                                        Represents the list of required fields
+                                        that are missing from the request body.
+                                      maxItems: 100
+                                      items:
+                                        type: object
+                                        description: >-
+                                          Each object represents the details of a
+                                          single required field that is missing
+                                          from the request.
+                                        additionalProperties: false
+                                        properties:
+                                          api_name:
+                                            type: string
+                                            description: >-
+                                              Represents the API name of the required
+                                              field that is missing from the request.
+                                            maxLength: 100
+                                          json_path:
+                                            type: string
+                                            description: >-
+                                              Represents the JSON path of the required
+                                              field that is missing from the request.
+                                            maxLength: 200
+                                        required:
+                                          - api_name
+                                          - json_path
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                            - x-zs-$id: UserTransferMandatoryFieldMissingError
+                              type: object
+                              additionalProperties: false
+                              description: >-
+                                Represents the error response returned when the
+                                transfer or move_subordinate object is present
+                                but its required id field is missing or null.
+                              properties:
+                                status:
+                                  type: string
+                                  description: 'Represents the status of the API request. '
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >-
+                                    Represents the error code when a required
+                                    nested field is missing. 
+                                  enum:
+                                    - MANDATORY_NOT_FOUND
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    missing required field.
+                                  maxLength: 500
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the details of the missing
+                                    required id field.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the missing
+                                        field.
+                                      enum:
+                                        - id
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path of the missing
+                                        field.
+                                      maxLength: 200
+                                    parent_api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the parent field under which
+                                        the id field is missing.
+                                      enum:
+                                        - transfer
+                                        - move_subordinate
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - parent_api_name
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                          description: >-
+                            Each object represents an error entry returned when
+                            validation fails or required fields are missing
+                            during the transfer and delete operation.
+                    required:
+                      - transfer_and_delete
+                  - x-zs-$id: UserTransferInvalidUserDataError
+                    type: object
+                    description: >-
+                      Represents a top-level error returned when the user ID in
+                      the request path is invalid or a data constraint is
+                      violated.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: 'Represents the status of the API request. '
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the invalid data or user
+                          error. 
+                        enum:
+                          - INVALID_DATA
+                          - NOT_ALLOWED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          user.
+                        maxLength: 500
+                      details:
+                        oneOf:
+                          - x-zs-$id: UserTransferInvalidUserInPathDetails
+                            type: object
+                            description: >-
+                              Represents error details returned when the user ID
+                              in the request path is not allowed to be deleted
+                              (e.g. own account), or refers to a non-CRM or
+                              deleted user.
+                            additionalProperties: false
+                            properties:
+                              resource_path_index:
+                                type: integer
+                                description: >-
+                                  Represents the position index of the invalid
+                                  user ID in the resource path.
+                                format: int32
+                              owner_status:
+                                type: string
+                                description: >-
+                                  Represents the current status of the user
+                                  specified in the request path. Not returned
+                                  for the NOT_ALLOWED case where the user tries
+                                  to delete their own account. 
+                                enum:
+                                  - not_crm_user
+                                  - deleted
+                            required:
+                              - resource_path_index
+                          - x-zs-$id: UserTransferMaximumLengthExceededDetails
+                            type: object
+                            description: >-
+                              Represents error details returned when a field
+                              value exceeds the maximum allowed length.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field that
+                                  exceeds the maximum allowed length.
+                                maxLength: 100
+                              json_path:
+                                type: string
+                                description: >-
+                                  Represents the JSON path of the field that
+                                  exceeds the maximum allowed length.
+                                maxLength: 200
+                              maximum_length:
+                                type: integer
+                                description: >-
+                                  Represents the maximum number of elements
+                                  allowed in the field.
+                                format: int32
+                            required:
+                              - api_name
+                              - json_path
+                              - maximum_length
+                        description: >-
+                          Represents the contextual details about the invalid
+                          user.
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - x-zs-$id: UserTransferJobLimitExceededError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the error returned when the maximum number of
+                      concurrently scheduled transfer and delete jobs has been
+                      reached.
+                    properties:
+                      status:
+                        type: string
+                        description: 'Represents the status of the API request. '
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned when the scheduler
+                          job limit is reached. 
+                        enum:
+                          - CONCURRENT_JOB_LIMIT_EXCEEDED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the scheduler
+                          limit.
+                        maxLength: 500
+                      details:
+                        type: object
+                        description: >-
+                          Represents the details of the exceeded scheduler
+                          limit.
+                        additionalProperties: false
+                        properties:
+                          limit:
+                            type: string
+                            description: >-
+                              Represents the maximum number of transfer and
+                              delete jobs that can be scheduled concurrently.
+                            maxLength: 10
+                        required:
+                          - limit
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                description: >-
+                  Represents the error response returned when the transfer and
+                  delete operation request contains invalid data or is missing
+                  required fields.
+              examples:
+                NotAllowedError:
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: 1
+                    message: Super Admin cannot be Deleted.
+                    status: error
+                InvalidDataError1:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                      owner_status: deleted
+                    message: the user id provided is already deleted.
+                    status: error
+                  description: >-
+                    Shows an error response returned when the user ID in the
+                    request path refers to a deleted user.
+                  summary: An example response of deleted user provided in the path.
+                InvalidDataError2:
+                  value:
+                    transfer_and_delete:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.transfer_and_delete.transfer.id
+                          owner_status: deleted
+                        message: >-
+                          The user to whom you are trying to transfer is
+                          deleted.
+                        status: error
+                  description: >-
+                    Shows an error response returned when the transfer target
+                    user has a deleted owner status.
+                  summary: >-
+                    An example error response of deleted transfer target user
+                    request.
+                ExpectedFieldMissingError:
+                  value:
+                    transfer_and_delete:
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_data:
+                            - api_name: transfer
+                              json_path: $.transfer_and_delete.transfer
+                            - api_name: move_subordinate
+                              json_path: $.transfer_and_delete.move_subordinate
+                        message: Specify atleast one field
+                        status: error
+                  description: >-
+                    Shows an error response returned when the required transfer
+                    and move_subordinate fields are not provided in the request.
+                  summary: An example of missing required fields in the request.
+                MandatoryFieldMissingError:
+                  value:
+                    transfer_and_delete:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.transfer_and_delete.transfer.id
+                          parent_api_name: transfer
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows an error response returned when the transfer object is
+                    present but its required id field is missing.
+                  summary: An example of a missing id field inside the transfer object.
+                JobLimitExceededError:
+                  value:
+                    status: error
+                    code: CONCURRENT_JOB_LIMIT_EXCEEDED
+                    message: Transfer and delete user scheduler limit reached
+                    details:
+                      limit: '10'
+                  description: >-
+                    Shows an error response returned when the maximum number of
+                    concurrently scheduled transfer and delete jobs has been
+                    reached.
+                  summary: >-
+                    An example error response for exceeding the concurrent
+                    scheduler job limit.
+        '403':
+          description: >-
+            Shows the error response body of a request when the user does not
+            have enough permission to perform the operation.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserPermissionDeniedError
+                type: object
+                description: >-
+                  Represents the error response returned when the user does not
+                  have the required permissions to perform the transfer and
+                  delete operation.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: 'Represents the status of the error response. '
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code returned when the user lacks the
+                      required permission. 
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the permission
+                      issue. 
+                    maxLength: 500
+                  details:
+                    type: object
+                    description: >+
+                      Represents the additional details about missing
+                      permissions.
+
+
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >
+                          Provides the list of required permissions that are
+                          missing.
+                        maxItems: 1
+                        items:
+                          type: string
+                          description: >-
+                            Each string epresents the specific CRM permission
+                            that the user lacks to perform the transfer
+                            operation, such as `Crm_Implied_Change_Owner_Leads`.
+                          maxLength: 200
+                    required:
+                      - permissions
+                required:
+                  - status
+                  - code
+                  - message
+              examples:
+                NoPermissionError:
+                  value:
+                    status: error
+                    code: NO_PERMISSION
+                    message: You do not have permission to perform this operation
+                    details:
+                      permissions:
+                        - Crm_Implied_Change_Owner_Leads
+                  description: >-
+                    Shows an error response returned when the caller lacks the
+                    Crm_Implied_Change_Owner_Leads permission.
+                  summary: An example error response for no permission to transfer.
+                SuperAdminPermissionError:
+                  value:
+                    status: error
+                    code: NO_PERMISSION
+                    message: Only super admin has permission to delete users
+                  description: >-
+                    Shows an error response returned when a non-super-admin user
+                    attempts to transfer and delete a user. The **details**
+                    object is not returned for this case.
+                  summary: >-
+                    An example error response when the caller is not a super
+                    admin.
+  /users/actions/transfer_and_delete:
+    post:
+      security:
+        - OAuth2:
+            - ZohoCRM.users.UPDATE
+      summary: Transfer and delete a user
+      description: Transfer user records, assignments, and criteria to another user
+      operationId: userTransferWithoutId
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for transferring and deleting user data
+              additionalProperties: false
+              properties:
+                transfer_and_delete:
+                  type: array
+                  description: >-
+                    Specify the list of user transfer and delete operations to
+                    perform. The array accepts a maximum of one entry.
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: >-
+                      Each object specifies the details of the user transfer and
+                      delete operation.
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                        description: >-
+                          Specify the unique identifier of the user whose data
+                          is to be transferred and who is to be deleted.
+                        maxLength: 19
+                      move_subordinate:
+                        type: object
+                        description: >-
+                          Provides the details of the user to whom subordinates
+                          will be moved.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              Specify the unique identifier of the user to whom
+                              the subordinates of the deleted user are moved.
+                              Use the [Get Users
+                              API](users.yaml#$.paths./users.get) API to get the
+                              valid values.
+                            maxLength: 19
+                        required:
+                          - id
+                      transfer:
+                        type: object
+                        description: >-
+                          Provides the transfer settings for records,
+                          assignments, and criteria.
+                        additionalProperties: false
+                        properties:
+                          records:
+                            type: boolean
+                            description: >-
+                              Specify whether to transfer the records of the
+                              deleted user to the target user.
+                          assignment:
+                            type: boolean
+                            description: >-
+                              Specify whether to transfer the assignments of the
+                              deleted user to the target user.
+                          criteria:
+                            type: boolean
+                            description: >-
+                              Specify whether to transfer the criteria of the
+                              deleted user to the target user.
+                          id:
+                            type: string
+                            description: >-
+                              Specify the unique identifier of the user to whom
+                              the data of the deleted user is transferred. Use
+                              the [Get Users API](users.yaml#$.paths./users.get)
+                              API to get the valid values.
+                            maxLength: 19
+                        required:
+                          - id
+                    required:
+                      - id
+                      - move_subordinate
+                      - transfer
+              required:
+                - transfer_and_delete
+            examples:
+              TransferAndDeleteExample:
+                value:
+                  transfer_and_delete:
+                    - id: '5725767000000411001'
+                      move_subordinate:
+                        id: '5725767000000411003'
+                      transfer:
+                        records: true
+                        assignment: true
+                        criteria: false
+                        id: '5725767000000411002'
+                description: >-
+                  Shows a request to transfer records and assignments of a user
+                  to one target and move subordinates to another, with criteria
+                  transfer disabled.
+                summary: >-
+                  An example response for transfer and delete request with user
+                  ID in body.
+        required: true
+        description: The request body contains the data required to perform the operation.
+      responses:
+        '200':
+          description: >-
+            Shows the success response of user transfer and delete operation is
+            scheduled.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserTransferScheduledResponse
+                type: object
+                description: >-
+                  Provides the response body for successful user transfer and
+                  delete operation.
+                additionalProperties: false
+                properties:
+                  transfer_and_delete:
+                    type: array
+                    description: >-
+                      Represents an array containing transfer and delete
+                      operation results.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents the result of the user transfer
+                        and delete operation.
+                      additionalProperties: false
+                      properties:
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the transfer and delete
+                            operation.
+                          maxLength: 100
+                        code:
+                          type: string
+                          description: >-
+                            Represents the rsponse code indicating operation
+                            scheduled.
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: Represents the message describing the result.
+                          maxLength: 500
+                        details:
+                          type: object
+                          description: >-
+                            Represents the additional details about the
+                            scheduled operation.
+                          additionalProperties: false
+                          properties:
+                            job_id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the
+                                scheduled job created for the transfer and
+                                delete operation.
+                              maxLength: 50
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the user
+                                involved in the transfer and delete operation.
+                              maxLength: 19
+                          required:
+                            - job_id
+                            - id
+                      required:
+                        - status
+                        - code
+                        - message
+                        - details
+                required:
+                  - transfer_and_delete
+              examples:
+                SuccessResponse:
+                  value:
+                    transfer_and_delete:
+                      - status: success
+                        code: SUCCESS
+                        message: User is deleted successfully
+                        details:
+                          job_id: '5725767000000498001'
+                          id: '5725767000000411001'
+                  description: >-
+                    Shows a successful response where the system deletes the
+                    user and returns a job ID along with the user ID for
+                    tracking.
+                  summary: >-
+                    An example success response for transfer and delete
+                    request. 
+        '400':
+          description: >-
+            Provides the error response body for an invalid data or missing
+            required fields.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserTransferInvalidOrMissingRequiredFieldsResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: UserTransferInvalidDataError
+                    description: >-
+                      Represents an error scenario where the response contains
+                      validation errors wrapped inside the transfer_and_delete
+                      array.
+                    additionalProperties: false
+                    properties:
+                      transfer_and_delete:
+                        type: array
+                        description: >-
+                          Represents the list of errors encountered during the
+                          transfer and delete operation.
+                        maxItems: 1
+                        items:
+                          oneOf:
+                            - x-zs-$id: ValidationErrors
+                              type: object
+                              additionalProperties: false
+                              description: >-
+                                Represents a validation error indicating that
+                                the request contains invalid data or a
+                                disallowed operation.
+                              properties:
+                                status:
+                                  type: string
+                                  description: 'Represents the status of the API request. '
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >-
+                                    Represents the error code for the validation
+                                    failure. 
+                                  enum:
+                                    - INVALID_DATA
+                                    - NOT_ALLOWED
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    validation failure.
+                                  maxLength: 500
+                                details:
+                                  oneOf:
+                                    - type: object
+                                      x-zs-$id: UserTransferInvalidIdValue
+                                      description: >-
+                                        Represents error details returned when
+                                        the provided user ID is invalid or does
+                                        not exist in the system.
+                                      additionalProperties: false
+                                      properties:
+                                        id:
+                                          type: string
+                                          description: >-
+                                            Represents the identifier value that
+                                            failed validation in the request.
+                                          maxLength: 19
+                                      required:
+                                        - id
+                                    - type: object
+                                      x-zs-$id: UserTransferInvalidFieldDetails2
+                                      description: >-
+                                        Represents error details returned when a
+                                        specified field name or JSON path is
+                                        invalid in the transfer request.
+                                      additionalProperties: false
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: >-
+                                            Represents the API name of the field
+                                            that failed validation.
+                                          maxLength: 100
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the field
+                                            that failed validation in the request
+                                            body.
+                                          maxLength: 200
+                                      required:
+                                        - api_name
+                                        - json_path
+                                    - type: object
+                                      x-zs-$id: UserTransferInvalidArrayElementDetails
+                                      description: >-
+                                        Represents error details returned when a
+                                        field value does not match the expected
+                                        data type in the transfer request.
+                                      additionalProperties: false
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: >-
+                                            Represents the API name of the field
+                                            that contains an incorrect data type.
+                                          maxLength: 100
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the field
+                                            that contains an incorrect data type.
+                                          maxLength: 200
+                                        expected_data_type:
+                                          type: string
+                                          description: >-
+                                            Represents the data type that the field
+                                            expects for a valid request.
+                                          maxLength: 50
+                                      required:
+                                        - api_name
+                                        - json_path
+                                        - expected_data_type
+                                    - type: object
+                                      x-zs-$id: UserTransferInvalidOwnerStatusDetails
+                                      description: >-
+                                        Represents error details returned when
+                                        the target user has an invalid owner
+                                        status such as not being a CRM user,
+                                        deleted, or inactive.
+                                      additionalProperties: false
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: >-
+                                            Represents the API name of the field
+                                            associated with an invalid owner status.
+                                          maxLength: 100
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the field
+                                            associated with an invalid owner status.
+                                          maxLength: 200
+                                        owner_status:
+                                          type: string
+                                          description: |
+                                            Represents the current status of the
+                                            user that prevents the transfer. 
+
+
+                                            **Possible values**: 
+
+                                            - no_crm_user
+
+                                            - deleted
+
+                                            - inactive
+                                          enum:
+                                            - no_crm_user
+                                            - deleted
+                                            - inactive
+                                      required:
+                                        - api_name
+                                        - json_path
+                                        - owner_status
+                                    - type: object
+                                      x-zs-$id: UserTransferInvalidArrayElement
+                                      description: >-
+                                        Represents error details returned when
+                                        an array element contains invalid data
+                                        or does not match the expected data
+                                        type.
+                                      additionalProperties: false
+                                      properties:
+                                        index:
+                                          type: integer
+                                          description: >-
+                                            Represents the zero-based index of the
+                                            array element that contains invalid
+                                            data.
+                                          format: int32
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the array
+                                            element that contains invalid data.
+                                          maxLength: 200
+                                        expected_data_type:
+                                          type: string
+                                          description: >-
+                                            Represents the data type that the array
+                                            element expects for a valid request.
+                                          maxLength: 50
+                                      required:
+                                        - index
+                                        - json_path
+                                        - expected_data_type
+                                  description: >-
+                                    Represents the contextual details of the
+                                    validation error, varying based on the type
+                                    of invalid data encountered.
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                            - type: object
+                              x-zs-$id: UserTransferExpectedFieldMissing
+                              additionalProperties: false
+                              description: >
+                                Represents the error response for expected field
+                                missing.
+                              properties:
+                                status:
+                                  type: string
+                                  description: 'Represents the status of the API request. '
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >-
+                                    Represents the error code when required
+                                    fields are missing.
+                                  enum:
+                                    - EXPECTED_FIELD_MISSING
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    missing required fields.
+                                  maxLength: 500
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the details of the missing
+                                    required fields in the request.
+                                  additionalProperties: false
+                                  properties:
+                                    expected_data:
+                                      type: array
+                                      description: >-
+                                        Represents the list of required fields
+                                        that are missing from the request body.
+                                      maxItems: 100
+                                      items:
+                                        type: object
+                                        description: >-
+                                          Each object represents the details of a
+                                          single required field that is missing
+                                          from the request.
+                                        additionalProperties: false
+                                        properties:
+                                          api_name:
+                                            type: string
+                                            description: >-
+                                              Represents the API name of the required
+                                              field that is missing from the request.
+                                            maxLength: 100
+                                          json_path:
+                                            type: string
+                                            description: >-
+                                              Represents the JSON path of the required
+                                              field that is missing from the request.
+                                            maxLength: 200
+                                        required:
+                                          - api_name
+                                          - json_path
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                            - type: object
+                              x-zs-$id: UserTransferMissingTransferIdError
+                              additionalProperties: false
+                              description: >-
+                                Represents the error response returned when the
+                                transfer or move_subordinate object is present
+                                but its required id field is missing or null.
+                              properties:
+                                status:
+                                  type: string
+                                  description: 'Represents the status of the API request. '
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >-
+                                    Represents the error code when a required
+                                    nested field is missing. 
+                                  enum:
+                                    - MANDATORY_NOT_FOUND
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    missing required field.
+                                  maxLength: 500
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the details of the missing
+                                    required id field.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the missing
+                                        field.
+                                      enum:
+                                        - id
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path of the missing
+                                        field.
+                                      maxLength: 200
+                                    parent_api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the parent field under which
+                                        the id field is missing.
+                                      enum:
+                                        - transfer
+                                        - move_subordinate
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - parent_api_name
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                          description: >-
+                            Each object represents an error entry returned when
+                            validation fails or required fields are missing
+                            during the transfer and delete operation.
+                    required:
+                      - transfer_and_delete
+                  - x-zs-$id: UserTransferInvalidUserOrDataError
+                    type: object
+                    description: >-
+                      Represents a top-level error returned when the request
+                      data exceeds constraints or contains invalid values.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: 'Represents the status of the API request. '
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: 'Represents the error code for the invalid data. '
+                        enum:
+                          - INVALID_DATA
+                          - NOT_ALLOWED
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 500
+                      details:
+                        x-zs-$id: UserTransferMaxLengthExceededDetails
+                        type: object
+                        description: >-
+                          Represents the details about the data constraint
+                          violation, including the field that exceeds the
+                          maximum allowed length.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field that exceeds
+                              the maximum allowed length.
+                            maxLength: 100
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path of the field that exceeds
+                              the maximum allowed length.
+                            maxLength: 200
+                          maximum_length:
+                            type: integer
+                            description: >-
+                              Represents the maximum number of elements allowed
+                              in the field.
+                            format: int32
+                        required:
+                          - api_name
+                          - json_path
+                          - maximum_length
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - x-zs-$id: UserTransferSchedulerLimitExceededError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the error returned when the maximum number of
+                      concurrently scheduled transfer and delete jobs has been
+                      reached.
+                    properties:
+                      status:
+                        type: string
+                        description: 'Represents the status of the API request. '
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned when the scheduler
+                          job limit is reached. 
+                        enum:
+                          - CONCURRENT_JOB_LIMIT_EXCEEDED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the scheduler
+                          limit.
+                        maxLength: 500
+                      details:
+                        type: object
+                        description: >-
+                          Represents the details of the exceeded scheduler
+                          limit.
+                        additionalProperties: false
+                        properties:
+                          limit:
+                            type: string
+                            description: >-
+                              Represents the maximum number of transfer and
+                              delete jobs that can be scheduled concurrently.
+                            maxLength: 10
+                        required:
+                          - limit
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                description: >-
+                  Represents the error response returned when the transfer and
+                  delete operation request contains invalid data, constraint
+                  violations, or is missing required fields.
+              examples:
+                InvalidDataError1:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: transfer_and_delete
+                      json_path: $.transfer_and_delete
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Shows an error response returned when the
+                    transfer_and_delete array exceeds the maximum allowed length
+                    of one entry.
+                  summary: >-
+                    An example error response for a maximum length exceeded
+                    request.
+                InvalidDataError2:
+                  value:
+                    transfer_and_delete:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.transfer_and_delete.transfer.id
+                          owner_status: deleted
+                        message: >-
+                          The user to whom you are trying to transfer is
+                          deleted.
+                        status: error
+                  description: >-
+                    Shows an error response returned when the transfer target
+                    user has a deleted owner status.
+                  summary: >-
+                    An example error response for deleted transfer target user
+                    request.
+                ExpectedFieldMissingError:
+                  value:
+                    transfer_and_delete:
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_data:
+                            - api_name: transfer
+                              json_path: $.transfer_and_delete.transfer
+                            - api_name: move_subordinate
+                              json_path: $.transfer_and_delete.move_subordinate
+                        message: Specify atleast one field
+                        status: error
+                  description: >-
+                    Shows an error response returned when the required transfer
+                    and move_subordinate fields are not provided in the request.
+                  summary: An example error response for missing required fields.
+                NotAllowedSelfDeleteError:
+                  value:
+                    transfer_and_delete:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.transfer_and_delete.id
+                        message: Super Admin cannot be Deleted.
+                        status: error
+                  description: >-
+                    Shows an error response returned when the id in the request
+                    body refers to the user's own account, which cannot be
+                    deleted.
+                  summary: >-
+                    An example error response for attempting to delete your own
+                    account.
+                MandatoryFieldMissingError:
+                  value:
+                    transfer_and_delete:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.transfer_and_delete.transfer.id
+                          parent_api_name: transfer
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows an error response returned when the transfer object is
+                    present but its required id field is missing.
+                  summary: An example of a missing id field inside the transfer object.
+                SchedulerLimitExceededError:
+                  value:
+                    status: error
+                    code: CONCURRENT_JOB_LIMIT_EXCEEDED
+                    message: Transfer and delete user scheduler limit reached
+                    details:
+                      limit: '10'
+                  description: >-
+                    Shows an error response returned when the maximum number of
+                    concurrently scheduled transfer and delete jobs has been
+                    reached.
+                  summary: >-
+                    An example error response for exceeding the concurrent
+                    scheduler job limit.
+        '403':
+          description: >-
+            Provides the error response for a request where user does not have
+            permission to perform this operation.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserTransferPermissionDeniedResponse
+                type: object
+                description: >-
+                  Represents the error response returned when the user does not
+                  have the required permissions to perform the transfer and
+                  delete operation.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: 'Represents the status of the error response. '
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code returned when the user lacks the
+                      required permission. 
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: Provides the message describing the issue in the request.
+                    maxLength: 500
+                  details:
+                    type: object
+                    description: Provides the additional details about missing permissions.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Provides the list of required permissions that are
+                          missing.
+                        maxItems: 1
+                        items:
+                          type: string
+                          description: >-
+                            Each string represents the specific CRM permission
+                            that the user lacks to perform the transfer and
+                            delete operation.
+                          maxLength: 200
+                    required:
+                      - permissions
+                required:
+                  - status
+                  - code
+                  - message
+              examples:
+                NoPermissionError:
+                  value:
+                    status: error
+                    code: NO_PERMISSION
+                    message: You do not have permission to perform this operation
+                    details:
+                      permissions:
+                        - Crm_Implied_Change_Owner_Leads
+                  description: >-
+                    Shows an error response returned when the caller lacks the
+                    Crm_Implied_Change_Owner_Leads permission.
+                  summary: An example of no permission to transfer issue.
+                SuperAdminPermissionError:
+                  value:
+                    status: error
+                    code: NO_PERMISSION
+                    message: Only super admin has permission to delete users
+                  description: >-
+                    Shows an error response returned when a non-super-admin user
+                    attempts to transfer and delete a user. The **details**
+                    object is not returned for this check.
+                  summary: >-
+                    An example error response when the caller is not a super
+                    admin.
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.users.DELETE
+            - ZohoCRM.users.READ
+      summary: Get transfer and delete status
+      description: >-
+        Retrieves the current status of a transfer and delete operation using
+        the job ID returned by the POST request. The response indicates whether
+        the job is scheduled, in progress, completed, or failed.
+      operationId: getTransferStatus
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: >-
+            Shows the success response of the retrieved transfer and delete
+            status.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: TransferStatusResponse
+                type: object
+                description: >-
+                  Represents the response body for the transfer and delete
+                  status request, containing the current status of the scheduled
+                  job.
+                additionalProperties: false
+                properties:
+                  transfer_and_delete:
+                    type: array
+                    description: >-
+                      Represents the list of transfer and delete operation
+                      status details. The array contains a maximum of one
+                      object.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents the status details of a single
+                        transfer and delete operation.
+                      additionalProperties: false
+                      properties:
+                        status:
+                          type: string
+                          description: |
+                            Represents the current status of the transfer and
+                            delete operation. 
+
+
+                            **Possible values**: 
+
+                            - in_progress
+
+                            - completed
+
+                            - failed
+
+                            - scheduled
+                          enum:
+                            - in_progress
+                            - completed
+                            - failed
+                            - scheduled
+                        reason:
+                          type: string
+                          description: >-
+                            Represents the failure reason of the job when
+                            `status` is `failed`. The key is not always present.
+                          maxLength: 500
+                required:
+                  - transfer_and_delete
+              examples:
+                TransferStatusResponse:
+                  value:
+                    transfer_and_delete:
+                      - status: completed
+                  description: >-
+                    Shows a successful response where the transfer and delete
+                    operation status is completed.
+                  summary: >-
+                    An example of success response of a completed transfer and
+                    delete status.
+        '204':
+          description: >-
+            Shows that no transfer and delete job was found for the provided job
+            ID.
+        '400':
+          description: The request failed due to an invalid or missing required parameter.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: TransferStatusMissingParamError
+                type: object
+                description: >-
+                  Represents the error response returned when a required
+                  parameter is missing from the request.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Represents the status of the API request.
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: 'Represents the error code for the failed request. '
+                    enum:
+                      - REQUIRED_PARAM_MISSING
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the missing
+                      parameter. 
+                    enum:
+                      - mandatory param missing
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional details about the error, including
+                      the name of the missing parameter.
+                    additionalProperties: false
+                    properties:
+                      param_name:
+                        type: string
+                        description: >-
+                          Represents the name of the missing required
+                          parameter. 
+                        enum:
+                          - job_id
+                    required:
+                      - param_name
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+              examples:
+                MissingJobIdError:
+                  value:
+                    status: error
+                    code: REQUIRED_PARAM_MISSING
+                    message: mandatory param missing
+                    details:
+                      param_name: job_id
+                  description: >-
+                    Shows an error response returned when the job_id query
+                    parameter is not provided in the request.
+                  summary: An example response of a missing job_id parameter.
+  /users/{userId}/actions/transfer:
+    post:
+      security:
+        - OAuth2:
+            - ZohoCRM.change_owner.CREATE
+      summary: Transfer a user
+      description: Transfer user records, assignments, and criteria to another user
+      operationId: userTransferAPI
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request body to transfer a user's records,
+                assignments, criteria, and subordinates to another user.
+              additionalProperties: false
+              properties:
+                transfer:
+                  type: array
+                  description: >-
+                    Specify the list of transfer operations to perform for the
+                    user. Only one transfer operation is allowed per request.
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: >-
+                      Each object specifies the details of the transfer
+                      operation including subordinate reassignment and data
+                      transfer preferences.
+                    additionalProperties: false
+                    properties:
+                      move_subordinate:
+                        type: object
+                        description: >-
+                          The details of the new user you want to transfer the
+                          subordinates of the old user to.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              Specify the unique identifier of the user to whom
+                              the subordinates are reassigned. Use the [Get
+                              Users API](users.yaml#$.paths./users.get) API to
+                              get the valid values.
+                            maxLength: 19
+                        required:
+                          - id
+                      transfer:
+                        type: object
+                        description: >-
+                          The details of the new user you want to transfer the
+                          records of the old user to.
+                        additionalProperties: false
+                        properties:
+                          records:
+                            type: boolean
+                            description: >-
+                              Specify whether to transfer the records to the
+                              target user.
+                          assignment:
+                            type: boolean
+                            description: >-
+                              Specify whether to transfer the record assignments
+                              to the target user.
+                          criteria:
+                            type: boolean
+                            description: >-
+                              Specify whether to transfer the criteria-based
+                              data to the target user.
+                          id:
+                            type: string
+                            description: >-
+                              Specify the unique identifier of the user to whom
+                              the data is transferred. Use the [Get Users
+                              API](users.yaml#$.paths./users.get) API to get the
+                              valid values.
+                            maxLength: 19
+                        required:
+                          - id
+                    required:
+                      - move_subordinate
+                      - transfer
+              required:
+                - transfer
+            examples:
+              TransferExample:
+                value:
+                  transfer:
+                    - move_subordinate:
+                        id: '5725767000000411001'
+                      transfer:
+                        records: true
+                        assignment: true
+                        criteria: false
+                        id: '5725767000000411002'
+                description: >-
+                  Shows a request to transfer records and assignments to one
+                  user and move subordinates to another user, with criteria
+                  transfer disabled.
+                summary: An example of transfer records and assignments.
+        required: true
+        description: The request body contains the data required to perform the operation.
+      responses:
+        '200':
+          description: >-
+            Shows the success response of a user transfer operation is
+            scheduled.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserTransferAPIResponse
+                type: object
+                description: >
+                  Provides the response body for successful user transfer
+                  operation
+                additionalProperties: false
+                properties:
+                  transfer:
+                    type: array
+                    description: Represents an array containing transfer operation results.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents the result of the user transfer
+                        operation.
+                      additionalProperties: false
+                      properties:
+                        status:
+                          type: string
+                          description: Represents the status of the transfer operation.
+                          maxLength: 100
+                        code:
+                          type: string
+                          description: >
+                            Represents the response code indicating operation
+                            scheduled.
+                          enum:
+                            - SCHEDULED
+                        message:
+                          type: string
+                          description: Represents the message describing the result.
+                          maxLength: 500
+                        details:
+                          type: object
+                          description: >
+                            Represents the additional details about the
+                            scheduled operation.
+                          additionalProperties: false
+                          properties:
+                            job_id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the
+                                scheduled job created for the transfer
+                                operation.
+                              maxLength: 19
+                          required:
+                            - job_id
+                      required:
+                        - status
+                        - code
+                        - message
+                        - details
+                required:
+                  - transfer
+              examples:
+                SuccessResponse:
+                  value:
+                    transfer:
+                      - code: SCHEDULED
+                        details:
+                          job_id: '4243020004133788'
+                        message: transfer of data is successfully scheduled
+                        status: success
+                  description: >-
+                    Shows a successful response where the system schedules the
+                    transfer job and returns a job ID for tracking the progress.
+                  summary: An example success response for the scheduled transfer job.
+        '400':
+          description: >-
+            Provides the error response for invalid data or missing required
+            fields.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserTransferAPIInvalidDataResponse
+                oneOf:
+                  - x-zs-$id: UserTransferAPIErrorWithArray
+                    type: object
+                    description: >-
+                      Represents an error scenario where the response contains
+                      validation errors wrapped inside the transfer array.
+                    additionalProperties: false
+                    properties:
+                      transfer:
+                        type: array
+                        description: >-
+                          Represents the list of errors encountered during the
+                          transfer operation.
+                        maxItems: 1
+                        items:
+                          oneOf:
+                            - x-zs-$id: UserTransferAPIValidationError
+                              type: object
+                              additionalProperties: false
+                              description: >-
+                                Represents a validation error indicating that
+                                the request contains invalid data or a
+                                disallowed operation.
+                              properties:
+                                status:
+                                  type: string
+                                  description: Represents the status of the API request.
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >-
+                                    Represents the error code for the validation
+                                    failure. 
+                                  enum:
+                                    - INVALID_DATA
+                                    - NOT_ALLOWED
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    validation failure.
+                                  maxLength: 500
+                                details:
+                                  oneOf:
+                                    - x-zs-$id: UserTransferAPIInvalidFieldDetails
+                                      type: object
+                                      description: >-
+                                        Represents error details returned when a
+                                        specified field name or JSON path is
+                                        invalid in the transfer request.
+                                      additionalProperties: false
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: >-
+                                            Represents the API name of the field
+                                            that failed validation in the transfer
+                                            request.
+                                          maxLength: 100
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the field
+                                            that failed validation in the transfer
+                                            request.
+                                          maxLength: 200
+                                      required:
+                                        - api_name
+                                        - json_path
+                                    - x-zs-$id: UserTransferAPIInvalidOwnerStatusDetails
+                                      type: object
+                                      description: >-
+                                        Represents error details returned when
+                                        the target user has an invalid owner
+                                        status such as not being a CRM user,
+                                        deleted, or inactive.
+                                      additionalProperties: false
+                                      properties:
+                                        api_name:
+                                          type: string
+                                          description: >-
+                                            Represents the API name of the field
+                                            associated with an invalid owner status.
+                                          maxLength: 100
+                                        json_path:
+                                          type: string
+                                          description: >-
+                                            Represents the JSON path of the field
+                                            associated with an invalid owner status.
+                                          maxLength: 200
+                                        owner_status:
+                                          type: string
+                                          description: |
+                                            Represents the current status of the
+                                            user that prevents the transfer. 
+
+
+                                            **Possible values**: 
+
+                                            - not_crm_user
+
+                                            - deleted
+
+                                            - inactive
+                                          enum:
+                                            - not_crm_user
+                                            - deleted
+                                            - inactive
+                                      required:
+                                        - api_name
+                                        - json_path
+                                        - owner_status
+                                  description: >-
+                                    Represents the additional details about the
+                                    validation error.
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                            - x-zs-$id: UserTransferAPIExpectedFieldMissingError
+                              type: object
+                              additionalProperties: false
+                              description: >
+                                Provides the error response for expected field
+                                missing.
+                              properties:
+                                status:
+                                  type: string
+                                  description: Represents the status of the API request.
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >-
+                                    Represents the error code when required
+                                    fields are missing. 
+                                  enum:
+                                    - EXPECTED_FIELD_MISSING
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    missing required fields.
+                                  maxLength: 500
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the details of the missing
+                                    required fields in the request.
+                                  additionalProperties: false
+                                  properties:
+                                    expected_data:
+                                      type: array
+                                      description: >-
+                                        Represents the list of required fields
+                                        that are missing from the request body.
+                                      maxItems: 100
+                                      items:
+                                        type: object
+                                        description: >-
+                                          Each object represents the details of a
+                                          single required field that is missing
+                                          from the request.
+                                        additionalProperties: false
+                                        properties:
+                                          api_name:
+                                            type: string
+                                            description: >-
+                                              Represents the API name of the required
+                                              field that is missing from the request.
+                                            maxLength: 100
+                                          json_path:
+                                            type: string
+                                            description: >-
+                                              Represents the JSON path of the required
+                                              field that is missing from the request.
+                                            maxLength: 200
+                                        required:
+                                          - api_name
+                                          - json_path
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                            - x-zs-$id: UserTransferAPIMissingTransferIdError
+                              type: object
+                              additionalProperties: false
+                              description: >-
+                                Represents the error response returned when the
+                                transfer or move_subordinate object is present
+                                but its required id field is missing or null.
+                              properties:
+                                status:
+                                  type: string
+                                  description: 'Represents the status of the API request. '
+                                  enum:
+                                    - error
+                                code:
+                                  type: string
+                                  description: >-
+                                    Represents the error code when a required
+                                    nested field is missing. 
+                                  enum:
+                                    - MANDATORY_NOT_FOUND
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    missing required field.
+                                  maxLength: 500
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents the details of the missing
+                                    required id field.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the missing
+                                        field.
+                                      enum:
+                                        - id
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path of the missing
+                                        field.
+                                      maxLength: 200
+                                    parent_api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the parent field under which
+                                        the id field is missing.
+                                      enum:
+                                        - transfer
+                                        - move_subordinate
+                                  required:
+                                    - api_name
+                                    - json_path
+                                    - parent_api_name
+                              required:
+                                - status
+                                - code
+                                - message
+                                - details
+                          description: >-
+                            Each object represents the details of a transfer
+                            validation error.
+                    required:
+                      - transfer
+                  - x-zs-$id: UserTransferAPIInvalidUserDataError
+                    type: object
+                    description: >-
+                      Represents a top-level error returned when the user ID in
+                      the request path is invalid, refers to a deleted user, or
+                      is not allowed to be transferred (e.g. not a subordinate
+                      of the caller).
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: 'Represents the status of the API request. '
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the invalid user or not
+                          allowed error. 
+                        enum:
+                          - INVALID_DATA
+                          - NOT_ALLOWED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          user in the request path.
+                        maxLength: 500
+                      details:
+                        x-zs-$id: UserTransferAPIInvalidUserInPathDetails
+                        type: object
+                        description: >-
+                          Represents the details about the invalid user in the
+                          request path. owner_status is not returned for the
+                          NOT_ALLOWED case where the target user is not a
+                          subordinate of the caller.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the position index of the invalid user
+                              ID in the resource path.
+                            format: int32
+                          owner_status:
+                            type: string
+                            description: >-
+                              Represents the current status of the user
+                              specified in the request path.
+                            enum:
+                              - not_crm_user
+                              - deleted
+                        required:
+                          - resource_path_index
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - x-zs-$id: UserTransferAPISchedulerLimitExceededError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the error returned when the maximum number of
+                      concurrently scheduled transfer and delete jobs has been
+                      reached.
+                    properties:
+                      status:
+                        type: string
+                        description: 'Represents the status of the API request. '
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned when the scheduler
+                          job limit is reached. 
+                        enum:
+                          - CONCURRENT_JOB_LIMIT_EXCEEDED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the scheduler
+                          limit.
+                        maxLength: 500
+                      details:
+                        type: object
+                        description: >-
+                          Represents the details of the exceeded scheduler
+                          limit.
+                        additionalProperties: false
+                        properties:
+                          limit:
+                            type: string
+                            description: >-
+                              Represents the maximum number of transfer and
+                              delete jobs that can be scheduled concurrently.
+                            maxLength: 10
+                        required:
+                          - limit
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                description: >-
+                  Represents the error response returned when the transfer
+                  request contains invalid data or is missing required fields.
+              examples:
+                NotAllowedResponse1:
+                  summary: >-
+                    An example of error response where Transfer is allowed only
+                    for subordinate users of current user.
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: 2
+                    message: >-
+                      Transfer is allowed only for subordinate users of current
+                      user.
+                    status: error
+                InvalidDataError1:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                      owner_status: deleted
+                    message: the user id provided is already deleted.
+                    status: error
+                  description: >-
+                    Shows an error response returned when the user ID in the
+                    request path refers to a deleted user.
+                  summary: An example error response for a deleted user in path.
+                InvalidDataError2:
+                  value:
+                    transfer:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.transfer.transfer.id
+                          owner_status: deleted
+                        message: >-
+                          The user to whom you are trying to transfer is
+                          deleted.
+                        status: error
+                  description: >-
+                    Shows an error response returned when the transfer target
+                    user has a deleted owner status.
+                  summary: An example error response of a deleted transfer target user.
+                ExpectedFieldMissingError:
+                  value:
+                    transfer:
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_data:
+                            - api_name: transfer
+                              json_path: $.transfer.transfer
+                            - api_name: move_subordinate
+                              json_path: $.transfer.move_subordinate
+                        message: Specify atleast one field
+                        status: error
+                  description: >-
+                    Shows an error response returned when the required transfer
+                    and move_subordinate fields are not provided in the request.
+                  summary: An example error response of a missing required fields.
+                MandatoryFieldMissingError:
+                  value:
+                    transfer:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.transfer.transfer.id
+                          parent_api_name: transfer
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows an error response returned when the transfer object is
+                    present but its required id field is missing.
+                  summary: An example of a missing id field inside the transfer object.
+                SchedulerLimitExceededError:
+                  value:
+                    status: error
+                    code: CONCURRENT_JOB_LIMIT_EXCEEDED
+                    message: Transfer and delete user scheduler limit reached
+                    details:
+                      limit: '10'
+                  description: >-
+                    Shows an error response returned when the maximum number of
+                    concurrently scheduled transfer and delete jobs has been
+                    reached.
+                  summary: >-
+                    An example error response for exceeding the concurrent
+                    scheduler job limit.
+        '403':
+          description: >-
+            Provides the error response body where the user does not have
+            permission to perform this operation.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UserTransferAPIPermissionDeniedError
+                type: object
+                description: >-
+                  Represents the error response returned when the user does not
+                  have the required permissions to perform the transfer
+                  operation.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: 'Represents the status of the error response. '
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code returned when the user lacks the
+                      required permission. 
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: >
+                      Represents the error message describing the permission
+                      issue.
+                    maxLength: 500
+                  details:
+                    type: object
+                    description: >
+                      Represents the additional details about missing
+                      permissions.
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of required permissions that are
+                          missing.
+                        maxItems: 1
+                        items:
+                          type: string
+                          description: >-
+                            Each object represents the specific CRM permission
+                            that the user lacks to perform the transfer
+                            operation.
+                          maxLength: 200
+                    required:
+                      - permissions
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+              examples:
+                NoPermissionError:
+                  value:
+                    status: error
+                    code: NO_PERMISSION
+                    message: You do not have permission to perform this operation
+                    details:
+                      permissions:
+                        - Crm_Implied_Change_Owner_Leads
+                  description: >-
+                    Shows an error response returned when the caller lacks the
+                    Crm_Implied_Change_Owner_Leads permission.
+                  summary: An example error response for no permission to transfer.
+  /users/actions/transfer:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.change_owner.READ
+      summary: Get user transfer status
+      description: >-
+        Retrieves the current status of a user transfer operation using the job
+        ID returned by the transfer request. The response indicates whether the
+        transfer job is scheduled, in progress, completed, or failed.
+      operationId: getTransferAPIStatus
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: The transfer status was retrieved successfully.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: TransferAPIStatusResponse
+                type: object
+                description: >-
+                  Represents the response body for the transfer status request,
+                  containing the current status of the scheduled transfer job.
+                additionalProperties: false
+                properties:
+                  transfer:
+                    type: array
+                    description: >-
+                      Represents the list of transfer operation status details.
+                      The array contains a maximum of one object.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents the status details of a single
+                        transfer operation.
+                      additionalProperties: false
+                      properties:
+                        status:
+                          type: string
+                          description: |
+                            Represents the current status of the transfer
+                            operation. 
+
+
+                            **Possible values**: 
+
+                            - in_progress
+
+                            - completed
+
+                            - failed
+
+                            - scheduled
+                          enum:
+                            - in_progress
+                            - completed
+                            - failed
+                            - scheduled
+                        reason:
+                          type: string
+                          description: >-
+                            Represents the failure reason of the job when
+                            `status` is `failed`. Not always present.
+                          maxLength: 500
+                required:
+                  - transfer
+              examples:
+                TransferStatusResponse:
+                  value:
+                    transfer:
+                      - status: completed
+                  description: >-
+                    Shows a successful response where the transfer operation
+                    status is completed.
+                  summary: An example response of completed transfer status.
+        '204':
+          description: >-
+            Shows the response when no transfer job was found for the provided
+            job ID.
+        '400':
+          description: The request failed due to an invalid or missing required parameter.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: TransferAPIMissingParamError
+                type: object
+                description: >-
+                  Represents the error response returned when a required
+                  parameter is missing from the request.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: 'Represents the status of the API request. '
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: 'Represents the error code for the failed request. '
+                    enum:
+                      - REQUIRED_PARAM_MISSING
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the missing
+                      parameter. 
+                    enum:
+                      - mandatory param missing
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional details about the error, including
+                      the name of the missing parameter.
+                    additionalProperties: false
+                    properties:
+                      param_name:
+                        type: string
+                        description: >-
+                          Represents the name of the missing required
+                          parameter. 
+                        enum:
+                          - job_id
+                    required:
+                      - param_name
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+              examples:
+                MissingJobIdError:
+                  value:
+                    status: error
+                    code: REQUIRED_PARAM_MISSING
+                    message: mandatory param missing
+                    details:
+                      param_name: job_id
+                  description: >-
+                    Shows an error response returned when the **job_id** query
+                    parameter is not provided in the request.
+                  summary: An example error response of missing job_id parameter.
+  /users/{userId}/actions/validate_before_transfer:
+    get:
+      security:
+        - OAuth2:
+            - ZohoCRM.change_owner.READ
+      summary: Validate user before transfer
+      description: >-
+        Validates whether the specified user has open records, assignments,
+        criteria configurations, subordinates, or alerts before transferring the
+        user's data. Use this operation to check the user's dependencies before
+        initiating a transfer.
+      operationId: getValidateBeforeTransferStatus
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: The pre-transfer validation details were retrieved successfully.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ValidateBeforeTransferStatusResponse
+                type: object
+                description: >-
+                  Represents the response body for the pre-transfer validation
+                  request, containing details about the user's records,
+                  assignments, criteria, subordinates, and alerts.
+                additionalProperties: false
+                properties:
+                  validate_before_transfer:
+                    type: array
+                    description: >-
+                      Represents the list of pre-transfer validation results for
+                      the specified user. The array contains a maximum of one
+                      object.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Represents the validation details for a single user
+                        before transfer.
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                          description: >-
+                            Represents the unique identifier of the user being
+                            validated.
+                          maxLength: 19
+                        name:
+                          type: string
+                          description: Represents the name of the user being validated.
+                          maxLength: 250
+                        assignment:
+                          type: boolean
+                          description: 'Indicates whether assignments exist for the user. '
+                        criteria:
+                          type: boolean
+                          description: >-
+                            Indicates whether criteria configurations exist for
+                            the user. 
+                        subordinates:
+                          type: boolean
+                          description: 'Indicates whether subordinates exist for the user. '
+                        alert:
+                          type: boolean
+                          description: 'Indicates whether alerts exist for the user. '
+                required:
+                  - validate_before_transfer
+              examples:
+                TransferStatusResponse:
+                  value:
+                    validate_before_transfer:
+                      - id: '5725767000000411001'
+                        name: John Doe
+                        assignment: true
+                        criteria: false
+                        subordinates: true
+                        alert: false
+                  description: >-
+                    Shows a successful response with the validation details for
+                    a user who has assignments and subordinates but no criteria
+                    or alerts.
+                  summary: An example successful response for pre-transfer validation.
+        '400':
+          description: The request failed due to an invalid user ID or request parameters.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ValidateBeforeTransferErrorResponse
+                description: >-
+                  Represents the error response returned when the provided user
+                  ID is invalid.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: 'Represents the error code for the failed request. '
+                    type: string
+                    enum:
+                      - INVALID_DATA
+                  details:
+                    description: >-
+                      Represents additional details about the error, including
+                      the index of the resource path that caused the failure.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      resource_path_index:
+                        description: >-
+                          Represents the index of the resource path that
+                          contains the invalid value.
+                        type: integer
+                        format: int32
+                    required:
+                      - resource_path_index
+                  message:
+                    description: Represents the error message describing the issue.
+                    type: string
+                    maxLength: 500
+                  status:
+                    description: Represents the status of the API request.
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                InvalidData:
+                  summary: An example error response for an invalid user ID.
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                    message: the id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows an error response returned when the user ID provided
+                    in the request path is invalid.
+        '403':
+          description: >-
+            Shows the error response body of a request when the user attempts to
+            validate their own account before transfer.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ValidateBeforeTransferSelfCheckError
+                type: object
+                description: >-
+                  Represents the error response returned when the user attempts
+                  to validate their own account before transfer.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: Represents the status of the API request.
+                    enum:
+                      - error
+                  code:
+                    type: string
+                    description: Represents the error code for the disallowed self-check.
+                    enum:
+                      - NOT_ALLOWED
+                  message:
+                    type: string
+                    description: Represents the error message describing the issue.
+                    maxLength: 500
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional details about the error, including
+                      the index of the resource path that caused the failure.
+                    additionalProperties: false
+                    properties:
+                      resource_path_index:
+                        description: >-
+                          Represents the index of the resource path that
+                          contains the invalid value.
+                        type: integer
+                        format: int32
+                    required:
+                      - resource_path_index
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+              examples:
+                SelfValidationNotAllowed:
+                  summary: An example error response when validating your own account.
+                  value:
+                    status: error
+                    code: NOT_ALLOWED
+                    message: Super Admin cannot be validated.
+                    details:
+                      resource_path_index: 1
+                  description: >-
+                    Shows an error response returned when the user attempts to
+                    validate their own account before transfer.
+components:
+  parameters:
+    JobId:
+      name: job_id
+      in: query
+      required: true
+      description: >-
+        Indicates the ID of the job scheduled previously through the [Transfer
+        Records and Delete User
+        API](users_transfer.yaml#$.paths./users/{userId}/actions/transfer_and_delete.post).
+      schema:
+        type: string
+        format: int64
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: >-
+        Represents the unique identifier of the user whose data is to be
+        transferred and whose account is to be deleted. Use the [Get Users
+        API](users.yaml#$.paths./users.get) API to get the valid values.
+      schema:
+        type: string
+        format: int64
+        pattern: ^[0-9]+$
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.users.DELETE: Grants permission to delete existing user accounts from Zoho CRM.
+            ZohoCRM.users.READ: Grants permission to retrieve user account details from Zoho CRM.
+            ZohoCRM.users.CREATE: Grants permission to create new user accounts in Zoho CRM.
+            ZohoCRM.users.UPDATE: >-
+              Grants permission to modify existing user account details in Zoho
+              CRM.
+            ZohoCRM.change_owner.READ: >-
+              Grants permission to retrieve the status of ownership transfer
+              jobs in Zoho CRM.
+            ZohoCRM.change_owner.CREATE: >-
+              Grants permission to initiate ownership transfer operations for
+              records in Zoho CRM.

@@ -1,0 +1,1155 @@
+openapi: 3.1.0
+info:
+  title: Mass Delete Tags APIs
+  description: >-
+    Mass delete tags APIs in Zoho CRM helps you schedule a job to delete
+    multiple tags from a module in bulk and tracks the deletion progress through
+    a job identifier. 
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /settings/tags/actions/mass_delete:
+    post:
+      summary: Mass delete tags
+      operationId: massDeleteTags
+      description: >-
+        To schedule a background job that deletes multiple tags in bulk from a
+        single module in your Zoho CRM organization. You can delete tags in bulk
+        from one module per API call. The response returns a job identifier that
+        can be used with the Mass Delete Tags Status GET operation to track the
+        progress of the deletion.
+      requestBody:
+        description: 'The request body contains the data required to perform the operation. '
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request payload for scheduling a mass delete tag
+                job, containing the target module and the tags to delete.
+              additionalProperties: false
+              properties:
+                mass_delete:
+                  type: array
+                  description: >-
+                    Specify the list of mass delete tag jobs. Each entry
+                    identifies the module and the tags to delete in that module
+                    within a single job.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: >-
+                      Each object specifies the module and the tags to delete in
+                      that module for one mass delete tag job.
+                    additionalProperties: false
+                    properties:
+                      module:
+                        type: object
+                        description: >-
+                          Specify the module from which the tags must be
+                          deleted, identified by its unique ID and API name.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            maxLength: 50
+                            description: >-
+                              Specify the API name of the module from which the
+                              tags must be deleted.
+                          id:
+                            type: string
+                            maxLength: 50
+                            description: >-
+                              Specify the unique ID of the module from which the
+                              tags must be deleted. Use the [Get Modules
+                              API](modules.yaml#$.paths./settings/modules.get)
+                              to get the valid values. 
+                        required:
+                          - api_name
+                          - id
+                      tags:
+                        type: array
+                        description: >-
+                          Specify the tags to delete from the module. Each entry
+                          identifies a single tag by its unique ID. Use the [Get
+                          Tags API](tags.yaml#$./settings/tags.get) to get the
+                          valid ID. 
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Each object specifies a tag to delete from the
+                            module.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              description: Specify the unique ID of the tag to delete.
+                              x-zs-$ref:
+                                resource: tags
+                                origins:
+                                  - operationId: getTags
+                                    propertyId: TagId
+                              type: string
+                              maxLength: 255
+                            name:
+                              type: string
+                              maxLength: 50
+                              description: Specify the name of the tag to delete.
+                          required:
+                            - id
+                    required:
+                      - module
+                      - tags
+              required:
+                - mass_delete
+            examples:
+              Sample:
+                summary: >-
+                  An example of the schedule deletion of a single tag from the
+                  Leads module.
+                value:
+                  mass_delete:
+                    - module:
+                        api_name: Leads
+                        id: '123'
+                      tags:
+                        - id: '456'
+                          name: Priority
+                description: >-
+                  Shows a request that schedules a mass delete tag job for one
+                  tag in the Leads module, identified by the module ID, the
+                  module API name, and the tag ID.
+      responses:
+        '202':
+          description: >-
+            Returns the job identifier and the schedule code for the mass delete
+            tag job that was queued for processing.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MassDeleteTagsResponse
+                type: object
+                description: >-
+                  Represents the response payload returned when a mass delete
+                  tag job is scheduled successfully, including the job
+                  identifier and the schedule code.
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the API call. For a scheduled
+                      job, the value is success.
+                    maxLength: 20
+                  code:
+                    type: string
+                    description: >-
+                      Represents the code that identifies the result of
+                      scheduling the mass delete tag job. For a successful
+                      schedule, the value is SCHEDULED.
+                    maxLength: 10
+                  message:
+                    type: string
+                    description: >-
+                      Represents the message that describes the outcome of
+                      scheduling the mass delete tag job.
+                    maxLength: 200
+                  details:
+                    type: object
+                    description: >-
+                      Represents the details of the scheduled mass delete tag
+                      job, including the job identifier returned by the system.
+                    additionalProperties: false
+                    properties:
+                      job_id:
+                        type: string
+                        description: >-
+                          Represents the unique identifier assigned to the
+                          scheduled mass delete tag job. Use this value with the
+                          [Mass Delete Tags
+                          Status](mass_delete_tags.yaml#$.paths./settings/tags/actions/mass_delete.get)
+                          API call to know the job state.
+                        maxLength: 50
+                    required:
+                      - job_id
+                required:
+                  - status
+                  - code
+                  - details
+                  - message
+              examples:
+                Sample:
+                  summary: An example of mass delete tag job scheduled successfully.
+                  value:
+                    status: success
+                    code: '202'
+                    details:
+                      job_id: job_789
+                    message: Mass delete job scheduled successfully
+                  description: >-
+                    Shows the response when a mass delete tag job is scheduled
+                    successfully, returning the job identifier that the client
+                    can use to track job progress.
+        '400':
+          description: |
+            The request payload is missing required fields, references unknown
+            or restricted tags, or violates the structural constraints of the
+            mass delete tag operation. 
+
+            Resolution: The request payload must include the mass_delete array,
+            the module, and a valid tags array that references existing tags not
+            currently associated with CRM features.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MassDeleteTagsErrorResponse'
+              examples:
+                RootKeyMissing:
+                  summary: mass_delete root key is missing from the request body
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    status: error
+                    message: required field not found
+                    details:
+                      api_name: mass_delete
+                      json_path: $.mass_delete
+                  description: >-
+                    Demonstrates the response when the request body does not
+                    contain the required mass_delete array.
+                TagsMissing:
+                  summary: tags key is missing inside a mass_delete item
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    status: error
+                    message: required field not found
+                    details:
+                      api_name: tags
+                      json_path: $.mass_delete[0].tags
+                  description: >-
+                    Demonstrates the response when a mass_delete entry omits the
+                    tags array that lists the tag identifiers to delete.
+                InvalidTagId:
+                  summary: Tag ID does not exist in the CRM
+                  value:
+                    code: INVALID_DATA
+                    status: error
+                    message: tags not found
+                    details:
+                      api_name: id
+                      json_path: $.mass_delete[0].tags[0].id
+                  description: >-
+                    Demonstrates the response when a tag ID in the request body
+                    does not match any tag known to the CRM.
+                TagsNotAvailable:
+                  summary: Tag exists but is not available in the specified module
+                  value:
+                    code: INVALID_DATA
+                    status: error
+                    message: one of the tags seems not found.
+                    details:
+                      api_name: id
+                      json_path: $.mass_delete[0].tags[0].id
+                  description: >-
+                    Demonstrates the response when a tag exists in the CRM but
+                    has not been attached to the specified module.
+                TagsArrayTooLong:
+                  summary: tags array exceeds the allowed length
+                  value:
+                    code: INVALID_DATA
+                    status: error
+                    message: invalid data
+                    details:
+                      api_name: tags
+                      json_path: $.mass_delete[0].tags
+                      maximum_length: 200
+                  description: >-
+                    Demonstrates the response when the tags array for a module
+                    exceeds the maximum allowed number of tag entries in a
+                    single request.
+                TagsNotArray:
+                  summary: tags field is not a JSON array
+                  value:
+                    code: INVALID_DATA
+                    status: error
+                    message: invalid data
+                    details:
+                      api_name: tags
+                      json_path: $.mass_delete[0].tags
+                      expected_data_type: jsonarray
+                  description: >-
+                    Demonstrates the response when the tags field for a module
+                    is not provided as a JSON array.
+                TagsAssociatedWithFeatures:
+                  summary: Tags are associated with features and cannot be deleted
+                  value:
+                    code: NOT_ALLOWED
+                    status: error
+                    message: tags has been associated to features
+                    details:
+                      api_name: id
+                      json_path: $.mass_delete[0].tags[0].id
+                  description: >-
+                    Demonstrates the response when one or more tags listed for
+                    deletion are still associated with CRM features such as
+                    Blueprint or Workflow Rules.
+                EmptyMassDeleteArray:
+                  summary: mass_delete array is empty
+                  value:
+                    code: INVALID_DATA
+                    status: error
+                    message: invalid data
+                    details:
+                      api_name: mass_delete
+                      json_path: $.mass_delete
+                  description: >-
+                    Demonstrates the response when the mass_delete array in the
+                    request body is empty and no job can be scheduled.
+                MassDeleteArrayTooLong:
+                  summary: mass_delete array exceeds the allowed length
+                  value:
+                    code: INVALID_DATA
+                    status: error
+                    message: invalid data
+                    details:
+                      api_name: mass_delete
+                      json_path: $.mass_delete
+                      maximum_length: 1
+                  description: >-
+                    Demonstrates the response when the mass_delete array exceeds
+                    the maximum allowed length for a single request.
+                ModuleMissing:
+                  summary: module key is missing inside a mass_delete item
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    status: error
+                    message: required field not found
+                    details:
+                      api_name: module
+                      json_path: $.mass_delete[0].module
+                  description: >-
+                    Demonstrates the response when a mass_delete entry omits the
+                    module object that identifies the target module.
+                ModuleNotObject:
+                  summary: module field is not a JSON object
+                  value:
+                    code: INVALID_DATA
+                    status: error
+                    message: invalid data
+                    details:
+                      api_name: module
+                      json_path: $.mass_delete[0].module
+                      expected_data_type: jsonobject
+                  description: >-
+                    Demonstrates the response when the module field in the
+                    request body is not provided as a JSON object.
+                ModuleIdMissing:
+                  summary: The module.id field is missing from the module object
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    status: error
+                    message: required field not found
+                    details:
+                      api_name: id
+                      json_path: $.mass_delete[0].module.id
+                  description: >-
+                    Demonstrates the response when the module.id field of the
+                    module object is missing from the request body.
+                ModuleApiNameMissing:
+                  summary: module.api_name is missing in the module object
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    status: error
+                    message: required field not found
+                    details:
+                      api_name: api_name
+                      json_path: $.mass_delete[0].module.api_name
+                  description: >-
+                    Demonstrates the response when the api_name field of the
+                    module object is missing or null in the request body.
+                AmbiguousModule:
+                  summary: Module ID and module API name refer to different modules
+                  value:
+                    code: AMBIGUITY_DURING_PROCESSING
+                    status: error
+                    message: ambiguous module identifiers
+                    details:
+                      ambiguity_due_to:
+                        - api_name: id
+                          json_path: $.mass_delete[0].module.id
+                        - api_name: api_name
+                          json_path: $.mass_delete[0].module.api_name
+                  description: >-
+                    Demonstrates the response when the module ID and the module
+                    API name in the request identify different modules and
+                    cannot be resolved unambiguously.
+        '401':
+          description: |
+            The OAuth access token does not include the scope required to
+            schedule a mass delete tag job. 
+
+            Resolution: A new access token must be generated with the
+            ZohoCRM.settings.tags.DELETE scope.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error payload returned when the request cannot
+                  be authenticated because the OAuth access token does not
+                  include the required scope.
+                oneOf:
+                  - x-zs-$id: MassDeleteTagsPost401OAuthScopeMismatch
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the error payload returned when the OAuth
+                      access token does not include the
+                      ZohoCRM.settings.tags.DELETE scope required to schedule a
+                      mass delete tag job.
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - OAUTH_SCOPE_MISMATCH
+                        description: >-
+                          Represents the error code that identifies the OAuth
+                          scope mismatch.
+                        maxLength: 30
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the status of the API call when the OAuth
+                          scope mismatch occurs.
+                        maxLength: 10
+                      message:
+                        type: string
+                        description: >-
+                          Represents the message that describes the OAuth scope
+                          mismatch.
+                        maxLength: 200
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Represents the details of the OAuth scope mismatch,
+                          including the request method and the URL that was
+                          called.
+                        properties:
+                          method:
+                            type: string
+                            description: >-
+                              Represents the HTTP method of the request that
+                              triggered the OAuth scope mismatch.
+                            maxLength: 10
+                          url:
+                            type: string
+                            description: >-
+                              Represents the request URL that was called when
+                              the OAuth scope mismatch occurred.
+                            maxLength: 200
+                    required:
+                      - code
+                      - status
+                      - message
+                      - details
+                x-zs-$id: MassDeleteTagsPost401
+              examples:
+                OAuthScopeMismatch:
+                  summary: >-
+                    An example of invalid OAuth scope for the tags delete
+                    permission.
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    status: error
+                    message: invalid oauth scope to access this URL
+                    details:
+                      method: POST
+                      url: /crm/v8/settings/tags/actions/mass_delete
+                  description: >-
+                    Shows the response when the access token does not include
+                    the ZohoCRM.settings.tags.DELETE scope required to schedule
+                    the mass delete tag job.
+        '403':
+          description: |
+            The user does not have enough permission to delete tags from the
+            specified module. 
+
+            Resolution: The CRM administrator must grant the required tag
+            management permission to the user profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MassDeleteTagsErrorResponse'
+              examples:
+                NoPermission:
+                  summary: User profile lacks the tag management permission
+                  value:
+                    code: NO_PERMISSION
+                    status: error
+                    message: permission denied
+                    details:
+                      permissions:
+                        - Crm_Implied_Edit_Tags
+                  description: >-
+                    Demonstrates the response when the requesting user profile
+                    is not assigned the tag management permission needed to
+                    schedule the mass delete tag job.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.tags.DELETE
+    get:
+      summary: Mass Delete Tags Status
+      operationId: getMassDeleteTagsStatus
+      description: >-
+        To retrieve the current status, the scheduled time, and the success and
+        failure counts for a previously scheduled mass delete tag job in your
+        Zoho CRM organization, using the job ID returned by the Mass Delete Tags
+        POST operation.
+      parameters:
+        - name: job_id
+          in: query
+          required: true
+          description: >-
+            Specify the unique identifier of the mass delete tag job for which
+            you want to retrieve the status. Use the job ID returned by the
+            [Mass Delete Tags
+            API](mass_delete_tags.yaml#$.paths./settings/tags/actions/mass_delete.post).
+          schema:
+            type: string
+            format: int64
+            maxLength: 19
+      responses:
+        '200':
+          description: >-
+            Returns the current status and tag deletion counts for the requested
+            mass delete tag job.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: MassDeleteTagsStatusResponse
+                description: >-
+                  Represents the status payload returned for the queried mass
+                  delete tag job, including the job identifier, current
+                  execution state, scheduled time, and counts of total, deleted,
+                  and failed tags.
+                additionalProperties: false
+                properties:
+                  mass_delete:
+                    type: array
+                    description: >-
+                      Represents the list of mass delete tag jobs returned for
+                      the queried job ID, with one entry per job.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents a single mass delete tag job,
+                        including its identifier, current status, and tag
+                        deletion counts.
+                      additionalProperties: false
+                      properties:
+                        job_id:
+                          type: string
+                          maxLength: 50
+                          description: >-
+                            Represents the unique identifier of the mass delete
+                            tag job scheduled through the [Mass Delete Tags
+                            API](mass_delete_tags.yaml#$.paths./settings/tags/actions/mass_delete.post).
+                        status:
+                          type: string
+                          maxLength: 20
+                          description: |
+                            Represents the current execution state of the mass
+                            delete tag job.
+
+                            Possible values:
+
+                            COMPLETED - The job has finished processing all
+                            tags.
+
+                            SCHEDULED - The job is queued and waiting to begin
+                            processing.
+
+                            FAILED - The job ended without completing the
+                            deletion.
+                        created_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Represents the timestamp at which the mass delete
+                            tag job was scheduled, in ISO 8601 format.
+                        total_count:
+                          type: integer
+                          format: int32
+                          description: >-
+                            Represents the total number of tags that were
+                            submitted for deletion in the mass delete tag job.
+                          minimum: 0
+                        failed_count:
+                          type: integer
+                          format: int32
+                          description: >-
+                            Represents the number of tags that the job failed to
+                            delete.
+                          minimum: 0
+                        deleted_count:
+                          type: integer
+                          format: int32
+                          description: >-
+                            Represents the number of tags that the job has
+                            deleted successfully.
+                          minimum: 0
+                      required:
+                        - job_id
+                        - status
+                required:
+                  - mass_delete
+              examples:
+                Sample:
+                  summary: An example of in-progress mass delete tag job status.
+                  value:
+                    mass_delete:
+                      - job_id: job_789
+                        status: in_progress
+                        created_time: '2025-11-21T18:00:00Z'
+                  description: >-
+                    Shows the status payload for a mass delete tag job that is
+                    currently running, with the job identifier and the scheduled
+                    time.
+        '400':
+          description: >
+            The job ID provided in the request is invalid or does not match any
+            scheduled mass delete tag job. 
+
+            Resolution: The job ID must be a valid identifier returned by the
+            [Mass Delete Tags
+            API](mass_delete_tags.yaml#$.paths./settings/tags/actions/mass_delete.post)
+            call.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MassDeleteTagsErrorResponse'
+              examples:
+                InvalidJobId:
+                  summary: Invalid job ID supplied as a literal null string
+                  value:
+                    mass_delete:
+                      - code: INVALID_DATA
+                        status: error
+                        message: invalid data
+                        details:
+                          job_id: 'null'
+                  description: >-
+                    Demonstrates the response when the job_id query parameter
+                    contains the literal string null and cannot be parsed as a
+                    valid identifier.
+                JobNotFound:
+                  summary: Job ID does not match any scheduled mass delete tag job
+                  value:
+                    mass_delete:
+                      - code: INVALID_DATA
+                        status: error
+                        message: job details not found
+                        details:
+                          job_id: '999999999999999999'
+                  description: >-
+                    Demonstrates the response when the supplied job_id cannot be
+                    resolved to any existing mass delete tag job in the
+                    organization.
+        '401':
+          description: |
+            The OAuth access token does not include the scope required to
+            retrieve the mass delete tag job status. 
+
+            Resolution: A new access token must be generated with the
+            ZohoCRM.settings.tags.READ scope.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error payload returned when the request cannot
+                  be authenticated because the OAuth access token does not
+                  include the required scope.
+                oneOf:
+                  - x-zs-$id: MassDeleteTagsGet401OAuthScopeMismatch
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the error payload returned when the OAuth
+                      access token does not include the
+                      ZohoCRM.settings.tags.READ scope required to retrieve the
+                      mass delete tag job status.
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - OAUTH_SCOPE_MISMATCH
+                        description: >-
+                          Represents the error code that identifies the OAuth
+                          scope mismatch.
+                        maxLength: 30
+                      status:
+                        type: string
+                        enum:
+                          - error
+                        description: >-
+                          Represents the status of the API call when the OAuth
+                          scope mismatch occurs.
+                        maxLength: 10
+                      message:
+                        type: string
+                        description: >-
+                          Represents the message that describes the OAuth scope
+                          mismatch.
+                        maxLength: 200
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Represents the details of the OAuth scope mismatch,
+                          including the request method and the URL that was
+                          called.
+                        properties:
+                          method:
+                            type: string
+                            description: >-
+                              Represents the HTTP method of the request that
+                              triggered the OAuth scope mismatch.
+                            maxLength: 10
+                          url:
+                            type: string
+                            description: >-
+                              Represents the request URL that was called when
+                              the OAuth scope mismatch occurred.
+                            maxLength: 200
+                    required:
+                      - code
+                      - status
+                      - message
+                      - details
+                x-zs-$id: MassDeleteTagsGet401
+              examples:
+                OAuthScopeMismatch:
+                  summary: An example of OAuth scope missing the tags read permission.
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    status: error
+                    message: invalid oauth scope to access this URL
+                    details:
+                      method: GET
+                      url: /crm/v8/settings/tags/actions/mass_delete
+                  description: >-
+                    Shows the response when the access token does not include
+                    the ZohoCRM.settings.tags.READ scope required to query the
+                    job status.
+        '403':
+          description: >
+            The user does not have permission to view the status of a mass
+            delete tag job. Resolution: The CRM administrator must grant the
+            required tag management permission to the user profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MassDeleteTagsErrorResponse'
+              examples:
+                NoPermission:
+                  summary: User profile lacks the tag management permission
+                  value:
+                    code: NO_PERMISSION
+                    status: error
+                    message: permission denied
+                    details:
+                      permissions:
+                        - Crm_Implied_Edit_Tags
+                  description: >-
+                    Demonstrates the response when the requesting user profile
+                    is not assigned the tag management permission needed to view
+                    the job status.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.tags.READ
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.tags.READ: >-
+              Grants permission to read tag configuration and mass delete tag
+              job status in Zoho CRM.
+            ZohoCRM.settings.tags.DELETE: >-
+              Grants permission to delete tags from Zoho CRM modules, including
+              scheduling mass delete tag jobs.
+  schemas:
+    MassDeleteTagsErrorResponse:
+      x-zs-$id: MassDeleteTagsErrorResponse
+      oneOf:
+        - x-zs-$id: MassDeleteTagsErrorMandatoryNotFound
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error payload returned when a required field is
+            missing from the request to a mass delete tag operation.
+          properties:
+            code:
+              type: string
+              enum:
+                - MANDATORY_NOT_FOUND
+              description: >-
+                Represents the error code indicating that a required field is
+                missing from the request.
+              maxLength: 30
+            status:
+              type: string
+              enum:
+                - error
+              description: Represents the status of the error response.
+              maxLength: 10
+            message:
+              type: string
+              description: >-
+                Represents the message that describes the missing required
+                field.
+              maxLength: 200
+            details:
+              type: object
+              additionalProperties: false
+              description: Represents the details that identify the missing required field.
+              properties:
+                api_name:
+                  type: string
+                  description: Represents the API name of the missing required field.
+                  maxLength: 50
+                json_path:
+                  type: string
+                  description: >-
+                    Represents the JSON path that points to the missing required
+                    field in the request body.
+                  maxLength: 200
+          required:
+            - code
+            - status
+            - message
+            - details
+        - x-zs-$id: MassDeleteTagsErrorInvalidData
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error payload returned when a field in the request to
+            a mass delete tag operation contains invalid data, an unsupported
+            data type, or violates a size limit. 
+          properties:
+            code:
+              type: string
+              enum:
+                - INVALID_DATA
+              description: >-
+                Represents the error code indicating that invalid data was
+                provided in the request.
+              maxLength: 20
+            status:
+              type: string
+              enum:
+                - error
+              description: Represents the status of the error response.
+              maxLength: 10
+            message:
+              type: string
+              description: >-
+                Represents the message that describes the invalid data in the
+                request.
+              maxLength: 200
+            details:
+              type: object
+              additionalProperties: false
+              description: >-
+                Represents the details that identify the invalid field and the
+                validation that failed.
+              properties:
+                api_name:
+                  type: string
+                  description: >-
+                    Represents the API name of the field that contains invalid
+                    data.
+                  maxLength: 50
+                json_path:
+                  type: string
+                  description: >-
+                    Represents the JSON path that points to the field with
+                    invalid data in the request body.
+                  maxLength: 200
+                expected_data_type:
+                  type: string
+                  description: Represents the expected data type of the field.
+                  maxLength: 50
+                maximum_length:
+                  type: integer
+                  format: int32
+                  description: >-
+                    Represents the maximum allowed number of items or characters
+                    for the field that failed validation.
+                  minimum: 0
+          required:
+            - code
+            - status
+            - message
+            - details
+        - x-zs-$id: MassDeleteTagsErrorAmbiguity
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error payload returned when the module ID and the
+            module API name in the request refer to different modules.
+          properties:
+            code:
+              type: string
+              enum:
+                - AMBIGUITY_DURING_PROCESSING
+              description: >-
+                Represents the error code indicating that the module ID and the
+                module API name in the request refer to different modules.
+              maxLength: 40
+            status:
+              type: string
+              enum:
+                - error
+              description: Represents the status of the error response.
+              maxLength: 10
+            message:
+              type: string
+              description: >-
+                Represents the message that describes the ambiguous module
+                identifiers in the request.
+              maxLength: 200
+            details:
+              type: object
+              additionalProperties: false
+              description: >-
+                Represents the details that identify the conflicting module
+                identifiers in the request.
+              properties:
+                ambiguity_due_to:
+                  type: array
+                  description: >-
+                    Represents the list of conflicting field identifiers that
+                    produced the ambiguity in the module reference.
+                  maxItems: 10
+                  items:
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents one conflicting field identifier that
+                      contributed to the ambiguity.
+                    properties:
+                      api_name:
+                        type: string
+                        description: Represents the API name of the conflicting field.
+                        maxLength: 50
+                      json_path:
+                        type: string
+                        description: >-
+                          Represents the JSON path of the conflicting field in
+                          the request body.
+                        maxLength: 200
+                    required:
+                      - api_name
+                      - json_path
+              required:
+                - ambiguity_due_to
+          required:
+            - code
+            - status
+            - message
+            - details
+        - x-zs-$id: MassDeleteTagsErrorNotAllowed
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error payload returned when one or more tags cannot
+            be deleted because they are associated with CRM features such as
+            Blueprint or Workflow Rules.
+          properties:
+            code:
+              type: string
+              enum:
+                - NOT_ALLOWED
+              description: >-
+                Represents the error code indicating that one or more tags
+                cannot be deleted because they are associated with CRM features.
+              maxLength: 20
+            status:
+              type: string
+              enum:
+                - error
+              description: Represents the status of the error response.
+              maxLength: 10
+            message:
+              type: string
+              description: >-
+                Represents the message that describes the restriction preventing
+                the deletion of the tags.
+              maxLength: 200
+            details:
+              type: object
+              additionalProperties: false
+              description: >-
+                Represents the details that identify the tag whose association
+                blocks the deletion.
+              properties:
+                api_name:
+                  type: string
+                  description: >-
+                    Represents the API name of the field related to the
+                    restricted deletion attempt.
+                  maxLength: 50
+                json_path:
+                  type: string
+                  description: >-
+                    Represents the JSON path that points to the tag identifier
+                    whose association blocks the deletion.
+                  maxLength: 200
+          required:
+            - code
+            - status
+            - message
+            - details
+        - x-zs-$id: MassDeleteTagsErrorNoPermission
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error payload returned when the user profile does not
+            have the permissions required to perform the mass delete tag
+            operation.
+          properties:
+            code:
+              type: string
+              enum:
+                - NO_PERMISSION
+              description: >-
+                Represents the error code indicating that the user does not have
+                permission to perform the action.
+              maxLength: 20
+            status:
+              type: string
+              enum:
+                - error
+              description: Represents the status of the error response.
+              maxLength: 10
+            message:
+              type: string
+              description: Represents the message that describes the permission denial.
+              maxLength: 200
+            details:
+              type: object
+              additionalProperties: false
+              description: >-
+                Represents the details that identify the permissions missing
+                from the user profile.
+              properties:
+                permissions:
+                  type: array
+                  description: >-
+                    Represents the list of permission identifiers that the user
+                    profile is missing.
+                  maxItems: 10
+                  items:
+                    type: string
+                    maxLength: 100
+                    description: >-
+                      Represents the name of a permission identifier required to
+                      perform the action.
+          required:
+            - code
+            - status
+            - message
+            - details
+        - x-zs-$id: MassDeleteTagsGetErrorWrapper
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the wrapped error payload returned by the mass delete tag
+            status query when the supplied job_id is invalid or does not match
+            any scheduled job.
+          properties:
+            mass_delete:
+              type: array
+              description: >-
+                Represents the wrapper array that carries the error for the
+                queried mass delete tag job.
+              maxItems: 1
+              items:
+                x-zs-$id: MassDeleteTagsGetErrorItem
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents the error entry for the queried mass delete tag
+                  job.
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INVALID_DATA
+                    description: >-
+                      Represents the error code indicating that the provided
+                      job_id is invalid.
+                    maxLength: 20
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: Represents the status of the error response.
+                    maxLength: 10
+                  message:
+                    type: string
+                    description: >-
+                      Represents the message that describes the invalid job
+                      query.
+                    maxLength: 200
+                  details:
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the details that identify the invalid job_id
+                      value provided in the request.
+                    properties:
+                      job_id:
+                        type: string
+                        description: >-
+                          Represents the invalid or unknown job_id value that
+                          was provided in the query parameter.
+                        maxLength: 50
+                required:
+                  - code
+                  - status
+                  - message
+                  - details
+          required:
+            - mass_delete
+      description: >-
+        Represents the error payload returned by the mass delete tag operations.
+        It provides the error structures for missing mandatory fields, invalid
+        data, ambiguous module identifiers, restricted tag deletion, missing
+        permissions, and invalid job queries.

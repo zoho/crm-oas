@@ -1,0 +1,12 @@
+Error response with code REQUIRED_PARAM_MISSING: One of the expected parameter is missing
+
+```json
+{
+  "code": "REQUIRED_PARAM_MISSING",
+  "details": {
+    "param_name": "id"
+  },
+  "message": "One of the expected parameter is missing",
+  "status": "error"
+}
+```

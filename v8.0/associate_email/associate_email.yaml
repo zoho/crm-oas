@@ -1,0 +1,532 @@
+openapi: 3.1.0
+info:
+  title: Zoho CRM Associate Email API
+  description: Associates emails to CRM records and checks email availability.
+  version: '8.0'
+servers:
+  - url: https://www.zohoapis.com/crm/{version}
+    description: Production Server (US)
+    variables:
+      version:
+        default: v8
+        description: API version
+paths:
+  /{module}/{recordId}/actions/associate_email:
+    post:
+      summary: Associate Email
+      description: >-
+        Associates an email with a specific record in a module, creating a link
+        between the email and the CRM record.
+      operationId: associateEmail
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.emails.CREATE
+      parameters:
+        - name: module
+          in: path
+          required: true
+          description: >
+            The API name of the module containing the record. Use the [Get
+            Modules API](modules.yaml#$.paths./settings/modules.get) to retrieve
+            the module API names.
+          schema:
+            type: string
+            maxLength: 100
+        - name: recordId
+          in: path
+          required: true
+          description: >
+            The unique ID of the record to associate the email with. Use the
+            [Get Records API](record.yaml#$.paths./module.get) to retrieve
+            record IDs.
+          schema:
+            type: string
+            maxLength: 100
+      requestBody:
+        description: Payload containing the email details to be associated with the record.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssociateEmailRequest'
+            examples:
+              Standard:
+                value:
+                  data:
+                    - from:
+                        user_name: John Doe
+                        email: john.doe@example.com
+                      to:
+                        - user_name: Client
+                          email: client@business.com
+                      subject: Project Update
+                      content: Update content
+                      original_message_id: msg_123
+                      sent: true
+                      date_time: '2025-10-10T14:00:00Z'
+      responses:
+        '201':
+          description: Email associated successfully with the record.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ActionResponse
+                $ref: '#/components/schemas/ActionResponse'
+              examples:
+                Success:
+                  value:
+                    Emails:
+                      - code: SUCCESS
+                        details:
+                          message_id: msg_123
+                        message: Email associated successfully.
+                        status: success
+        '400':
+          description: >-
+            Bad Request - The request could not be processed due to invalid
+            input. Review the error details and correct the issues before
+            retrying.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidModuleError'
+                  - $ref: '#/components/schemas/MaximumLengthError'
+                  - $ref: '#/components/schemas/MandatoryNotFoundError'
+                  - $ref: '#/components/schemas/InvalidDataError'
+                  - $ref: '#/components/schemas/InvalidValueErrorDetails'
+                x-zs-$id: InvalidRequestError
+              examples:
+                MaximumLength:
+                  value:
+                    code: INVALID_DATA
+                    message: invalid data
+                    status: error
+                    details:
+                      maximum_length: 1
+                      api_name: Emails
+                      json_path: $.Emails
+                InvalidData:
+                  value:
+                    code: INVALID_DATA
+                    message: the related id given seems to be invalid
+                    status: error
+                    details: {}
+                MandatoryNotFound:
+                  value:
+                    Emails:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: from
+                          json_path: $.Emails[0].from
+                        message: required field not found
+                        status: error
+                InvalidValue:
+                  value:
+                    code: INVALID_DATA
+                    message: invalid data
+                    status: error
+                    details:
+                      api_name: from
+                      json_path: $.Emails[0].from
+        '404':
+          description: >-
+            Not Found - The specified module does not exist or is not
+            accessible. Verify the module name and retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidModuleError'
+                x-zs-$id: InvalidModuleError
+              examples:
+                InvalidModule:
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      resource_path_index: 0
+                    message: the module name given seems to be invalid
+                    status: error
+components:
+  schemas:
+    AssociateEmailRequest:
+      type: object
+      description: Request body for associating an email with a record.
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: List of email objects to associate with the record.
+          items:
+            $ref: '#/components/schemas/EmailObject'
+          minItems: 1
+          maxItems: 50
+      required:
+        - data
+    EmailObject:
+      type: object
+      description: Detailed email metadata object for association.
+      additionalProperties: false
+      properties:
+        from:
+          $ref: '#/components/schemas/EmailAddress'
+        to:
+          type: array
+          description: Primary recipients of the email.
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/EmailAddress'
+        cc:
+          type: array
+          description: Carbon copy recipients of the email.
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/EmailAddress'
+        bcc:
+          type: array
+          description: Blind carbon copy recipients of the email.
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/EmailAddress'
+        subject:
+          type: string
+          description: The subject line of the email.
+          maxLength: 500
+        content:
+          type: string
+          description: The email body content.
+          maxLength: 32000
+        mail_format:
+          type: string
+          description: The format of the email content.
+          enum:
+            - text
+            - html
+          default: text
+        original_message_id:
+          type: string
+          description: >-
+            The unique identifier of the email from the mail server. This is
+            used to prevent duplicate email associations.
+          maxLength: 255
+        sent:
+          type: boolean
+          description: >-
+            Indicates whether the email was sent (true) or received (false) by
+            the CRM user.
+        date_time:
+          type: string
+          format: date-time
+          description: The timestamp of the email (ISO 8601 format).
+          maxLength: 50
+        attachments:
+          type: array
+          description: >-
+            List of attachments associated with the email. Use the [Files
+            API](files.yaml#$.paths./files.get) to retrieve attachment IDs.
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/AttachmentRef'
+      required:
+        - from
+        - to
+        - subject
+        - content
+        - original_message_id
+        - sent
+        - date_time
+    EmailAddress:
+      type: object
+      description: Object representing an email address and display name.
+      additionalProperties: false
+      properties:
+        user_name:
+          type: string
+          description: The display name of the email recipient or sender.
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          description: The actual email address.
+          maxLength: 255
+      required:
+        - email
+    AttachmentRef:
+      type: object
+      description: Reference to an email attachment.
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: >
+            The attachment ID. Use the [Files
+            API](files.yaml#$.paths./files.get) to retrieve attachment IDs.
+          maxLength: 100
+      required:
+        - id
+    ActionResponse:
+      type: object
+      description: Generic wrapper for multiple record action responses.
+      x-zs-$id: ActionResponse
+      additionalProperties: false
+      properties:
+        Emails:
+          type: array
+          description: Array of result statuses for each email association operation.
+          maxItems: 50
+          items:
+            type: object
+            description: Individual result for a specific email association.
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: >-
+                  Status code indicating the result of the operation. Possible
+                  values:SUCCESS, ERROR.
+                maxLength: 50
+                enum:
+                  - SUCCESS
+              details:
+                type: object
+                description: Contextual details about the operation result.
+                additionalProperties: false
+                properties:
+                  message_id:
+                    type: string
+                    description: The original message ID of the email that was processed.
+                    maxLength: 255
+                required:
+                  - message_id
+              message:
+                type: string
+                description: Human-readable message describing the operation result.
+                maxLength: 255
+              status:
+                type: string
+                description: Operation status. Possible values:success, error.
+                maxLength: 50
+                enum:
+                  - success
+    InvalidDataError:
+      type: object
+      description: Details about a failed API request.
+      x-zs-$id: InvalidDataError
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Error code.
+          maxLength: 50
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: Human-readable error message describing the issue.
+          maxLength: 255
+          enum:
+            - the related id given seems to be invalid
+        status:
+          type: string
+          description: Error status. Always "error".
+          maxLength: 50
+          enum:
+            - error
+        details:
+          type: object
+          description: >-
+            Detailed error context, including field-specific validation
+            information.
+          additionalProperties: false
+    InvalidValueErrorDetails:
+      type: object
+      description: >-
+        Error response returned when the request payload contains invalid data.
+        The Emails array contains per-item error details.
+      x-zs-$id: InvalidValueErrorDetails
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: >-
+            Error code indicating the type of validation failure. For example,
+            INVALID_DATA.
+          maxLength: 50
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          description: Detailed error context identifying the invalid field.
+          additionalProperties: false
+          properties:
+            api_name:
+              type: string
+              description: The API name of the invalid field.
+              maxLength: 100
+            json_path:
+              type: string
+              description: The JSON path of the invalid field in the request payload.
+              maxLength: 255
+        message:
+          type: string
+          description: Human-readable message describing the validation error.
+          maxLength: 255
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: Status of the operation. Always "error" for validation failures.
+          maxLength: 50
+          enum:
+            - error
+    MandatoryNotFoundError:
+      type: object
+      description: >-
+        Error response returned when a required field is missing in the request
+        payload. The Emails array contains per-item error details.
+      x-zs-$id: MandatoryNotFoundError
+      additionalProperties: false
+      properties:
+        Emails:
+          type: array
+          maxItems: 1
+          description: >-
+            Array of per-email error results indicating which required fields
+            are missing.
+          items:
+            type: object
+            description: Individual error entry for a specific email item.
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: >-
+                  Error code indicating the type of validation failure. For
+                  example, MANDATORY_NOT_FOUND.
+                maxLength: 50
+                enum:
+                  - MANDATORY_NOT_FOUND
+              details:
+                type: object
+                description: Detailed error context identifying the missing required field.
+                additionalProperties: false
+                properties:
+                  api_name:
+                    type: string
+                    description: The API name of the missing required field.
+                    maxLength: 100
+                  json_path:
+                    type: string
+                    description: >-
+                      The JSON path of the missing required field in the request
+                      payload.
+                    maxLength: 255
+              message:
+                type: string
+                description: Human-readable message describing the validation error.
+                maxLength: 255
+              status:
+                type: string
+                description: >-
+                  Status of the operation. Always "error" for validation
+                  failures.
+                maxLength: 50
+    InvalidModuleError:
+      type: object
+      description: >-
+        Error response returned when the module name provided in the request
+        path does not exist or is invalid.
+      x-zs-$id: InvalidModuleError
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: >-
+            Error code indicating the type of failure. Always INVALID_MODULE for
+            this error.
+          maxLength: 50
+          enum:
+            - INVALID_MODULE
+        details:
+          type: object
+          description: Details providing additional context about the invalid module error.
+          additionalProperties: false
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                The zero-based index position in the resource path where the
+                invalid module name was detected.
+        message:
+          type: string
+          description: Human-readable message describing the invalid module error.
+          maxLength: 255
+          enum:
+            - the module name given seems to be invalid
+        status:
+          type: string
+          description: Status of the operation. Always "error" for this failure.
+          maxLength: 50
+          enum:
+            - error
+    MaximumLengthError:
+      type: object
+      description: Details about a failed API request.
+      x-zs-$id: MaximumLengthError
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Error code.
+          maxLength: 50
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: Human-readable error message describing the issue.
+          maxLength: 255
+        status:
+          type: string
+          description: Error status. Always "error".
+          maxLength: 50
+          enum:
+            - error
+        details:
+          type: object
+          description: >-
+            Detailed error context, including field-specific validation
+            information.
+          additionalProperties: false
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: The maximum allowed length for the field that failed validation.
+            api_name:
+              type: string
+              description: >-
+                The API name of the field or module that caused the validation
+                error.
+              maxLength: 100
+            json_path:
+              type: string
+              description: The JSON path of the field that caused the validation error.
+              maxLength: 255
+          required:
+            - maximum_length
+            - api_name
+            - json_path
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: Zoho CRM OAuth2 Authentication.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.emails.CREATE: Grants permission to associate emails with records.
+            ZohoCRM.modules.emails.READ: Grants permission to read email associations.
+            ZohoCRM.modules.emails.ALL: >-
+              Grants full access to email operations, including create and read
+              permissions.

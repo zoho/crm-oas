@@ -1,0 +1,1848 @@
+openapi: 3.1.0
+info:
+  title: Portals
+  description: >-
+    Portals in Zoho CRM are branded, externally accessible web portals that
+    allow organizations to share CRM records with customers, partners, or
+    vendors. This API enables developers to create, retrieve, and update portal
+    configurations, including SAML-based single sign-on settings.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM. Includes the datacenter domain and API
+      version.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain of the Zoho CRM datacenter where the organization
+          is hosted.
+
+          Possible values: **com** - United States. **eu** - European Union.
+          **in** - India. **cn** - China. **au** - Australia.
+      version:
+        default: v8
+        description: The version of the Zoho CRM API to use. Defaults to **v8**.
+paths:
+  /settings/portals:
+    get:
+      operationId: getPortals
+      summary: Portals
+      description: >-
+        To retrieve the list of all portals configured for the Zoho CRM
+        organization. A 204 response indicates no portal has been created yet.
+      x-zs-llm-description: Retrieves basic portal info; returns 204 if no portal is configured.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.READ
+      responses:
+        '200':
+          description: >-
+            Returns the list of portals configured for the organization with
+            their summary details.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the 200 response schema for listing portals,
+                  containing the array of portal summary objects.
+                x-zs-$id: GetPortalsResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  portals:
+                    description: >-
+                      Represents the list of portals configured for the
+                      organization.
+                    type: array
+                    maxItems: 100
+                    items:
+                      description: Represents the summary details of a single portal.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        created_time:
+                          description: >-
+                            Represents the timestamp when the portal was first
+                            added.
+                          type: string
+                          format: date-time
+                        modified_time:
+                          description: >-
+                            Represents the timestamp when the portal
+                            configuration was last modified.
+                          type: string
+                          format: date-time
+                        modified_by:
+                          description: >-
+                            Represents the Zoho CRM user who last modified this
+                            portal.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: >-
+                                Represents the name of the user who last
+                                modified this portal.
+                              type: string
+                              maxLength: 255
+                            id:
+                              description: >-
+                                Represents the unique identifier of the user who
+                                last modified this portal.
+                              type: string
+                              maxLength: 255
+                          required:
+                            - name
+                            - id
+                        created_by:
+                          description: >-
+                            Represents the Zoho CRM user who created this
+                            portal.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: >-
+                                Represents the name of the user who created this
+                                portal.
+                              type: string
+                              maxLength: 255
+                            id:
+                              description: >-
+                                Represents the unique identifier of the user who
+                                created this portal.
+                              type: string
+                              maxLength: 255
+                          required:
+                            - name
+                            - id
+                        zaid:
+                          description: >-
+                            Represents the Zoho account ID (`zaid`) associated
+                            with the portal.
+                          type: string
+                          maxLength: 255
+                        name:
+                          description: Represents the unique name of the portal.
+                          type: string
+                          maxLength: 60
+                          x-zs-$id: PortalsName
+                        active:
+                          description: Indicates whether the portal is active.
+                          type: boolean
+                        login_url:
+                          description: Represents the login URL for the portal.
+                          type: string
+                          maxLength: 2048
+                      required:
+                        - created_time
+                        - modified_time
+                        - modified_by
+                        - created_by
+                        - zaid
+                        - name
+                        - active
+                required:
+                  - portals
+              examples:
+                Default:
+                  value:
+                    portals:
+                      - created_time: '2022-12-20T10:23:57Z'
+                        modified_time: '2022-12-20T10:23:57Z'
+                        modified_by:
+                          name: John Doe
+                          id: '1234567890'
+                        name: portalname
+                        created_by:
+                          name: Jane Doe
+                          id: '0987654321'
+                        zaid: '1234567890'
+                        active: true
+                        login_url: www.example.com
+                  description: >-
+                    Shows the list of portals returned for the organization,
+                    including creation and modification metadata.
+                  summary: Successful portal list retrieval
+        '204':
+          description: >-
+            No portal has been created for this organization. The response body
+            is empty.
+        '400':
+          description: >-
+            The API is not supported in the current environment. Resolution:
+            Retry the request in a production environment.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the API_NOT_SUPPORTED error returned when the Get
+                  Portals API is called in a sandbox environment.
+                x-zs-$id: GetPortalsSandboxErrorResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **API_NOT_SUPPORTED** - the API is not
+                      supported in the current environment. 
+                    type: string
+                    enum:
+                      - API_NOT_SUPPORTED
+                  details:
+                    description: Represents additional error context.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      unsupported_environment:
+                        description: >-
+                          Represents the environment type that does not support
+                          this API.
+                        type: string
+                        maxLength: 255
+                  message:
+                    description: Represents the error message describing the failure.
+                    type: string
+                    maxLength: 255
+                  status:
+                    description: |-
+                      Represents the overall response status.
+                      Possible values: **error** - the request failed. 
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                ApiNotSupportedResponse1:
+                  summary: API_NOT_SUPPORTED - sandbox environment
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the error response when the Get Portals API is called
+                    in a sandbox environment, which is not supported.
+        '403':
+          description: >-
+            The authenticated user does not have the required
+            `ZohoCRM.settings.clientportal.READ` permission. Resolution: Ensure
+            the access token includes the correct scope.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the NO_PERMISSION error returned when the
+                  authenticated user lacks the required portal read permission.
+                x-zs-$id: GetPortalsForbiddenResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **NO_PERMISSION** - the authenticated
+                      user lacks the required permission. 
+                    type: string
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    description: >-
+                      Represents the error message describing the missing
+                      permission.
+                    type: string
+                    maxLength: 255
+                  details:
+                    description: >-
+                      Represents additional context about the missing
+                      permission.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        description: >-
+                          Represents the list of required permission identifiers
+                          that the user lacks.
+                        type: array
+                        maxItems: 100
+                        items:
+                          description: Represents a required permission identifier.
+                          type: string
+                          maxLength: 255
+                  status:
+                    description: |-
+                      Represents the overall response status.
+                      Possible values: **error** - the request failed. 
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                Example1:
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: Permission is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required Read Portals permission.
+                  summary: NO_PERMISSION - insufficient portal permission
+    post:
+      operationId: createPortal
+      summary: Portal
+      description: >-
+        To create a Client Portal for the Zoho CRM organization. Only one portal
+        can be created per organization. The portal name must be unique across
+        Zoho, between 6 and 30 characters.
+      x-zs-llm-description: Create portal for the org. Throws exception if portal already exist.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.CREATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: >-
+                Represents the request body schema for creating a portal,
+                containing the portal name.
+              type: object
+              additionalProperties: false
+              properties:
+                portals:
+                  description: >-
+                    Specify the list of portals to create. Only one portal is
+                    allowed per request.
+                  type: array
+                  maxItems: 100
+                  items:
+                    description: Represents the configuration for a new portal.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      name:
+                        description: >-
+                          Specify the display name for the portal. The name must
+                          be between 6 and 30 characters.
+                        type: string
+                        minLength: 6
+                        maxLength: 30
+                    required:
+                      - name
+              required:
+                - portals
+            examples:
+              Default:
+                value:
+                  portals:
+                    - name: examplePortal
+                description: Shows a sample request body for creating a portal with a name.
+                summary: Sample portal creation request
+            x-zs-llm-examples:
+              - Default
+        required: true
+        description: >-
+          The request body must contain a **portals** array with exactly one
+          portal object specifying the portal name. The name must be unique,
+          between 6 and 30 characters.
+      responses:
+        '200':
+          description: >-
+            Returns the result of the portal creation, including the portal name
+            and a SUCCESS status code.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the 200 response schema for a successful portal
+                  creation, including the portal name and result code.
+                x-zs-$id: CreatePortalSuccessResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  portals:
+                    description: Represents the list of created portals.
+                    type: array
+                    maxItems: 100
+                    items:
+                      description: Represents the creation result for a single portal.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        code:
+                          description: >-
+                            Represents the result code for the portal creation.
+
+                            Possible values: **SUCCESS** - the portal creation
+                            completed successfully. 
+                          type: string
+                          enum:
+                            - SUCCESS
+                        message:
+                          description: >-
+                            Represents the confirmation message for the portal
+                            creation.
+                          type: string
+                          maxLength: 255
+                        details:
+                          description: Represents the details of the created portal.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: Represents the name of the created portal.
+                              type: string
+                              maxLength: 30
+                          required:
+                            - name
+                        status:
+                          description: >-
+                            Represents the overall status of the portal
+                            creation.
+
+                            Possible values: **success** - the operation
+                            completed successfully. 
+                          type: string
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - message
+                        - details
+                        - status
+                required:
+                  - portals
+              examples:
+                Default:
+                  value:
+                    portals:
+                      - code: SUCCESS
+                        message: Portal created successfully
+                        details:
+                          name: examplePortal
+                        status: success
+                  description: >-
+                    Shows the response after a portal creation completes
+                    successfully.
+                  summary: Successful portal creation
+        '400':
+          description: >-
+            The request is invalid. Possible causes include an invalid portal
+            name format, a portal name that is already in use, a missing
+            required field, or a sandbox restriction. Resolution: Review the
+            error details and correct the request before retrying.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreatePortalBadRequestResponseWrapper
+                oneOf:
+                  - description: >-
+                      Represents the 403 error response when the authenticated
+                      user lacks the required permission to create a portal.
+                    x-zs-$id: CreatePortalBadRequestResponse
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      portals:
+                        description: >-
+                          Represents the list of per-portal validation errors
+                          returned when the request is invalid.
+                        type: array
+                        maxItems: 100
+                        items:
+                          description: >-
+                            Represents the validation error object for a single
+                            portal in the request.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              description: >-
+                                Represents the error code identifying the type
+                                of validation failure.
+
+                                Possible values: **INVALID_DATA** - a field
+                                value is invalid or out of range.
+                                **ALREADY_USED** - the portal name is already in
+                                use. **MANDATORY_NOT_FOUND** - a required field
+                                is missing. 
+                              type: string
+                              enum:
+                                - ALREADY_USED
+                                - PATTERN_NOT_MATCHED
+                                - MANDATORY_NOT_FOUND
+                                - INVALID_DATA
+                                - NO_PERMISSION
+                            message:
+                              description: >-
+                                Represents the error message describing the
+                                validation failure.
+                              type: string
+                              maxLength: 255
+                            details:
+                              description: >-
+                                Represents additional context about the
+                                validation error.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  description: >-
+                                    Represents the API name of the field that
+                                    caused the validation error.
+                                  type: string
+                                  maxLength: 255
+                                json_path:
+                                  description: >-
+                                    Represents the JSON Path location of the
+                                    field that caused the validation error.
+                                  type: string
+                                  maxLength: 255
+                                minimum_length:
+                                  description: >-
+                                    Represents the minimum required character
+                                    length for the field.
+                                  type: integer
+                                  format: int32
+                                maximum_length:
+                                  description: >-
+                                    Represents the maximum allowed character
+                                    length for the field.
+                                  type: integer
+                                  format: int32
+                                expected_data_type:
+                                  description: >-
+                                    Represents the expected data type for the
+                                    field that failed validation.
+                                  type: string
+                                  maxLength: 255
+                                regex:
+                                  description: >-
+                                    Represents the regular expression pattern
+                                    the field value must match.
+                                  type: string
+                                  maxLength: 255
+                                resource_path_index:
+                                  description: >-
+                                    Represents the index of the array item
+                                    associated with the validation error.
+                                  type: integer
+                                  format: int32
+                            status:
+                              description: >-
+                                Represents the overall response status.
+
+                                Possible values: **error** - the request
+                                encountered a validation error. 
+                              type: string
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                  - description: >-
+                      Represents the API_NOT_SUPPORTED error returned when the
+                      Create Portal API is called in a sandbox environment.
+                    x-zs-$id: CreatePortalSandboxErrorResponse
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **API_NOT_SUPPORTED** - the API is
+                          not supported in the current environment. 
+                        type: string
+                        enum:
+                          - API_NOT_SUPPORTED
+                      details:
+                        description: Represents additional error context.
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          unsupported_environment:
+                            description: >-
+                              Represents the environment type that does not
+                              support this API.
+                            type: string
+                            maxLength: 255
+                      message:
+                        description: Represents the error message describing the failure.
+                        type: string
+                        maxLength: 255
+                      status:
+                        description: |-
+                          Represents the overall response status.
+                          Possible values: **error** - the request failed. 
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                description: >-
+                  Represents the 400 error response schema for portal creation,
+                  covering per-portal validation errors and sandbox
+                  restrictions.
+              examples:
+                Example1:
+                  value:
+                    portals:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: name
+                          json_path: $.portals[0].name
+                          minimum_length: 6
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows the error response when a portal name field value is
+                    invalid or out of range.
+                  summary: INVALID_DATA - portal name validation error
+                Example2:
+                  value:
+                    portals:
+                      - code: ALREADY_USED
+                        details:
+                          api_name: name
+                        message: The entered portal name is already in use
+                        status: error
+                  description: >-
+                    Shows the error response when the specified portal name is
+                    already in use by another organization.
+                  summary: ALREADY_USED - portal name already in use
+                Example3:
+                  value:
+                    portals:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: name
+                          json_path: $.portals[0].name
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows the error response when the required portal name field
+                    is missing from the request.
+                  summary: MANDATORY_NOT_FOUND - required field missing
+                ApiNotSupportedResponse1:
+                  summary: API_NOT_SUPPORTED - sandbox environment
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the error response when the Create Portal API is
+                    called in a sandbox environment, which is not supported.
+        '403':
+          description: >-
+            The authenticated user does not have the required
+            `ZohoCRM.settings.clientportal.CREATE` permission. Resolution:
+            Ensure the access token includes the correct scope.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the NO_PERMISSION error returned when the
+                  authenticated user lacks the required portal creation
+                  permission.
+                x-zs-$id: CreatePortalForbiddenResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **NO_PERMISSION** - the authenticated
+                      user lacks the required permission. 
+                    type: string
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    description: >-
+                      Represents the error message describing the missing
+                      permission.
+                    type: string
+                    maxLength: 255
+                  details:
+                    description: >-
+                      Represents additional context about the missing
+                      permission.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        description: >-
+                          Represents the list of required permission identifiers
+                          that the user lacks.
+                        type: array
+                        maxItems: 100
+                        items:
+                          description: Represents a required permission identifier.
+                          type: string
+                          maxLength: 255
+                  status:
+                    description: |-
+                      Represents the overall response status.
+                      Possible values: **error** - the request failed. 
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                Example1:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal
+                    message: Permission is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required Create Portal permission and a specific
+                    permission identifier is included.
+                  summary: NO_PERMISSION - required permission missing
+                Example2:
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: Permission is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required Create Portal permission.
+                  summary: NO_PERMISSION - insufficient portal permission
+  /settings/portals/{portal}:
+    get:
+      summary: Specific Portal
+      description: >-
+        To retrieve the complete configuration of a specific portal in the Zoho
+        CRM organization, including its SAML authentication settings, active
+        status, and creation metadata.
+      x-zs-llm-description: Retrieves portal details, returns 204 if portalname was invalid.
+      operationId: getPortal
+      parameters:
+        - $ref: '#/components/parameters/Portals'
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.READ
+      responses:
+        '200':
+          description: >-
+            Returns the complete configuration of the specified portal,
+            including SAML settings and metadata.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the 200 response schema for getting a portal by
+                  identifier, containing the full portal configuration.
+                x-zs-$id: GetPortalDetailsResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  portals:
+                    description: >-
+                      Represents the list of portal objects returned by the
+                      response.
+                    type: array
+                    maxItems: 100
+                    items:
+                      description: >-
+                        Represents the detailed configuration of a single
+                        portal.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        name:
+                          description: Represents the unique name of the portal.
+                          type: string
+                          maxLength: 50
+                          x-zs-$id: PortalName
+                        created_time:
+                          description: >-
+                            Represents the timestamp when the portal was first
+                            added.
+                          type: string
+                          format: date-time
+                        modified_time:
+                          description: >-
+                            Represents the timestamp when the portal
+                            configuration was last modified.
+                          type: string
+                          format: date-time
+                        modified_by:
+                          description: >-
+                            Represents the Zoho CRM user who last modified this
+                            portal.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: >-
+                                Represents the name of the user who last
+                                modified this portal.
+                              type: string
+                              maxLength: 255
+                            id:
+                              description: >-
+                                Represents the unique identifier of the user who
+                                last modified this portal.
+                              type: string
+                              maxLength: 255
+                          required:
+                            - name
+                            - id
+                        created_by:
+                          description: >-
+                            Represents the Zoho CRM user who created this
+                            portal.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: >-
+                                Represents the name of the CRM user who created
+                                this portal.
+                              type: string
+                              maxLength: 255
+                            id:
+                              description: >-
+                                Represents the unique identifier of the CRM user
+                                who created this portal.
+                              type: string
+                              maxLength: 255
+                          required:
+                            - name
+                            - id
+                        zaid:
+                          description: >-
+                            Represents the Zoho account ID (`zaid`) associated
+                            with the portal.
+                          type: string
+                          maxLength: 255
+                        active:
+                          description: Indicates whether the portal is active.
+                          type: boolean
+                        saml_configuration:
+                          description: >-
+                            Represents the SAML authentication configuration for
+                            the portal.
+                          type:
+                            - object
+                            - 'null'
+                          additionalProperties: false
+                          properties:
+                            login_url:
+                              description: >-
+                                Represents the SAML SSO login URL where the
+                                portal redirects users for authentication.
+                              type: string
+                              maxLength: 2048
+                            logout_url:
+                              description: >-
+                                Represents the SAML SSO logout URL where the
+                                portal redirects users when they sign out. Must
+                                begin with `https://www.`.
+                              type: string
+                              maxLength: 2048
+                              pattern: http[s]://www[.][a-z]{7}[.]com
+                            public_key:
+                              description: >-
+                                Represents the SAML X.509 public key certificate
+                                used to verify assertions from the identity
+                                provider.
+                              type: string
+                              maxLength: 5000
+                              enum:
+                                - >-
+                                  -----BEGIN
+                                  CERTIFICATE-----nMIICkTCCAXkCBgGFNDYS5DANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDEwFBMB4XDTIyMTIyMDEwMjM1N1oXDTI1MTIyMDEwMjM1N1owDDEKMAgGA1UEAxMBQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJ9JHZa/KoI1v4bl9HyDB2EB684y1P8hykirP0BoGpf2o4hj2ITjkhncbBJt9PFR8Cp8PmxL7UnGIZl/4g0VQMIxtq82UuvaC8uTZUQJeUDbrPEVMoN12YOF2sJ2AZ4gf3Pr6rf+kXYDp5T9gyFMFUzqNS/WL5xOpyzVJkROv69YbPkcLWms+orpcs+ADXXNfwhIfwF6ZLcNqgi1itX9T/vuvW5KEcU5QtOLLQdqNQ0Oi/0oiyIXhcsjGD1e+QSAtxdTpM44WkxOYW3TUj0+8EZOdU+Vj0lhgr61+bJHgnYiyA83LHqKcIKXEYVs70Lb3Ors4dU7XU6gBzxLnsf9nCECAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAUiTh+to8d/QKYh9yOLqE25PraBEVselNgNx8Dly//JXfXz42lzwG5WOY94bmUur2qYe8sVUqY07O/1XSW7QBrGMhGA9Hhvgz6zrRPzGPUVVQT3caTG/b+1pNLriga7OSam6rp1uL5emutkyyn6ZUZ7px4K1vGEx6/GBFsepGH5E2N0PRuekTp0eiV+5m+6z4VL7tVtYGQbWUfVgBqBUEhkdu450ry0jJT6SPs1W8TPBQEZQ/Pjis4MubIRKrUtkb+SkLDpBSWmXdoKlsIJt8VqhdqN04bmt91sB+XdgSC4X7ideK7WPcEj2DYna4v/YB13MitxQrKKU9uT/HNm1JHg==n-----END
+                                  CERTIFICATE-----
+                            active:
+                              description: >-
+                                Indicates whether the SAML configuration is
+                                active for the portal. Possible values: **true**
+                                - SAML SSO is enabled.
+                              type: boolean
+                              enum:
+                                - true
+                            modified_by:
+                              description: >-
+                                Represents the Zoho CRM user who last modified
+                                this SAML configuration.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  description: >-
+                                    Represents the name of the user who last
+                                    modified this SAML configuration.
+                                  type: string
+                                  maxLength: 255
+                                id:
+                                  description: >-
+                                    Represents the unique identifier of the user
+                                    who last modified this SAML configuration.
+                                  type: string
+                                  maxLength: 255
+                              required:
+                                - name
+                                - id
+                            created_by:
+                              description: >-
+                                Represents the Zoho CRM user who created this
+                                SAML configuration.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                name:
+                                  description: >-
+                                    Represents the name of the CRM user who
+                                    created this SAML configuration.
+                                  type: string
+                                  maxLength: 255
+                                id:
+                                  description: >-
+                                    Represents the unique identifier of the CRM
+                                    user who created this SAML configuration.
+                                  type: string
+                                  maxLength: 255
+                              required:
+                                - name
+                                - id
+                          required:
+                            - login_url
+                            - logout_url
+                            - public_key
+                            - active
+                        login_url:
+                          description: >-
+                            Represents the login URL for the portal. Displayed
+                            on the portal login page.
+                          type: string
+                          maxLength: 2048
+                        acs_url:
+                          description: >-
+                            Represents the Assertion Consumer Service (ACS) URL
+                            for the portal.
+                          type: string
+                          maxLength: 2048
+                        admin_zuid:
+                          description: >-
+                            Represents the Zoho account zone ID of the portal
+                            administrator.
+                          type: integer
+                          format: int32
+                        default_relay_state_url:
+                          description: >-
+                            Represents the default relay state URL used after a
+                            successful SAML login.
+                          type: string
+                          maxLength: 2048
+                        issuer:
+                          description: >-
+                            Represents the SAML issuer identifier (entity ID)
+                            for the portal.
+                          type: string
+                          maxLength: 2048
+                        single_logout_url:
+                          description: >-
+                            Represents the single logout URL (SLO) used to
+                            terminate SAML sessions across all service
+                            providers.
+                          type: string
+                          maxLength: 2048
+                      required:
+                        - created_time
+                        - modified_time
+                        - modified_by
+                        - created_by
+                        - zaid
+                        - active
+                        - saml_configuration
+                required:
+                  - portals
+              examples:
+                Default:
+                  value:
+                    portals:
+                      - created_time: '2022-12-20T10:23:57Z'
+                        modified_time: '2022-12-20T10:23:57Z'
+                        modified_by:
+                          name: John Doe
+                          id: '1234567890'
+                        created_by:
+                          name: Jane Doe
+                          id: '0987654321'
+                        zaid: '1234567890'
+                        active: true
+                        saml_configuration:
+                          login_url: https://www.example.com
+                          logout_url: https://www.example.com
+                          public_key: >-
+                            -----BEGIN
+                            CERTIFICATE-----nMIICkTCCAXkCBgGFNDYS5DANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDEwFBMB4XDTIyMTIyMDEwMjM1N1oXDTI1MTIyMDEwMjM1N1owDDEKMAgGA1UEAxMBQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJ9JHZa/KoI1v4bl9HyDB2EB684y1P8hykirP0BoGpf2o4hj2ITjkhncbBJt9PFR8Cp8PmxL7UnGIZl/4g0VQMIxtq82UuvaC8uTZUQJeUDbrPEVMoN12YOF2sJ2AZ4gf3Pr6rf+kXYDp5T9gyFMFUzqNS/WL5xOpyzVJkROv69YbPkcLWms+orpcs+ADXXNfwhIfwF6ZLcNqgi1itX9T/vuvW5KEcU5QtOLLQdqNQ0Oi/0oiyIXhcsjGD1e+QSAtxdTpM44WkxOYW3TUj0+8EZOdU+Vj0lhgr61+bJHgnYiyA83LHqKcIKXEYVs70Lb3Ors4dU7XU6gBzxLnsf9nCECAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAUiTh+to8d/QKYh9yOLqE25PraBEVselNgNx8Dly//JXfXz42lzwG5WOY94bmUur2qYe8sVUqY07O/1XSW7QBrGMhGA9Hhvgz6zrRPzGPUVVQT3caTG/b+1pNLriga7OSam6rp1uL5emutkyyn6ZUZ7px4K1vGEx6/GBFsepGH5E2N0PRuekTp0eiV+5m+6z4VL7tVtYGQbWUfVgBqBUEhkdu450ry0jJT6SPs1W8TPBQEZQ/Pjis4MubIRKrUtkb+SkLDpBSWmXdoKlsIJt8VqhdqN04bmt91sB+XdgSC4X7ideK7WPcEj2DYna4v/YB13MitxQrKKU9uT/HNm1JHg==n-----END
+                            CERTIFICATE-----
+                          active: true
+                          modified_by:
+                            name: John Doe
+                            id: '1234567890'
+                          created_by:
+                            name: Jane Doe
+                            id: '0987654321'
+                        login_url: www.example.com
+                        acs_url: www.example.com
+                        admin_zuid: 1234567890
+                        default_relay_state_url: https://www.example.com
+                        issuer: example.com
+                        single_logout_url: https://www.example.com
+                  description: >-
+                    Shows the complete portal configuration returned for a
+                    specific portal, including SAML settings.
+                  summary: Successful portal details retrieval
+        '204':
+          description: >-
+            No portal has been created for this organization. The response body
+            is empty.
+        '400':
+          description: >-
+            The API is not supported in the current environment. Resolution:
+            Retry the request in a production environment.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the API_NOT_SUPPORTED error returned when the Get
+                  Portal API is called in a sandbox environment.
+                x-zs-$id: GetPortalSandboxErrorResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **API_NOT_SUPPORTED** - the API is not
+                      supported in the current environment. 
+                    type: string
+                    enum:
+                      - API_NOT_SUPPORTED
+                  details:
+                    description: Represents additional error context.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      unsupported_environment:
+                        description: >-
+                          Represents the environment type that does not support
+                          this API.
+                        type: string
+                        maxLength: 255
+                  message:
+                    description: Represents the error message describing the failure.
+                    type: string
+                    maxLength: 255
+                  status:
+                    description: |-
+                      Represents the overall response status.
+                      Possible values: **error** - the request failed. 
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                ApiNotSupportedResponse1:
+                  summary: API_NOT_SUPPORTED - sandbox environment
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the error response when the Get Portal API is called
+                    in a sandbox environment, which is not supported.
+        '403':
+          description: >-
+            The authenticated user does not have the required
+            `ZohoCRM.settings.clientportal.READ` permission. Resolution: Ensure
+            the access token includes the correct scope.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the NO_PERMISSION error returned when the
+                  authenticated user lacks the required portal read permission.
+                x-zs-$id: GetPortalDetailsForbiddenResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **NO_PERMISSION** - the authenticated
+                      user lacks the required permission. 
+                    type: string
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    description: >-
+                      Represents the error message describing the missing
+                      permission.
+                    type: string
+                    maxLength: 255
+                  details:
+                    description: >-
+                      Represents additional context about the missing
+                      permission.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        description: >-
+                          Represents the list of required permission identifiers
+                          that the user lacks.
+                        type: array
+                        maxItems: 100
+                        items:
+                          description: Represents a required permission identifier.
+                          type: string
+                          maxLength: 255
+                  status:
+                    description: |-
+                      Represents the overall response status.
+                      Possible values: **error** - the request failed. 
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                Example1:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal
+                    message: Permission is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required Read Portal permission and a specific
+                    permission identifier is included.
+                  summary: NO_PERMISSION - required permission missing
+                Example2:
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: Permission is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required Read Portal permission.
+                  summary: NO_PERMISSION - insufficient portal permission
+    put:
+      summary: Portal
+      description: >-
+        To update the configuration of an existing portal in the Zoho CRM
+        organization, including the portal name and SAML single sign-on
+        settings.
+      x-zs-llm-description: Update the portal name or saml_configurations for portals.
+      operationId: updatePortal
+      parameters:
+        - $ref: '#/components/parameters/Portals'
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.UPDATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: >-
+                Represents the request body schema for updating a portal,
+                supporting name and SAML configuration updates.
+              type: object
+              additionalProperties: false
+              properties:
+                portals:
+                  description: >-
+                    Specify the list of portal update objects. Only one portal
+                    is allowed per request.
+                  type: array
+                  maxItems: 100
+                  items:
+                    description: Represents the set of portal properties to update.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      name:
+                        description: >-
+                          Specify the updated display name for the portal. The
+                          name must be between 6 and 30 characters.
+                        type: string
+                        minLength: 6
+                        maxLength: 30
+                      saml_configuration:
+                        description: Specify the SAML configuration to apply to the portal.
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          login_url:
+                            description: >-
+                              Specify the SAML SSO login URL for the portal.
+                              Must begin with `https://www.`. Required when
+                              updating SAML configuration.
+                            type: string
+                            pattern: http[s]://www[.][a-z]{7}[.]com
+                            maxLength: 2048
+                          logout_url:
+                            description: >-
+                              Specify the SAML SSO logout URL for the portal.
+                              Must begin with `https://www.`. Required when
+                              updating SAML configuration.
+                            type: string
+                            pattern: http[s]://www[.][a-z]{7}[.]com
+                            maxLength: 2048
+                          public_key:
+                            description: >-
+                              Specify the SAML X.509 public key certificate.
+                              Required when updating SAML configuration.
+                            type: string
+                            maxLength: 5000
+                          active:
+                            description: >-
+                              Specify **true** to activate the SAML
+                              configuration for the portal. Possible values:
+                              **true**.
+                            type: boolean
+                            enum:
+                              - true
+                        required:
+                          - login_url
+                          - logout_url
+                          - public_key
+              required:
+                - portals
+            examples:
+              Default:
+                value:
+                  portals:
+                    - name: updateportal
+                      saml_configuration:
+                        login_url: https://www.example.com
+                        logout_url: https://www.example.com
+                        public_key: >-
+                          -----BEGIN
+                          CERTIFICATE-----nMIICkTCCAXkCBgGFNDYS5DANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDEwFBMB4XDTIyMTIyMDEwMjM1N1oXDTI1MTIyMDEwMjM1N1owDDEKMAgGA1UEAxMBQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJ9JHZa/KoI1v4bl9HyDB2EB684y1P8hykirP0BoGpf2o4hj2ITjkhncbBJt9PFR8Cp8PmxL7UnGIZl/4g0VQMIxtq82UuvaC8uTZUQJeUDbrPEVMoN12YOF2sJ2AZ4gf3Pr6rf+kXYDp5T9gyFMFUzqNS/WL5xOpyzVJkROv69YbPkcLWms+orpcs+ADXXNfwhIfwF6ZLcNqgi1itX9T/vuvW5KEcU5QtOLLQdqNQ0Oi/0oiyIXhcsjGD1e+QSAtxdTpM44WkxOYW3TUj0+8EZOdU+Vj0lhgr61+bJHgnYiyA83LHqKcIKXEYVs70Lb3Ors4dU7XU6gBzxLnsf9nCECAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAUiTh+to8d/QKYh9yOLqE25PraBEVselNgNx8Dly//JXfXz42lzwG5WOY94bmUur2qYe8sVUqY07O/1XSW7QBrGMhGA9Hhvgz6zrRPzGPUVVQT3caTG/b+1pNLriga7OSam6rp1uL5emutkyyn6ZUZ7px4K1vGEx6/GBFsepGH5E2N0PRuekTp0eiV+5m+6z4VL7tVtYGQbWUfVgBqBUEhkdu450ry0jJT6SPs1W8TPBQEZQ/Pjis4MubIRKrUtkb+SkLDpBSWmXdoKlsIJt8VqhdqN04bmt91sB+XdgSC4X7ideK7WPcEj2DYna4v/YB13MitxQrKKU9uT/HNm1JHg==n-----END
+                          CERTIFICATE-----
+                        active: true
+                description: >-
+                  Shows a sample request body for updating a portal name and
+                  SAML configuration.
+                summary: Sample portal update request
+            x-zs-llm-examples:
+              - Default
+        required: true
+        description: >-
+          The request body must contain a **portals** array with exactly one
+          portal update object. You can update the portal name and SAML
+          configuration. All SAML fields - `login_url`, `logout_url`, and
+          `public_key` - are required when updating SAML settings.
+      responses:
+        '200':
+          description: >-
+            Returns the result of the portal update, including the updated
+            portal name and a SUCCESS status code.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the 200 response schema for a successful portal
+                  update, including the portal name and result code.
+                x-zs-$id: UpdatePortalSuccessResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  portals:
+                    description: Represents the list of updated portal results.
+                    type: array
+                    maxItems: 100
+                    items:
+                      description: Represents the update result for a single portal.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        code:
+                          description: >-
+                            Represents the result code for the portal update.
+
+                            Possible values: **SUCCESS** - the portal update
+                            completed successfully. 
+                          type: string
+                          enum:
+                            - SUCCESS
+                        message:
+                          description: >-
+                            Represents the confirmation message for the portal
+                            update.
+                          type: string
+                          maxLength: 255
+                        details:
+                          description: Represents the details of the updated portal.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            name:
+                              description: Represents the name of the updated portal.
+                              type: string
+                              maxLength: 30
+                          required:
+                            - name
+                        status:
+                          description: >-
+                            Represents the overall status of the portal update.
+
+                            Possible values: **success** - the operation
+                            completed successfully. 
+                          type: string
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - message
+                        - details
+                        - status
+                required:
+                  - portals
+              examples:
+                Default:
+                  value:
+                    portals:
+                      - code: SUCCESS
+                        message: Portal updated successfully
+                        details:
+                          name: examplePortal
+                        status: success
+                  description: >-
+                    Shows the response returned when a portal update is
+                    completed successfully.
+                  summary: Successful portal update
+        '400':
+          description: >-
+            The request is invalid. Possible causes include an invalid portal
+            name, a name already in use, a missing required SAML field, a null
+            value for a required field, or a sandbox restriction. Resolution:
+            Review the error details and correct the request before retrying.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdatePortalBadRequestResponseWrapper
+                oneOf:
+                  - description: >-
+                      Represents the combined error response schema for the
+                      Update Portal operation.
+                    x-zs-$id: UpdatePortalBadRequestResponse
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      portals:
+                        description: >-
+                          Represents the list of per-portal validation errors
+                          returned when the update request is invalid.
+                        type: array
+                        maxItems: 100
+                        items:
+                          description: >-
+                            Represents the validation error object for a single
+                            portal update.
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              description: >-
+                                Represents the error code identifying the type
+                                of validation failure.
+
+                                Possible values: **INVALID_DATA** - a field
+                                value is invalid or out of range.
+                                **ALREADY_USED** - the portal name is already in
+                                use. **MANDATORY_NOT_FOUND** - a required field
+                                is missing. **NOT_ALLOWED** - the operation is
+                                not permitted. 
+                              type: string
+                              enum:
+                                - ALREADY_USED
+                                - PATTERN_NOT_MATCHED
+                                - MANDATORY_NOT_FOUND
+                                - INVALID_DATA
+                                - NO_PERMISSION
+                                - NOT_ALLOWED
+                            message:
+                              description: >-
+                                Represents the error message describing the
+                                validation failure.
+                              type: string
+                              maxLength: 255
+                            details:
+                              description: >-
+                                Represents additional context about the
+                                validation error.
+                              type: object
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  description: >-
+                                    Represents the API name of the field that
+                                    caused the validation error.
+                                  type: string
+                                  maxLength: 255
+                                json_path:
+                                  description: >-
+                                    Represents the JSON Path location of the
+                                    field that caused the validation error.
+                                  type: string
+                                  maxLength: 255
+                                minimum_length:
+                                  description: >-
+                                    Represents the minimum required character
+                                    length for the field.
+                                  type: integer
+                                  format: int32
+                                maximum_length:
+                                  description: >-
+                                    Represents the maximum allowed character
+                                    length for the field.
+                                  type: integer
+                                  format: int32
+                                expected_data_type:
+                                  description: >-
+                                    Represents the expected data type for the
+                                    field that failed validation.
+                                  type: string
+                                  maxLength: 255
+                                regex:
+                                  description: >-
+                                    Represents the regular expression pattern
+                                    the field value must match.
+                                  type: string
+                                  maxLength: 255
+                                resource_path_index:
+                                  description: >-
+                                    Represents the index of the array item
+                                    associated with the validation error.
+                                  type: integer
+                                  format: int32
+                            status:
+                              description: >-
+                                Represents the overall response status.
+
+                                Possible values: **error** - the request
+                                encountered a validation error. 
+                              type: string
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                    required:
+                      - portals
+                  - description: >-
+                      Represents the per-portal validation error object returned
+                      when a portal update request fails validation.
+                    x-zs-$id: UpdateErrorResponse
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code for the top-level error.
+
+                          Possible values: **INVALID_DATA** - a field value is
+                          invalid. **ALREADY_USED** - the portal name is already
+                          in use. **MANDATORY_NOT_FOUND** - a required field is
+                          missing. **NOT_ALLOWED** - the operation is not
+                          permitted. 
+                        type: string
+                        enum:
+                          - ALREADY_USED
+                          - PATTERN_NOT_MATCHED
+                          - MANDATORY_NOT_FOUND
+                          - INVALID_DATA
+                          - NO_PERMISSION
+                          - NOT_ALLOWED
+                      message:
+                        description: >-
+                          Represents the error message describing the validation
+                          failure.
+                        type: string
+                        maxLength: 255
+                      details:
+                        description: >-
+                          Represents additional context about the validation
+                          error.
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            description: >-
+                              Represents the API name of the field that caused
+                              the validation error.
+                            type: string
+                            maxLength: 255
+                          json_path:
+                            description: >-
+                              Represents the JSON Path location of the field
+                              that caused the validation error.
+                            type: string
+                            maxLength: 255
+                          minimum_length:
+                            description: >-
+                              Represents the minimum required character length
+                              for the field.
+                            type: integer
+                            format: int32
+                          maximum_length:
+                            description: >-
+                              Represents the maximum allowed character length
+                              for the field.
+                            type: integer
+                            format: int32
+                          expected_data_type:
+                            description: >-
+                              Represents the expected data type for the field
+                              that failed validation.
+                            type: string
+                            maxLength: 255
+                          regex:
+                            description: >-
+                              Represents the regular expression pattern the
+                              field value must match.
+                            type: string
+                            maxLength: 255
+                          resource_path_index:
+                            description: >-
+                              Represents the index of the array item associated
+                              with the validation error.
+                            type: integer
+                            format: int32
+                      status:
+                        description: >-
+                          Represents the overall response status.
+
+                          Possible values: **error** - the request encountered a
+                          validation error. 
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                  - description: >-
+                      Represents the API_NOT_SUPPORTED error returned when the
+                      Update Portal API is called in a sandbox environment.
+                    x-zs-$id: UpdatePortalSandboxErrorResponse
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code for this response.
+
+                          Possible values: **API_NOT_SUPPORTED** - the API is
+                          not supported in the current environment. 
+                        type: string
+                        enum:
+                          - API_NOT_SUPPORTED
+                      details:
+                        description: Represents additional error context.
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          unsupported_environment:
+                            description: >-
+                              Represents the environment type that does not
+                              support this API.
+                            type: string
+                            maxLength: 255
+                      message:
+                        description: Represents the error message describing the failure.
+                        type: string
+                        maxLength: 255
+                      status:
+                        description: |-
+                          Represents the overall response status.
+                          Possible values: **error** - the request failed. 
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                description: >-
+                  Represents the 400 error response schema for portal updates,
+                  covering per-portal validation errors and sandbox
+                  restrictions.
+              examples:
+                Example1:
+                  value:
+                    portals:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: name
+                          json_path: $.portals[0].name
+                          minimum_length: 6
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Shows the error response when a portal field value is
+                    invalid or out of the allowed range.
+                  summary: INVALID_DATA - portal field validation error
+                Example2:
+                  value:
+                    portals:
+                      - code: ALREADY_USED
+                        details:
+                          api_name: name
+                        message: The entered portal name is already in use
+                        status: error
+                  description: >-
+                    Shows the error response when the specified portal name is
+                    already in use by another organization.
+                  summary: ALREADY_USED - portal name already in use
+                Example3:
+                  value:
+                    portals:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: name
+                          json_path: $.portals[0].name
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows the error response when a required field is missing
+                    from the portal update request.
+                  summary: MANDATORY_NOT_FOUND - required field missing
+                Example4:
+                  value:
+                    portals:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: login_url
+                          json_path: $.portals[0].saml_configuration.login_url
+                        message: login url is mandatory to configure saml
+                        status: error
+                  description: >-
+                    Shows the error response when the SAML login URL field is
+                    missing from the SAML configuration update.
+                  summary: MANDATORY_NOT_FOUND - SAML login URL missing
+                Example5:
+                  value:
+                    portals:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: public_key
+                          json_path: $.portals[0].saml_configuration.public_key
+                        message: public key is mandatory to configure saml
+                        status: error
+                  description: >-
+                    Shows the error response when the SAML public key field is
+                    missing from the SAML configuration update.
+                  summary: MANDATORY_NOT_FOUND - SAML public key missing
+                Example6:
+                  value:
+                    portals:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: login_url
+                          json_path: $.portals[0].saml_configuration.login_url
+                        message: not allowed to set value as null
+                        status: error
+                  description: >-
+                    Shows the error response when an attempt is made to set a
+                    required SAML field to null.
+                  summary: NOT_ALLOWED - null value not permitted
+                ApiNotSupportedResponse1:
+                  summary: API_NOT_SUPPORTED - sandbox environment
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the error response when the Update Portal API is
+                    called in a sandbox environment, which is not supported.
+        '403':
+          description: >-
+            The authenticated user does not have the required
+            `ZohoCRM.settings.clientportal.UPDATE` permission. Resolution:
+            Ensure the access token includes the correct scope.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the NO_PERMISSION error returned when the
+                  authenticated user lacks the required portal update
+                  permission.
+                x-zs-$id: UpdatePortalForbiddenResponse
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code for this response.
+
+                      Possible values: **NO_PERMISSION** - the authenticated
+                      user lacks the required permission. 
+                    type: string
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    description: >-
+                      Represents the error message describing the missing
+                      permission.
+                    type: string
+                    maxLength: 255
+                  details:
+                    description: >-
+                      Represents additional context about the missing
+                      permission.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      permissions:
+                        description: >-
+                          Represents the list of required permission identifiers
+                          that the user lacks.
+                        type: array
+                        maxItems: 100
+                        items:
+                          description: Represents a required permission identifier.
+                          type: string
+                          maxLength: 255
+                  status:
+                    description: |-
+                      Represents the overall response status.
+                      Possible values: **error** - the request failed. 
+                    type: string
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                Example1:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal
+                    message: Permission is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required Update Portal permission and a specific
+                    permission identifier is included.
+                  summary: NO_PERMISSION - required permission missing
+                Example2:
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: Permission is invalid.
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user lacks
+                    the required Update Portal permission.
+                  summary: NO_PERMISSION - insufficient portal permission
+components:
+  parameters:
+    Portals:
+      description: >-
+        Specify the API name of the portal to retrieve or update. Use the Get
+        Portals operation to retrieve the list of available portals and their
+        names.
+      name: portal
+      in: path
+      required: true
+      schema:
+        x-zs-$ref:
+          resource: portals
+          origins:
+            - operationId: getPortals
+              propertyId: PortalsName
+        description: Represents the unique name of the portal.
+        type: string
+        maxLength: 60
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.clientportal.CREATE: >-
+              Grants permission to create Client Portal settings in the Zoho CRM
+              organization.
+            ZohoCRM.settings.clientportal.READ: >-
+              Grants read-only access to Client Portal settings in the Zoho CRM
+              organization.
+            ZohoCRM.settings.clientportal.UPDATE: >-
+              Grants permission to update Client Portal settings in the Zoho CRM
+              organization.
+            ZohoCRM.settings.clientportal.DELETE: >-
+              Grants permission to delete Client Portal settings in the Zoho CRM
+              organization.
+            ZohoCRM.settings.clientportal.ALL: >-
+              Grants full read, create, update, and delete access to Client
+              Portal settings in the Zoho CRM organization.

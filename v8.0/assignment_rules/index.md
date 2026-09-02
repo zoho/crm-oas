@@ -1,0 +1,33 @@
+# Assignment Rules
+
+- [OpenAPI specification](assignment_rules.yaml)
+- [Assignment Rules](operations/getAssignmentRules/operation.md)
+  - To retrieve all Assignment Rules configured in your Zoho CRM organization.
+  - [Examples](operations/getAssignmentRules/examples/)
+- [Create an Assignment Rule](operations/postAssignmentRules/operation.md)
+  - To create a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](operations/postAssignmentRules/examples/)
+- [Specific Assignment Rule details](operations/getAssignmentRuleById/operation.md)
+  - To retrieve the details of a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](operations/getAssignmentRuleById/examples/)
+- [Update a Specific Assignment Rule](operations/updateAssignmentRuleById/operation.md)
+  - To update a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](operations/updateAssignmentRuleById/examples/)
+- [Delete an Assignment Rule](operations/deleteAssignmentRuleById/operation.md)
+  - To delete a single Assignment Rule from your Zoho CRM organization.
+  - [Examples](operations/deleteAssignmentRuleById/examples/)
+- [Clone Assignment Rule](operations/cloneAssignmentRule/operation.md)
+  - To clone a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](operations/cloneAssignmentRule/examples/)
+- [Clone Assignment Rule Entries](operations/putCloneEntries/operation.md)
+  - To clone rule entries for a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](operations/putCloneEntries/examples/)
+- [Reorder Assignment Rule entries](operations/putReorderEntries/operation.md)
+  - To reorder rule entries for a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](operations/putReorderEntries/examples/)
+- [Assignment Rules Count](operations/getAssignmentRulesCount/operation.md)
+  - To retrieve the count of Assignment Rules configured for a module in your Zoho CRM organization.
+  - [Examples](operations/getAssignmentRulesCount/examples/)
+- [Assignment Rule Associations](operations/getAssignmentRuleAssociations/operation.md)
+  - To retrieve the CRM features associated with a single Assignment Rule in your Zoho CRM organization.
+  - [Examples](operations/getAssignmentRuleAssociations/examples/)

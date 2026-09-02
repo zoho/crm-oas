@@ -1,0 +1,10 @@
+Invalid HTTP request method
+
+```json
+{
+  "code": "INVALID_REQUEST_METHOD",
+  "message": "The http request method type is not a valid one",
+  "status": "error",
+  "details": {}
+}
+```

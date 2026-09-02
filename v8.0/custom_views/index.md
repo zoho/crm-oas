@@ -1,0 +1,27 @@
+# Custom Views
+
+- [OpenAPI specification](custom_views.yaml)
+- [Custom Views](operations/updateCustomViewsBulk/operation.md)
+  - To update the configuration of one or more Custom Views in bulk for a specified module in your Zoho CRM organization.
+  - [Examples](operations/updateCustomViewsBulk/examples/)
+- [CustomView creation](operations/createCustomView/operation.md)
+  - To create one or more Custom Views for a specified module in your Zoho CRM organization.
+  - [Examples](operations/createCustomView/examples/)
+- [Get All Custom Views](operations/getCustomViews/operation.md)
+  - To retrieve the list of all Custom Views configured for a specified module in your Zoho CRM organization.
+  - [Examples](operations/getCustomViews/examples/)
+- [Delete Custom Views](operations/deleteCustomView/operation.md)
+  - To delete one or more Custom Views from a specified module in your Zoho CRM organization.
+  - [Examples](operations/deleteCustomView/examples/)
+- [CustomView update](operations/updateCustomView/operation.md)
+  - To update the configuration of a specific Custom View in a module of your Zoho CRM organization, using the Custom View ID. Use the [Get Custom Views API](custom_views.yaml#$.paths./settings/custom_views.get) to retrieve the custom view IDs.
+  - [Examples](operations/updateCustomView/examples/)
+- [Get Custom View By Id](operations/getCustomViewById/operation.md)
+  - To retrieve the details of a specific Custom View for a module in your Zoho CRM organization, using the Custom View ID.
+  - [Examples](operations/getCustomViewById/examples/)
+- [Sort Order](operations/changeSort/operation.md)
+  - To change the sort field and sort order for one or more Custom Views in the specified module of your Zoho CRM organization.
+  - [Examples](operations/changeSort/examples/)
+- [Sort Order by ID](operations/changeSortById/operation.md)
+  - To change the sort field and sort order for a specific Custom View in the specified module of your Zoho CRM organization. Use the [Get Custom Views Metadata API](custom_views.yaml#$.paths./settings/custom_views.get) to retrieve the custom view IDs."
+  - [Examples](operations/changeSortById/examples/)

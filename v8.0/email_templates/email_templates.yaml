@@ -1,0 +1,920 @@
+openapi: 3.1.0
+info:
+  title: Email Templates
+  description: >-
+    Email Templates enable consistent and reusable email communication across
+    Zoho CRM. Templates can be associated with specific CRM modules and used in
+    individual **emails, bulk email campaigns, workflows, schedulers, and
+    Cadence campaigns.** This API supports the complete lifecycle management of
+    email templates, including **listing, retrieving, creating, updating, and
+    deleting** templates, as well as managing favorites, organizing templates
+    into folders, retrieving usage associations, sending test emails, and
+    configuring user-level editor preferences.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      The base URL of the Zoho CRM API server. The domain suffix varies by data
+      center region.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain (TLD) for the Zoho CRM API server corresponding
+          to the user's data center region (for example, `com`, `eu`, `in`,
+          `com.au`, `jp`).
+      version:
+        default: v8
+        description: >-
+          The API version to use. Specify the version that matches the target
+          endpoints (for example, `v8`).
+paths:
+  /settings/email_templates:
+    get:
+      operationId: getEmailTemplates
+      summary: Email Templates
+      description: >-
+        To retrieve a paginated list of email templates accessible to the
+        authenticated user in your Zoho CRM organization. The list can be scoped
+        to a specific CRM module using the module parameter, filtered by
+        category (such as favorite, draft, or created_by_me), and refined using
+        a structured filter expression. Results are sortable by last_usage_time,
+        modified_time, or name, and paginated using the page and per_page
+        parameters.
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Page'
+      security:
+        - OAuth2:
+            - ZohoCRM.templates.email.READ
+      responses:
+        '200':
+          description: >-
+            Returns a paginated list of email templates matching the specified
+            criteria, along with pagination metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailTemplateListResponse'
+              examples:
+                Success:
+                  value:
+                    email_templates:
+                      - id: '4019123000001797067'
+                        name: Abc12
+                        created_time: '2025-11-27T06:00:00Z'
+                        modified_time: '2025-11-27T07:00:00Z'
+                        last_usage_time: '2025-11-27T07:00:00Z'
+                        category: normal
+                        folder:
+                          id: '4019123000001797060'
+                          name: Default
+                        module:
+                          api_name: Inventory
+                          id: '4019123000001797064'
+                        created_by:
+                          id: '4019123000001797444'
+                          name: Alice
+                        modified_by:
+                          id: '4019123000001797123'
+                          name: Bob
+                        editor_mode: plain_text
+                        favorite: false
+                        attachments:
+                          - size: '111'
+                            file_name: 4019123000001450001.csv
+                            file_id: v3zom53c15d05e77e43749f5982313b711a61
+                            id: '4019123000001797047'
+                        subject: Template Subject
+                        associated: false
+                        active: true
+                        consent_linked: false
+                        last_version_statistics:
+                          tracked: 0
+                          delivered: 0
+                          opened: 0
+                          bounced: 0
+                          sent: 0
+                          clicked: 0
+                    info:
+                      per_page: 20
+                      page: 1
+                      count: 1
+                      more_records: true
+                  description: >-
+                    Shows a paginated list response with one Email Template
+                    summary, including folder, module, editor mode, subject,
+                    usage statistics, and pagination metadata.
+                  summary: Successful email templates list response
+        '204':
+          description: >-
+            No Email Templates match the supplied criteria. The server returns
+            no response body.
+        '400':
+          description: >-
+            The request contains an invalid parameter value or references a
+            module that does not exist.
+
+            **Resolution:** Verify that the sort_order value is one of the
+            supported options, the module API name is valid, and all filter
+            expressions conform to the required format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEmailTemplates400Error'
+              examples:
+                MissingParameter:
+                  summary: Invalid sort_order parameter value
+                  value:
+                    code: PATTERN_NOT_MATCHED
+                    message: Please check whether the input values are correct
+                    status: error
+                    details:
+                      param_name: sort_order
+                  description: >-
+                    Shows an error response when the sort_order parameter value
+                    does not match the expected pattern.
+                InvalidModule:
+                  summary: Invalid module name in request
+                  value:
+                    code: INVALID_DATA
+                    message: Module not found or not allowed
+                    status: error
+                    details:
+                      param_name: module
+                  description: >-
+                    Shows an error response when the module API name provided in
+                    the request does not correspond to a valid or accessible CRM
+                    module.
+components:
+  schemas:
+    ModuleRef:
+      type: object
+      description: >-
+        Represents a reference to the CRM module associated with the Email
+        Template. Refer to the [Get
+        Modules](modules.yaml#$.paths./settings/modules.get) resource for valid
+        values.
+      properties:
+        api_name:
+          type: string
+          maxLength: 255
+          description: >-
+            Represents the API name of the module.  Refer to the [Get
+            Modules](modules.yaml#$.paths./settings/modules.get) resource for
+            valid values.
+        id:
+          type: string
+          maxLength: 255
+          description: 'Represents the unique ID of the module. '
+      required:
+        - api_name
+        - id
+      additionalProperties: false
+    FolderRef:
+      type: object
+      description: >-
+        Represents a reference to the folder in which the Email Template is
+        stored.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: 'Represents the display name of the folder. '
+        id:
+          type: string
+          maxLength: 255
+          description: 'Represents the unique ID of the folder. '
+      required:
+        - name
+        - id
+      additionalProperties: false
+    UserRef:
+      type: object
+      description: >-
+        Represents a reference to the Zoho CRM user associated with the Email
+        Template.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: 'Represents the display name of the user. '
+        id:
+          type: string
+          maxLength: 255
+          description: 'Represents the unique ID of the user. '
+      required:
+        - name
+        - id
+      additionalProperties: false
+    InfoBlock:
+      type: object
+      description: >-
+        Represents the pagination metadata for the email templates list
+        response.
+      properties:
+        per_page:
+          type: integer
+          format: int32
+          description: 'Represents the number of Email Template records returned per page. '
+        page:
+          type: integer
+          format: int32
+          description: 'Represents the current page number of the paginated response. '
+        count:
+          type: integer
+          format: int32
+          description: >-
+            Represents the number of Email Template records returned in the
+            current page. 
+        more_records:
+          type: boolean
+          description: |-
+            Indicates whether additional pages of results are available. 
+            Possible values:
+            **true** - More records are available on subsequent pages.
+            **false** - The current page contains the last available records.
+      required:
+        - per_page
+        - page
+        - count
+        - more_records
+      additionalProperties: false
+    EmailTemplateListItem:
+      type: object
+      description: >-
+        Represents an Email Template in list view with summary information,
+        including metadata, statistics, and association details.
+      properties:
+        created_time:
+          type: string
+          format: date-time
+          description: >-
+            Represents the timestamp indicating when Zoho CRM created the Email
+            Template. 
+        modified_time:
+          type: string
+          format: date-time
+          description: >-
+            Represents the timestamp indicating when the Email Template was last
+            modified. 
+        last_usage_time:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: >-
+            Represents the timestamp indicating when the Email Template was last
+            used. 
+        category:
+          type: string
+          enum:
+            - normal
+            - draft
+            - marketplace
+            - plugin
+            - system_templates
+          description: Template category - normal, draft, marketplace, plugin, or default
+        folder:
+          $ref: '#/components/schemas/FolderRef'
+        module:
+          $ref: '#/components/schemas/ModuleRef'
+        created_by:
+          $ref: '#/components/schemas/UserRef'
+        modified_by:
+          $ref: '#/components/schemas/UserRef'
+        name:
+          type: string
+          maxLength: 75
+          description: 'Represents the display name of the Email Template. '
+        id:
+          x-zs-$id: EmailTemplatesId
+          type: string
+          maxLength: 255
+          description: 'Represents the unique ID of the Email Template. '
+        editor_mode:
+          type: string
+          enum:
+            - plain_text
+            - rich_text
+            - gallery
+          description: |-
+            Represents the editor mode used to create the Email Template. 
+            Possible values:
+            **plain_text** - The template uses plain text format.
+            **rich_text** - The template uses rich text format.
+            **gallery** - The template uses the gallery drag-and-drop editor.
+        favorite:
+          type: boolean
+          description: >-
+            Indicates whether the Email Template is marked as a favorite by the
+            authenticated user. 
+
+            Possible values:
+
+            **true** - The template is marked as a favorite.
+
+            **false** - The template is not marked as a favorite.
+        attachments:
+          type:
+            - array
+            - 'null'
+          maxItems: 10
+          description: >-
+            Represents the list of attachments associated with the Email
+            Template. 
+          items:
+            type: object
+            description: Represents an attachment entry associated with the Email Template.
+            properties:
+              size:
+                type: string
+                maxLength: 255
+                description: 'Represents the size of the attachment file. '
+              file_name:
+                type: string
+                maxLength: 255
+                description: 'Represents the name of the attachment file. '
+              file_id:
+                type: string
+                maxLength: 255
+                description: >-
+                  Represents the unique ID of the attachment file in the Zoho
+                  CRM file store. 
+              id:
+                type: string
+                maxLength: 255
+                description: 'Represents the unique ID of the attachment entry. '
+            required:
+              - size
+              - file_name
+              - file_id
+              - id
+            additionalProperties: false
+        subject:
+          type: string
+          maxLength: 250
+          description: 'Represents the email subject line of the template. '
+        associated:
+          type: boolean
+          description: >-
+            Indicates whether the Email Template is currently associated with
+            one or more CRM components. 
+
+            Possible values:
+
+            **true** - The template is associated with one or more CRM
+            components.
+
+            **false** - The template is not associated with any CRM component.
+        active:
+          type: boolean
+          description: |-
+            Indicates whether the Email Template is active. 
+            Possible values:
+            **true** - The template is active.
+            **false** - The template is inactive/deleted.
+        consent_linked:
+          type: boolean
+          description: |-
+            Indicates whether this Email Template is linked to a consent form. 
+            Possible values:
+            **true** - The template is linked to a consent form.
+            **false** - The template is not linked to a consent form.
+        last_version_statistics:
+          type: object
+          description: >-
+            Represents the email delivery and engagement statistics from the
+            most recent version of the template. 
+          properties:
+            tracked:
+              type: integer
+              format: int32
+              description: >-
+                Represents the number of emails sent using this template for
+                which tracking is enabled. 
+            delivered:
+              type: integer
+              format: int32
+              description: >-
+                Represents the number of emails delivered successfully when sent
+                using this template. 
+            opened:
+              type: integer
+              format: int32
+              description: >-
+                Represents the number of emails opened by recipients when sent
+                using this template. 
+            bounced:
+              type: integer
+              format: int32
+              description: >-
+                Represents the number of emails that bounced when sent using
+                this template. 
+            sent:
+              type: integer
+              format: int32
+              description: 'Represents the total number of emails sent using this template. '
+            clicked:
+              type: integer
+              format: int32
+              description: >-
+                Represents the number of link clicks recorded in emails sent
+                using this template. 
+          required:
+            - tracked
+            - delivered
+            - opened
+            - bounced
+            - sent
+            - clicked
+          additionalProperties: false
+      required:
+        - created_time
+        - modified_time
+        - last_usage_time
+        - category
+        - folder
+        - module
+        - created_by
+        - modified_by
+        - name
+        - id
+        - editor_mode
+        - favorite
+        - attachments
+        - subject
+        - associated
+        - active
+        - consent_linked
+        - last_version_statistics
+      additionalProperties: false
+    EmailTemplateListResponse:
+      type: object
+      x-zs-$id: EmailTemplateListResponse
+      description: Successful response for email templates retrieval
+      properties:
+        email_templates:
+          type: array
+          maxItems: 2000
+          description: >-
+            Represents the list of email templates matching the request
+            criteria. 
+          items:
+            $ref: '#/components/schemas/EmailTemplateListItem'
+        info:
+          $ref: '#/components/schemas/InfoBlock'
+      required:
+        - email_templates
+        - info
+      additionalProperties: false
+    GetEmailTemplates400Error:
+      description: Single error item - can be one of multiple error types
+      x-zs-$id: GetEmailTemplates400Error
+      oneOf:
+        - $ref: '#/components/schemas/ErrorItemMandatoryNotFoundForGet'
+        - $ref: '#/components/schemas/ErrorItemInvalidDataForGet'
+        - $ref: '#/components/schemas/ErrorItemPatternNotMatchedForGet'
+        - $ref: '#/components/schemas/ErrorItemInvalidRequest'
+    ErrorItemMandatoryNotFoundForGet:
+      description: >-
+        Represents an error item indicating that a required field is absent from
+        a retrieval request.
+      x-zs-$id: ErrorItemMandatoryNotFoundForGet
+      allOf:
+        - $ref: '#/components/schemas/ErrorItemBase'
+        - type: object
+          description: >-
+            Represents the MANDATORY_NOT_FOUND error details for the Email
+            Template retrieval request.
+          properties:
+            code:
+              type: string
+              enum:
+                - MANDATORY_NOT_FOUND
+              description: >-
+                Represents the error code for the missing mandatory field. The
+                value is **MANDATORY_NOT_FOUND**.
+            message:
+              type: string
+              description: >-
+                Represents the error message describing the missing mandatory
+                field.
+              maxLength: 1024
+            status:
+              type: string
+              description: Represents the error status. The value is **error**.
+              enum:
+                - error
+            details:
+              oneOf:
+                - type: object
+                  x-zs-$id: ErrorItemMandatoryNotFoundForGetDetails1
+                  description: >-
+                    Represents the error details containing the field name and
+                    path of the missing mandatory field.
+                  additionalProperties: true
+                - type: object
+                  description: >-
+                    Represents the error details containing the parent API name
+                    for the missing mandatory field.
+                  x-zs-$id: ErrorItemMandatoryNotFoundForGetDetails2
+                  properties:
+                    parent_api_name:
+                      type: string
+                      maxLength: 255
+                      description: >-
+                        Represents the API name of the parent module for the
+                        missing mandatory field.
+                  required:
+                    - parent_api_name
+                  additionalProperties: false
+              description: None
+          additionalProperties: false
+    ErrorItemMandatoryNotFound:
+      description: >-
+        Represents an error item indicating that a required field is absent from
+        the request.
+      x-zs-$id: ErrorItemMandatoryNotFound
+      allOf:
+        - $ref: '#/components/schemas/ErrorItemBase'
+        - description: >-
+            Represents the specialized properties for the MANDATORY_NOT_FOUND
+            error type.
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              description: >-
+                Represents the error code indicating that a mandatory field is
+                missing. 
+
+                Possible values:
+
+                **MANDATORY_NOT_FOUND** - A required field is absent from the
+                request.
+              type: string
+              enum:
+                - MANDATORY_NOT_FOUND
+            details:
+              type: object
+              description: >-
+                Represents additional details identifying the missing mandatory
+                field. 
+              x-zs-$id: ErrorItemMandatoryNotFoundDetails
+              additionalProperties: false
+              properties:
+                api_name:
+                  description: 'Represents the API name of the missing mandatory field. '
+                  type: string
+                  maxLength: 128
+                json_path:
+                  description: >-
+                    Represents the JSON path to the missing mandatory field in
+                    the request body. 
+                  type: string
+                  maxLength: 512
+              required:
+                - api_name
+                - json_path
+    ErrorItemInvalidDataForGet:
+      description: >-
+        Represents an error item indicating that the provided data or module
+        reference is invalid for a retrieval request.
+      x-zs-$id: ErrorItemInvalidDataForGet
+      allOf:
+        - $ref: '#/components/schemas/ErrorItemBase'
+        - type: object
+          description: >-
+            Represents the specialized properties for the INVALID_DATA and
+            INVALID_MODULE error types in retrieval operations.
+          properties:
+            code:
+              type: string
+              enum:
+                - INVALID_DATA
+                - INVALID_MODULE
+              description: >
+                Represents the error code for the invalid data or module
+                condition. 
+
+
+                Possible values:
+
+
+                **INVALID_DATA** - The provided data is invalid.
+
+
+                **INVALID_MODULE** - The specified module does not exist or is
+                not accessible.
+            details:
+              type: object
+              description: 'Represents additional details about the invalid data error. '
+              additionalProperties: true
+            message:
+              type: string
+              description: Represents the error message describing the invalid data.
+              maxLength: 1024
+            status:
+              type: string
+              description: Represents the error status. The value is **error**.
+              enum:
+                - error
+          additionalProperties: false
+    ErrorItemInvalidData:
+      x-zs-$id: ErrorItemInvalidData
+      description: >-
+        Represents an error item indicating that the provided data or module
+        reference is invalid.
+      allOf:
+        - $ref: '#/components/schemas/ErrorItemBase'
+        - description: >-
+            Represents the specialized properties for the INVALID_DATA and
+            INVALID_MODULE error types.
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              description: >
+                Represents the error code for the invalid data or module
+                condition. 
+
+
+                Possible values:
+
+
+                **INVALID_DATA** - The provided data is invalid.
+
+
+                **INVALID_MODULE** - The specified module does not exist or is
+                not accessible.
+              type: string
+              enum:
+                - INVALID_DATA
+                - INVALID_MODULE
+            details:
+              description: 'Represents additional details about the invalid data error. '
+              type: object
+              additionalProperties: true
+    ErrorItemBase:
+      description: >-
+        Represents the base structure for error response items, containing the
+        code, message, status, and details fields.
+      type: object
+      x-zs-$id: ErrorItemBase
+      additionalProperties: false
+      properties:
+        code:
+          description: 'Represents the error code identifier. '
+          type: string
+          maxLength: 128
+        message:
+          description: 'Represents the descriptive message explaining the error. '
+          type: string
+          maxLength: 1024
+        status:
+          description: |
+            Represents the severity level of the error. 
+
+            Possible values:
+
+            **error** - The request resulted in an error.
+
+            **warning** - The request completed with a warning.
+
+            **info** - The response carries informational status.
+          type: string
+          enum:
+            - error
+            - warning
+            - info
+        details:
+          description: 'Represents additional details about the error. '
+          type: object
+          additionalProperties: true
+      required:
+        - code
+        - message
+        - status
+        - details
+    ErrorItemPatternNotMatchedForGet:
+      description: >-
+        Represents an error item indicating that a field value does not match
+        the required pattern in a retrieval request.
+      x-zs-$id: ErrorItemPatternNotMatchedForGet
+      allOf:
+        - $ref: '#/components/schemas/ErrorItemBase'
+        - type: object
+          description: >-
+            Represents the specialized properties for the PATTERN_NOT_MATCHED
+            error type in retrieval operations.
+          properties:
+            code:
+              type: string
+              enum:
+                - PATTERN_NOT_MATCHED
+              description: >-
+                Represents the error code indicating that a value does not match
+                the required pattern. 
+
+                Possible values:
+
+                **PATTERN_NOT_MATCHED** - The provided value does not conform to
+                the expected format.
+            message:
+              type: string
+              description: Represents the error message describing the pattern mismatch.
+              maxLength: 1024
+            status:
+              type: string
+              description: Represents the error status. The value is **error**.
+              enum:
+                - error
+            details:
+              oneOf:
+                - type: object
+                  description: >-
+                    Represents details with the API name of the field that
+                    failed pattern validation.
+                  x-zs-$id: ErrorItemPatternNotMatchedForGetDetails1
+                  properties:
+                    api_name:
+                      type: string
+                      maxLength: 255
+                      description: >-
+                        Represents the API name of the field whose value did not
+                        match the required pattern. 
+                  required:
+                    - api_name
+                  additionalProperties: false
+                - type: object
+                  x-zs-$id: ErrorItemPatternNotMatchedForGetDetails2
+                  description: >-
+                    Represents additional details for the pattern mismatch error
+                    in a generic format.
+                  additionalProperties: true
+              description: >-
+                Represents additional details identifying the field that failed
+                pattern validation. 
+          additionalProperties: false
+    ErrorItemPatternNotMatched:
+      x-zs-$id: ErrorItemPatternNotMatched
+      description: >-
+        Represents an error item indicating that a field value does not match
+        the required pattern.
+      allOf:
+        - $ref: '#/components/schemas/ErrorItemBase'
+        - description: >-
+            Represents the specialized properties for the PATTERN_NOT_MATCHED
+            error type.
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              description: >
+                Represents the error code indicating that a value does not match
+                the required pattern. 
+
+
+                Possible values:
+
+
+                **PATTERN_NOT_MATCHED** - The provided value does not conform to
+                the expected format.
+              type: string
+              enum:
+                - PATTERN_NOT_MATCHED
+            details:
+              oneOf:
+                - type: object
+                  x-zs-$id: ErrorItemPatternNotMatchedDetails1
+                  description: >-
+                    Represents details with the API name of the field that
+                    failed pattern validation.
+                  additionalProperties: false
+                  properties:
+                    api_name:
+                      description: >-
+                        Represents the API name of the field whose value did not
+                        match the required pattern. 
+                      type: string
+                      maxLength: 128
+                  required:
+                    - api_name
+                - type: object
+                  x-zs-$id: ErrorItemPatternNotMatchedDetails2
+                  description: >-
+                    Represents additional details for the pattern mismatch error
+                    in a generic format.
+                  additionalProperties: true
+              description: >-
+                Represents additional details identifying the field that failed
+                pattern validation. 
+    ErrorItemInvalidRequest:
+      x-zs-$id: ErrorItemInvalidRequest
+      description: >-
+        Represents an error item indicating that the request payload is invalid
+        or cannot be parsed.
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          description: |-
+            Represents the error status of the request. 
+            Possible values:
+            **error** - The request resulted in an error.
+          type: string
+          enum:
+            - error
+        code:
+          description: >
+            Represents the error code for the invalid request condition. 
+
+
+            Possible values:
+
+
+            **INVALID_REQUEST** - The request payload is invalid.
+
+
+            **JSON_PARSE_ERROR** - The request body could not be parsed as valid
+            JSON.
+
+
+            **INVALID_MODULE** - The specified module does not exist or is not
+            accessible.
+          type: string
+          enum:
+            - INVALID_REQUEST
+            - JSON_PARSE_ERROR
+            - INVALID_MODULE
+        message:
+          description: 'Represents the descriptive error message for the invalid request. '
+          type: string
+          maxLength: 1024
+        details:
+          description: 'Represents additional details about the invalid request error. '
+          type: object
+          additionalProperties: true
+      required:
+        - status
+        - code
+        - message
+        - details
+  parameters:
+    Module:
+      name: module
+      in: query
+      required: false
+      description: >-
+        Provide the API name of the CRM module to filter Email Templates by.
+        Refer to the [Get Modules](modules.yaml#$.paths./settings/modules.get)
+        resource for module API name.
+      schema:
+        type: string
+        maxLength: 255
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 200
+        maximum: 200
+      description: >-
+        Provide the maximum number of Email Template records to return per page.
+        Default value is **200** and the maximum value is **200.**
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 1
+        minimum: 1
+      description: >-
+        Specify the page number to retrieve in a paginated response. The default
+        value is <b>1</b>.
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.templates.email.CREATE: Create email templates.
+            ZohoCRM.templates.email.READ: Read email templates.
+            ZohoCRM.templates.email.UPDATE: Update email templates.
+            ZohoCRM.templates.email.DELETE: Delete email templates.
+            ZohoCRM.templates.email.send_test_mail.CREATE: Send test mail for email templates.

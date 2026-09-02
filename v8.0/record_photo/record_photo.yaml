@@ -1,0 +1,805 @@
+openapi: 3.1.0
+info:
+  title: Record Photo
+  description: >-
+    Record photos are images attached to individual records in Zoho CRM modules
+    to provide a visual representation of each record. This API enables
+    developers to upload, retrieve, and delete the photo associated with a
+    specific record in a CRM module.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The regional top-level domain for the API server. Possible values:
+          **com**, **eu**, **in**, **cn**, **au**. Default: **com**.
+      version:
+        default: v8
+        description: 'The API version to use. Default: **v8**.'
+paths:
+  /{module}/{record}/photo:
+    get:
+      summary: Get a record photo
+      description: >-
+        To retrieve the photo associated with a specific record in your Zoho CRM
+        organization.
+      x-zs-llm-description: >-
+        Use this operation to fetch the profile photo binary of a single CRM
+        record in a given module. Before calling this, the LLM agent must first
+        resolve the target module's api_name using the Modules API (getModules)
+        and the target record's id using the Records API (getRecord/getRecords);
+        never guess these values.
+      operationId: getRecordPhoto
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/Record'
+      responses:
+        '200':
+          description: Returns the binary image data of the record photo as a PNG file.
+          content:
+            image/png:
+              schema:
+                x-zs-$id: RecordPhotoGetSuccessResponse
+                type: string
+                format: binary
+                description: Represents the binary image data of the record photo.
+        '204':
+          description: Indicates that no photo is associated with the specified record.
+        '400':
+          description: >-
+            The request is invalid due to an incorrect URL pattern, data, or
+            module name.
+
+            **Resolution:** The module API name and record ID in the request URL
+            must be valid.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordPhotoGetErrorResponse
+                type: object
+                description: >-
+                  Represents the error response returned when the photo
+                  retrieval request fails due to an invalid URL pattern, data,
+                  or module.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code indicating the type of request
+                      error. Possible values: **INVALID_URL_PATTERN**,
+                      **INVALID_DATA**, **INVALID_MODULE**.
+                    enum:
+                      - INVALID_URL_PATTERN
+                      - INVALID_DATA
+                      - INVALID_MODULE
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the request
+                      failure.
+                    maxLength: 1000
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the error response. Possible
+                      values: **error**. 
+                    enum:
+                      - error
+                  details:
+                    oneOf:
+                      - x-zs-$id: RecordPhotoGetErrorDetailsEmpty
+                        type: object
+                        description: >-
+                          Represents an empty details object returned when no
+                          additional error context is available.
+                        additionalProperties: false
+                      - x-zs-$id: RecordPhotoGetErrorDetailsInvalidID
+                        type: object
+                        description: >-
+                          Represents the error details containing the invalid
+                          identifier that caused the request to fail.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              Represents the invalid identifier that caused the
+                              error.
+                            maxLength: 100
+                        required:
+                          - id
+                      - x-zs-$id: RecordPhotoGetErrorDetailsResourcePathIndex
+                        type: object
+                        description: >-
+                          Represents the error details containing the index of
+                          the invalid resource path in the request URL.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the index of the invalid resource path
+                              in the request URL.
+                        required:
+                          - resource_path_index
+                    description: >-
+                      Represents additional details about the error. Contains
+                      the invalid identifier or resource path index when
+                      applicable.
+                required:
+                  - code
+                  - message
+                  - status
+                  - details
+              examples:
+                InvalidUrlPattern:
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows a 400 error response when the request URL does not
+                    match the expected pattern for the photo retrieval endpoint.
+                  summary: Get record photo with invalid URL pattern
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.READ
+    post:
+      summary: Upload a record photo
+      description: To upload a photo for a specific record in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Use this operation to upload or replace the profile photo of a single
+        CRM record in a given module by sending the image file as
+        multipart/form-data. Before calling this, the LLM agent must first
+        resolve the target module's api_name using the Modules API (getModules)
+        and the target record's id using the Records API (getRecord/getRecords);
+        never guess these values.
+      operationId: uploadRecordPhoto
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/Record'
+        - $ref: '#/components/parameters/RestrictTriggers'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              description: >-
+                Represents the schema for the photo upload request, containing
+                the photo file in multipart/form-data format.
+              additionalProperties: false
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Specify the photo file to upload for the record.
+              required:
+                - file
+        required: true
+        description: >-
+          The request body must be a multipart/form-data payload containing the
+          **file** field with the binary photo data to upload for the record.
+      responses:
+        '200':
+          description: >-
+            Returns a success response confirming that the record photo was
+            uploaded.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: RecordPhotoUploadSuccessResponse
+                description: >-
+                  Represents the success response returned when the record photo
+                  is uploaded successfully.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the success code for the photo upload
+                      operation. Possible values: **SUCCESS**. 
+                    enum:
+                      - SUCCESS
+                  message:
+                    type: string
+                    description: >-
+                      Represents the success message describing the result of
+                      the upload operation.
+                    maxLength: 1000
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the response. Possible values:
+                      **success**. 
+                    enum:
+                      - success
+                  details:
+                    type: object
+                    description: Represents additional details about the upload operation.
+                    additionalProperties: false
+                required:
+                  - code
+                  - message
+                  - status
+                  - details
+              examples:
+                SuccessResponse:
+                  value:
+                    code: SUCCESS
+                    message: Photo uploaded successfully
+                    status: success
+                    details: {}
+                  description: >-
+                    Shows a successful photo upload response with the SUCCESS
+                    code and a confirmation message.
+                  summary: Upload record photo success
+        '400':
+          description: >-
+            The request is invalid due to an incorrect URL pattern, data, module
+            name, or insufficient permissions.
+
+            **Resolution:** The module API name and record ID in the request URL
+            must be valid. The requesting user must have the required
+            permission, and the record must not be locked, under review, or
+            pending approval.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordPhotoUploadErrorResponse
+                description: >-
+                  Represents the error response returned when the photo upload
+                  request fails due to an invalid request or a business rule
+                  violation.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code indicating the type of request
+                      error. Possible values: **INVALID_URL_PATTERN**,
+                      **INVALID_DATA**, **INVALID_MODULE**,
+                      **CANNOT_PERFORM_ACTION**, **NOT_REVIEWED**,
+                      **NOT_APPROVED**, **RECORD_LOCKED**. 
+                    enum:
+                      - INVALID_URL_PATTERN
+                      - INVALID_DATA
+                      - INVALID_MODULE
+                      - CANNOT_PERFORM_ACTION
+                      - NOT_REVIEWED
+                      - NOT_APPROVED
+                      - RECORD_LOCKED
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the request
+                      failure.
+                    maxLength: 1000
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the error response. Possible
+                      values: **error**. 
+                    enum:
+                      - error
+                  details:
+                    oneOf:
+                      - $ref: '#/components/schemas/RecordPhotoErrorDetailsEmpty'
+                      - x-zs-$id: RecordPhotoUploadErrorDetailsInvalidID
+                        type: object
+                        description: >-
+                          Represents the error details containing the invalid
+                          identifier that caused the upload request to fail.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              Represents the invalid identifier that caused the
+                              error.
+                            maxLength: 100
+                        required:
+                          - id
+                      - x-zs-$id: RecordPhotoUploadErrorDetailsResourcePathIndex
+                        type: object
+                        description: >-
+                          Represents the error details containing the index of
+                          the invalid resource path in the request URL.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the index of the invalid resource path
+                              in the request URL.
+                        required:
+                          - resource_path_index
+                    description: >-
+                      Represents additional details about the error. Contains
+                      the invalid identifier or resource path index when
+                      applicable.
+                required:
+                  - code
+                  - message
+                  - status
+                  - details
+              examples:
+                InvalidUrlPattern:
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows a 400 error response when the request URL does not
+                    match the expected pattern for the photo upload endpoint.
+                  summary: Upload record photo with invalid URL pattern
+                CannotPerformAction:
+                  value:
+                    code: CANNOT_PERFORM_ACTION
+                    details: {}
+                    message: no permission to perform an action on this record
+                    status: error
+                  description: >-
+                    Shows a 400 error response when the requesting user does not
+                    have permission to upload a photo for the specified record.
+                  summary: Upload record photo with no permission
+                UnderReviewProcess:
+                  value:
+                    code: NOT_REVIEWED
+                    details:
+                      id: '111111000000091108'
+                    message: cannot upload the record image that is not reviewed yet
+                    status: error
+                  description: >-
+                    Shows a 400 error response when the record is under review
+                    and the photo cannot be uploaded until the review is
+                    complete.
+                  summary: Upload record photo for record under review process
+                UnderApprovalProcess:
+                  value:
+                    code: NOT_APPROVED
+                    details:
+                      id: '111111000000091057'
+                    message: cannot upload the record image that is not approved yet
+                    status: error
+                  description: >-
+                    Shows a 400 error response when the record is pending
+                    approval and the photo cannot be uploaded until the approval
+                    is complete.
+                  summary: Upload record photo for record under Approval Process
+                UnderRecordLockingFeature:
+                  value:
+                    code: RECORD_LOCKED
+                    details:
+                      id: '111111000000091019'
+                    message: >-
+                      Sorry, you cannot perform this operation as the record is
+                      locked.
+                    status: error
+                  description: >-
+                    Shows a 400 error response when the record is locked and
+                    cannot be modified.
+                  summary: Upload record photo for locked record
+        '413':
+          description: >-
+            The uploaded file exceeds the maximum allowed size.
+
+            **Resolution:** The photo file size must be within the maximum
+            allowed limit before uploading.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordPhotoUploadPayloadTooLargeResponse
+                type: object
+                description: >-
+                  Represents the error response returned when the uploaded photo
+                  file exceeds the maximum allowed size.
+                additionalProperties: false
+                properties:
+                  code:
+                    description: >-
+                      Represents the error code indicating that the uploaded
+                      file exceeds the maximum allowed size. Possible values:
+                      **FILE_SIZE_EXCEEDS**. 
+                    type: string
+                    enum:
+                      - FILE_SIZE_EXCEEDS
+                  details:
+                    description: >-
+                      Represents additional details about the file size error,
+                      including the size of the file that exceeded the limit.
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      size:
+                        description: >-
+                          Represents the size of the uploaded file that exceeded
+                          the maximum allowed limit.
+                        type: integer
+                        format: int32
+                    required:
+                      - size
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the file size
+                      violation.
+                    maxLength: 1000
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the error response. Possible
+                      values: **error**. 
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                FileSizeExceeds:
+                  value:
+                    code: FILE_SIZE_EXCEEDS
+                    details:
+                      size: 10485760
+                    message: File exceeded its maximum limit
+                    status: error
+                  description: >-
+                    Shows a 413 error response when the uploaded photo file
+                    exceeds the maximum allowed size.
+                  summary: Upload record photo with file size exceeded
+        '415':
+          description: >-
+            The uploaded file has an unsupported format or its resolution
+            exceeds the maximum allowed limit.
+
+            **Resolution:** The photo file must be a supported image type and
+            within the maximum allowed resolution.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordPhotoUploadUnsupportedMediaTypeResponse
+                type: object
+                description: >-
+                  Represents the error response returned when the uploaded photo
+                  file has an unsupported format or its resolution exceeds the
+                  allowed limit.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code indicating an unsupported media
+                      type or invalid file format. Possible values:
+                      **FILE_RESOLUTION_EXCEEDS**, **INVALID_DATA**. 
+                    enum:
+                      - FILE_RESOLUTION_EXCEEDS
+                      - INVALID_DATA
+                  details:
+                    description: >-
+                      Represents additional details about the media type error.
+                      Contains the file resolution that exceeded the limit when
+                      applicable.
+                    oneOf:
+                      - x-zs-$id: RecordPhotoUploadFileResolutionExceedsDetails
+                        description: >-
+                          Represents the error details containing the file
+                          resolution that exceeded the maximum allowed limit.
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          resolution:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the resolution of the uploaded file
+                              that exceeded the maximum allowed limit.
+                        required:
+                          - resolution
+                      - $ref: '#/components/schemas/RecordPhotoErrorDetailsEmpty'
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the media type or
+                      file format issue.
+                    maxLength: 1000
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the error response. Possible
+                      values: **error**. 
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                FileResolutionExceeds:
+                  value:
+                    code: FILE_RESOLUTION_EXCEEDS
+                    details:
+                      resolution: 16062248
+                    message: File exceeded its maximum limit
+                    status: error
+                  description: >-
+                    Shows a 415 error response when the uploaded photo file
+                    resolution exceeds the maximum allowed limit.
+                  summary: Upload record photo with file resolution exceeded
+                InvalidFileType:
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: invalid file type
+                    status: error
+                  description: >-
+                    Shows a 415 error response when the uploaded photo file is
+                    not a supported image format.
+                  summary: Upload record photo with invalid file type
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.CREATE
+    delete:
+      summary: Delete a record photo
+      description: >-
+        To delete the photo associated with a specific record in your Zoho CRM
+        organization.
+      x-zs-llm-description: >-
+        Use this operation to permanently remove the profile photo of a single
+        CRM record in a given module. Before calling this, the LLM agent must
+        first resolve the target module's api_name using the Modules API
+        (getModules) and the target record's id using the Records API
+        (getRecord/getRecords); never guess these values.
+      operationId: deleteRecordPhoto
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/Record'
+        - $ref: '#/components/parameters/RestrictTriggers'
+      responses:
+        '200':
+          description: >-
+            Returns a success response confirming the record photo delete
+            operation completed.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: RecordPhotoDeleteSuccessResponse
+                description: >-
+                  Represents the success response returned after a successful
+                  photo delete operation.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the success code for the photo delete
+                      operation. Possible values: **SUCCESS**. 
+                    enum:
+                      - SUCCESS
+                  message:
+                    type: string
+                    description: >-
+                      Represents the success message describing the result of
+                      the delete operation.
+                    maxLength: 1000
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the response. Possible values:
+                      **success**. 
+                    enum:
+                      - success
+                  details:
+                    type: object
+                    description: Represents additional details about the delete operation.
+                    additionalProperties: false
+                required:
+                  - code
+                  - message
+                  - status
+                  - details
+              examples:
+                SuccessResponse:
+                  value:
+                    code: SUCCESS
+                    message: Photo deleted successfully
+                    status: success
+                    details: {}
+                  description: >-
+                    Shows a successful photo delete response with the SUCCESS
+                    code and a confirmation message.
+                  summary: Delete record photo success
+        '400':
+          description: >-
+            The request is invalid due to an incorrect URL pattern, data, or
+            module name.
+
+            **Resolution:** The module API name and record ID in the request URL
+            must be valid.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: RecordPhotoDeleteErrorResponse
+                description: >-
+                  Represents the error response returned when the photo DELETE
+                  request fails due to an invalid URL pattern, data, or module.
+                type: object
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code indicating the type of request
+                      error. Possible values: **INVALID_URL_PATTERN**,
+                      **INVALID_DATA**, **INVALID_MODULE**. 
+                    enum:
+                      - INVALID_URL_PATTERN
+                      - INVALID_DATA
+                      - INVALID_MODULE
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message describing the request
+                      failure.
+                    maxLength: 1000
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the error response. Possible
+                      values: **error**. 
+                    enum:
+                      - error
+                  details:
+                    oneOf:
+                      - x-zs-$id: RecordPhotoDeleteErrorDetailsEmpty
+                        type: object
+                        description: >-
+                          Represents an empty details object returned when no
+                          additional error context is available.
+                        additionalProperties: false
+                      - x-zs-$id: RecordPhotoDeleteErrorDetailsInvalidID
+                        type: object
+                        description: >-
+                          Represents the error details containing the invalid
+                          identifier that caused the request to fail.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              Represents the invalid identifier that caused the
+                              error.
+                            maxLength: 100
+                        required:
+                          - id
+                      - x-zs-$id: RecordPhotoDeleteErrorDetailsResourcePathIndex
+                        type: object
+                        description: >-
+                          Represents the error details containing the index of
+                          the invalid resource path in the request URL.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the index of the invalid resource path
+                              in the request URL.
+                        required:
+                          - resource_path_index
+                    description: >-
+                      Represents additional details about the error. Contains
+                      the invalid identifier or resource path index when
+                      applicable.
+                required:
+                  - code
+                  - message
+                  - status
+                  - details
+              examples:
+                InvalidUrlPattern:
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows a 400 error response when the request URL does not
+                    match the expected pattern for the photo DELETE endpoint.
+                  summary: Delete record photo with invalid URL pattern
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.DELETE
+components:
+  parameters:
+    Module:
+      name: module
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the module for which you want to manage the
+        record photo. Refer to the [Get Modules Metadata
+        API](modules.yaml#$.paths./settings/modules.get) to retrieve the
+        module's API name.
+      schema:
+        x-zs-$ref:
+          resource: modules
+          origins:
+            - operationId: getModules
+              propertyId: ModulesApiName
+        type: string
+        maxLength: 50
+        description: >-
+          Unique API identifier for the module used in third-party integrations;
+          starts with a letter, contains only alphanumeric characters and
+          underscores, and has no consecutive or trailing underscores.
+    Record:
+      name: record
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the record for which you want to manage
+        the photo. Use the [Get Records API](record.yaml#$.paths./module.get) to
+        retrieve the record IDs.
+      schema:
+        x-zs-$ref:
+          resource: record
+          origins:
+            - operationId: getRecord
+              propertyId: RecordsId
+        type: string
+        format: int64
+        description: Represents the unique identifier of the RecordGETDataItem record.
+    RestrictTriggers:
+      name: restrict_triggers
+      in: query
+      required: false
+      description: >-
+        (Optional) Comma-separated list of automation triggers to suppress
+        during the operation. Accepted values are `workflow`, `approval`,
+        `blueprint`, `pathfinder`, and `orchestration`.
+      schema:
+        type: string
+        description: Comma-separated trigger names to restrict.
+        maxLength: 100
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.ALL: Access all CRM modules
+            ZohoCRM.modules.DELETE: Delete Record Photo
+            ZohoCRM.modules.CREATE: Create Record Photo
+            ZohoCRM.modules.READ: Read Record Photo
+  schemas:
+    RecordPhotoErrorDetailsEmpty:
+      x-zs-$id: RecordPhotoErrorDetailsEmpty
+      type: object
+      description: >-
+        Represents an empty details object returned when no additional error
+        context is available for the error response.
+      additionalProperties: false

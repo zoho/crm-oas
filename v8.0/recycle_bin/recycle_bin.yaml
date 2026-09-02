@@ -1,0 +1,1707 @@
+openapi: 3.1.0
+info:
+  title: Recycle Bin
+  description: >-
+    The Recycle Bin is the holding area in Zoho CRM that retains records deleted
+    from any module so administrators can review or recover them before
+    permanent removal. This API enables developers to list, count, retrieve,
+    restore, and permanently delete recycle-bin entries individually, in bulk,
+    or by emptying the entire Recycle Bin.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Public Zoho CRM API server. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain of the regional data center that hosts the Zoho
+          CRM organization. Possible values: **com**, **eu**, **in**, **cn**,
+          **au**. Default: **com**.
+      version:
+        default: v8
+        description: 'The Zoho CRM API version used in the request path. Default: **v8**.'
+paths:
+  /settings/recycle_bin:
+    get:
+      operationId: getRecycleBinRecords
+      summary: Get recycle-bin records
+      description: >-
+        To retrieve a paginated list of records currently present in the Recycle
+        Bin in your Zoho CRM account. The response contains up to 200 records
+        per page, along with pagination metadata. The list can be filtered by
+        display name, source module, the user who deleted the records, or the
+        deletion timestamp. Sorting is supported by display name, deletion time,
+        or deleted-by user in ascending or descending order.
+      x-zs-llm-description: >-
+        Lists deleted records from the recycle bin with pagination and optional
+        filters, including the related module and user details for each item.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.recycle_bin.READ
+      responses:
+        '200':
+          description: >-
+            Returns a paginated list of recycle-bin records that match the
+            request, along with pagination metadata such as the current page,
+            page size, and whether more records are available.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: RecycleBinListResponse
+                properties:
+                  recycle_bin:
+                    type: array
+                    description: >-
+                      Represents the list of recycle-bin records that match the
+                      request, with up to 200 records per page.
+                    maxItems: 200
+                    items:
+                      description: >-
+                        Represents a single recycle-bin record, including its
+                        display name, source module, deletion timestamp, owner,
+                        and the user who deleted it.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        display_name:
+                          type: string
+                          maxLength: 500
+                          description: >-
+                            Represents the display name of the deleted record as
+                            it appeared in its source module.
+                        deleted_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Represents the date and time at which the record was
+                            moved to the Recycle Bin, in ISO 8601 format.
+                        owner:
+                          type: object
+                          description: >-
+                            Represents the user who owned the record at the time
+                            of deletion. Refer to the [Get
+                            users](users.yaml#$.paths./users.get) endpoint for
+                            details.
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              maxLength: 255
+                              description: Represents the display name of the owning user.
+                            id:
+                              type: string
+                              maxLength: 100
+                              description: >-
+                                Represents the unique identifier of the owning
+                                user.
+                          required:
+                            - name
+                            - id
+                        module:
+                          type: object
+                          description: >-
+                            Represents the source module of the deleted record.
+                            Refer to the [Get
+                            modules](modules.yaml#$.paths./settings/modules.get)
+                            endpoint for details.
+                          additionalProperties: false
+                          properties:
+                            api_name:
+                              type: string
+                              maxLength: 100
+                              description: >-
+                                Represents the API name of the module the record
+                                originally belonged to.
+                            id:
+                              type: string
+                              maxLength: 100
+                              description: >-
+                                Represents the unique identifier of the module
+                                the record originally belonged to.
+                        deleted_by:
+                          type: object
+                          description: >-
+                            Represents the user who deleted the record. Refer to
+                            the [Get users](users.yaml#$.paths./users.get)
+                            endpoint for details.
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              maxLength: 255
+                              description: >-
+                                Represents the display name of the user who
+                                deleted the record.
+                            id:
+                              type: string
+                              maxLength: 100
+                              description: >-
+                                Represents the unique identifier of the user who
+                                deleted the record.
+                          required:
+                            - name
+                            - id
+                        id:
+                          type: string
+                          maxLength: 100
+                          description: >-
+                            Represents the unique identifier of the recycle-bin
+                            record.
+                          x-zs-$id: RecycleBinRecordId
+                      required:
+                        - display_name
+                        - deleted_time
+                        - owner
+                        - module
+                        - deleted_by
+                        - id
+                  info:
+                    type: object
+                    description: >-
+                      Represents pagination and count information for the
+                      returned list of recycle-bin records.
+                    additionalProperties: false
+                    properties:
+                      per_page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the number of records returned on the
+                          current page.
+                      count:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the total number of records returned on the
+                          current page.
+                      page:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the current page number in the paginated
+                          response.
+                      more_records:
+                        type: boolean
+                        description: >-
+                          Indicates whether additional pages of recycle-bin
+                          records are available. Possible values: **true** -
+                          More records exist beyond the current page. **false**
+                          - The current page contains the last set of records.
+                    required:
+                      - per_page
+                      - count
+                      - page
+                      - more_records
+                required:
+                  - recycle_bin
+                  - info
+                description: >-
+                  Represents the response payload for a request to retrieve a
+                  paginated list of recycle-bin records, containing the records
+                  under **recycle_bin** and pagination metadata under **info**.
+                additionalProperties: false
+              examples:
+                RecycleBinListSample:
+                  summary: Sample paginated Recycle Bin list
+                  description: >-
+                    Shows a representative list response with one deleted record
+                    and pagination metadata indicating page size, current page,
+                    count, and whether more records are available.
+                  value:
+                    recycle_bin:
+                      - display_name: John Doe
+                        deleted_time: '2025-10-22T14:12:00Z'
+                        owner:
+                          name: Jane Smith
+                          id: '789'
+                        module:
+                          api_name: Leads
+                        deleted_by:
+                          name: Admin
+                          id: '456'
+                        id: '12345'
+                    info:
+                      per_page: 20
+                      count: 1
+                      page: 1
+                      more_records: false
+        '204':
+          description: >-
+            Indicates that the request succeeded but no recycle-bin records were
+            found. The response body is empty.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    delete:
+      operationId: deleteRecycleBinRecords
+      summary: Delete recycle-bin records
+      description: >-
+        To permanently delete one or more records from the Recycle Bin in your
+        Zoho CRM account. When deleting a parent record, Zoho CRM also removes
+        all its associated child records from the Recycle Bin, such as Notes and
+        Attachments. When the total number of records to delete is 1000 or
+        fewer, the operation completes immediately and returns a 200 response
+        with per-item results. When the total exceeds 1000, the deletion runs as
+        a background job and returns a 202 response. Partial successes return a
+        207 multi-status response with individual success and error entries per
+        record.
+      x-zs-llm-description: >-
+        Permanently deletes recycle bin records selected by filters and returns
+        per-item success or failure details.
+      parameters:
+        - $ref: '#/components/parameters/Filters'
+      responses:
+        '200':
+          description: >-
+            Returns the per-item results for each recycle-bin record that Zoho
+            CRM permanently removes. The **recycle_bin** array contains one
+            entry per processed record, each with the deletion status, result
+            code, message, and the affected record ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultList'
+              examples:
+                Success:
+                  value:
+                    recycle_bin:
+                      - code: SUCCESS
+                        details:
+                          id: '4794080000003267613'
+                        message: record deleted
+                        status: success
+        '202':
+          description: >-
+            Indicates that the deletion has been accepted and scheduled as a
+            background job. Zoho CRM returns this response when the total number
+            of records to delete, including child records such as Notes and
+            Attachments, exceeds 1000, or when the **filters** parameter is
+            used.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultList'
+              examples:
+                Scheduled:
+                  value:
+                    recycle_bin:
+                      - code: SCHEDULED
+                        details:
+                          id: '4794080000003267613'
+                        message: record has been scheduled for deletion
+                        status: success
+        '207':
+          $ref: '#/components/responses/MultiStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.recycle_bin.DELETE
+  /settings/recycle_bin/actions/restore:
+    post:
+      operationId: restoreRecycleBinRecords
+      summary: Restore multiple Recycle Bin records
+      description: >-
+        To restore one or more deleted records from the Recycle Bin in your Zoho
+        CRM account. Supply the scope of restoration in the request body using
+        exactly one of three options: **ids** to restore specific records,
+        **filters** to restore records matching field-based criteria, or
+        **restore_all_records** to restore every record currently in the Recycle
+        Bin. When restoring a parent record, Zoho CRM also restores all its
+        associated child records, such as Notes and Attachments. If the total
+        number of records to restore, including child records, is 1000 or fewer,
+        the operation completes immediately. When the total exceeds 1000, when
+        the **filters** option is applied, or when **restore_all_records** is
+        **true**, the restoration runs as a background job. Admin users can
+        restore any record; non-admin users can restore only the records they
+        own unless their profile grants broader access.
+      x-zs-llm-description: >-
+        Restores recycle bin records using record IDs, filter criteria, or a
+        bulk restore flag and returns immediate or scheduled results.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.recycle_bin.UPDATE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              x-zs-$id: RestoreRecycleBinRequest
+              description: >-
+                Request payload that specifies how to scope the restoration.
+                Provide exactly one of **ids**, **filters**, or
+                **restore_all_records**; supplying more than one results in an
+                AMBIGUITY_DURING_PROCESSING error.
+              additionalProperties: false
+              properties:
+                ids:
+                  type: array
+                  description: >-
+                    Specify the unique IDs of the recycle-bin records you want
+                    to restore. Mutually exclusive with **filters** and
+                    **restore_all_records**.
+                  maxItems: 200
+                  items:
+                    x-zs-$ref:
+                      resource: recycle_bin
+                      origins:
+                        - operationId: getRecycleBinRecords
+                          propertyId: RecycleBinRecordId
+                    description: >-
+                      Represents the unique identifier of a single recycle-bin
+                      record to restore.
+                    type: string
+                    maxLength: 100
+                filters:
+                  type: object
+                  description: >-
+                    Specify the filter criteria to select recycle-bin records
+                    for restoration. Mutually exclusive with **ids** and
+                    **restore_all_records**. Restoration based on filters is
+                    always scheduled as a background job, regardless of the
+                    number of matching records.
+                  additionalProperties: false
+                  properties:
+                    group_operator:
+                      type: string
+                      enum:
+                        - AND
+                      description: >-
+                        Specify the logical operator that combines the
+                        conditions inside the **group** array. Possible values:
+                        **AND**.
+                    group:
+                      type: array
+                      description: >-
+                        Specify the list of filter conditions used to select
+                        recycle-bin records for restoration.
+                      maxItems: 20
+                      items:
+                        type: object
+                        description: >-
+                          Represents a single filter condition, including the
+                          field to filter on, the comparator, and the value to
+                          compare against.
+                        additionalProperties: false
+                        properties:
+                          field:
+                            type: object
+                            description: >-
+                              Specify the field to filter on. The field is
+                              identified by its API name.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                maxLength: 100
+                                description: >-
+                                  Specify the API name of the field to filter
+                                  on. Possible values: **display_name**,
+                                  **module**, **deleted_by**, **deleted_time**.
+                            required:
+                              - api_name
+                          comparator:
+                            type: string
+                            description: >-
+                              Specify the comparison operator to apply between
+                              the field and the value. Possible values:
+                              **equal**, **not_equal**, **contains**,
+                              **not_contains**, **starts_with**, **ends_with**,
+                              **greater_than**, **less_than**. The set of
+                              comparators supported depends on the field:
+                              **display_name** and **deleted_by** support equal,
+                              not_equal, contains, not_contains, starts_with,
+                              ends_with; **module** supports equal and
+                              not_equal; **deleted_time** supports equal,
+                              not_equal, greater_than, less_than.
+                            maxLength: 50
+                          value:
+                            description: >-
+                              Specify the value to compare the field against.
+                              The data type depends on the field being filtered.
+                            oneOf:
+                              - type: string
+                                x-zs-$id: FilterValueString
+                                description: >-
+                                  String value used when filtering by
+                                  **display_name**, **module**, **deleted_by**,
+                                  or **deleted_time**.
+                                maxLength: 500
+                              - type: number
+                                x-zs-$id: FilterValueNumber
+                                description: >-
+                                  Numeric value used when filtering by a numeric
+                                  attribute.
+                              - type: boolean
+                                description: >-
+                                  Boolean value used when filtering by a Boolean
+                                  attribute.
+                                x-zs-$id: FilterValueBoolean
+                        required:
+                          - field
+                          - comparator
+                          - value
+                  required:
+                    - group_operator
+                    - group
+                restore_all_records:
+                  type: boolean
+                  description: >-
+                    Specify whether every record currently in the Recycle Bin
+                    should be restored. Possible values: **true** - Every record
+                    in the Recycle Bin is restored. This option cannot be
+                    combined with **ids** or **filters** and the operation is
+                    always scheduled as a background job. **false** - Either
+                    **ids** or **filters** must be supplied to scope the
+                    restoration.
+              oneOf:
+                - required:
+                    - ids
+                  x-zs-$id: RestoreByIds
+                  description: >-
+                    Restore only the recycle-bin records whose IDs are listed in
+                    **ids**.
+                - required:
+                    - filters
+                  x-zs-$id: RestoreByFilters
+                  description: >-
+                    Restore the recycle-bin records that match the conditions
+                    defined in **filters**.
+                - required:
+                    - restore_all_records
+                  x-zs-$id: RestoreAll
+                  description: >-
+                    Restore every record currently in the Recycle Bin when
+                    **restore_all_records** is set to **true**.
+            examples:
+              RestoreByIds:
+                summary: Restore specific records by IDs
+                value:
+                  ids:
+                    - '111111000000077729'
+                    - '111111000000077734'
+              RestoreByFilters:
+                summary: Restore records matching filter criteria
+                value:
+                  filters:
+                    group_operator: AND
+                    group:
+                      - field:
+                          api_name: display_name
+                        comparator: contains
+                        value: Amazon Marketplace
+                      - field:
+                          api_name: module
+                        comparator: equal
+                        value: Leads
+              RestoreAll:
+                summary: Restore all records
+                value:
+                  restore_all_records: true
+      responses:
+        '200':
+          description: >-
+            Returns per-item results when records are restored immediately. The
+            **recycle_bin** array contains one entry per processed record with
+            the operation status, code, message, and the restored record ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultList'
+              examples:
+                ImmediateSuccess:
+                  summary: Immediate restoration success
+                  value:
+                    recycle_bin:
+                      - status: success
+                        code: SUCCESS
+                        message: record restored
+                        details:
+                          id: '111111000000077729'
+        '202':
+          description: >-
+            Indicates that the restoration has been accepted and scheduled as a
+            background job. Zoho CRM returns this response when the total number
+            of records to restore, including child records, exceeds 1000, when
+            the **filters** option is applied, or when **restore_all_records**
+            is set to **true**.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultList'
+              examples:
+                ScheduledByIds:
+                  summary: Restoration scheduled for specific IDs
+                  value:
+                    recycle_bin:
+                      - code: SCHEDULED
+                        details:
+                          id: '111111000000077729'
+                        message: record has been scheduled for restoration
+                        status: success
+                      - code: SCHEDULED
+                        details:
+                          id: '111111000000077734'
+                        message: record has been scheduled for restoration
+                        status: success
+                ScheduledByFilters:
+                  summary: Bulk restoration scheduled based on filters
+                  value:
+                    recycle_bin:
+                      - code: SCHEDULED
+                        details: {}
+                        message: >-
+                          Bulk restoration of records based on filters has been
+                          scheduled
+                        status: success
+                ScheduledRestoreAll:
+                  summary: All records scheduled for restoration
+                  value:
+                    recycle_bin:
+                      - code: SCHEDULED
+                        details: {}
+                        message: >-
+                          Bulk restoration of records based on filters has been
+                          scheduled
+                        status: success
+        '207':
+          $ref: '#/components/responses/MultiStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /settings/recycle_bin/actions/count:
+    get:
+      operationId: getRecycleBinCounts
+      summary: Get recycle-bin record count
+      description: >-
+        To retrieve the total count of records currently present in the Recycle
+        Bin in your Zoho CRM account. The count reflects every entry across all
+        modules.
+      x-zs-llm-description: >-
+        Returns the total number of records currently present in the recycle
+        bin.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.recycle_bin.READ
+      responses:
+        '200':
+          description: >-
+            Returns the total count of records currently present in the Recycle
+            Bin.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: RecycleBinCountResponse
+                properties:
+                  count:
+                    type: integer
+                    format: int32
+                    description: >-
+                      Represents the total number of records currently present
+                      in the Recycle Bin.
+                required:
+                  - count
+                description: >-
+                  Represents the response payload containing the total count of
+                  records present in the Recycle Bin.
+                additionalProperties: false
+              examples:
+                CountExample:
+                  value:
+                    count: 150
+  /settings/recycle_bin/actions/empty:
+    post:
+      operationId: emptyRecycleBin
+      summary: Empty the Recycle Bin
+      description: >-
+        To permanently delete every record from the Recycle Bin in your Zoho CRM
+        account. This action is irreversible - the records cannot be restored
+        after this operation completes. When the Recycle Bin contains 1000 or
+        fewer records, including child records such as Notes and Attachments,
+        Zoho CRM deletes the records immediately and returns a 200 response.
+        When the count exceeds 1000, the deletion runs as a background job and
+        returns a 202 response. Only users with the Admin profile can empty the
+        Recycle Bin.
+      x-zs-llm-description: >-
+        Empties the recycle bin by permanently deleting all recycle bin records
+        and reports whether the action completed immediately or was scheduled.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.recycle_bin.UPDATE
+      responses:
+        '200':
+          description: >-
+            Returns a confirmation that Zoho CRM has emptied the Recycle Bin
+            immediately. The response includes the **SUCCESS** result code and
+            the success status.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: EmptyRecycleBinSuccessResponse
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - SUCCESS
+                    description: >-
+                      Represents the result code for the empty operation.
+                      Possible values: **SUCCESS** - Every record in the Recycle
+                      Bin was permanently deleted.
+                    maxLength: 100
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional details about the empty operation.
+                      This is an empty object when the operation completes
+                      successfully.
+                    additionalProperties: true
+                  message:
+                    type: string
+                    maxLength: 500
+                    description: >-
+                      Represents the message confirming that the Recycle Bin was
+                      emptied.
+                  status:
+                    type: string
+                    enum:
+                      - success
+                    description: >-
+                      Indicates the outcome of the empty operation. Possible
+                      values: **success** - Every record in the Recycle Bin was
+                      permanently deleted.
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                additionalProperties: false
+                description: >-
+                  Represents the success payload returned when Zoho CRM deletes
+                  every record in the Recycle Bin immediately in a single
+                  synchronous call.
+              examples:
+                ImmediateSuccess:
+                  summary: Recycle Bin emptied immediately
+                  value:
+                    code: SUCCESS
+                    details: {}
+                    message: recyclebin is cleared
+                    status: success
+        '202':
+          description: >-
+            Indicates that the empty Recycle Bin action has been accepted and
+            scheduled as a background job. Zoho CRM returns this response when
+            the Recycle Bin contains more than 1000 records, including child
+            records.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: EmptyRecycleBinScheduledResponse
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - SCHEDULED
+                    description: >-
+                      Represents the result code indicating that the empty
+                      operation is scheduled as a background job. Possible
+                      values: **SCHEDULED** - The empty Recycle Bin action was
+                      queued as a background job.
+                    maxLength: 100
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional details about the scheduled empty
+                      operation. This is an empty object when the job is queued.
+                    additionalProperties: true
+                  message:
+                    type: string
+                    maxLength: 500
+                    description: >-
+                      Represents the message confirming that the empty Recycle
+                      Bin action has been scheduled as a background job.
+                  status:
+                    type: string
+                    enum:
+                      - success
+                    description: >-
+                      Indicates the outcome of the scheduling request. Possible
+                      values: **success** - The empty Recycle Bin action was
+                      accepted and queued as a background job.
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                additionalProperties: false
+                description: >-
+                  Represents the accepted payload returned when the empty
+                  Recycle Bin action is scheduled as a background job.
+              examples:
+                ScheduledDeletion:
+                  summary: Empty Recycle Bin scheduled as background job
+                  value:
+                    code: SCHEDULED
+                    details: {}
+                    message: Empty bin action has been scheduled
+                    status: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: >-
+            The OAuth token does not include the required scope to empty the
+            Recycle Bin. **Resolution:** A new access token must be generated
+            with the **ZohoCRM.settings.recycle_bin.UPDATE** scope.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: EmptyRecycleBinUnauthorizedResponse
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: >-
+                      Indicates that the request was not authorized. Possible
+                      values: **error** - The OAuth token does not include the
+                      required scope.
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code identifying the cause of the
+                      authorization failure.
+                    maxLength: 100
+                  message:
+                    type: string
+                    maxLength: 500
+                    description: >-
+                      Represents the message describing the cause of the
+                      authorization failure.
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional context about the authorization
+                      failure. This is an empty object for scope mismatch
+                      errors.
+                    additionalProperties: true
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+                description: >-
+                  Represents the error payload returned when the OAuth token
+                  does not include the scope required to empty the Recycle Bin.
+                additionalProperties: false
+              examples:
+                OAuthScopeMismatch:
+                  value:
+                    status: error
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: Unauthorized
+                    details: {}
+        '404':
+          description: >-
+            The request URL does not match a valid endpoint pattern for emptying
+            the Recycle Bin in Zoho CRM. **Resolution:** The request path must
+            be verified and reissued as a POST request to the correct empty
+            Recycle Bin endpoint.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: EmptyRecycleBinNotFoundResponse
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: >-
+                      Indicates that the requested URL pattern is invalid.
+                      Possible values: **error** - The request did not match a
+                      valid endpoint pattern.
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code identifying why the URL pattern
+                      is invalid.
+                    maxLength: 100
+                  message:
+                    type: string
+                    maxLength: 500
+                    description: Represents the message describing the URL pattern issue.
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional context about the invalid URL
+                      pattern. This is an empty object for URL pattern errors.
+                    additionalProperties: true
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+                description: >-
+                  Represents the error payload returned when the request targets
+                  an invalid URL pattern for the empty Recycle Bin action.
+                additionalProperties: false
+              examples:
+                InvalidUrlPattern:
+                  value:
+                    status: error
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    details: {}
+  /settings/recycle_bin/{recordId}/actions/restore:
+    post:
+      operationId: restoreRecycleBinRecord
+      summary: Restore a Recycle Bin record
+      description: >-
+        To restore a single deleted record from the Recycle Bin in your Zoho CRM
+        account. The record is moved back to its original module along with all
+        its associated child records, such as Notes and Attachments. When the
+        total number of restored records, including child records, is 1000 or
+        fewer, the restoration completes immediately and returns a 200 response.
+        When the total exceeds 1000, the operation is scheduled as a background
+        job. Admin users can restore any record; non-admin users can restore
+        only the records they own unless their profile grants broader access.
+      x-zs-llm-description: >-
+        Restores one recycle bin record identified by the path parameter
+        recordId.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.recycle_bin.UPDATE
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            x-zs-$ref:
+              resource: recycle_bin
+              origins:
+                - operationId: getRecycleBinRecords
+                  propertyId: RecycleBinRecordId
+            type: string
+            maxLength: 100
+            description: Represents the unique identifier of the recycle-bin record.
+          description: >-
+            Specify the unique ID of the recycle-bin record you want to restore.
+            The **recordId** in the URL takes precedence over any restoration
+            scope given in a request body.
+          examples:
+            Example1:
+              value: '1234567890'
+      responses:
+        '200':
+          description: >-
+            Returns a per-item result that confirms the recycle-bin record was
+            restored to its original module. The **recycle_bin** array contains
+            a single entry indicating success along with the restored record ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultList'
+              examples:
+                Success:
+                  value:
+                    recycle_bin:
+                      - status: success
+                        code: SUCCESS
+                        message: Restored
+                        details:
+                          id: '12345'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /settings/recycle_bin/{recordId}:
+    get:
+      operationId: getRecycleBinRecord
+      summary: Get a recycle-bin record
+      description: >-
+        To retrieve metadata for a single record from the Recycle Bin in your
+        Zoho CRM account using its unique ID. The response includes the display
+        name, source module, deletion timestamp, original owner, and the user
+        who deleted the record.
+      x-zs-llm-description: >-
+        Returns one recycle bin record by its recordId, including the deleted
+        record details and related module metadata.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.recycle_bin.READ
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 500
+            description: Identifier
+          description: >-
+            Specify the unique ID of the recycle-bin record you want to
+            retrieve. The **recordId** in the URL takes precedence over any
+            **filters** or **ids** values supplied as query parameters.
+          examples:
+            Example1:
+              value: '4876876000007018006'
+      responses:
+        '200':
+          description: >-
+            Returns metadata for the requested recycle-bin record, including its
+            display name, source module, deletion timestamp, owner, and the user
+            who deleted it.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: RecycleBinRecordResponse
+                properties:
+                  recycle_bin:
+                    type: array
+                    description: >-
+                      Represents the list containing the single recycle-bin
+                      record matching the requested **recordId**.
+                    maxItems: 1
+                    items:
+                      description: >-
+                        Represents a single recycle-bin record, including its
+                        display name, source module, deletion timestamp, owner,
+                        and the user who deleted it.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        display_name:
+                          type: string
+                          maxLength: 500
+                          description: >-
+                            Represents the display name of the deleted record as
+                            it appeared in its source module.
+                        deleted_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Represents the date and time at which the record was
+                            moved to the Recycle Bin, in ISO 8601 format.
+                        owner:
+                          type: object
+                          description: >-
+                            Represents the user who owned the record at the time
+                            of deletion. Refer to the [Get
+                            users](users.yaml#$.paths./users.get) endpoint for
+                            details.
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              maxLength: 255
+                              description: Represents the display name of the owning user.
+                            id:
+                              type: string
+                              maxLength: 100
+                              description: >-
+                                Represents the unique identifier of the owning
+                                user.
+                          required:
+                            - name
+                            - id
+                        module:
+                          type: object
+                          description: >-
+                            Represents the source module of the deleted record.
+                            Refer to the [Get
+                            modules](modules.yaml#$.paths./settings/modules.get)
+                            endpoint for details.
+                          additionalProperties: false
+                          properties:
+                            api_name:
+                              type: string
+                              maxLength: 100
+                              description: >-
+                                Represents the API name of the module the record
+                                originally belonged to.
+                            id:
+                              type: string
+                              maxLength: 100
+                              description: >-
+                                Represents the unique identifier of the module
+                                the record originally belonged to.
+                          required:
+                            - api_name
+                            - id
+                        deleted_by:
+                          type: object
+                          description: >-
+                            Represents the user who deleted the record. Refer to
+                            the [Get users](users.yaml#$.paths./users.get)
+                            endpoint for details.
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              maxLength: 255
+                              description: >-
+                                Represents the display name of the user who
+                                deleted the record.
+                            id:
+                              type: string
+                              maxLength: 100
+                              description: >-
+                                Represents the unique identifier of the user who
+                                deleted the record.
+                          required:
+                            - name
+                            - id
+                        id:
+                          type: string
+                          maxLength: 100
+                          description: >-
+                            Represents the unique identifier of the recycle-bin
+                            record.
+                          x-zs-$id: RecycleBinRecordIdSingle
+                      required:
+                        - display_name
+                        - deleted_time
+                        - owner
+                        - module
+                        - deleted_by
+                        - id
+                required:
+                  - recycle_bin
+                description: >-
+                  Represents the response payload for a request to retrieve a
+                  single recycle-bin record, containing the record metadata
+                  under **recycle_bin**.
+                additionalProperties: false
+              examples:
+                SingleRecordExample:
+                  summary: Recycle Bin record metadata
+                  description: >-
+                    Shows the metadata returned for a single recycle-bin record,
+                    including its owner, source module, deleted-by user, and
+                    deletion timestamp.
+                  value:
+                    recycle_bin:
+                      - owner:
+                          name: Patricia Boyle
+                          id: '4876876000000327001'
+                        module:
+                          api_name: Leads
+                          id: '4876876000000002175'
+                        deleted_by:
+                          name: Patricia Boyle
+                          id: '4876876000000327001'
+                        id: '4876876000007018006'
+                        display_name: John Doe
+                        deleted_time: '2024-07-23T15:37:52+05:30'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: >-
+            The OAuth token does not include the required scope to read
+            recycle-bin records. **Resolution:** A new access token must be
+            generated with the **ZohoCRM.settings.recycle_bin.READ** scope.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: RecycleBinRecordUnauthorizedResponse
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: >-
+                      Indicates that the request was not authorized. Possible
+                      values: **error** - The OAuth token does not include the
+                      required scope.
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code identifying the authorization
+                      failure.
+                    maxLength: 100
+                  message:
+                    type: string
+                    maxLength: 500
+                    description: >-
+                      Represents the message describing the authorization
+                      failure.
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional context about the authorization
+                      failure. This is an empty object for OAuth scope
+                      mismatches.
+                    additionalProperties: true
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+                description: >-
+                  Represents the error payload returned when the OAuth token
+                  does not include the scope required to read recycle-bin
+                  records.
+                additionalProperties: false
+              examples:
+                OAuthScopeMismatch:
+                  value:
+                    status: error
+                    code: OAUTH_SCOPE_MISMATCH
+                    message: Unauthorized
+                    details: {}
+        '404':
+          description: >-
+            The request URL does not match a valid endpoint pattern for
+            retrieving a recycle-bin record in Zoho CRM. **Resolution:** The
+            request path must be verified and reissued as a GET request to the
+            correct endpoint.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: RecycleBinRecordNotFoundResponse
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - error
+                    description: >-
+                      Indicates that the requested URL pattern is invalid.
+                      Possible values: **error** - The request did not match a
+                      valid endpoint pattern.
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code identifying why the URL pattern
+                      is invalid.
+                    maxLength: 100
+                  message:
+                    type: string
+                    maxLength: 500
+                    description: Represents the message describing the URL pattern issue.
+                  details:
+                    type: object
+                    description: >-
+                      Represents additional context about the invalid URL
+                      pattern. This is an empty object for URL pattern errors.
+                    additionalProperties: true
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+                description: >-
+                  Represents the error payload returned when the request URL
+                  does not match the valid endpoint pattern for retrieving a
+                  recycle-bin record.
+                additionalProperties: false
+              examples:
+                InvalidUrlPattern:
+                  value:
+                    status: error
+                    code: INVALID_URL_PATTERN
+                    message: The request URL is incorrect.
+                    details: {}
+    delete:
+      operationId: deleteRecycleBinRecord
+      summary: Delete a recycle-bin record permanently
+      description: >-
+        To permanently delete a single record from the Recycle Bin in your Zoho
+        CRM account using its unique ID. Deleting a parent record also removes
+        all its associated child records from the Recycle Bin, such as Notes and
+        Attachments. This operation is irreversible - the record cannot be
+        restored after deletion. When the total number of records to delete,
+        including child records, exceeds 1000, the operation runs as a
+        background job.
+      x-zs-llm-description: >-
+        Permanently deletes one recycle bin record identified by the path
+        parameter recordId.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.recycle_bin.DELETE
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            x-zs-$ref:
+              resource: recycle_bin
+              origins:
+                - operationId: getRecycleBinRecords
+                  propertyId: RecycleBinRecordId
+            description: Identifier
+            type: string
+            maxLength: 100
+          description: >-
+            Specify the unique ID of the recycle-bin record you want to delete
+            permanently.
+      responses:
+        '200':
+          description: >-
+            Returns the per-item result confirming that the recycle-bin record
+            was permanently deleted. The **recycle_bin** array contains one
+            entry with the deletion status and the deleted record ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: RecycleBinRecordDeleteResponse
+                properties:
+                  recycle_bin:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                            - success
+                            - error
+                          description: >-
+                            Indicates whether the deletion succeeded or failed
+                            for the record. Possible values: **success** - The
+                            record was permanently deleted. **error** - The
+                            deletion failed for this record.
+                        code:
+                          type: string
+                          enum:
+                            - SUCCESS
+                            - CANNOT_DELETE
+                          description: >-
+                            Represents the result code for the deletion.
+                            Possible values: **SUCCESS** - The record was
+                            permanently deleted. **CANNOT_DELETE** - The record
+                            could not be permanently deleted.
+                        message:
+                          type: string
+                          maxLength: 500
+                          description: >-
+                            Represents the message describing the outcome of the
+                            deletion request.
+                        details:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              maxLength: 500
+                              description: >-
+                                Represents the unique identifier of the
+                                recycle-bin record that was permanently deleted.
+                          required:
+                            - id
+                          description: >-
+                            Represents additional details about the per-item
+                            deletion result, including the ID of the affected
+                            record.
+                          additionalProperties: true
+                      required:
+                        - status
+                        - code
+                        - message
+                        - details
+                      description: >-
+                        Represents the per-item outcome for a single recycle-bin
+                        record deletion, including the outcome status, result
+                        code, message, and deletion details.
+                      additionalProperties: false
+                    description: >-
+                      Represents the list of per-item results for the deletion
+                      request, with one entry for the single deleted record.
+                    maxItems: 200
+                required:
+                  - recycle_bin
+                description: >-
+                  Represents the response payload for a successful permanent
+                  deletion of a single recycle-bin record, containing the
+                  per-item result under the **recycle_bin** array.
+                additionalProperties: false
+              examples:
+                Success:
+                  value:
+                    recycle_bin:
+                      - status: success
+                        code: SUCCESS
+                        message: Deleted permanently
+                        details:
+                          id: '12345'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  parameters:
+    Filters:
+      name: filters
+      in: query
+      required: true
+      schema:
+        description: Filter expression string.
+        type: string
+        maxLength: 2000
+      description: >-
+        Specify the URL-encoded filter expression that scopes the operation to
+        recycle-bin records matching the supplied conditions. The expression is
+        a JSON object with a top-level **AND** group of field conditions
+        covering **display_name**, **module**, **deleted_by**, or
+        **deleted_time**.
+      examples:
+        ByModule:
+          value: module:Leads
+  schemas:
+    ScheduledResponse:
+      description: >-
+        Result returned when a recycle-bin operation is queued as a background
+        job because it cannot complete synchronously.
+      type: object
+      x-zs-$id: ScheduledResponse
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          enum:
+            - SCHEDULED
+          description: >-
+            Result code indicating that the operation is scheduled. Possible
+            values: **SCHEDULED**.
+        message:
+          type: string
+          maxLength: 500
+          description: >-
+            Represents the message confirming that the operation has been queued
+            as a background job.
+        details:
+          type: object
+          description: >-
+            Represents additional details about the scheduled operation. This is
+            typically an empty object or contains a record ID associated with
+            the scheduled job.
+          additionalProperties: true
+        status:
+          type: string
+          enum:
+            - success
+          description: >-
+            Indicates that the request to schedule the operation succeeded.
+            Possible values: **success**.
+      required:
+        - code
+        - details
+        - message
+        - status
+    SuccessResponse:
+      description: >-
+        Per-item result returned when a single recycle-bin record is processed
+        successfully.
+      type: object
+      x-zs-$id: SuccessResponse
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: >-
+            Indicates that the per-item operation succeeded. Possible values:
+            **success**.
+          enum:
+            - success
+        code:
+          type: string
+          description: >-
+            Result code for the per-item operation. Possible values:
+            **SUCCESS**.
+          maxLength: 100
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          description: >-
+            Represents the message that describes the outcome of the per-item
+            operation.
+          maxLength: 500
+        details:
+          type: object
+          description: >-
+            Represents additional details about the per-item operation,
+            including the affected record ID.
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              description: >-
+                Represents the unique identifier of the recycle-bin record that
+                the per-item result refers to.
+              maxLength: 500
+      required:
+        - code
+        - details
+        - message
+        - status
+    ResultList:
+      description: >-
+        Wrapper that returns the per-item results of a recycle-bin operation
+        under the **recycle_bin** array.
+      type: object
+      x-zs-$id: ResultList
+      additionalProperties: false
+      properties:
+        recycle_bin:
+          description: >-
+            List of per-item results for the operation. Each entry is either a
+            success result or a scheduled-job result.
+          type: array
+          maxItems: 200
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/SuccessResponse'
+              - $ref: '#/components/schemas/ScheduledResponse'
+      required:
+        - recycle_bin
+    ErrorResponse:
+      type: object
+      x-zs-$id: ErrorResponse
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+          description: 'Indicates that the API request failed. Possible values: **error**.'
+        code:
+          type: string
+          description: >-
+            Error code identifying why the request failed. Possible values:
+            **INVALID_DATA**, **EXPECTED_FIELD_MISSING**,
+            **EXPECTED_PARAM_MISSING**, **AMBIGUITY_DURING_PROCESSING**,
+            **AUTHORIZATION_FAILED**.
+          enum:
+            - INVALID_DATA
+            - EXPECTED_FIELD_MISSING
+            - EXPECTED_PARAM_MISSING
+            - AMBIGUITY_DURING_PROCESSING
+            - AUTHORIZATION_FAILED
+        message:
+          type: string
+          maxLength: 500
+          description: Message that describes the cause of the error.
+        details:
+          type: object
+          description: >-
+            Provides additional context about the error, such as the offending
+            parameter, field, JSON path, expected data type, or record ID. The
+            populated keys depend on the **code** value.
+          additionalProperties: false
+          properties:
+            param_name:
+              type: string
+              description: >-
+                Represents the name of the request parameter that caused the
+                error. Possible values: **filters**, **ids**.
+              enum:
+                - filters
+                - ids
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 100
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the request body field that caused
+                the error.
+              maxLength: 1000
+            expected_data_type:
+              type: string
+              description: >-
+                Represents the data type expected for the offending field when
+                the error is due to an invalid data type. Possible values:
+                **jsonarray**, **jsonobject**, **string**.
+              enum:
+                - jsonarray
+                - jsonobject
+                - string
+            param_names:
+              type: array
+              description: >-
+                List of request parameter names that are expected but missing
+                when the error is **EXPECTED_PARAM_MISSING**.
+              items:
+                type: string
+                description: >-
+                  Name of an expected request parameter that was not supplied.
+                  Possible values: **filters**, **ids**,
+                  **restore_all_records**.
+                enum:
+                  - filters
+                  - ids
+                  - restore_all_records
+              maxItems: 2
+            expected_fields:
+              type: array
+              description: >-
+                List of fields that are expected in the request body when the
+                error is **EXPECTED_FIELD_MISSING**.
+              items:
+                type: object
+                description: >-
+                  Represents a single expected field, identified by its API name
+                  and JSON path.
+                additionalProperties: false
+                properties:
+                  api_name:
+                    type: string
+                    description: Represents the API name of the expected field.
+                    maxLength: 100
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path of the expected field within the
+                      request body.
+                    maxLength: 1000
+              maxItems: 3
+            ambiguity_due_to:
+              type: array
+              description: >-
+                List of factors that caused ambiguity when the error is
+                **AMBIGUITY_DURING_PROCESSING**, typically because two or more
+                mutually exclusive restoration modes were supplied.
+              items:
+                type: object
+                description: >-
+                  Represents a single ambiguity factor, identified by its API
+                  name and JSON path.
+                additionalProperties: false
+                properties:
+                  api_name:
+                    type: string
+                    description: Represents the API name of the ambiguity factor.
+                    maxLength: 100
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path of the ambiguity factor within
+                      the request body.
+                    maxLength: 1000
+              maxItems: 2
+            id:
+              type: string
+              description: Represents the record identifier associated with the error.
+              format: int64
+            resource_path_index:
+              type: integer
+              description: >-
+                Represents the zero-based index of the resource path segment
+                that caused the error.
+              format: int32
+      required:
+        - status
+        - code
+        - message
+        - details
+      description: >-
+        Error payload returned when a recycle-bin request fails, including the
+        error code, the error message, and context-specific details.
+      additionalProperties: false
+  responses:
+    BadRequest:
+      description: >-
+        The request contains invalid parameters or payload. See the response
+        body for the specific error code, message, and offending field.
+        **Resolution:** The caller must inspect the **code** and **details**
+        fields, correct the offending input, and reissue the request.
+      content:
+        application/json:
+          schema:
+            x-zs-$id: BadRequestErrorResponse
+            oneOf:
+              - $ref: '#/components/schemas/ErrorResponse'
+              - type: object
+                x-zs-$id: WrappedErrorResponse
+                description: >-
+                  Wrapper that returns multiple error entries under the
+                  **recycle_bin** array when more than one input item is
+                  invalid.
+                additionalProperties: false
+                properties:
+                  recycle_bin:
+                    type: array
+                    description: >-
+                      Represents the list of error entries, one per invalid
+                      input item, with at least one entry and at most 200
+                      entries.
+                    minItems: 1
+                    maxItems: 200
+                    items:
+                      $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Error:
+              value:
+                code: INVALID_DATA
+                details:
+                  api_name: comparator
+                  json_path: $.comparator
+                  param_name: filters
+                message: Please provide a valid comparator
+                status: error
+    MultiStatus:
+      description: >-
+        Returns a per-item multi-status response when some records in the bulk
+        request succeeded and others failed. The **recycle_bin** array contains
+        both success and error entries.
+      content:
+        application/json:
+          schema:
+            type: object
+            x-zs-$id: MultiStatusResponse
+            properties:
+              recycle_bin:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/SuccessResponse'
+                    - $ref: '#/components/schemas/ErrorResponse'
+                maxItems: 200
+                description: >-
+                  Represents the list of per-item results, where each entry is
+                  either a **SuccessResponse** for a successful item or an
+                  **ErrorResponse** for a failed item.
+            required:
+              - recycle_bin
+            additionalProperties: false
+            description: >-
+              Multi-status payload that combines per-item success and error
+              entries when a bulk request partially succeeds.
+          examples:
+            MultiStatusResponse:
+              value:
+                recycle_bin:
+                  - code: SUCCESS
+                    details:
+                      id: '4794080000003274845'
+                    message: record restored
+                    status: success
+                  - code: INVALID_DATA
+                    details:
+                      id: '1000000000000'
+                    message: the id given seems to be invalid
+                    status: error
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.recycle_bin.READ: Read recycle bin records
+            ZohoCRM.settings.recycle_bin.UPDATE: Restore recycle bin records
+            ZohoCRM.settings.recycle_bin.DELETE: Delete recycle bin records
+      description: OAuth2 security scheme for user authentication

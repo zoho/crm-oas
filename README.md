@@ -1,89 +1,95 @@
 
 # Zoho CRM OpenAPI Specification (OAS) v8.0
 
-Welcome to the **Zoho CRM OpenAPI Specification (OAS) v8.0** repository. This repository provides the OpenAPI Specification files for Zoho CRM APIs, enabling developers to seamlessly integrate Zoho CRM with their applications using standardized API definitions.
+Welcome to the **Zoho CRM OpenAPI Specification (OAS) v8.0** repository. This repository provides OpenAPI specifications and operation-level documentation for Zoho CRM APIs, enabling developers to understand the APIs, generate SDKs, and build integrations using standardized API definitions.
 
----
+## Overview
 
-## **Overview**
-
-The OpenAPI Specification (OAS) is a standardized format for documenting RESTful APIs. It provides details about API structure, endpoints, request/response formats, and authentication methods in JSON or YAML formats. This repository hosts the OAS files for Zoho CRM APIs to help developers:
+The OpenAPI Specification (OAS) is a standardized format for documenting RESTful APIs. It describes API endpoints, request and response formats, schemas, and authentication requirements. The files in this repository can be used to:
 
 - Understand Zoho CRM API endpoints and their usage.
-- Generate SDKs in various programming languages.
+- Generate SDKs in languages such as Python, Java, and Node.js.
 - Integrate Zoho CRM with third-party applications.
+- Provide compressed operation documentation and examples to CRM Skills.
 
----
+## Repository Structure
 
-## **Repository Structure**
+### `v8.0/`
 
-The repository is organized into the following sections:
+`v8.0/` contains one folder per resource, for example `appointments/`, `record/`, `users/`, and many others.
 
-- **`v8.0/`**: Contains the OAS files for version 8.0 of Zoho CRM APIs.
-  - `records.json`: Defines endpoints and schemas for record-related operations.
-  - `modules.json`: Provides API details for module-related operations.
-  - Other resource-specific OAS files.
+Each resource folder contains:
 
-- **`python/sample_api_runner.py`**: A sample Python runner script demonstrating how to use the OAS files to interact with Zoho CRM APIs.
+- `<resource>.yaml` - the resource OAS file (for example, `appointments.yaml`).
+- `index.md` - resource overview with links to operations.
+- `operations/<operation_id>/operation.md` - compressed Markdown for each operation.
+- `operations/<operation_id>/examples/*.md` - request/response example Markdown files.
 
----
+Example:
 
-## **Getting Started**
+```text
+v8.0/appointments/
+   appointments.yaml
+   index.md
+   operations/
+      getAppointmentsS/
+         operation.md
+         examples/
+            response-200-success200.md
+            response-400-invalidmoduleresponse1.md
+```
 
-### **1. Explore OAS Files**
-1. Navigate to the `v8.0/` folder in this repository.
-2. Select the OAS file relevant to your use case (e.g., `records.json` for record operations).
-3. Use tools like Swagger's API Hub or Postman to import and explore these files.
+### `python/`
 
-### **2. Generate SDKs**
-Zoho CRM's OAS files can be used to generate SDKs in various programming languages such as Python, Java, and Node.js.
+- `sample_api_runner.py` - sample runner for testing CRM API operations with a generated Python SDK.
 
-#### Steps:
-1. Import the OAS file into Swagger's API Hub:
-   - Go to **Swagger API Hub > Design > Import API**.
-   - Paste the raw link of the selected OAS file from this repository.
-2. Navigate to **Codegen > Client SDK** in Swagger's API Hub.
-3. Select your preferred language (e.g., Python) and download the generated SDK.
+## CRM Skills Integration
 
----
+[CRM Skills](https://github.com/zoho/crm-skills) uses the OAS files, compressed operation Markdown, and examples from this repository to provide API-specific guidance.
 
-## **Using the Sample Python Runner**
+For the skill to work correctly, keep these in sync:
 
-The repository includes a sample Python runner script (`sample_api_runner.py`) that demonstrates how to authenticate and interact with Zoho CRM APIs using the generated Python SDK.
+- Resource OAS files (`v8.0/<resource>/<resource>.yaml`).
+- Operation compressed Markdown (`v8.0/<resource>/operations/<operation_id>/operation.md`).
+- Operation example Markdown files (`v8.0/<resource>/operations/<operation_id>/examples/*.md`).
 
-### **Steps to Run the Sample Runner**
-1. **Download the Sample Runner**:
-   - Download the `sample_api_runner.py` file from `python/` directory in this repository.
-   
-2. **Set Up Authentication**:
-   Zoho CRM APIs use OAuth 2.0 for secure authentication. To authenticate your requests:
+When an OAS file changes, its operation documentation and examples must also be updated. Otherwise, CRM Skills may return stale or inconsistent API guidance.
 
-     1. Obtain your `Client ID`, `Client Secret`, and `Refresh Token` from Zoho's [Developer Console](https://api-console.zoho.com).
-     2. Configure these credentials in your SDK or runner script.
+## Getting Started
 
-3. **Install Dependencies**:
-   - Ensure you have Python installed on your system.
-   - Install any required dependencies using:
-     ```bash
-     pip install -r requirements.txt
-     ```
+### Explore OAS Files
 
-4. **Run the Script**:
-   - Execute the script in your local environment:
-     ```bash
-     python sample_api_runner.py
-     ```
+1. Navigate to `v8.0/`.
+2. Select the resource folder relevant to your use case, such as `record/`, `users/`, or `appointments/`.
+3. Use the resource YAML file as the OpenAPI definition.
+4. Refer to `index.md`, `operations/*/operation.md`, and `operations/*/examples/*.md` for supporting documentation and examples.
+5. Import the YAML file into Swagger API Hub or Postman to explore the API.
 
-5. **Test API Operations**:
-   - The script demonstrates basic operations like creating and fetching records using Zoho CRM APIs.
+### Generate SDKs
 
----
+1. In Swagger API Hub, go to **Design > Import API**.
+2. Import the raw URL of the required resource YAML file from this repository.
+3. Go to **Codegen > Client SDK**.
+4. Select a language and download the generated SDK.
 
+## Using the Sample Python Runner
 
-## **Support**
+`python/sample_api_runner.py` demonstrates authenticated Zoho CRM API calls with a generated SDK.
 
-For any questions or assistance, refer to [Zoho CRM API Documentation](https://www.zoho.com/crm/developer/docs/) or contact our support team at [support@zohocrm.com](mailto:support@zohocrm.com) .
+1. Configure OAuth credentials (`Client ID`, `Client Secret`, `Refresh Token`) from the [Zoho Developer Console](https://api-console.zoho.com).
+2. Install dependencies:
 
---- 
+```bash
+pip install requests python-dotenv
+```
 
-Start building powerful integrations with Zoho CRM today! 🚀
+3. Ensure generated Python SDK modules (for example, `swagger_client`) are available in your environment.
+4. Run from repository root:
+
+```bash
+python3 python/sample_api_runner.py
+```
+
+## Support
+
+For help, see [Zoho CRM API Documentation](https://www.zoho.com/crm/developer/docs/) or contact [support@zohocrm.com](mailto:support@zohocrm.com).

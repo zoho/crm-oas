@@ -1,0 +1,24 @@
+# Zoho CRM Related Records API
+
+- [OpenAPI specification](related_records.yaml)
+- [Related Records](operations/getRelatedRecords/operation.md)
+  - To retrieve the list of records associated with a parent record from a specified related list in your Zoho CRM organization.
+  - [Examples](operations/getRelatedRecords/examples/)
+- [Update related records](operations/updateRelatedRecords/operation.md)
+  - To update multiple records associated with a parent record in a specified related list in your Zoho CRM organization.
+  - [Examples](operations/updateRelatedRecords/examples/)
+- [Delink related records](operations/delinkRelatedRecords/operation.md)
+  - To delink multiple records from a parent record's related list in your Zoho CRM organization. This operation removes only the relationship links - the related records themselves remain intact in their respective modules.
+  - [Examples](operations/delinkRelatedRecords/examples/)
+- [Get a related record](operations/getRelatedRecord/operation.md)
+  - To retrieve the details of a specific related record from a specified related list of a parent record in your Zoho CRM organization.
+  - [Examples](operations/getRelatedRecord/examples/)
+- [Update a related record](operations/updateSpecificRelatedRecord/operation.md)
+  - To update the properties of a specific record associated with a parent record in your Zoho CRM organization.
+  - [Examples](operations/updateSpecificRelatedRecord/examples/)
+- [Delink a related record](operations/delinkSpecificRelatedRecord/operation.md)
+  - To delink a specific related record from a parent record in your Zoho CRM organization. This operation removes only the relationship link - the related record itself remains intact in its module.
+  - [Examples](operations/delinkSpecificRelatedRecord/examples/)
+- [List deleted related records](operations/getDeletedRelatedRecord/operation.md)
+  - To retrieve the list of records that were previously associated with a parent record but have since been deleted from the related list in your Zoho CRM organization.
+  - [Examples](operations/getDeletedRelatedRecord/examples/)

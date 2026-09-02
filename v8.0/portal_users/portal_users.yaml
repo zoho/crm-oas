@@ -1,0 +1,3035 @@
+openapi: 3.1.0
+info:
+  title: Portal Users
+  description: API for managing portal users.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /settings/portals/{portal}/user_type/{userType}/users:
+    get:
+      summary: List portal users
+      description: >-
+        To retrieve the list of portal users in your Zoho CRM organization for
+        the specified portal and user type, with optional filtering by source.
+      x-zs-llm-description: Retrieve users of a specific portal filtered by user type.
+      operationId: getPortalUsers
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.READ
+      parameters:
+        - $ref: '#/components/parameters/Portal'
+        - $ref: '#/components/parameters/UserType'
+        - name: page
+          in: query
+          required: false
+          description: Represents the number of records to return per page.
+          schema:
+            type: integer
+            format: int32
+        - name: per_page
+          in: query
+          required: false
+          description: Represents number of records to return per page.
+          schema:
+            type: integer
+            format: int32
+        - name: Source__s
+          in: query
+          required: false
+          description: Represents the source of the user record.
+          schema:
+            type: string
+            maxLength: 255
+        - name: filters
+          in: query
+          required: false
+          description: Represents the filters of the user record.
+          schema:
+            type: string
+            maxLength: 255
+        - name: personality_ids
+          in: query
+          required: false
+          description: Represents the list of portal user record IDs to filter the results.
+          schema:
+            type: string
+            maxLength: 255
+        - name: type
+          in: query
+          required: false
+          description: Represents the filter type for the portal users.
+          schema:
+            type: string
+            maxLength: 255
+      responses:
+        '200':
+          description: >-
+            Returns the list of portal users for the specified portal and user
+            type.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetPortalUsersResponse
+                description: >-
+                  Response containing the list of portal users and pagination
+                  metadata.
+                additionalProperties: false
+                properties:
+                  users:
+                    type: array
+                    description: Represents the list of portal user objects.
+                    maxItems: 10000
+                    items:
+                      type: object
+                      description: >-
+                        Represents a single portal user and their associated
+                        attributes.
+                      additionalProperties: false
+                      properties:
+                        personality_id:
+                          type: string
+                          description: >-
+                            Represents the unique identifier of the portal user
+                            record.
+                          maxLength: 255
+                        confirm:
+                          type: boolean
+                          description: >-
+                            Indicates whether the portal user has confirmed
+                            their account. Possible values: **true**,
+                            **false**. 
+                        status_reason__s:
+                          type: string
+                          description: >-
+                            Represents the reason for the current status of the
+                            portal user.
+                          maxLength: 500
+                        created_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            Represents the date and time of portal user
+                            creation.
+                        module:
+                          type: string
+                          description: >-
+                            Represents the API name of the CRM module associated
+                            with the portal user.
+                          maxLength: 100
+                        name:
+                          type: string
+                          description: Represents the full name of the portal user.
+                          maxLength: 255
+                        active:
+                          type: boolean
+                          description: >-
+                            Indicates whether the portal user is currently
+                            active. Possible values: **true**, **false**. 
+                        email:
+                          type: string
+                          description: Represents the email address of the portal user.
+                          format: email
+                        Source__s:
+                          type: string
+                          description: Represents the source of the portal user record.
+                          maxLength: 255
+                      required:
+                        - personality_id
+                        - confirm
+                        - status_reason__s
+                        - created_time
+                        - module
+                        - name
+                        - active
+                        - email
+                        - Source__s
+                  info:
+                    type: object
+                    description: Represents pagination metadata for the response.
+                    additionalProperties: false
+                    properties:
+                      total_count:
+                        type: integer
+                        format: int32
+                        description: >-
+                          Represents the total number of portal users available
+                          for the specified portal and user type.
+                    required:
+                      - total_count
+                required:
+                  - users
+                  - info
+              examples:
+                Example1:
+                  value:
+                    users:
+                      - personality_id: '12345'
+                        confirm: true
+                        status_reason__s: Active
+                        created_time: '2023-01-15T10:30:00Z'
+                        module: Contacts
+                        name: John Doe
+                        active: true
+                        email: john.doe@example.com
+                        Source__s: Portal
+                    info:
+                      total_count: 1
+                  description: >-
+                    Shows a successful response containing a single portal user
+                    with all required fields and the total count in the info
+                    object.
+                  summary: List of portal users with response metadata
+        '204':
+          description: >-
+            No portal users found for the specified portal and user type. The
+            portal has no users yet.
+        '400':
+          description: >-
+            Invalid request - a query parameter value does not match the
+            expected format. Resolution: Check the error details for the
+            parameter name and correct the value.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetPortalUsersBadRequestResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: GetPortalUsersPatternNotMatchedResponse
+                    description: >-
+                      Error response returned when the authenticated user does
+                      not have the required permission to perform the operation.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **PATTERN_NOT_MATCHED**. 
+                        enum:
+                          - PATTERN_NOT_MATCHED
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: Represents additional details about the error.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the parameter that
+                              caused the error.
+                            maxLength: 255
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the parameter that
+                              caused the error. Returned when available.
+                            maxLength: 255
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                  - type: object
+                    x-zs-$id: GetPortalUsersApiNotSupportedResponse
+                    description: >-
+                      Error response returned when the API is invoked in an
+                      unsupported environment, such as a sandbox.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **API_NOT_SUPPORTED**. 
+                        enum:
+                          - API_NOT_SUPPORTED
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Represents additional details about the error.
+                        properties:
+                          unsupported_environment:
+                            type: string
+                            description: >-
+                              Represents the name of the environment where this
+                              API is not supported.
+                            maxLength: 255
+                        required:
+                          - unsupported_environment
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message. Possible values: **api
+                          not supported in sandbox**. 
+                        enum:
+                          - api not supported in sandbox
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: Response schema for this operation.
+              examples:
+                InvalidType:
+                  value:
+                    code: PATTERN_NOT_MATCHED
+                    details:
+                      api_name: type
+                    message: Please check whether the input values are correct
+                    status: error
+                  description: >-
+                    Shows the PATTERN_NOT_MATCHED error returned when the
+                    **type** parameter value does not match the required format.
+                  summary: >-
+                    Error when a parameter value does not match the expected
+                    pattern
+                ApiNotSupported:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when the list
+                    portal users operation is attempted in a sandbox
+                    environment.
+                  summary: Error when the API runs in a sandbox environment
+        '403':
+          description: >-
+            Permission denied. Resolution: The CRM administrator must grant the
+            **ZohoCRM.settings.clientportal** scope permission to the user's
+            profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetPortalUsersForbiddenResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: NoPermissionErrorResponse
+                    description: >-
+                      Error response returned when the authenticated user does
+                      not have the required permission to perform the operation.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **NO_PERMISSION**. 
+                        enum:
+                          - NO_PERMISSION
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: Represents additional details about the error.
+                        additionalProperties: true
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                  - type: object
+                    x-zs-$id: PortalInviteErrorResponse
+                    description: >-
+                      Error response containing a list of portal invitation
+                      errors, one per failed invitation.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation permission
+                          error objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents a single portal user and their associated
+                            attributes.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Represents the status code of the operation.
+                              maxLength: 255
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message describing the
+                                issue.
+                              maxLength: 1000
+                          required:
+                            - code
+                            - message
+                    required:
+                      - portal_invite
+                  - type: object
+                    x-zs-$id: AlternativePortalInviteErrorResponse
+                    description: >-
+                      Alternative error response format for portal invitation
+                      failures.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation permission
+                          error objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents a single portal user and their associated
+                            attributes.
+                          additionalProperties: true
+                    required:
+                      - portal_invite
+                  - type: object
+                    x-zs-$id: AdditionalPortalInviteErrorResponse
+                    description: >-
+                      Error response containing an array of portal invitation
+                      error objects.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation permission
+                          error objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents a single portal user and their associated
+                            attributes.
+                          additionalProperties: true
+                description: Response schema for this operation.
+              examples:
+                NoPermissions:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal_Users
+                    message: NO_PERMISSION
+                    status: error
+                  description: >-
+                    Shows the NO_PERMISSION error returned when the
+                    authenticated user does not have the required client portal
+                    read permission.
+                  summary: Error when the user lacks required permissions
+    delete:
+      summary: delete portal users
+      description: >-
+        To delete one or more portal users from your Zoho CRM organization for
+        the specified portal and user type.
+      x-zs-llm-description: >-
+        Based on the personality ids passed in params portal users will be
+        deleted
+      operationId: deletePortalUsers
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.DELETE
+      parameters:
+        - $ref: '#/components/parameters/Portal'
+        - $ref: '#/components/parameters/UserType'
+        - name: personality_ids
+          in: query
+          required: false
+          description: List for record IDs of portal users to be deleted.
+          schema:
+            type: string
+            maxLength: 255
+            x-zs-$ref:
+              resource: record
+              origins:
+                - operationId: getRecords
+                  propertyId: RecordsId
+            format: int64
+            description: Represents the unique identifier of the RecordGETDataItem record.
+      responses:
+        '200':
+          description: Returns the deletion result for the requested portal users.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: DeletePortalUsersResponse
+                description: >-
+                  Response containing the deletion result for each requested
+                  portal user.
+                additionalProperties: false
+                properties:
+                  users:
+                    type: array
+                    description: >-
+                      Represents the list of deleted portal user results.
+                      Contains one result object per requested deletion.
+                    maxItems: 200
+                    items:
+                      type: object
+                      description: Represents the deletion result for a single portal user.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the error code. Possible values:
+                            **SUCCESS**. 
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: >-
+                            Represents the success or informational message for
+                            this operation result.
+                          maxLength: 1000
+                        details:
+                          type: object
+                          description: >-
+                            Represents additional details about the operation
+                            result.
+                          additionalProperties: false
+                          properties:
+                            personality_id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the portal
+                                user record.
+                              maxLength: 255
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the operation. Possible
+                            values: **error**, **success**. 
+                          enum:
+                            - error
+                            - success
+                      required:
+                        - code
+                        - message
+                        - details
+                        - status
+                required:
+                  - users
+              examples:
+                Success:
+                  value:
+                    users:
+                      - code: SUCCESS
+                        details:
+                          personality_id: '12345'
+                        message: User deleted successfully
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          personality_id: '67890'
+                        message: User deleted successfully
+                        status: success
+                  description: >-
+                    Shows a successful response for the deletion of two portal
+                    users, including the personality ID of each deleted user.
+                  summary: Successful deletion of portal users
+        '400':
+          description: >-
+            Invalid request - the deletion failed due to a validation error.
+            Resolution: Check the error code and correct the request before
+            retrying.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeletePortalUsersBadRequestResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: DeletePortalUsersInvalidDataResponse
+                    description: >-
+                      Error response returned when one or more field values in
+                      the request do not match the expected format or
+                      constraints.
+                    additionalProperties: false
+                    properties:
+                      users:
+                        type: array
+                        description: >-
+                          Represents the list of deletion error results. Each
+                          object contains error details for a failed deletion.
+                        maxItems: 200
+                        items:
+                          type: object
+                          description: >-
+                            Represents the deletion result for a single portal
+                            user.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the error code. Possible values:
+                                **INVALID_DATA**. 
+                              enum:
+                                - INVALID_DATA
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message describing the
+                                issue.
+                              maxLength: 1000
+                            details:
+                              type: object
+                              description: Represents additional details about the error.
+                              additionalProperties: false
+                              properties:
+                                personality_id:
+                                  type: string
+                                  format: int64
+                                  description: >-
+                                    Represents the identifier of the portal user
+                                    record associated with the error. Returned
+                                    when available.
+                            status:
+                              type: string
+                              description: >-
+                                Represents the status of the operation. Possible
+                                values: **error**. 
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                  - type: object
+                    x-zs-$id: DeletePortalUsersApiNotSupportedResponse
+                    description: >-
+                      Error response returned when the API is invoked in an
+                      unsupported environment, such as a sandbox.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **API_NOT_SUPPORTED**. 
+                        enum:
+                          - API_NOT_SUPPORTED
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Represents additional details about the error.
+                        properties:
+                          unsupported_environment:
+                            type: string
+                            description: >-
+                              Represents the name of the environment where this
+                              API is not supported.
+                            maxLength: 255
+                        required:
+                          - unsupported_environment
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message. Possible values: **api
+                          not supported in sandbox**. 
+                        enum:
+                          - api not supported in sandbox
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: Response schema for this operation.
+              examples:
+                InvalidData:
+                  value:
+                    users:
+                      - code: INVALID_DATA
+                        details:
+                          personality_id: '5020928000001843001'
+                        message: >-
+                          Delete of user failed as personality id does not
+                          belongs to any portal user or belongs to portal user,
+                          who does not belongs to provided user type.
+                        status: error
+                  description: >-
+                    Shows the INVALID_DATA error returned when a personality ID
+                    does not belong to a valid portal user in the specified user
+                    type.
+                  summary: Error when the personality ID is invalid
+                ApiNotSupported:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when the delete
+                    operation is attempted in a sandbox environment.
+                  summary: Error when the API runs in a sandbox environment
+        '403':
+          description: >-
+            Permission denied. Resolution: The CRM administrator must grant the
+            **ZohoCRM.settings.clientportal** scope permission to the user's
+            profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: DeletePortalUsersForbiddenResponse
+                description: >-
+                  Error response returned when the authenticated user does not
+                  have the required permission to perform the operation.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code. Possible values:
+                      **NO_PERMISSION**. 
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: Represents the error message describing the issue.
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Represents additional details about the error.
+                    additionalProperties: true
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the operation. Possible values:
+                      **error**. 
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                NoPermissions:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal_Users
+                    message: NO_PERMISSION
+                    status: error
+                  description: >-
+                    Shows the NO_PERMISSION error returned when the
+                    authenticated user does not have permission to delete portal
+                    users.
+                  summary: Error when the user lacks required permissions
+  /{module}/actions/portal_invite:
+    post:
+      summary: Invite portal users
+      description: >-
+        To send portal invitations in bulk to CRM records in your Zoho CRM
+        organization for the specified module, scheduling them as asynchronous
+        invitation jobs.
+      x-zs-llm-description: >-
+        Portal invitation will be sent for the records which are present in
+        request body for specific module with language and invitation type
+      operationId: inviteUsers
+      parameters:
+        - $ref: '#/components/parameters/Module'
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.CREATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for inviting portal users
+              additionalProperties: false
+              properties:
+                portal_invite:
+                  type: array
+                  description: >-
+                    Specify the list of portal invitation objects. Each object
+                    must contain a **data** array of user records to invite.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: >-
+                      Specify the invitation data for a single portal invitation
+                      batch.
+                    additionalProperties: false
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Specify the list of user records to include in this
+                          invitation batch.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Specify the invitation data for a single portal
+                            invitation batch.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Specify the unique identifier of the CRM record
+                                to invite as a portal user.
+                              maxLength: 255
+                              x-zs-$ref:
+                                resource: record
+                                origins:
+                                  - operationId: getRecords
+                                    propertyId: RecordsId
+                              format: int64
+                            user_type_id:
+                              type: string
+                              description: >-
+                                Specify the unique identifier of the portal user
+                                type to assign. Refer to the [Get Portal User
+                                Types](https://www.zoho.com/crm/developer/docs/api/v8/get-user-types.html)
+                                resource for valid values.
+                              maxLength: 255
+                              x-zs-$ref:
+                                resource: portal_user_type
+                                origins:
+                                  - operationId: getPortalUserTypes
+                                    propertyId: PortalUserTypesId
+                              format: int64
+                            type:
+                              type: string
+                              description: >-
+                                Specify the invitation action type. Possible
+                                values: **invite** (new invitation),
+                                **reinvite** (re-send invitation).
+                              enum:
+                                - reinvite
+                                - invite
+                            language:
+                              type:
+                                - string
+                                - 'null'
+                              description: >-
+                                Specify the locale code of the language for the
+                                invitation email. Omit or set to null to use the
+                                portal's default language.
+                              enum:
+                                - ''
+                                - it_IT
+                                - ru_RU
+                                - pl_PL
+                                - tr_TR
+                                - hi_IN
+                                - pt_BR
+                                - th_TH
+                                - fr_FR
+                                - ja_JP
+                                - in_ID
+                                - cs_CZ
+                                - de_DE
+                                - hu_HU
+                                - zh_TW
+                                - es_ES
+                                - nl_NL
+                                - sv_SE
+                                - da_DK
+                                - bg_BG
+                                - vi_VN
+                                - iw_IL
+                                - hr_HR
+                                - en_GB
+                                - ko_KR
+                                - en_US
+                                - zh_CN
+                                - ar_EG
+                                - pt_PT
+                                - null
+                          required:
+                            - id
+                            - user_type_id
+                            - type
+                    required:
+                      - data
+              required:
+                - portal_invite
+            examples:
+              Example1:
+                value:
+                  portal_invite:
+                    - data:
+                        - id: '5843104000000624013'
+                          user_type_id: '5843104000000411001'
+                          type: invite
+                          language: en_US
+                description: Shows the Example1 scenario for this operation.
+                summary: Example1 example
+            x-zs-llm-examples:
+              - Example1
+        required: true
+        description: >-
+          The request body must contain a **portal_invite** array. You can
+          include up to 100 invitation objects, each containing a **data** array
+          of user records to invite.
+      responses:
+        '200':
+          description: Returns the scheduled invitation job information.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: InviteUsersResponse
+                description: Response for portal user invitation requests
+                additionalProperties: false
+                properties:
+                  portal_invite:
+                    type: array
+                    description: >-
+                      Represents the list of portal invitation response objects.
+                      Contains one object per invitation batch.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the invitation result for a single portal
+                        invitation batch.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the error code. Possible values:
+                            **SCHEDULED**. 
+                          enum:
+                            - SCHEDULED
+                        details:
+                          type: object
+                          description: >-
+                            Represents additional details about the operation
+                            result.
+                          additionalProperties: false
+                          properties:
+                            job_id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the
+                                scheduled invitation job.
+                              maxLength: 255
+                              x-zs-$id: BulkInviteJobId
+                          required:
+                            - job_id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the success or informational message for
+                            this operation result.
+                          maxLength: 1000
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the operation. Possible
+                            values: **success**. 
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - portal_invite
+              examples:
+                Example1:
+                  value:
+                    portal_invite:
+                      - code: SCHEDULED
+                        details:
+                          job_id: '5020928000002338037'
+                        message: Portal bulk invite scheduled successfully
+                        status: success
+                  description: >-
+                    Shows a successful response when a bulk portal invitation is
+                    scheduled, including the job ID returned for status
+                    tracking.
+                  summary: Successful scheduled bulk portal invitation
+        '400':
+          description: >-
+            Invalid request - one or more fields in the invitation request are
+            invalid or missing. Resolution: Check the error code and correct the
+            request body before retrying.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InviteUsersBadRequestResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: InviteUsersErrorResponse
+                    description: >-
+                      Error response containing a list of portal invitation
+                      errors, one per failed invitation.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation error
+                          objects. Contains one error object per failed
+                          invitation.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents the error details for a single failed
+                            portal invitation.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the error code. Possible values:
+                                **MANDATORY_NOT_FOUND**, **INVALID_DATA**. 
+                              maxLength: 255
+                              enum:
+                                - MANDATORY_NOT_FOUND
+                                - INVALID_DATA
+                            details:
+                              type: object
+                              description: Represents additional details about the error.
+                              additionalProperties: true
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message describing the
+                                issue.
+                              maxLength: 1000
+                            status:
+                              type: string
+                              description: Represents the status of the response.
+                              maxLength: 255
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                    required:
+                      - portal_invite
+                  - type: object
+                    x-zs-$id: InviteUsersApiNotSupportedResponse
+                    description: >-
+                      Error response returned when the API is invoked in an
+                      unsupported environment, such as a sandbox.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **API_NOT_SUPPORTED**. 
+                        enum:
+                          - API_NOT_SUPPORTED
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Represents additional details about the error.
+                        properties:
+                          unsupported_environment:
+                            type: string
+                            description: >-
+                              Represents the name of the environment where this
+                              API is not supported.
+                            maxLength: 255
+                        required:
+                          - unsupported_environment
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message. Possible values: **api
+                          not supported in sandbox**. 
+                        enum:
+                          - api not supported in sandbox
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: Response schema for this operation.
+              examples:
+                MandatoryNotFound:
+                  value:
+                    portal_invite:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: user_type_id
+                          json_path: $.portal_invite[0].data[0].user_type_id
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Shows the MANDATORY_NOT_FOUND error returned when a required
+                    field, such as **user_type_id**, is missing from the request
+                    body.
+                  summary: Error when a required field is missing from the request
+                ApiNotSupported:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when the bulk
+                    invite operation is attempted in a sandbox environment.
+                  summary: Error when the API runs in a sandbox environment
+        '403':
+          description: >-
+            Permission denied. Resolution: The CRM administrator must grant the
+            **ZohoCRM.settings.clientportal** scope permission to the user's
+            profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InviteUsersForbiddenResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: InviteNoPermissionErrorResponse
+                    description: >-
+                      Error response returned when the module specified in the
+                      request path is invalid or not accessible.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **NO_PERMISSION**. 
+                        enum:
+                          - NO_PERMISSION
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: Represents additional details about the error.
+                        additionalProperties: true
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                  - type: object
+                    x-zs-$id: InvitePortalInviteErrorResponse
+                    description: >-
+                      Error response containing a list of portal invitation
+                      errors, one per failed invitation.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation permission
+                          error objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents the permission error for a single portal
+                            invitation.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Represents the status code of the operation.
+                              maxLength: 255
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message describing the
+                                issue.
+                              maxLength: 1000
+                          required:
+                            - code
+                            - message
+                    required:
+                      - portal_invite
+                  - type: object
+                    x-zs-$id: InviteAlternativePortalInviteErrorResponse
+                    description: >-
+                      Alternative error response format for portal invitation
+                      failures.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation permission
+                          error objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents the permission error for a single portal
+                            invitation.
+                          additionalProperties: true
+                    required:
+                      - portal_invite
+                  - type: object
+                    x-zs-$id: InviteAdditionalPortalInviteErrorResponse
+                    description: >-
+                      Error response containing an array of portal invitation
+                      error objects.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation permission
+                          error objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents the permission error for a single portal
+                            invitation.
+                          additionalProperties: true
+                description: Response schema for this operation.
+              examples:
+                NoPermissions:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal_Users
+                    message: NO_PERMISSION
+                    status: error
+                  description: >-
+                    Shows the NO_PERMISSION error returned when the
+                    authenticated user does not have the required client portal
+                    create permission.
+                  summary: Error when the user lacks required permissions
+    get:
+      summary: Invite portal users
+      description: >-
+        To retrieve the status of a scheduled portal invitation job in your Zoho
+        CRM organization using the job identifier returned when invitations were
+        scheduled.
+      x-zs-llm-description: >-
+        Used to fetch the current status of the scheduler which was scheduled
+        for bulk invites. In this need to pass jobid which will be taken from
+        POST bulk invite
+      operationId: getScheduledInviteUsersInfo
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - name: job_id
+          in: query
+          required: false
+          description: >-
+            The ID of the job you received in the response of the [Bulk Invite
+            Users to a Portal
+            API](https://www.zoho.com/crm/developer/docs/api/v8/portal-bulk-invite-users.html).
+            When you do not include this parameter, the response will contain an
+            array of all the jobs that were scheduled previously. 
+
+            If you give an incorrect job_id, you will get an empty response(HTTP
+            204).
+          schema:
+            type: string
+            maxLength: 255
+            x-zs-$ref:
+              resource: portal_users
+              origins:
+                - operationId: inviteUsers
+                  propertyId: BulkInviteJobId
+            description: Represents the unique identifier of the scheduled invitation job.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.READ
+      responses:
+        '200':
+          description: Returns the status of the scheduled portal invitation job.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetScheduledInviteUsersInfoResponse
+                description: Response for portal user invitation requests
+                additionalProperties: false
+                properties:
+                  portal_invite:
+                    type: array
+                    description: >-
+                      Represents the list of portal invitation response objects.
+                      Contains one object per invitation batch.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the invitation result for a single portal
+                        invitation batch.
+                      additionalProperties: false
+                      properties:
+                        data:
+                          type: array
+                          description: >-
+                            Represents the list of individual invitation results
+                            for this job batch.
+                          maxItems: 200
+                          items:
+                            type: object
+                            description: >-
+                              Represents the invitation result for a single
+                              portal invitation batch.
+                            additionalProperties: false
+                            properties:
+                              details:
+                                type: object
+                                description: >-
+                                  Represents additional details about the
+                                  operation result.
+                                additionalProperties: false
+                                properties:
+                                  id:
+                                    type: string
+                                    description: >-
+                                      Represents the unique identifier of the
+                                      CRM record.
+                                    maxLength: 255
+                              code:
+                                type: string
+                                description: >-
+                                  Represents the error code. Possible values:
+                                  **SUCCESS**, **CANNOT_PROCESS**,
+                                  **INVALID_DATA**, **REQUIRED_PARAM_MISSING**,
+                                  **LICENSE_LIMIT_EXCEEDED**, **NOT_REVIEWED**,
+                                  **NOT_APPROVED**, **DUPLICATE_DATA**.
+                                enum:
+                                  - SUCCESS
+                                  - CANNOT_PROCESS
+                                  - INVALID_DATA
+                                  - REQUIRED_PARAM_MISSING
+                                  - LICENSE_LIMIT_EXCEEDED
+                                  - NOT_REVIEWED
+                                  - NOT_APPROVED
+                                  - DUPLICATE_DATA
+                              message:
+                                type: string
+                                description: >-
+                                  Represents the success or informational
+                                  message for this operation result.
+                                maxLength: 1000
+                              status:
+                                type: string
+                                description: >-
+                                  Represents the status of the operation.
+                                  Possible values: **success**, **error**.
+                                enum:
+                                  - success
+                                  - error
+                        job_id:
+                          type: string
+                          description: >-
+                            Represents the unique identifier of the scheduled
+                            invitation job.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the operation. Possible
+                            values: **scheduled**, **completed**,
+                            **in_progress**. 
+                          enum:
+                            - scheduled
+                            - completed
+                            - in_progress
+                      required:
+                        - data
+                        - job_id
+                        - status
+                required:
+                  - portal_invite
+              examples:
+                Example1:
+                  value:
+                    portal_invite:
+                      - data:
+                          - details:
+                              id: '1234567890'
+                            code: SUCCESS
+                            message: An Invite has been sent to the personality.
+                            status: success
+                        job_id: '1234567'
+                        status: completed
+                  description: >-
+                    Shows a successful response with a completed invitation job,
+                    including one processed record with a SUCCESS status.
+                  summary: Scheduled invitation job with completion status
+        '400':
+          description: >-
+            This API is not supported in sandbox environments. Resolution: The
+            request must be made from a production Zoho CRM organization, not a
+            sandbox.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetScheduledInviteUsersInfoApiNotSupportedResponse
+                description: >-
+                  Error response returned when the API is invoked in an
+                  unsupported environment, such as a sandbox.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code. Possible values:
+                      **API_NOT_SUPPORTED**. 
+                    enum:
+                      - API_NOT_SUPPORTED
+                  details:
+                    type: object
+                    additionalProperties: false
+                    description: Represents additional details about the error.
+                    properties:
+                      unsupported_environment:
+                        type: string
+                        description: >-
+                          Represents the name of the environment where this API
+                          is not supported.
+                        maxLength: 255
+                    required:
+                      - unsupported_environment
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message. Possible values: **api not
+                      supported in sandbox**. 
+                    enum:
+                      - api not supported in sandbox
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the operation. Possible values:
+                      **error**. 
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                ApiNotSupported:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when retrieving
+                    invitation status is attempted in a sandbox environment.
+                  summary: Error when the API runs in a sandbox environment
+  /{module}/{recordId}/actions/portal_invite:
+    post:
+      summary: Invite portal users
+      description: >-
+        To send a portal invitation to a single CRM record in your Zoho CRM
+        organization, inviting or re-inviting the record as a portal user for
+        the specified user type.
+      x-zs-llm-description: Invitation will be sent to the record which is specified in url path.
+      operationId: singleInviteUser
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.CREATE
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/RecordId'
+        - name: language
+          in: query
+          required: false
+          description: Preferred language for the invitation
+          schema:
+            type: string
+            enum:
+              - ''
+              - it_IT
+              - ru_RU
+              - pl_PL
+              - tr_TR
+              - hi_IN
+              - pt_BR
+              - th_TH
+              - fr_FR
+              - ja_JP
+              - in_ID
+              - cs_CZ
+              - de_DE
+              - hu_HU
+              - zh_TW
+              - es_ES
+              - nl_NL
+              - sv_SE
+              - da_DK
+              - bg_BG
+              - vi_VN
+              - iw_IL
+              - hr_HR
+              - en_GB
+              - ko_KR
+              - en_US
+              - zh_CN
+              - ar_EG
+              - pt_PT
+        - name: user_type_id
+          in: query
+          required: true
+          description: >-
+            The ID of the user type you want to assign this user with. Use the
+            [Get User Types
+            API](https://www.zoho.com/crm/developer/docs/api/v8/get-user-types.html)
+            for this ID.
+          schema:
+            type: string
+            maxLength: 255
+        - name: type
+          in: query
+          required: true
+          description: >-
+            Represents whether the user is invited the first time or is
+            re-invited. The possible values are invite and reinvite.
+          schema:
+            type: string
+            enum:
+              - reinvite
+              - invite
+      responses:
+        '200':
+          description: Returns the result of the single portal user invitation.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: SingleInviteUserResponse
+                description: Response for portal user invitation requests
+                additionalProperties: false
+                properties:
+                  portal_invite:
+                    type: array
+                    description: >-
+                      Represents the list of portal invitation response objects.
+                      Contains one object per invitation batch.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the invitation result for a single portal
+                        invitation batch.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the error code. Possible values:
+                            **SUCCESS**. 
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: >-
+                            Represents additional details about the operation
+                            result.
+                          additionalProperties: false
+                          properties:
+                            record_id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the CRM
+                                record associated with this invitation.
+                              maxLength: 255
+                          required:
+                            - record_id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the success or informational message for
+                            this operation result.
+                          maxLength: 1000
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the operation. Possible
+                            values: **success**.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                required:
+                  - portal_invite
+              examples:
+                Success:
+                  value:
+                    portal_invite:
+                      - code: SUCCESS
+                        details:
+                          record_id: '5020928000002338037'
+                        message: An Invite has been sent to the personality.
+                        status: success
+                  description: >-
+                    Shows a successful response when a single CRM record is
+                    invited to the portal, including the record ID in the
+                    details.
+                  summary: Successful single portal user invitation
+        '400':
+          description: >-
+            Invalid request - the portal invitation failed due to a validation
+            error. Resolution: Check the error code for the specific failure
+            reason and correct the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: SingleInviteUserBadRequestResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: SingleInviteUserErrorResponse
+                    description: >-
+                      Error response containing a list of portal invitation
+                      errors, one per failed invitation.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **CANNOT_PROCESS**, **INVALID_DATA**,
+                          **REQUIRED_PARAM_MISSING**,
+                          **LICENSE_LIMIT_EXCEEDED**, **NOT_REVIEWED**,
+                          **NOT_APPROVED**, **DUPLICATE_DATA**. 
+                        maxLength: 255
+                        enum:
+                          - CANNOT_PROCESS
+                          - INVALID_DATA
+                          - REQUIRED_PARAM_MISSING
+                          - LICENSE_LIMIT_EXCEEDED
+                          - NOT_REVIEWED
+                          - NOT_APPROVED
+                          - DUPLICATE_DATA
+                      details:
+                        type: object
+                        description: Represents additional details about the error.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: Represents the status of the response.
+                        maxLength: 255
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: SingleInviteUserApiNotSupportedResponse
+                    description: >-
+                      Error response returned when the API is invoked in an
+                      unsupported environment, such as a sandbox.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **API_NOT_SUPPORTED**. 
+                        enum:
+                          - API_NOT_SUPPORTED
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Represents additional details about the error.
+                        properties:
+                          unsupported_environment:
+                            type: string
+                            description: >-
+                              Represents the name of the environment where this
+                              API is not supported.
+                            maxLength: 255
+                        required:
+                          - unsupported_environment
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message. Possible values: **api
+                          not supported in sandbox**. 
+                        enum:
+                          - api not supported in sandbox
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: Response schema for this operation.
+              examples:
+                CannotProcess:
+                  value:
+                    code: CANNOT_PROCESS
+                    details: {}
+                    message: Invalid type for the portal invite
+                    status: error
+                  description: >-
+                    Shows the CANNOT_PROCESS error returned when the invitation
+                    type provided is not valid for the specified record.
+                  summary: Error when the invitation type is invalid
+                InvalidData:
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: >-
+                      Invitation sent has failed as provided personality record
+                      does not have email id.
+                    status: error
+                  description: >-
+                    Shows the INVALID_DATA error returned when the CRM record
+                    does not have an email address required for portal
+                    invitation.
+                  summary: Error when the record does not have an email address
+                NotReviewed:
+                  value:
+                    code: NOT_REVIEWED
+                    details:
+                      record_id: '67890'
+                    message: >-
+                      You cannot sent portal invitation since the record is
+                      waiting for approval under review process.
+                    status: error
+                  description: >-
+                    Shows the NOT_REVIEWED error returned when the record cannot
+                    be invited because it is awaiting approval in a review
+                    process.
+                  summary: Error when the record is pending review approval
+                NotApproved:
+                  value:
+                    code: NOT_APPROVED
+                    details:
+                      record_id: '67890'
+                    message: Entity has not approved to invite yet.
+                    status: error
+                  description: >-
+                    Shows the NOT_APPROVED error returned when the record has
+                    not yet been approved for portal invitation.
+                  summary: Error when the record has not been approved
+                DuplicateData:
+                  value:
+                    code: DUPLICATE_DATA
+                    details:
+                      record_id: '67890'
+                    message: >-
+                      Invitation sent has failed as a portal user exists with
+                      same email id
+                    status: error
+                  description: >-
+                    Shows the DUPLICATE_DATA error returned when a portal user
+                    with the same email address already exists in the portal.
+                  summary: Error when a portal user with the same email already exists
+                ApiNotSupported:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when the single
+                    invite operation is attempted in a sandbox environment.
+                  summary: Error when the API runs in a sandbox environment
+        '403':
+          description: >-
+            Permission denied. Resolution: The CRM administrator must grant the
+            **ZohoCRM.settings.clientportal** scope permission to the user's
+            profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: SingleInviteUserForbiddenResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: SingleInviteNoPermissionErrorResponse
+                    description: >-
+                      Error response returned when the module specified in the
+                      request path is invalid or not accessible.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **NO_PERMISSION**. 
+                        enum:
+                          - NO_PERMISSION
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: Represents additional details about the error.
+                        additionalProperties: true
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                  - type: object
+                    x-zs-$id: SingleInvitePortalInviteErrorResponse
+                    description: >-
+                      Error response containing a list of portal invitation
+                      errors, one per failed invitation.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation permission
+                          error objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents the permission error for a single portal
+                            invitation.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Represents the status code of the operation.
+                              maxLength: 255
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message describing the
+                                issue.
+                              maxLength: 1000
+                          required:
+                            - code
+                            - message
+                    required:
+                      - portal_invite
+                  - type: object
+                    x-zs-$id: SingleInviteAlternativePortalInviteErrorResponse
+                    description: >-
+                      Alternative error response format for portal invitation
+                      failures.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation permission
+                          error objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents the permission error for a single portal
+                            invitation.
+                          additionalProperties: true
+                    required:
+                      - portal_invite
+                  - type: object
+                    x-zs-$id: SingleInviteAdditionalPortalInviteErrorResponse
+                    description: >-
+                      Error response containing an array of portal invitation
+                      error objects.
+                    additionalProperties: false
+                    properties:
+                      portal_invite:
+                        type: array
+                        description: >-
+                          Represents the list of portal invitation permission
+                          error objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents the permission error for a single portal
+                            invitation.
+                          additionalProperties: true
+                description: Response schema for this operation.
+              examples:
+                NoPermissions:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal_Users
+                    message: NO_PERMISSION
+                    status: error
+                  description: >-
+                    Shows the NO_PERMISSION error returned when the
+                    authenticated user does not have the required permission to
+                    invite portal users.
+                  summary: Error when the user lacks required permissions
+  /settings/portals/{portal}/user_type/{userType}/users/action/transfer:
+    post:
+      summary: Transfer portal users from one user group to another
+      description: >-
+        To transfer one or more portal users from one user type group to another
+        within the same portal in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        USed to change portal users from one user group(user type) to another
+        user type which should match same module and invitation field
+      operationId: transferPortalUsers
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.CREATE
+      parameters:
+        - $ref: '#/components/parameters/Portal'
+        - $ref: '#/components/parameters/UserType'
+        - name: transfer_To
+          in: query
+          required: true
+          description: The ID of the user type to which you want to transfer the users.
+          schema:
+            type: string
+            format: int64
+        - name: personality_ids
+          in: query
+          required: true
+          description: The ID of the user type to which you want to transfer the users.
+          schema:
+            type: string
+            format: int64
+      responses:
+        '200':
+          description: Returns the transfer result for the requested portal users.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: TransferPortalUsersResponse
+                description: >-
+                  Response containing the transfer result for each requested
+                  portal user.
+                additionalProperties: false
+                properties:
+                  users:
+                    type: array
+                    description: >-
+                      Represents the list of transferred portal user results.
+                      Contains one result object per transferred user.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: Represents the transfer result for a single portal user.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the error code. Possible values:
+                            **SUCCESS**. 
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: >-
+                            Represents additional details about the operation
+                            result.
+                          additionalProperties: false
+                          properties:
+                            personality_id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the portal
+                                user record.
+                              maxLength: 255
+                          required:
+                            - personality_id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the success or informational message for
+                            this operation result.
+                          maxLength: 1000
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the operation. Possible
+                            values: **success**. 
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - users
+              examples:
+                Success:
+                  value:
+                    users:
+                      - code: SUCCESS
+                        details:
+                          personality_id: '5020928000000606073'
+                        message: User has been transferred successfully
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          personality_id: '5020928000002110005'
+                        message: User has been transferred successfully
+                        status: success
+                  description: >-
+                    Shows a successful response when two portal users are
+                    transferred to a new user type group.
+                  summary: Successful transfer of portal users
+        '400':
+          description: >-
+            Invalid request - the transfer failed due to missing or invalid
+            parameters. Resolution: Check the error code and ensure all required
+            parameters are provided.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: TransferPortalUsersBadRequestResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: TransferPortalUsersErrorResponse
+                    description: >-
+                      Error response containing a list of portal user transfer
+                      errors, one per failed transfer.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **REQUIRED_PARAM_MISSING**, **INVALID_DATA**. 
+                        maxLength: 255
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        description: Represents additional details about the error.
+                        additionalProperties: false
+                        properties:
+                          transfer_To:
+                            type: string
+                            description: >-
+                              Represents the identifier of the destination user
+                              type provided in the request. Returned when
+                              available.
+                            maxLength: 255
+                          param:
+                            type: string
+                            description: >-
+                              Represents the name of the missing or invalid
+                              parameter. Possible values: **personality_ids**,
+                              **transfer_To**. Returned when available.
+                            enum:
+                              - personality_ids
+                              - transfer_To
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: Represents the status of the response.
+                        maxLength: 255
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: TransferPortalUsersUsersErrorResponse
+                    description: >-
+                      Error response containing a users array with transfer
+                      error details.
+                    additionalProperties: false
+                    properties:
+                      users:
+                        type: array
+                        description: >-
+                          Represents the list of transfer error results. Each
+                          object contains error details for a failed transfer.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents the transfer result for a single portal
+                            user.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >-
+                                Represents the error code. Possible values:
+                                **INVALID_DATA**. 
+                              maxLength: 255
+                              enum:
+                                - INVALID_DATA
+                            details:
+                              type: object
+                              description: Represents additional details about the error.
+                              additionalProperties: false
+                              properties:
+                                personality_id:
+                                  type: string
+                                  description: >-
+                                    Represents the identifier of the portal user
+                                    record associated with the error. Returned
+                                    when available.
+                                  maxLength: 255
+                              required:
+                                - personality_id
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message describing the
+                                issue.
+                              maxLength: 1000
+                            status:
+                              type: string
+                              description: Represents the status of the response.
+                              maxLength: 255
+                          required:
+                            - code
+                            - message
+                            - status
+                            - details
+                    required:
+                      - users
+                  - type: object
+                    x-zs-$id: TransferPortalUsersApiNotSupportedResponse
+                    description: >-
+                      Error response returned when the API is invoked in an
+                      unsupported environment, such as a sandbox.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **API_NOT_SUPPORTED**. 
+                        enum:
+                          - API_NOT_SUPPORTED
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Represents additional details about the error.
+                        properties:
+                          unsupported_environment:
+                            type: string
+                            description: >-
+                              Represents the name of the environment where this
+                              API is not supported.
+                            maxLength: 255
+                        required:
+                          - unsupported_environment
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message. Possible values: **api
+                          not supported in sandbox**. 
+                        enum:
+                          - api not supported in sandbox
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: Response schema for this operation.
+              examples:
+                InvalidData:
+                  value:
+                    users:
+                      - code: INVALID_DATA
+                        details:
+                          personality_id: '1234567890'
+                        message: >-
+                          Transfer of user failed as personality id does not
+                          belongs to any portal user or belongs to portal user,
+                          who does not belongs to provided user type.
+                        status: error
+                  description: >-
+                    Shows the INVALID_DATA error returned when one or more
+                    personality IDs do not belong to valid portal users in the
+                    specified user type.
+                  summary: Error when the transfer data is invalid
+                RequiredParamMissing:
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param: transfer_To
+                    message: One of the expected parameter is missing
+                    status: error
+                  description: >-
+                    Shows the REQUIRED_PARAM_MISSING error returned when the
+                    **transfer_To** parameter is not included in the request.
+                  summary: Error when a required parameter is missing
+                ApiNotSupported:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when the transfer
+                    operation is attempted in a sandbox environment.
+                  summary: Error when the API runs in a sandbox environment
+        '403':
+          description: >-
+            Permission denied. Resolution: The CRM administrator must grant the
+            **ZohoCRM.settings.clientportal** scope permission to the user's
+            profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: TransferPortalUsersForbiddenResponse
+                description: >-
+                  Error response returned when the authenticated user does not
+                  have the required permission to perform the operation.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code. Possible values:
+                      **NO_PERMISSION**. 
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: Represents the error message describing the issue.
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Represents additional details about the error.
+                    additionalProperties: true
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the operation. Possible values:
+                      **error**. 
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                NoPermissions:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal_Users
+                    message: User has been transferred successfully
+                    status: error
+                  description: >-
+                    Shows the NO_PERMISSION error returned when the
+                    authenticated user does not have the required client portal
+                    update permission.
+                  summary: Error when the user lacks required permissions
+  /settings/portals/{portal}/user_type/{userType}/users/{recordId}/actions/change_status:
+    put:
+      summary: Change status of portal users
+      description: Changing portal users status.
+      x-zs-llm-description: Updating the portal user status in bullk
+      operationId: changePortalUsersStatus
+      parameters:
+        - $ref: '#/components/parameters/Portal'
+        - $ref: '#/components/parameters/UserType'
+        - $ref: '#/components/parameters/RecordId'
+        - name: active
+          in: query
+          required: true
+          description: >-
+            **true** activates the user in the portal, and **false** deactivates
+            the user in the portal.
+          schema:
+            type: boolean
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.UPDATE
+      responses:
+        '200':
+          description: Returns the status change result for the portal user.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: ChangePortalUsersStatusResponse
+                description: >-
+                  Response containing the status change result for the portal
+                  user.
+                additionalProperties: false
+                properties:
+                  change_status:
+                    type: array
+                    description: >-
+                      Represents the list of portal user status change results.
+                      Contains one result object per requested status change.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the status change result for a single portal
+                        user.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the error code. Possible values:
+                            **SUCCESS**. 
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: >-
+                            Represents additional details about the operation
+                            result.
+                          additionalProperties: false
+                          properties:
+                            personality_id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the portal
+                                user record.
+                              maxLength: 255
+                          required:
+                            - personality_id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the success or informational message for
+                            this operation result.
+                          maxLength: 1000
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the operation. Possible
+                            values: **success**. 
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - change_status
+              examples:
+                Success:
+                  value:
+                    change_status:
+                      - code: SUCCESS
+                        details:
+                          personality_id: '5020928000000606073'
+                        message: Status of the user changed successfully.
+                        status: success
+                  description: >-
+                    Shows a successful response when the portal user status is
+                    changed, including the personality ID of the updated user.
+                  summary: Successful status change for a portal user
+        '400':
+          description: >-
+            Invalid request - the status change failed due to a validation
+            error. Resolution: Check the error code and correct the request
+            parameters before retrying.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ChangePortalUsersStatusBadRequestResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: ChangePortalUsersStatusErrorResponse
+                    description: >-
+                      Portal user status changes error response with array of
+                      errors
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **ALREADY_ACTIVATED**, **INVALID_DATA**,
+                          **LIMIT_EXCEEDED**, **NOT_ALLOWED**. 
+                        maxLength: 255
+                        enum:
+                          - ALREADY_ACTIVATED
+                          - INVALID_DATA
+                          - LIMIT_EXCEEDED
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: Represents additional details about the error.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: string
+                            description: >-
+                              Represents the record identifier associated with
+                              the error. Returned when available.
+                            maxLength: 255
+                          limit:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the configured portal user limit for
+                              this portal. Returned when available.
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: Represents the status of the response.
+                        maxLength: 255
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: ChangePortalUsersStatusApiNotSupportedResponse
+                    description: >-
+                      Error response returned when the API is invoked in an
+                      unsupported environment, such as a sandbox.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code. Possible values:
+                          **API_NOT_SUPPORTED**. 
+                        enum:
+                          - API_NOT_SUPPORTED
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Represents additional details about the error.
+                        properties:
+                          unsupported_environment:
+                            type: string
+                            description: >-
+                              Represents the name of the environment where this
+                              API is not supported.
+                            maxLength: 255
+                        required:
+                          - unsupported_environment
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message. Possible values: **api
+                          not supported in sandbox**. 
+                        enum:
+                          - api not supported in sandbox
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the operation. Possible
+                          values: **error**. 
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                description: Response schema for this operation.
+              examples:
+                NotAllowed:
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: '6'
+                    message: Deactivating unconfirmed user is not allowed
+                    status: error
+                  description: >-
+                    Shows the NOT_ALLOWED error returned when the requested
+                    status change is not permitted for the portal user.
+                  summary: Error when the status change is not allowed
+                LimitExceeded:
+                  value:
+                    code: LIMIT_EXCEEDED
+                    details:
+                      limit: 0
+                    message: License Limit has been exceeded.
+                    status: error
+                  description: >-
+                    Shows the LIMIT_EXCEEDED error returned when activating a
+                    portal user would exceed the configured portal user limit.
+                  summary: Error when the portal user limit is exceeded
+                AlreadyActivated:
+                  value:
+                    code: ALREADY_ACTIVATED
+                    details:
+                      resource_path_index: '6'
+                    message: Already in active state only.
+                    status: error
+                  description: >-
+                    Shows the ALREADY_ACTIVATED error returned when attempting
+                    to activate a portal user who is already in an active state.
+                  summary: Error when user is already activated
+                InvalidData:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: '6'
+                    message: >-
+                      Activation/Deactivation of portal user whose personality
+                      record in recyclebin is not allowed.
+                    status: error
+                  description: >-
+                    Shows the INVALID_DATA error returned when the personality
+                    ID does not match a valid portal user.
+                  summary: Error when the personality ID is invalid
+                ApiNotSupported:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when the change
+                    status operation is attempted in a sandbox environment.
+                  summary: Error when the API runs in a sandbox environment
+        '403':
+          description: >-
+            Permission denied. Resolution: The CRM administrator must grant the
+            **ZohoCRM.settings.clientportal** scope permission to the user's
+            profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: ChangePortalUsersStatusForbiddenResponse
+                description: >-
+                  Error response returned when the authenticated user does not
+                  have the required permission to perform the operation.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code. Possible values:
+                      **NO_PERMISSION**. 
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: Represents the error message describing the issue.
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Represents additional details about the error.
+                    additionalProperties: true
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the operation. Possible values:
+                      **error**. 
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                NoPermissions:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal_Users
+                    message: NO_PERMISSION
+                    status: error
+                  description: >-
+                    Shows the NO_PERMISSION error returned when the
+                    authenticated user does not have the required client portal
+                    permission.
+                  summary: Error when the user lacks required permissions
+  /settings/portals/{portal}/user_type/{userType}/users/actions/change_status:
+    put:
+      summary: Portal User Status
+      description: >-
+        To activate or deactivate multiple portal users in bulk in your Zoho CRM
+        organization for the specified portal and user type.
+      x-zs-llm-description: >-
+        Updating the status of specific portal user which was associated with
+        given record
+      operationId: changePortalUsersStatusBulk
+      parameters:
+        - $ref: '#/components/parameters/Portal'
+        - $ref: '#/components/parameters/UserType'
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.clientportal.UPDATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for changing status of portal users
+              additionalProperties: false
+              properties:
+                change_status:
+                  type: array
+                  description: >-
+                    Represents the list of portal user status change results.
+                    Contains one result object per requested status change.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: >-
+                      Represents the status change result for a single portal
+                      user.
+                    additionalProperties: false
+                    properties:
+                      users:
+                        type: array
+                        description: Represents the list of portal user objects.
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Represents the status change result for a single
+                            portal user.
+                          additionalProperties: false
+                          properties:
+                            active:
+                              type: boolean
+                              description: >-
+                                Indicates whether the portal user is currently
+                                active. Possible values: **true**, **false**.
+                            personality_id:
+                              type: string
+                              description: >-
+                                Specify the unique identifier of the portal user
+                                record.
+                              maxLength: 255
+                          required:
+                            - personality_id
+                            - active
+                    required:
+                      - users
+              required:
+                - change_status
+            examples:
+              Example1:
+                value:
+                  change_status:
+                    - users:
+                        - active: false
+                          personality_id: '12346789899'
+                        - active: false
+                          personality_id: '12346789898'
+                description: >-
+                  Shows a request body for changing the active status of
+                  multiple portal users in bulk.
+                summary: Request body for bulk status change
+            x-zs-llm-examples:
+              - Example1
+        description: >-
+          The request body must contain a **change_status** array. You can
+          include the personality identifiers and new active status for the
+          portal users.
+      responses:
+        '200':
+          description: Returns the status change result for the portal user.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: ChangePortalUsersStatusBulkResponse
+                description: >-
+                  Response containing the status change result for the portal
+                  user.
+                additionalProperties: false
+                properties:
+                  change_status:
+                    type: array
+                    description: >-
+                      Represents the list of portal user status change results.
+                      Contains one result object per requested status change.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the status change result for a single portal
+                        user.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the error code. Possible values:
+                            **SCHEDULED**. 
+                          enum:
+                            - SCHEDULED
+                        details:
+                          type: object
+                          description: >-
+                            Represents additional details about the operation
+                            result.
+                          additionalProperties: false
+                          properties:
+                            job_id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the
+                                scheduled invitation job.
+                              maxLength: 255
+                              x-zs-$id: PortalUserStatusChangeJobId
+                          required:
+                            - job_id
+                        message:
+                          type: string
+                          description: >-
+                            Represents the success or informational message for
+                            this operation result.
+                          maxLength: 1000
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the operation. Possible
+                            values: **success**. 
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - change_status
+              examples:
+                Success:
+                  value:
+                    change_status:
+                      - code: SCHEDULED
+                        details:
+                          job_id: '5020928000000606073'
+                        message: Portal bulk user status change scheduled successfully
+                        status: success
+                  description: >-
+                    Shows a successful response when multiple portal users have
+                    their status changed in bulk.
+                  summary: Successful bulk status change
+        '400':
+          description: >-
+            This API is not supported in sandbox environments. Resolution: The
+            request must be made from a production Zoho CRM organization, not a
+            sandbox.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: ChangePortalUsersStatusBulkApiNotSupportedResponse
+                description: >-
+                  Error response returned when the API is invoked in an
+                  unsupported environment, such as a sandbox.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code. Possible values:
+                      **API_NOT_SUPPORTED**. 
+                    enum:
+                      - API_NOT_SUPPORTED
+                  details:
+                    type: object
+                    additionalProperties: false
+                    description: Represents additional details about the error.
+                    properties:
+                      unsupported_environment:
+                        type: string
+                        description: >-
+                          Represents the name of the environment where this API
+                          is not supported.
+                        maxLength: 255
+                    required:
+                      - unsupported_environment
+                  message:
+                    type: string
+                    description: >-
+                      Represents the error message. Possible values: **api not
+                      supported in sandbox**. 
+                    enum:
+                      - api not supported in sandbox
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the operation. Possible values:
+                      **error**. 
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              examples:
+                ApiNotSupported:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      unsupported_environment: sandbox
+                    message: api not supported in sandbox
+                    status: error
+                  description: >-
+                    Shows the API_NOT_SUPPORTED error returned when the bulk
+                    status change is attempted in a sandbox environment.
+                  summary: Error when the API runs in a sandbox environment
+        '403':
+          description: >-
+            Permission denied. Resolution: The CRM administrator must grant the
+            **ZohoCRM.settings.clientportal** scope permission to the user's
+            profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: ChangePortalUsersStatusBulkForbiddenResponse
+                description: >-
+                  Error response returned when the authenticated user does not
+                  have the required permission to perform the operation.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code. Possible values:
+                      **NO_PERMISSION**. 
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: Represents the error message describing the issue.
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Represents additional details about the error.
+                    additionalProperties: true
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the operation. Possible values:
+                      **error**. 
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                NoPermissions:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Manage_ClientPortal_Users
+                    message: NO_PERMISSION
+                    status: error
+                  description: >-
+                    Shows the NO_PERMISSION error returned when the
+                    authenticated user does not have the required client portal
+                    permission.
+                  summary: Error when the user lacks required permissions
+components:
+  parameters:
+    Portal:
+      name: portal
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the portal. Refer to the [Get
+        Portals](https://www.zoho.com/crm/developer/docs/api/v8/get-portals.html)
+        resource for valid values.
+      schema:
+        type: string
+        maxLength: 255
+        x-zs-$ref:
+          resource: portals
+          origins:
+            - operationId: getPortals
+              propertyId: PortalsName
+        description: Represents the unique name of the portal.
+    UserType:
+      name: userType
+      in: path
+      required: true
+      description: >-
+        Specify the user type of the portal users. Refer to the [Get Portal User
+        Types](https://www.zoho.com/crm/developer/docs/api/v8/get-user-types.html)
+        resource for valid values.
+      schema:
+        type: integer
+        format: int64
+        x-zs-$ref:
+          resource: portal_user_type
+          origins:
+            - operationId: getPortalUserTypes
+              propertyId: PortalUserTypesId
+        description: Represents the unique numeric identifier of the portal user type.
+        maxLength: 255
+    Module:
+      name: module
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the CRM module for which you want to manage
+        portal users. Refer to the [Get
+        Modules](https://www.zoho.com/crm/developer/docs/api/v8/modules-api.html)
+        resource for valid values.
+      schema:
+        type: string
+        maxLength: 255
+        x-zs-$ref:
+          resource: modules
+          origins:
+            - operationId: getModules
+              propertyId: ModulesApiName
+        description: >-
+          Unique API identifier for the module used in third-party integrations;
+          starts with a letter, contains only alphanumeric characters and
+          underscores, and has no consecutive or trailing underscores.
+    RecordId:
+      name: recordId
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the CRM record for which you want to
+        perform the portal action.
+      schema:
+        type: integer
+        format: int64
+        x-zs-$ref:
+          resource: record
+          origins:
+            - operationId: getRecords
+              propertyId: RecordsId
+        description: Represents the unique identifier of the RecordGETDataItem record.
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.clientportal.CREATE: >-
+              Grants permission to create client portal records and send portal
+              invitations.
+            ZohoCRM.settings.clientportal.READ: >-
+              Grants permission to read portal users and retrieve client portal
+              settings.
+            ZohoCRM.settings.clientportal.UPDATE: >-
+              Grants permission to update portal user status and transfer portal
+              users between user type groups.
+            ZohoCRM.settings.clientportal.DELETE: Grants permission to delete portal users from a client portal.
+            ZohoCRM.settings.clientportal.ALL: >-
+              Grants permission to read, create, update, and delete client
+              portal settings and portal users.

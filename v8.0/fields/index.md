@@ -1,0 +1,24 @@
+# Fields API
+
+- [OpenAPI specification](fields.yaml)
+- [List fields metadata](operations/getFields/operation.md)
+  - To retrieve the field metadata for the specified module in your Zoho CRM account, including standard, custom, subform, and linking module fields. The response includes fields from all layouts but does not contain layout-specific configurations such as mandatory flags or picklist values.
+  - [Examples](operations/getFields/examples/)
+- [Create custom fields in a module](operations/createFields/operation.md)
+  - To create custom fields in a module in your Zoho CRM organization, where supported modules include Leads, Contacts, Accounts, Campaigns, Cases, Invoices, Deals, Price Books, Products, Purchase Orders, Quotes, Sales Orders, Solutions, Vendors, Calls, Tasks, Events, Users, and Custom modules.
+  - [Examples](operations/createFields/examples/)
+- [Update custom fields](operations/updateField/operation.md)
+  - To update one or more custom fields in a module in your Zoho CRM account.
+  - [Examples](operations/updateField/examples/)
+- [Get field metadata by ID](operations/getFieldsWithID/operation.md)
+  - To retrieve the metadata of a specific custom field in a module in your Zoho CRM account by its field ID.
+  - [Examples](operations/getFieldsWithID/examples/)
+- [Update a custom field](operations/putFieldsWithId/operation.md)
+  - To update a specific custom field in a module in your Zoho CRM account by its unique field ID.
+  - [Examples](operations/putFieldsWithId/examples/)
+- [Delete a custom field](operations/deleteCustomField/operation.md)
+  - To delete a custom field from a module in your Zoho CRM account. The field must not be used in workflows, approvals, scoring rules, or other configurations before deletion.
+  - [Examples](operations/deleteCustomField/examples/)
+- [Get scheduled jobs for a field](operations/getScheduledJobs/operation.md)
+  - To retrieve the status of scheduled jobs for picklist field operations in your Zoho CRM account, such as replace or delete picklist option jobs.
+  - [Examples](operations/getScheduledJobs/examples/)

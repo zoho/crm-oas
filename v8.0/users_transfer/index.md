@@ -1,0 +1,21 @@
+# Transfer And Delete User
+
+- [OpenAPI specification](users_transfer.yaml)
+- [Transfer and delete a user](operations/userTransfer/operation.md)
+  - Transfer user records, assignments, and criteria to another user
+  - [Examples](operations/userTransfer/examples/)
+- [Transfer and delete a user](operations/userTransferWithoutId/operation.md)
+  - Transfer user records, assignments, and criteria to another user
+  - [Examples](operations/userTransferWithoutId/examples/)
+- [Get transfer and delete status](operations/getTransferStatus/operation.md)
+  - Retrieves the current status of a transfer and delete operation using the job ID returned by the POST request. The response indicates whether the job is scheduled, in progress, completed, or failed.
+  - [Examples](operations/getTransferStatus/examples/)
+- [Transfer a user](operations/userTransferAPI/operation.md)
+  - Transfer user records, assignments, and criteria to another user
+  - [Examples](operations/userTransferAPI/examples/)
+- [Get user transfer status](operations/getTransferAPIStatus/operation.md)
+  - Retrieves the current status of a user transfer operation using the job ID returned by the transfer request. The response indicates whether the transfer job is scheduled, in progress, completed, or failed.
+  - [Examples](operations/getTransferAPIStatus/examples/)
+- [Validate user before transfer](operations/getValidateBeforeTransferStatus/operation.md)
+  - Validates whether the specified user has open records, assignments, criteria configurations, subordinates, or alerts before transferring the user's data. Use this operation to check the user's dependencies before initiating a transfer.
+  - [Examples](operations/getValidateBeforeTransferStatus/examples/)

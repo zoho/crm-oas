@@ -1,0 +1,24 @@
+# Currencies
+
+- [OpenAPI specification](currencies.yaml)
+- [List currencies](operations/getCurrencies/operation.md)
+  - Retrieves all added currencies in the organization.
+  - [Examples](operations/getCurrencies/examples/)
+- [Create currencies](operations/createCurrencies/operation.md)
+  - Creates one or more new currencies for the organization.
+  - [Examples](operations/createCurrencies/examples/)
+- [Update currencies](operations/updateCurrencies/operation.md)
+  - Updates one or more currencies other than the base currency.
+  - [Examples](operations/updateCurrencies/examples/)
+- [Specific Currency](operations/getCurrencyById/operation.md)
+  - Retrieves details of a specific currency via its unique currency ID.
+  - [Examples](operations/getCurrencyById/examples/)
+- [Currency](operations/updateCurrencyById/operation.md)
+  - Update a specific currency by its unique ID.
+  - [Examples](operations/updateCurrencyById/examples/)
+- [Enable multi-currency](operations/enableCurrency/operation.md)
+  - Enable multi-currency for the organization and set the base currency.
+  - [Examples](operations/enableCurrency/examples/)
+- [Update base currency](operations/updateBaseCurrency/operation.md)
+  - Update existing base currency details.
+  - [Examples](operations/updateBaseCurrency/examples/)

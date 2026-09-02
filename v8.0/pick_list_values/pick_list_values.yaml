@@ -1,0 +1,3218 @@
+openapi: 3.1.0
+info:
+  title: Pick List Values
+  description: >-
+    Picklist values are the predefined options configured for picklist-type
+    fields in a CRM module. This API enables developers to retrieve the
+    available picklist values for a specified field, including display names,
+    reference values, color codes, usage status, and layout associations.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server for /crm
+    variables:
+      dc:
+        description: API Server URL TLD
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: API Version
+        default: v8
+paths:
+  /settings/fields/{fieldId}/pick_list_values:
+    get:
+      operationId: getPickListValues
+      summary: Picklist Values for a Field
+      x-zs-llm-description: >-
+        This endpoint retrieves the available pick list values for a specified
+        field in a module. It provides detailed information about each pick list
+        value, including its display value (with translations if enabled),
+        reference value, layout associations, and metadata such as sequence
+        number, color code, and usage status. If the specified field exists but
+        is not of a pick list type, the endpoint will return a 204 No Content
+        response. Note that this endpoint does not support pagination, so all
+        pick list values will be returned in a single response.
+      description: >-
+        Returns the available pick list values for a specified field in a
+        module, including display values (with translations if enabled),
+        reference values, layout associations, and metadata. Returns 204 if the
+        field exists but is not a pick list type. Does not support pagination.
+      parameters:
+        - $ref: '#/components/parameters/FieldId'
+        - $ref: '#/components/parameters/Module'
+      responses:
+        '200':
+          description: >-
+            Returns the list of picklist values for the specified field,
+            including display values, reference values, color codes, usage
+            status, and associated layouts.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Contains the picklist values with metadata for the specified
+                  field, including display names, reference values, color codes,
+                  usage status, and layout associations.
+                properties:
+                  pick_list_values:
+                    type: array
+                    description: >-
+                      Represents the list of picklist value objects retrieved
+                      for the specified field.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      description: Pick list value object
+                      properties:
+                        sequence_number:
+                          type: integer
+                          format: int32
+                          description: >-
+                            Represents the display order position of the
+                            picklist value in the list.
+                          minimum: 1
+                        display_value:
+                          type: string
+                          description: >-
+                            Represents the translated display value of the
+                            picklist option shown to users. When translation is
+                            not enabled, this value matches **reference_value**.
+                          maxLength: 120
+                        reference_value:
+                          type: string
+                          description: >-
+                            Represents the untranslated reference value of the
+                            picklist option used in API operations.
+                          maxLength: 120
+                        colour_code:
+                          type:
+                            - string
+                            - 'null'
+                          maxLength: 9
+                          description: >-
+                            Hexadecimal color code for UI rendering. Null if no
+                            color assigned.
+                          pattern: ^#[0-9a-fA-F]{6}$
+                        actual_value:
+                          type: string
+                          description: >-
+                            Represents the actual internal value of the picklist
+                            option stored in the system.
+                          maxLength: 120
+                        id:
+                          type: string
+                          format: int64
+                          description: >-
+                            Represents the unique identifier of this pick list
+                            value
+                          x-zs-$id: PickListValuesId
+                        type:
+                          type: string
+                          description: >-
+                            Represents the usage status of the picklist value in
+                            the CRM field. Possible values: **used** - The
+                            picklist value is active and available for
+                            selection. **unused** - The picklist value is
+                            inactive and not available for selection. Always
+                            returned in the response.
+                          enum:
+                            - used
+                            - unused
+                        layout_associations:
+                          type:
+                            - array
+                            - 'null'
+                          description: >-
+                            Represents the layouts with which this picklist
+                            value is associated. Returns **null** if the value
+                            is unused or not associated with any layout. Always
+                            returned in the response. Refer to the [Get
+                            Layouts](layouts.json#$.paths./settings/layouts.get)
+                            endpoint for details. Layout IDs are unique within
+                            this array.
+                          maxItems: 10
+                          items:
+                            type: object
+                            additionalProperties: false
+                            description: Layout association object
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the associated
+                                  layout.
+                                maxLength: 50
+                              name:
+                                type: string
+                                description: Display name of the associated layout
+                                maxLength: 40
+                              id:
+                                type: string
+                                format: int64
+                                description: Unique identifier of the associated layout
+                            required:
+                              - api_name
+                              - id
+                              - name
+                      required:
+                        - actual_value
+                        - colour_code
+                        - display_value
+                        - id
+                        - layout_associations
+                        - reference_value
+                        - sequence_number
+                        - type
+                    maxItems: 2000
+                required:
+                  - pick_list_values
+                x-zs-$id: PickListValuesResponse
+              examples:
+                MultiplePickListValues:
+                  summary: >-
+                    Pick list with multiple values showing used/unused types and
+                    color codes
+                  value:
+                    pick_list_values:
+                      - sequence_number: 1
+                        display_value: '-None-'
+                        reference_value: '-None-'
+                        colour_code: null
+                        actual_value: '-None-'
+                        id: '111111000000093642'
+                        type: used
+                        layout_associations:
+                          - api_name: test_1
+                            name: test 1
+                            id: '111111000000081166'
+                          - api_name: Standard__s
+                            name: Standard
+                            id: '111111000000003592'
+                      - sequence_number: 2
+                        display_value: Option 1
+                        reference_value: Option 1
+                        colour_code: '#fea36a'
+                        actual_value: Option 1
+                        id: '111111000000093637'
+                        type: used
+                        layout_associations:
+                          - api_name: Standard__s
+                            name: Standard
+                            id: '111111000000003592'
+                          - api_name: test_1
+                            name: test 1
+                            id: '111111000000081166'
+                      - sequence_number: 3
+                        display_value: Option 2
+                        reference_value: Option 2
+                        colour_code: '#c9651a'
+                        actual_value: Option 2
+                        id: '111111000000093639'
+                        type: unused
+                        layout_associations: null
+                      - sequence_number: 4
+                        display_value: op 3
+                        reference_value: op 3
+                        colour_code: '#ced9ff'
+                        actual_value: op 3
+                        id: '111111000000093683'
+                        type: used
+                        layout_associations:
+                          - api_name: test_1
+                            name: test 1
+                            id: '111111000000081166'
+                          - api_name: Standard__s
+                            name: Standard
+                            id: '111111000000003592'
+        '204':
+          description: >-
+            The specified field exists in the module but is not a picklist type.
+            The API returns an empty response body.
+        '400':
+          description: >-
+            The request failed due to an invalid field ID, an invalid module API
+            name, or an unsupported API version. Resolution: Verify that the
+            field ID in the request URL is valid, the module API name is
+            correct, and the API version is supported.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the error response when an invalid picklist
+                      field ID is provided in the request URL.
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned when an invalid
+                          filed ID is provided in the request.
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Contains additional context about the invalid field ID
+                          error, including the zero-based index of the invalid
+                          path parameter.
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the zero-based index of the invalid
+                              path parameter in the request URL, where 2
+                              indicates the **fieldId** position. Always
+                              returned in the response.
+                            maximum: 10
+                            minimum: 0
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing why the
+                          request failed due to an invalid field ID.
+                        maxLength: 255
+                        minLength: 1
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. **Possible
+                          values:** **error** - The request was not processed
+                          successfully.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    x-zs-$id: InvalidFieldIdError
+                  - type: object
+                    additionalProperties: false
+                    description: Invalid module name provided in query parameter
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned when an invalid
+                          module API name is provided in the request. Possible
+                          values: **INVALID_MODULE** - The module API name in
+                          the request is invalid. Always returned in the
+                          response.
+                        enum:
+                          - INVALID_MODULE
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing why the
+                          request failed due to an invalid module name.
+                        maxLength: 255
+                        minLength: 1
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Contains additional error context for this response.
+                          Returns an empty object for the **INVALID_MODULE**
+                          error. Always returned in the response.
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. Possible
+                          values: **error** - The request was not processed
+                          successfully. Always returned in the response.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    x-zs-$id: InvalidModuleError
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the error response when the specified API
+                      version is not supported.
+                    properties:
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. Possible
+                          values: **error** - The request was not processed
+                          successfully. Always returned in the response.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned when the specified
+                          API version is not supported. Possible values:
+                          **VERSION_NOT_SUPPORTED** - The API version specified
+                          in the request URL is not supported. Always returned
+                          in the response.
+                        enum:
+                          - VERSION_NOT_SUPPORTED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing why the
+                          request failed due to an unsupported API version.
+                        maxLength: 255
+                        minLength: 1
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Contains additional error context for this response.
+                          Returns an empty object for the
+                          **VERSION_NOT_SUPPORTED** error.
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    x-zs-$id: VersionNotSupportedError
+                x-zs-$id: GetPickListValuesErrorResponse
+              examples:
+                InvalidFieldId:
+                  summary: Invalid field ID in request URL
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: the id given seems to be invalid
+                    status: error
+                InvalidModule:
+                  summary: Invalid module API name in request
+                  value:
+                    code: INVALID_MODULE
+                    details: {}
+                    message: the module name given seems to be invalid
+                    status: error
+                VersionNotSupported:
+                  summary: Unsupported API version in request URL
+                  value:
+                    code: VERSION_NOT_SUPPORTED
+                    details: {}
+                    message: api version is not supported
+                    status: error
+        '403':
+          description: >-
+            Permission denied to access field metadata. Resolution: The CRM
+            administrator must grant the required permission to the user's
+            profile (Crm_Implied_Customize_Zoho_CRM permission).
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents the error response when the user does not have the
+                  required permissions to access picklist field metadata.
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code returned when permission to
+                      access field metadata is denied. Possible values:
+                      **NO_PERMISSION** - The user does not have the required
+                      permission to access this resource. Always returned in the
+                      response.
+                    enum:
+                      - NO_PERMISSION
+                  details:
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Contains additional context about the permission error,
+                      including the list of required permissions that are
+                      missing.
+                    properties:
+                      permissions:
+                        type: array
+                        description: >-
+                          Represents the list of CRM permissions required to
+                          perform this action that are missing from the user's
+                          profile. Always returned in the response. Array
+                          contains unique permission identifiers; order is not
+                          significant.
+                        items:
+                          type: string
+                          description: >-
+                            Represents a permission identifier required for this
+                            action.
+                          maxLength: 255
+                          minLength: 1
+                        maxItems: 10
+                        minItems: 1
+                        uniqueItems: true
+                    required:
+                      - permissions
+                  message:
+                    type: string
+                    description: >-
+                      Human-readable error message describing the permission
+                      denial
+                    maxLength: 255
+                    minLength: 1
+                  status:
+                    type: string
+                    description: >-
+                      Represents the status of the response. Possible values:
+                      **error** - The request was not processed successfully.
+                      Always returned in the response.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+                x-zs-$id: NoPermissionError
+              examples:
+                NoPermission:
+                  summary: Missing required permission to access field metadata
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Customize_Zoho_CRM
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.fields.READ
+  /settings/fields/{fieldId}/pick_list_values/{pickListValueId}:
+    get:
+      summary: get a picklist field option
+      x-zs-llm-description: >-
+        This endpoint retrieves a specific picklist field option by its unique
+        identifier (pickListValueId) for a given field (fieldId) in a specified
+        module. It returns the details of the picklist option, including its
+        display value, reference value, color code, actual value, type (used or
+        unused), and layout associations. If the picklist option does not exist
+        or is not associated with the specified field, appropriate error
+        responses will be returned.
+      description: Picklist field option GET
+      operationId: getPickListValuesByPickListValueid
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/FieldId'
+        - $ref: '#/components/parameters/ParamPathPickListValueId'
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PicklistOptionLookupResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    pick_list_values:
+                      - sequence_number: 1
+                        display_value: Referral
+                        reference_value: Referral
+                        colour_code: null
+                        actual_value: Referral
+                        id: '2423488000000002313'
+                        type: used
+                        layout_associations:
+                          - api_name: Standard__s
+                            name: Standard
+                            id: '2423488000000095055'
+                          - api_name: testing_layout
+                            name: testing layout
+                            id: '2423488000000771002'
+        '204':
+          description: No Content - Successful response with no body
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: >-
+                      #/components/schemas/InvalidFieldIdForPicklistValuesErrorResponse
+                  - $ref: '#/components/schemas/InvalidModuleErrorResponse'
+                  - $ref: >-
+                      #/components/schemas/RequiredModuleParameterMissingErrorResponse
+                  - $ref: '#/components/schemas/FeatureNotSupportedErrorResponse'
+                x-zs-$id: GetpicklistvaluesbypicklistvalueidError400
+              examples:
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: The Field Id is
+                    Invalid
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The Field Id is Invalid
+                    status: error
+                InvalidModuleResponse1:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the module name
+                    given seems to be invalid
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      param_name: module
+                    message: the module name given seems to be invalid
+                    status: error
+                RequiredParamMissingResponse1:
+                  summary: >-
+                    Error response with code REQUIRED_PARAM_MISSING: One of the
+                    expected parameter is missing
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: module
+                    message: One of the expected parameter is missing
+                    status: error
+                FeatureNotSupportedResponse1:
+                  summary: >-
+                    Error response with code FEATURE_NOT_SUPPORTED: Your License
+                    does not support this feature
+                  value:
+                    code: FEATURE_NOT_SUPPORTED
+                    details: {}
+                    message: Your License does not support this feature
+                    status: error
+        '403':
+          description: Forbidden - The client does not have access rights to the content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedErrorResponse'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Customize_Zoho_CRM
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.fields.READ
+    delete:
+      summary: Delete a picklist field option
+      description: Delete picklist field option
+      x-zs-llm-description: >-
+        This endpoint allows you to delete a specific picklist field option by
+        its unique identifier (pickListValueId) for a given field (fieldId) in a
+        specified module. The deletion can be immediate or scheduled based on
+        the system's processing capabilities. The response will indicate whether
+        the deletion was successful, scheduled for later processing, or if there
+        were any errors preventing the deletion, such as the option being in use
+        or restricted.
+      operationId: deletePickListValuesByPickListValueid
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/FieldId'
+        - $ref: '#/components/parameters/ParamPathPickListValueId'
+      responses:
+        '200':
+          description: OK - Picklist option deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectPicklistOptionDeletionResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    pick_list_values:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000004126'
+                        message: PickList Option deleted successfully
+                        status: success
+        '202':
+          description: Accepted - Request accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PicklistOptionDeletionResponse'
+              examples:
+                Success202:
+                  summary: Success response for status 202
+                  value:
+                    pick_list_values:
+                      - code: SCHEDULED
+                        details:
+                          job_id: '1111130000001941380'
+                        message: Picklist Option deletion scheduled successfully
+                        status: success
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidPicklistOptionIdErrorResponse'
+                  - $ref: '#/components/schemas/InvalidModuleErrorResponse'
+                  - $ref: >-
+                      #/components/schemas/InvalidFieldIdForPicklistValuesErrorResponse
+                  - $ref: >-
+                      #/components/schemas/RestrictedPicklistOptionDeletionErrorResponse
+                  - $ref: '#/components/schemas/PicklistOptionInUseErrorResponse'
+                  - $ref: >-
+                      #/components/schemas/GlobalPicklistOptionDeletionErrorResponse
+                  - $ref: >-
+                      #/components/schemas/MinimumPicklistOptionConstraintErrorResponse
+                  - $ref: >-
+                      #/components/schemas/MultipleLayoutAssociationDeletionErrorResponse
+                  - $ref: >-
+                      #/components/schemas/RequiredModuleParameterMissingErrorResponse
+                  - $ref: '#/components/schemas/FeatureNotSupportedErrorResponse'
+                x-zs-$id: DeletepicklistvaluesbypicklistvalueidError400
+              examples:
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: pickList option is
+                    not available
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 4
+                    message: pickList option is not available
+                    status: error
+                InvalidModuleResponse1:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the module name
+                    given seems to be invalid
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      param_name: module
+                    message: the module name given seems to be invalid
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: The Field Id is
+                    Invalid
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The Field Id is Invalid
+                    status: error
+                NotAllowedResponse1:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: Restricted Option
+                    cannot be deleted
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: 4
+                    message: Restricted Option cannot be deleted
+                    status: error
+                NotAllowedResponse2:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: The picklist option is
+                    used in features
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      _associations:
+                        - resources:
+                            - name: Lead Nurturing blueprint
+                              id: '1560451000004719301'
+                              _details: null
+                          type: blueprint
+                        - resources:
+                            - name: CadenceTest1
+                              id: '1560451000004719986'
+                              _details: null
+                          type: cadences
+                      resource_path_index: 4
+                    message: The picklist option is used in features
+                    status: error
+                NotAllowedResponse3:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: Global picklist option
+                    cannot be deleted
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: 4
+                    message: Global picklist option cannot be deleted
+                    status: error
+                NotAllowedResponse4:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: PickList field should
+                    have at least one option in the layouts
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: 4
+                    message: >-
+                      PickList field should have at least one option in the
+                      layouts
+                    status: error
+                NotAllowedResponse5:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: PickList field should
+                    be in at most one layout or in unused state in all layouts
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: 4
+                    message: >-
+                      PickList field should be in at most one layout or in
+                      unused state in all layouts
+                    status: error
+                RequiredParamMissingResponse1:
+                  summary: >-
+                    Error response with code REQUIRED_PARAM_MISSING: One of the
+                    expected parameter is missing
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: module
+                    message: One of the expected parameter is missing
+                    status: error
+                FeatureNotSupportedResponse1:
+                  summary: >-
+                    Error response with code FEATURE_NOT_SUPPORTED: Your License
+                    does not support this feature
+                  value:
+                    code: FEATURE_NOT_SUPPORTED
+                    details: {}
+                    message: Your License does not support this feature
+                    status: error
+        '403':
+          description: Forbidden - The client does not have access rights to the content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedErrorResponse'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Customize_Zoho_CRM
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.fields.DELETE
+  /settings/fields/{fieldId}/actions/replace_pick_list_values:
+    post:
+      summary: Replace Pick list values
+      description: Replace picklist value
+      x-zs-llm-description: >-
+        This endpoint allows you to replace one or more picklist values in a
+        specified field of a module. You can provide a old value to be replaced
+        with new value, along with an option to delete the old values after
+        replacement. The request body should contain the details of the old and
+        new picklist values, including their IDs and display values. The
+        response will indicate whether the replacement operation was scheduled
+        successfully or if there were any errors during processing those
+        respective errors will be mentioned.
+      operationId: postReplacePickListValues
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/FieldId'
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PicklistReplaceRequestBody'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  replace_pick_list_values:
+                    - old_value:
+                        id: '1111130000001470910'
+                        display_value: Option 1
+                      new_value:
+                        id: '1111130000001470030'
+                        display_value: Option 2
+                      delete_old_value: true
+      responses:
+        '202':
+          description: Accepted - Request accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PicklistReplaceResponse'
+              examples:
+                Success202:
+                  summary: Success response for status 202
+                  value:
+                    replace_pick_list_values:
+                      - code: SCHEDULED
+                        details:
+                          job_id: '2423488000000732044'
+                        message: >-
+                          Picklist option replace operation scheduled
+                          successfully
+                        status: success
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidFieldIdErrorResponse'
+                  - $ref: >-
+                      #/components/schemas/InvalidReplacePayloadTypeErrorResponse
+                  - type: object
+                    additionalProperties: false
+                    description: Wrapped error response with replace_pick_list_values
+                    properties:
+                      replace_pick_list_values:
+                        type: array
+                        description: Array of error objects
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/InvalidSourceOptionIdErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidTargetOptionIdErrorResponse
+                            - $ref: >-
+                                #/components/schemas/ReplaceBlockedOptionInUseErrorResponse
+                            - $ref: >-
+                                #/components/schemas/GlobalPicklistOptionReplaceErrorResponse
+                            - $ref: >-
+                                #/components/schemas/RestrictedPicklistOptionReplaceErrorResponse
+                            - $ref: >-
+                                #/components/schemas/TargetOptionExpectedFieldMissingErrorResponse
+                            - $ref: >-
+                                #/components/schemas/SourceOptionAmbiguityErrorResponse
+                            - $ref: >-
+                                #/components/schemas/TargetOptionAmbiguityErrorResponse
+                            - $ref: >-
+                                #/components/schemas/IdenticalSourceAndTargetErrorResponse
+                            - $ref: >-
+                                #/components/schemas/SourceOptionMandatoryErrorResponse
+                            - $ref: >-
+                                #/components/schemas/TargetOptionMandatoryErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidTargetDisplayValueErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidDeleteOldValueFlagErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidSourceOptionObjectErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidTargetOptionObjectErrorResponse
+                            - $ref: >-
+                                #/components/schemas/DeleteOldValueNotAllowedErrorResponse
+                        maxItems: 25
+                    required:
+                      - replace_pick_list_values
+                    x-zs-$id: PostreplacepicklistvaluesError400Wrapper
+                  - $ref: '#/components/schemas/InvalidModuleErrorResponse'
+                  - $ref: >-
+                      #/components/schemas/RequiredModuleParameterMissingErrorResponse
+                  - $ref: '#/components/schemas/FeatureNotSupportedErrorResponse'
+                  - $ref: >-
+                      #/components/schemas/InvalidReplacePayloadTypeMinErrorResponse
+                  - $ref: >-
+                      #/components/schemas/MultiselectPicklistReplaceNotAllowedErrorResponse
+                x-zs-$id: PostreplacepicklistvaluesError400
+              examples:
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: The Field Id is
+                    Invalid
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: The Field Id is Invalid
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data type
+                    replace_pick_list_values object (Field:
+                    replace_pick_list_values)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: replace_pick_list_values
+                      json_path: $.replace_pick_list_values
+                    message: invalid data type replace_pick_list_values object
+                    status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: The id given in
+                    old_value is invalid (Field: id)
+                  value:
+                    replace_pick_list_values:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.replace_pick_list_values[0].old_value.id
+                        message: The id given in old_value is invalid
+                        status: error
+                InvalidDataResponse4:
+                  summary: >-
+                    Error response with code INVALID_DATA: The id given in
+                    new_value is invalid (Field: id)
+                  value:
+                    replace_pick_list_values:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.replace_pick_list_values[0].new_value.id
+                        message: The id given in new_value is invalid
+                        status: error
+                InvalidModuleResponse1:
+                  summary: >-
+                    Error response with code INVALID_MODULE: the module name
+                    given seems to be invalid
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      param_name: module
+                    message: the module name given seems to be invalid
+                    status: error
+                NotAllowedResponse1:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: The picklist option is
+                    used in features (Field: id)
+                  value:
+                    replace_pick_list_values:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.replace_pick_list_values[0].old_value.id
+                          _associations:
+                            - resources:
+                                - name: Lead Nurturing blueprint
+                                  id: '1560451000004719301'
+                                  _details: null
+                              type: blueprint
+                            - resources:
+                                - name: CadenceTest1
+                                  id: '1560451000004719986'
+                                  _details: null
+                              type: cadences
+                        message: The picklist option is used in features
+                        status: error
+                NotAllowedResponse2:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: Global picklist option
+                    cannot be replaced (Field: id)
+                  value:
+                    replace_pick_list_values:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.replace_pick_list_values[0].old_value.id
+                        message: Global picklist option cannot be replaced
+                        status: error
+                NotAllowedResponse3:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: Restricted Option
+                    cannot be replaced (Field: id)
+                  value:
+                    replace_pick_list_values:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.replace_pick_list_values[0].old_value.id
+                        message: Restricted Option cannot be replaced
+                        status: error
+                RequiredParamMissingResponse1:
+                  summary: >-
+                    Error response with code REQUIRED_PARAM_MISSING: One of the
+                    expected parameter is missing
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: module
+                    message: One of the expected parameter is missing
+                    status: error
+                ExpectedFieldMissingResponse1:
+                  summary: >-
+                    Error response with code EXPECTED_FIELD_MISSING: specify
+                    atleast one field
+                  value:
+                    replace_pick_list_values:
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_fields:
+                            - api_name: id
+                              json_path: $.replace_pick_list_values[0].new_value.id
+                            - api_name: display_value
+                              json_path: >-
+                                $.replace_pick_list_values[0].new_value.display_value
+                        message: specify atleast one field
+                        status: error
+                ExpectedFieldMissingResponse2:
+                  summary: >-
+                    Error response with code EXPECTED_FIELD_MISSING: specify
+                    atleast one field
+                  value:
+                    replace_pick_list_values:
+                      - code: EXPECTED_FIELD_MISSING
+                        details:
+                          expected_fields:
+                            - api_name: id
+                              json_path: $.replace_pick_list_values[0].old_value.id
+                            - api_name: display_value
+                              json_path: >-
+                                $.replace_pick_list_values[0].old_value.display_value
+                        message: specify atleast one field
+                        status: error
+                AmbiguityDuringProcessingResponse1:
+                  summary: >-
+                    Error response with code AMBIGUITY_DURING_PROCESSING:
+                    ambiguity while processing the old_value
+                  value:
+                    replace_pick_list_values:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.replace_pick_list_values[0].old_value.id
+                            - api_name: display_value
+                              json_path: >-
+                                $.replace_pick_list_values[0].old_value.display_value
+                        message: ambiguity while processing the old_value
+                        status: error
+                AmbiguityDuringProcessingResponse2:
+                  summary: >-
+                    Error response with code AMBIGUITY_DURING_PROCESSING:
+                    ambiguity while processing the new_value
+                  value:
+                    replace_pick_list_values:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.replace_pick_list_values[0].new_value.id
+                            - api_name: display_value
+                              json_path: >-
+                                $.replace_pick_list_values[0].new_value.display_value
+                        message: ambiguity while processing the new_value
+                        status: error
+                DependentMismatchResponse1:
+                  summary: >-
+                    Error response with code DEPENDENT_MISMATCH: old_value and
+                    new_value should not be the same (Field: new_value)
+                  value:
+                    replace_pick_list_values:
+                      - code: DEPENDENT_MISMATCH
+                        details:
+                          dependee:
+                            api_name: old_value
+                            json_path: $.replace_pick_list_values[0].old_value
+                          api_name: new_value
+                          json_path: $.replace_pick_list_values[0].new_value
+                        message: old_value and new_value should not be the same
+                        status: error
+                MandatoryNotFoundResponse1:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: old_value is
+                    mandatory (Field: old_value)
+                  value:
+                    replace_pick_list_values:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: old_value
+                          json_path: $.replace_pick_list_values[0].old_value
+                        message: old_value is mandatory
+                        status: error
+                MandatoryNotFoundResponse2:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: new_value is
+                    mandatory (Field: new_value)
+                  value:
+                    replace_pick_list_values:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: new_value
+                          json_path: $.replace_pick_list_values[0].new_value
+                        message: new_value is mandatory
+                        status: error
+                InvalidDataResponse5:
+                  summary: >-
+                    Error response with code INVALID_DATA: The display_value
+                    given in new_value is invalid (Field: display_value)
+                  value:
+                    replace_pick_list_values:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: display_value
+                          json_path: >-
+                            $.replace_pick_list_values[0].new_value.display_value
+                        message: The display_value given in new_value is invalid
+                        status: error
+                InvalidDataResponse6:
+                  summary: >-
+                    Error response with code INVALID_DATA: The delete_old_value
+                    boolean field type mismatch (Field: delete_old_value)
+                  value:
+                    replace_pick_list_values:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: boolean
+                          api_name: delete_old_value
+                          json_path: $.replace_pick_list_values[0].delete_old_value
+                        message: The delete_old_value boolean field type mismatch
+                        status: error
+                InvalidDataResponse7:
+                  summary: >-
+                    Error response with code INVALID_DATA: old_value expected
+                    data type invalid (Field: old_value)
+                  value:
+                    replace_pick_list_values:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: jsonobject
+                          api_name: old_value
+                          json_path: $.replace_pick_list_values[0].old_value
+                        message: old_value expected data type invalid
+                        status: error
+                InvalidDataResponse8:
+                  summary: >-
+                    Error response with code INVALID_DATA: new_value expected
+                    data type invalid (Field: new_value)
+                  value:
+                    replace_pick_list_values:
+                      - code: INVALID_DATA
+                        details:
+                          expected_data_type: jsonobject
+                          api_name: new_value
+                          json_path: $.replace_pick_list_values[0].new_value
+                        message: new_value expected data type invalid
+                        status: error
+                FeatureNotSupportedResponse1:
+                  summary: >-
+                    Error response with code FEATURE_NOT_SUPPORTED: Your License
+                    does not support this feature
+                  value:
+                    code: FEATURE_NOT_SUPPORTED
+                    details: {}
+                    message: Your License does not support this feature
+                    status: error
+                NotAllowedResponse5:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: Cannot delete
+                    old_value for a picklist field
+                  value:
+                    replace_pick_list_values:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: delete_old_value
+                          json_path: $.replace_pick_list_values[0].delete_old_value
+                        message: Cannot delete old_value for a picklist field
+                        status: error
+                InvalidDataResponse9:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data type
+                    replace_pick_list_values object (Field:
+                    replace_pick_list_values)
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      minimum_length: 1
+                      api_name: replace_pick_list_values
+                      json_path: $.replace_pick_list_values
+                    message: invalid data type replace_pick_list_values object
+                    status: error
+                NotAllowedResponse4:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: PickList option
+                    replace not allowed
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      resource_path_index: 2
+                    message: PickList option replace not allowed
+                    status: error
+        '403':
+          description: Forbidden - The client does not have access rights to the content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedErrorResponse'
+              examples:
+                NoPermissionResponse1:
+                  summary: 'Error response with code NO_PERMISSION: permission denied'
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Customize_Zoho_CRM
+                    message: permission denied
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.fields.UPDATE
+components:
+  schemas:
+    InvalidTargetOptionIdErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the ID provided in new_value (target option) is invalid.
+        Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - The id given in new_value is invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Target Option ID Error Response
+      x-zs-$id: InvalidTargetOptionIdErrorResponse
+    InvalidFieldIdForPicklistValuesErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the provided field ID is invalid for retrieving picklist
+        values. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: 'Detail field: resource_path_index'
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - The Field Id is Invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Field ID for Picklist Values Error Response
+      x-zs-$id: InvalidFieldIdForPicklistValuesErrorResponse
+    FeatureNotSupportedErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the requested feature is not supported by the current
+        license. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - FEATURE_NOT_SUPPORTED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Your License does not support this feature
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Feature Not Supported Error Response
+      x-zs-$id: FeatureNotSupportedErrorResponse
+    PicklistReplaceRequestBody:
+      type: object
+      additionalProperties: false
+      description: >-
+        Container for the replace_pick_list_values array, listing one or more
+        instructions to perform picklist value replacements.
+      properties:
+        replace_pick_list_values:
+          type: array
+          description: Replace picklist value with from and to options (Required)
+          items:
+            $ref: '#/components/schemas/PicklistReplaceInstructionItem'
+          maxItems: 1
+          minItems: 1
+      required:
+        - replace_pick_list_values
+      title: Picklist Replace Request Body
+    PicklistReplaceInstructionItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        A structured instruction that pairs a source and target picklist option,
+        with an option to delete the source after replacement.
+      properties:
+        old_value:
+          $ref: '#/components/schemas/PicklistReplaceSourceValue'
+          description: The option which is to be replaced (Required)
+        new_value:
+          $ref: '#/components/schemas/PicklistReplaceTargetValue'
+          description: The option to be replaced with the option (Required)
+        delete_old_value:
+          type:
+            - boolean
+            - 'null'
+          description: Boolean value to delete the old_value along with replace
+      required:
+        - new_value
+        - old_value
+      title: Picklist Replace Instruction Item
+    DirectPicklistOptionDeletionResult:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a direct (non-scheduled) deletion result for a picklist
+        option, including status, code, message, and deleted option ID.
+      properties:
+        code:
+          type: string
+          description: Picklist option deletion result code
+          enum:
+            - SUCCESS
+        details:
+          type: object
+          additionalProperties: false
+          description: Details of the deleted picklist option
+          properties:
+            id:
+              type: string
+              format: int64
+              description: The unique ID of the deleted picklist option
+              minLength: 13
+              maxLength: 100
+          required:
+            - id
+        message:
+          type: string
+          description: Picklist option deletion message
+          enum:
+            - PickList Option deleted successfully
+        status:
+          type: string
+          description: Picklist option deletion status
+          enum:
+            - success
+          maxLength: 7
+          minLength: 5
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Direct Picklist Option Deletion Result
+      x-zs-$id: DirectPicklistOptionDeletionResult
+    DirectPicklistOptionDeletionResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Success response indicating picklist option has been deleted directly.
+        Returns an array of deletion results.
+      properties:
+        pick_list_values:
+          type: array
+          description: pick list values
+          items:
+            $ref: '#/components/schemas/DirectPicklistOptionDeletionResult'
+          maxItems: 1
+          minItems: 0
+      required:
+        - pick_list_values
+      title: Direct Picklist Option Deletion Response
+      x-zs-$id: DirectPicklistOptionDeletionResponse
+    PicklistOptionDeletionResult:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the scheduled deletion outcome for a picklist option,
+        including status, code, message, and async job details.
+      properties:
+        code:
+          type: string
+          description: picklist option deletion code
+          enum:
+            - SCHEDULED
+        details:
+          $ref: '#/components/schemas/AsyncJobDetails'
+        message:
+          type: string
+          description: Picklist option deletion message
+          enum:
+            - Picklist Option deletion scheduled successfully
+        status:
+          type: string
+          description: Picklist option deletion status
+          enum:
+            - success
+          maxLength: 7
+          minLength: 5
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Picklist Option Deletion Result
+    PicklistReplaceResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Accepted response indicating picklist replace operations have been
+        scheduled. Returns an array of scheduling results.
+      properties:
+        replace_pick_list_values:
+          type: array
+          description: Description of the replace option on schedule
+          items:
+            $ref: '#/components/schemas/PicklistReplaceScheduleResult'
+          maxItems: 1
+          minItems: 1
+      required:
+        - replace_pick_list_values
+      title: Picklist Replace Response
+      x-zs-$id: PicklistReplaceResponse
+    IdenticalSourceAndTargetErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when old_value and new_value reference the same picklist
+        option. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - DEPENDENT_MISMATCH
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            dependee:
+              type: object
+              additionalProperties: false
+              description: 'Detail field: dependee'
+              properties:
+                api_name:
+                  type: string
+                  description: 'Nested detail field: api_name'
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: 'Nested detail field: json_path'
+                  maxLength: 1000
+              required:
+                - api_name
+                - json_path
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - dependee
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - old_value and new_value should not be the same
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Identical Source and Target Error Response
+      x-zs-$id: IdenticalSourceAndTargetErrorResponse
+    PicklistReplaceScheduleResult:
+      type: object
+      additionalProperties: false
+      description: >-
+        Result entry for a scheduled replace operation, including status, code,
+        message, and asynchronous job details.
+      properties:
+        code:
+          type: string
+          description: Code of the scheduler response
+          enum:
+            - SCHEDULED
+        details:
+          $ref: '#/components/schemas/AsyncJobDetails'
+        message:
+          type: string
+          description: Message of the scheduled details
+          enum:
+            - Picklist option replace operation scheduled successfully
+        status:
+          type: string
+          description: status on replace operation of the scheduler
+          enum:
+            - success
+          maxLength: 7
+          minLength: 5
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Picklist Replace Schedule Result
+    InvalidSourceOptionObjectErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when old_value is not a valid object or has an unexpected
+        structure. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: 'Detail field: expected_data_type'
+              maxLength: 255
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - old_value expected data type invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Source Option Object Error Response
+      x-zs-$id: InvalidSourceOptionObjectErrorResponse
+    InvalidSourceOptionIdErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the ID provided in old_value (source option) is invalid.
+        Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - The id given in old_value is invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Source Option ID Error Response
+      x-zs-$id: InvalidSourceOptionIdErrorResponse
+    SourceOptionMandatoryErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when old_value is missing in the replace request. Includes
+        error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - old_value is mandatory
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Source Option Mandatory Error Response
+      x-zs-$id: SourceOptionMandatoryErrorResponse
+    TargetOptionExpectedFieldMissingErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when required fields for new_value are not provided. Includes
+        error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - EXPECTED_FIELD_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_fields:
+              type: array
+              description: 'Detail field: expected_fields'
+              items:
+                type: object
+                additionalProperties: false
+                description: 'Detail Field: expected_fields'
+                properties:
+                  api_name:
+                    type: string
+                    description: 'Nested detail field: api_name'
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: 'Nested detail field: json_path'
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - expected_fields
+        message:
+          type: string
+          description: Error message
+          enum:
+            - specify atleast one field
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Target Option Expected Field Missing Error Response
+      x-zs-$id: TargetOptionExpectedFieldMissingErrorResponse
+    PermissionDeniedErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the user lacks permission to access the requested picklist
+        resource. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - NO_PERMISSION
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            permissions:
+              type: array
+              description: 'Detail field: permissions'
+              items:
+                type: string
+                description: 'Detail Field: permissions'
+                maxLength: 255
+              maxItems: 25
+          required:
+            - permissions
+        message:
+          type: string
+          description: Error message
+          enum:
+            - permission denied
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Permission Denied Error Response
+      x-zs-$id: PermissionDeniedErrorResponse
+    MinimumPicklistOptionConstraintErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when deletion would leave no options in a layout (must have at
+        least one option). Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: 'Detail field: resource_path_index'
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - PickList field should have at least one option in the layouts
+            - PickList field should have at least two option in the layouts
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Minimum Picklist Option Constraint Error Response
+      x-zs-$id: MinimumPicklistOptionConstraintErrorResponse
+    InvalidReplacePayloadTypeMinErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the replace_pick_list_values payload fails minimum length
+        or type validations. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+            minimum_length:
+              type: integer
+              format: int32
+              description: 'Detail field: minimum_length'
+          required:
+            - api_name
+            - json_path
+            - minimum_length
+        message:
+          type: string
+          description: Error message
+          enum:
+            - invalid data type replace_pick_list_values object
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Replace Payload Type (Minimum) Error Response
+      x-zs-$id: InvalidReplacePayloadTypeMinErrorResponse
+    MultiselectPicklistReplaceNotAllowedErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when attempting to replace picklist options on a multiselect
+        picklist field, which is not supported.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details
+          properties:
+            resource_path_index:
+              type: integer
+              description: Resource path index
+              format: int64
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - PickList option replace not allowed
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Multiselect Picklist Replace Not Allowed Error Response
+      x-zs-$id: MultiselectPicklistReplaceNotAllowedErrorResponse
+    InvalidPicklistOptionIdErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the specified picklist option ID does not exist or is
+        invalid. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: 'Detail field: resource_path_index'
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - pickList option is not available
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Picklist Option ID Error Response
+      x-zs-$id: InvalidPicklistOptionIdErrorResponse
+    PicklistLayoutAssociation:
+      type: object
+      additionalProperties: false
+      description: >-
+        Identifies a layout where the picklist option is available, including
+        the layout API name, display name, and unique association ID.
+      properties:
+        api_name:
+          type: string
+          description: Api Name of the layout
+          maxLength: 255
+        name:
+          type: string
+          description: Name of the layout
+          maxLength: 255
+        id:
+          type: string
+          description: Unique Id of the picklist option
+          format: int64
+      required:
+        - api_name
+        - id
+        - name
+      title: Picklist Layout Association
+    PicklistOptionDetail:
+      type: object
+      additionalProperties: false
+      description: >-
+        Full metadata for a picklist option, including unique ID,
+        actual/reference/display values, sequence order, usage type
+        (used/unused), optional color code, and associated layouts.
+      properties:
+        sequence_number:
+          type: integer
+          format: int32
+          description: sort order of the option respective to field
+        display_value:
+          type: string
+          description: >-
+            Display value of the picklist option which are localised or
+            translated
+          maxLength: 120
+        reference_value:
+          type: string
+          description: >-
+            Reference value of the picklist option which are localised or
+            updated
+          maxLength: 120
+        colour_code:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Color code of the picklist option when the picklist field in color
+            code enabled
+          maxLength: 9
+        actual_value:
+          type: string
+          description: Actual value of the picklist option.
+          maxLength: 120
+        id:
+          type: string
+          description: Unique Id of the picklist option
+          format: int64
+        type:
+          type: string
+          description: Presence of the option in layouts and in the module
+          enum:
+            - used
+            - unused
+        layout_associations:
+          type:
+            - array
+            - 'null'
+          description: Layout Association of the picklist option
+          items:
+            $ref: '#/components/schemas/PicklistLayoutAssociation'
+          maxItems: 6
+          minItems: 0
+      required:
+        - actual_value
+        - colour_code
+        - display_value
+        - id
+        - layout_associations
+        - reference_value
+        - sequence_number
+        - type
+      title: Picklist Option Detail
+    InvalidModuleErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the specified module name is invalid. Includes error code,
+        message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_MODULE
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            param_name:
+              type: string
+              description: 'Detail field: param_name'
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: Error message
+          enum:
+            - the module name given seems to be invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Module Error Response
+      x-zs-$id: InvalidModuleErrorResponse
+    TargetOptionMandatoryErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when new_value is missing in the replace request. Includes
+        error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - new_value is mandatory
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Target Option Mandatory Error Response
+      x-zs-$id: TargetOptionMandatoryErrorResponse
+    PicklistReplaceSourceValue:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the picklist option to be replaced, providing the display
+        value and unique identifier. At least one of id or display_value must be
+        provided.
+      properties:
+        display_value:
+          type:
+            - string
+            - 'null'
+          description: Specify the display value of the option to be replaced
+          maxLength: 120
+        id:
+          type:
+            - string
+            - 'null'
+          format: int64
+          description: Specify the option id which is to be replaced (Unique)
+          maxLength: 20
+          minLength: 13
+      anyOf:
+        - required:
+            - id
+        - required:
+            - display_value
+      title: Picklist Replace Source Value
+    GlobalPicklistOptionReplaceErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when attempting to replace a global picklist option, which is
+        not allowed. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Global picklist option cannot be replaced
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Global Picklist Option Replace Error Response
+      x-zs-$id: GlobalPicklistOptionReplaceErrorResponse
+    RequiredModuleParameterMissingErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the required module parameter is missing. Includes error
+        code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - REQUIRED_PARAM_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            param_name:
+              type: string
+              description: 'Detail field: param_name'
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: Error message
+          enum:
+            - One of the expected parameter is missing
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Required Module Parameter Missing Error Response
+      x-zs-$id: RequiredModuleParameterMissingErrorResponse
+    PicklistReplaceTargetValue:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the picklist option that will act as the replacement,
+        providing the display value and unique identifier. At least one of id or
+        display_value must be provided.
+      properties:
+        display_value:
+          type:
+            - string
+            - 'null'
+          description: Display value of the option
+          maxLength: 120
+        id:
+          type:
+            - string
+            - 'null'
+          format: int64
+          description: The option id (Unique)
+          maxLength: 20
+          minLength: 13
+      anyOf:
+        - required:
+            - id
+        - required:
+            - display_value
+      title: Picklist Replace Target Value
+    ReplaceBlockedOptionInUseErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when a replace operation is blocked because the option is used
+        by other features. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            _associations:
+              type: array
+              description: 'Detail field: _associations'
+              items:
+                type: object
+                additionalProperties: false
+                description: 'Detail Field: _associations'
+                properties:
+                  resources:
+                    type: array
+                    description: 'Nested detail field: resources'
+                    items:
+                      type: object
+                      additionalProperties: false
+                      description: 'Detail Field: resources'
+                      properties:
+                        name:
+                          type: string
+                          description: 'Nested detail field: name'
+                          maxLength: 255
+                        id:
+                          type: string
+                          description: 'Nested detail field: id'
+                          maxLength: 255
+                        _details:
+                          type:
+                            - object
+                            - 'null'
+                          description: 'Nested detail field: _details'
+                          additionalProperties: true
+                      required:
+                        - _details
+                        - id
+                        - name
+                    maxItems: 25
+                  type:
+                    type: string
+                    description: 'Nested detail field: type'
+                    maxLength: 255
+                required:
+                  - resources
+                  - type
+              maxItems: 25
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - _associations
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - The picklist option is used in features
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: 'Replace Blocked: Option In Use Error Response'
+      x-zs-$id: ReplaceBlockedOptionInUseErrorResponse
+    RestrictedPicklistOptionReplaceErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when attempting to replace a restricted picklist option.
+        Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Restricted Option cannot be replaced
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Restricted Picklist Option Replace Error Response
+      x-zs-$id: RestrictedPicklistOptionReplaceErrorResponse
+    InvalidTargetDisplayValueErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the display_value provided in new_value is invalid.
+        Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - The display_value given in new_value is invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Target Display Value Error Response
+      x-zs-$id: InvalidTargetDisplayValueErrorResponse
+    PicklistOptionDeletionResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Accepted response indicating picklist option deletion has been
+        scheduled. Returns an array of deletion results.
+      properties:
+        pick_list_values:
+          type: array
+          description: pick list values
+          items:
+            $ref: '#/components/schemas/PicklistOptionDeletionResult'
+          maxItems: 1
+          minItems: 0
+      required:
+        - pick_list_values
+      title: Picklist Option Deletion Response
+      x-zs-$id: PicklistOptionDeletionResponse
+    RestrictedPicklistOptionDeletionErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when attempting to delete a restricted picklist option.
+        Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: 'Detail field: resource_path_index'
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Restricted Option cannot be deleted
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Restricted Picklist Option Deletion Error Response
+      x-zs-$id: RestrictedPicklistOptionDeletionErrorResponse
+    PicklistOptionInUseErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the picklist option is used by other features and cannot
+        be modified. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            _associations:
+              type: array
+              description: 'Detail field: _associations'
+              items:
+                type: object
+                additionalProperties: false
+                description: 'Detail Field: _associations'
+                properties:
+                  resources:
+                    type: array
+                    description: 'Nested detail field: resources'
+                    items:
+                      type: object
+                      additionalProperties: false
+                      description: 'Detail Field: resources'
+                      properties:
+                        name:
+                          type: string
+                          description: 'Nested detail field: name'
+                          maxLength: 255
+                        id:
+                          type: string
+                          description: 'Nested detail field: id'
+                          maxLength: 255
+                        _details:
+                          type:
+                            - object
+                            - 'null'
+                          description: 'Nested detail field: _details'
+                          additionalProperties: true
+                      required:
+                        - _details
+                        - id
+                        - name
+                    maxItems: 25
+                  type:
+                    type: string
+                    description: 'Nested detail field: type'
+                    maxLength: 255
+                required:
+                  - resources
+                  - type
+              maxItems: 25
+            resource_path_index:
+              type: integer
+              format: int32
+              description: 'Detail field: resource_path_index'
+          required:
+            - _associations
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - The picklist option is used in features
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Picklist Option In Use Error Response
+      x-zs-$id: PicklistOptionInUseErrorResponse
+    AsyncJobDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Contains the scheduler job identifier for an asynchronous operation that
+        was accepted for processing.
+      properties:
+        job_id:
+          type: string
+          format: int64
+          description: scheduler jobid
+          maxLength: 20
+          minLength: 13
+      required:
+        - job_id
+      title: Asynchronous Job Details
+    GlobalPicklistOptionDeletionErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when attempting to delete a global picklist option, which is
+        not allowed. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: 'Detail field: resource_path_index'
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Global picklist option cannot be deleted
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Global Picklist Option Deletion Error Response
+      x-zs-$id: GlobalPicklistOptionDeletionErrorResponse
+    InvalidFieldIdErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the provided field ID is invalid for the requested
+        operation. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: 'Detail field: resource_path_index'
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - The Field Id is Invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Field ID Error Response
+      x-zs-$id: InvalidFieldIdErrorResponse
+    SourceOptionAmbiguityErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when ambiguity occurs while processing old_value (source
+        option). Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            ambiguity_due_to:
+              type: array
+              description: 'Detail field: ambiguity_due_to'
+              items:
+                type: object
+                additionalProperties: false
+                description: 'Detail Field: ambiguity_due_to'
+                properties:
+                  api_name:
+                    type: string
+                    description: 'Nested detail field: api_name'
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: 'Nested detail field: json_path'
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - ambiguity_due_to
+        message:
+          type: string
+          description: Error message
+          enum:
+            - ambiguity while processing the old_value
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Source Option Ambiguity Error Response
+      x-zs-$id: SourceOptionAmbiguityErrorResponse
+    TargetOptionAmbiguityErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when ambiguity occurs while processing new_value (target
+        option). Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            ambiguity_due_to:
+              type: array
+              description: 'Detail field: ambiguity_due_to'
+              items:
+                type: object
+                additionalProperties: false
+                description: 'Detail Field: ambiguity_due_to'
+                properties:
+                  api_name:
+                    type: string
+                    description: 'Nested detail field: api_name'
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: 'Nested detail field: json_path'
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - ambiguity_due_to
+        message:
+          type: string
+          description: Error message
+          enum:
+            - ambiguity while processing the new_value
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Target Option Ambiguity Error Response
+      x-zs-$id: TargetOptionAmbiguityErrorResponse
+    InvalidReplacePayloadTypeErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the replace_pick_list_values payload has an invalid data
+        type or exceeds allowed constraints. Includes error code, message,
+        status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: 'Detail field: maximum_length'
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: Error message
+          enum:
+            - invalid data type replace_pick_list_values object
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Replace Payload Type Error Response
+      x-zs-$id: InvalidReplacePayloadTypeErrorResponse
+    InvalidTargetOptionObjectErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when new_value is not a valid object or has an unexpected
+        structure. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: 'Detail field: expected_data_type'
+              maxLength: 255
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - new_value expected data type invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Target Option Object Error Response
+      x-zs-$id: InvalidTargetOptionObjectErrorResponse
+    PicklistOptionLookupResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Successful response containing the list of picklist options that match
+        the specified pick list value ID for the given field.
+      properties:
+        pick_list_values:
+          type: array
+          description: PickList option of the mention picklist unique Id
+          items:
+            $ref: '#/components/schemas/PicklistOptionDetail'
+          maxItems: 1
+          minItems: 1
+      required:
+        - pick_list_values
+      title: Picklist Option Lookup Response
+      x-zs-$id: PicklistOptionLookupResponse
+    MultipleLayoutAssociationDeletionErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the picklist option exists in multiple layouts and cannot
+        be deleted. Includes error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: 'Detail field: resource_path_index'
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - >-
+              PickList field should be in at most one layout or in unused state
+              in all layouts
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Multiple Layout Association Deletion Error Response
+      x-zs-$id: MultipleLayoutAssociationDeletionErrorResponse
+    InvalidDeleteOldValueFlagErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when delete_old_value has an invalid boolean format. Includes
+        error code, message, status, and details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: 'Detail field: expected_data_type'
+              maxLength: 255
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - The delete_old_value boolean field type mismatch
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Delete Old Value Flag Error Response
+      x-zs-$id: InvalidDeleteOldValueFlagErrorResponse
+    DeleteOldValueNotAllowedErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when delete_old_value is set to true for a regular picklist
+        field where deletion of old value is not allowed.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details
+          properties:
+            api_name:
+              type: string
+              description: The field API name
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path of the field
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Cannot delete old_value for a picklist field
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Delete Old Value Not Allowed Error Response
+      x-zs-$id: DeleteOldValueNotAllowedErrorResponse
+  parameters:
+    FieldId:
+      name: fieldId
+      in: path
+      description: >-
+        Specify the unique numeric identifier of the field. Refer to the [Get
+        Fields Metadata](fields.json#$.paths./settings/fields/{fieldId}.get)
+        resource for valid values.
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+        format: int64
+        minLength: 1
+      examples:
+        StandardField:
+          summary: Example field ID
+          value: '1629307000006596211'
+    Module:
+      name: module
+      in: query
+      description: >-
+        Specify the API name of the CRM module that contains the field. Refer to
+        the [Get Modules](modules.json#$.paths./settings/modules.get) resource
+        for valid values.
+      required: true
+      style: form
+      explode: true
+      schema:
+        type: string
+        maxLength: 50
+        minLength: 1
+      examples:
+        Leads:
+          summary: Leads module
+          value: Leads
+        Contacts:
+          summary: Contacts module
+          value: Contacts
+        Accounts:
+          summary: Accounts module
+          value: Accounts
+        Deals:
+          summary: Deals module
+          value: Deals
+    ParamPathPickListValueId:
+      name: pickListValueId
+      in: path
+      description: 'Path parameter: pickListValueId'
+      required: true
+      schema:
+        type: string
+        format: int64
+        example: '{pickListValueId}'
+        maxLength: 255
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.fields.READ: Access to ZohoCRM.settings.fields.READ scope
+            ZohoCRM.settings.fields.DELETE: Access to ZohoCRM.settings.fields.DELETE scope
+            ZohoCRM.settings.fields.UPDATE: Access to ZohoCRM.settings.fields.UPDATE scope

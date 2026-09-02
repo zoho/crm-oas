@@ -1,0 +1,906 @@
+openapi: 3.1.0
+info:
+  title: Cancel Meetings
+  description: >-
+    The Cancel Meeting API cancels a scheduled meeting and sends a cancellation
+    notification email to the participants.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /Events/{event}/actions/cancel:
+    post:
+      summary: Cancel a Meeting
+      operationId: cancelMeetings
+      description: >-
+        To cancel a meeting and send an email regarding the meeting cancellation
+        to the participants. A meeting can only be cancelled if attendees have
+        already been invited and the meeting has not passed its scheduled end
+        time. To check the cancellation status of a meeting, refer to the
+        $event_cancelled key in the response from the [Get Records
+        API](record.yaml#$.paths./module.get).
+      x-zs-llm-description: >-
+        Use this API to cancel an existing meeting (Event) in Zoho CRM and
+        optionally send a cancellation notification email to all participants.
+        Before calling this API, you need the Event ID of the meeting you want
+        to cancel. You can obtain the Event ID by calling the GET /Events API to
+        list events or from the response of a previously created event. The
+        meeting must have participants, must not already be cancelled, and must
+        not have passed its end time.
+      x-zs-llm-examples:
+        - description: Cancel a meeting and send cancellation email to participants
+          request:
+            method: POST
+            path: /Events/4876876000001563018/actions/cancel
+            body:
+              data:
+                - send_cancelling_mail: true
+        - description: Cancel a meeting without sending cancellation email
+          request:
+            method: POST
+            path: /Events/4876876000001563018/actions/cancel
+            body:
+              data:
+                - send_cancelling_mail: false
+      parameters:
+        - $ref: '#/components/parameters/Event'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              description: The request body for the cancel meeting operation.
+              properties:
+                data:
+                  type: array
+                  description: >-
+                    Array containing the cancellation notification preference.
+                    Mandatory.
+                  maxItems: 10
+                  items:
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Object specifying whether to send a cancellation
+                      notification email to participants.
+                    properties:
+                      send_cancelling_mail:
+                        type: boolean
+                        description: >-
+                          Indicates whether to send a meeting cancellation
+                          notification email to all participants. Mandatory.
+                          Possible values: true - Sends a cancellation
+                          notification email to all participants. false -
+                          Cancels the meeting without sending a notification
+                          email
+                      cancelled_by:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          The user who cancelled the meeting. If specified,
+                          send_cancelling_mail must be true.
+                        properties:
+                          id:
+                            type: string
+                            description: The ID of the user who cancelled the meeting.
+                            maxLength: 255
+                        required:
+                          - id
+                    required:
+                      - send_cancelling_mail
+              required:
+                - data
+            examples:
+              RequestBodyExample:
+                value:
+                  data:
+                    - send_cancelling_mail: false
+        required: true
+      responses:
+        '200':
+          description: The meeting was cancelled successfully.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: Successresponse
+                type: object
+                additionalProperties: false
+                description: Successful response containing the cancellation result.
+                properties:
+                  data:
+                    type: array
+                    description: Array containing the cancellation result for the meeting.
+                    maxItems: 10
+                    items:
+                      type: object
+                      additionalProperties: false
+                      description: >-
+                        Object containing the result of the cancellation
+                        operation.
+                      properties:
+                        code:
+                          type: string
+                          description: The status code of the operation.
+                          enum:
+                            - SUCCESS
+                        message:
+                          type: string
+                          description: A message describing the result of the operation.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: The status of the operation.
+                          enum:
+                            - success
+                        details:
+                          type: object
+                          additionalProperties: false
+                          description: Object containing the ID of the cancelled meeting.
+                          properties:
+                            id:
+                              type: string
+                              description: The unique identifier of the cancelled meeting.
+                              maxLength: 255
+                          required:
+                            - id
+                      required:
+                        - code
+                        - message
+                        - status
+                        - details
+                required:
+                  - data
+              examples:
+                CancelMeetingSuccessResponse:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '4876876000001563018'
+                        message: The event is successfully cancelled
+                        status: success
+        '400':
+          description: >-
+            The request failed due to an invalid request method, missing
+            mandatory fields, invalid meeting ID, an already cancelled meeting,
+            no participants, meeting past end time, insufficient permissions, or
+            daily email limit exceeded.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ErrorResponse
+                description: >-
+                  One of the possible error responses for the cancel meeting
+                  operation.
+                oneOf:
+                  - x-zs-$id: InvalidRequestMethodError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Returned when the HTTP request method is incorrect. Use
+                      the HTTP POST method for this API call.
+                    properties:
+                      code:
+                        type: string
+                        description: The error code identifying the type of error.
+                        enum:
+                          - INVALID_REQUEST_METHOD
+                      message:
+                        type: string
+                        description: A message describing the error.
+                        maxLength: 255
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Error details.
+                      status:
+                        type: string
+                        description: The status of the response (error).
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                  - x-zs-$id: MandatoryNotFoundError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Required field not found. A required field is missing in
+                      the request.
+                    properties:
+                      data:
+                        type: array
+                        description: List of error details
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: Error detail object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Error code
+                              enum:
+                                - MANDATORY_NOT_FOUND
+                            message:
+                              type: string
+                              description: A message describing the error
+                              maxLength: 255
+                            details:
+                              type: object
+                              additionalProperties: false
+                              description: >-
+                                Object containing the API name and JSON path of
+                                the missing mandatory field.
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: The API name of the missing mandatory field.
+                                  maxLength: 255
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    The JSON path to the missing mandatory field
+                                    in the request body.
+                                  maxLength: 255
+                              required:
+                                - api_name
+                                - json_path
+                            status:
+                              type: string
+                              description: The status of the response (error).
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                    required:
+                      - data
+                  - x-zs-$id: InvalidDataError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Returned when the meeting ID specified in the URL is
+                      invalid. Specify a valid meeting ID.
+                    properties:
+                      code:
+                        type: string
+                        description: The error code identifying the type of error.
+                        enum:
+                          - INVALID_DATA
+                      message:
+                        type: string
+                        description: A message describing the error.
+                        maxLength: 255
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: >-
+                          Object containing the API name and JSON path of the
+                          invalid field.
+                        properties:
+                          expected_data_type:
+                            type: string
+                            description: Expected data type
+                            maxLength: 255
+                          api_name:
+                            type: string
+                            description: The API name of the field with the invalid value.
+                            maxLength: 255
+                          json_path:
+                            type: string
+                            description: The JSON path to the field with the invalid value.
+                            maxLength: 255
+                        required:
+                          - api_name
+                          - json_path
+                      status:
+                        type: string
+                        description: The status of the response (error).
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                  - x-zs-$id: EventAlreadyCancelledError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Returned when the meeting is already cancelled. Specify a
+                      valid meeting ID that has not been cancelled.
+                    properties:
+                      data:
+                        type: array
+                        description: Contains the list of error details.
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: Contains the error detail object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: The error code identifying the type of error.
+                              enum:
+                                - NOT_ALLOWED
+                            message:
+                              type: string
+                              description: A message describing the error.
+                              maxLength: 255
+                            details:
+                              type: object
+                              additionalProperties: false
+                              description: Error details
+                            status:
+                              type: string
+                              description: The status of the response (error).
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                    required:
+                      - data
+                  - x-zs-$id: NoParticipantsError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Returned when the meeting has no invited participants.
+                      Invite participants before cancelling the meeting.
+                    properties:
+                      data:
+                        type: array
+                        description: List of error details
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: Error detail object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: The error code identifying the type of error.
+                              enum:
+                                - NOT_ALLOWED
+                            message:
+                              type: string
+                              description: A message describing the error
+                              maxLength: 255
+                            details:
+                              type: object
+                              additionalProperties: false
+                              description: Error details
+                              properties:
+                                reason:
+                                  type: string
+                                  description: The reason for the error.
+                                  enum:
+                                    - no_participants_invited
+                                id:
+                                  type: string
+                                  description: Record ID
+                                  maxLength: 255
+                              required:
+                                - reason
+                                - id
+                            status:
+                              type: string
+                              description: The status of the response (error).
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                    required:
+                      - data
+                  - x-zs-$id: MeetingCancelledAfterEndTimeError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Returned when attempting to cancel a meeting after its
+                      scheduled end time. Specify a meeting that has not passed
+                      its scheduled end time.
+                    properties:
+                      data:
+                        type: array
+                        description: List of error details
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: Error detail object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: The error code identifying the type of error.
+                              enum:
+                                - NOT_ALLOWED
+                            message:
+                              type: string
+                              description: A message describing the error.
+                              maxLength: 255
+                            details:
+                              type: object
+                              additionalProperties: false
+                              description: Error details
+                              properties:
+                                reason:
+                                  type: string
+                                  description: Reason for the error
+                                  enum:
+                                    - completed_meeting
+                                id:
+                                  type: string
+                                  description: Record ID
+                                  maxLength: 255
+                              required:
+                                - reason
+                                - id
+                            status:
+                              type: string
+                              description: Error Status
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                    required:
+                      - data
+                  - x-zs-$id: CannotPerformactionError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Returned when the user does not have permission to perform
+                      an action on the record. Contact the system administrator.
+                    properties:
+                      data:
+                        type: array
+                        description: Contains the list of error details.
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: Error detail object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Contains the error code.
+                              enum:
+                                - CANNOT_PERFORM_ACTION
+                            message:
+                              type: string
+                              description: Contains a message describing the error.
+                              maxLength: 255
+                            details:
+                              type: object
+                              additionalProperties: false
+                              description: Error details
+                            status:
+                              type: string
+                              description: Contains the status of the error.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                    required:
+                      - data
+                  - type: object
+                    x-zs-$id: Dailylimitreached
+                    additionalProperties: false
+                    description: >-
+                      Returned when the user has reached the daily email sending
+                      limit. Cancel the meeting without sending an email, or
+                      retry the next day.
+                    properties:
+                      code:
+                        type: string
+                        description: The error code identifying the type of error.
+                        enum:
+                          - DAILY_LIMIT_EXCEEDED
+                      message:
+                        type: string
+                        description: A message describing the error.
+                        maxLength: 255
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Error details.
+                      status:
+                        type: string
+                        description: The status of the response (error).
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+                  - x-zs-$id: InvalidDataRecordError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      The given id seems to be invalid. Specify a valid Meeting
+                      ID.
+                    properties:
+                      data:
+                        type: array
+                        description: List of error details
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: Error detail object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Error code
+                              enum:
+                                - INVALID_DATA
+                            message:
+                              type: string
+                              description: Error message
+                              maxLength: 255
+                            details:
+                              type: object
+                              additionalProperties: false
+                              description: Error details
+                              properties:
+                                id:
+                                  type: string
+                                  description: The invalid record ID
+                                  maxLength: 255
+                              required:
+                                - id
+                            status:
+                              type: string
+                              description: Error Status
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                    required:
+                      - data
+                  - x-zs-$id: InvalidDataFieldError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Invalid data for a specific field. Specify valid data for
+                      the field and try again.
+                    properties:
+                      data:
+                        type: array
+                        description: List of error details
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: Error detail object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Error code
+                              enum:
+                                - INVALID_DATA
+                            message:
+                              type: string
+                              description: Error message
+                              maxLength: 255
+                            details:
+                              type: object
+                              additionalProperties: false
+                              description: Error details
+                              properties:
+                                expected_data_type:
+                                  type: string
+                                  description: Expected data type
+                                  maxLength: 255
+                                api_name:
+                                  type: string
+                                  description: Detail_field - api_name
+                                  maxLength: 255
+                                json_path:
+                                  type: string
+                                  description: Detail_field - json_path
+                                  maxLength: 255
+                              required:
+                                - api_name
+                                - json_path
+                            status:
+                              type: string
+                              description: Error Status
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                    required:
+                      - data
+                  - x-zs-$id: DependentMismatchError
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Dependent field mismatch. send_cancelling_mail must be
+                      true if cancelled_by is present.
+                    properties:
+                      data:
+                        type: array
+                        description: List of error details
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: Error detail object
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Error code
+                              enum:
+                                - DEPENDENT_MISMATCH
+                            message:
+                              type: string
+                              description: Error message
+                              maxLength: 255
+                            details:
+                              type: object
+                              additionalProperties: false
+                              description: Error details
+                              properties:
+                                dependee:
+                                  type: object
+                                  additionalProperties: false
+                                  description: The field that the current field depends on
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: Detail_field - api_name
+                                      maxLength: 255
+                                    json_path:
+                                      type: string
+                                      description: Detail_field - json_path
+                                      maxLength: 255
+                                  required:
+                                    - api_name
+                                    - json_path
+                                api_name:
+                                  type: string
+                                  description: Detail_field - api_name
+                                  maxLength: 255
+                                json_path:
+                                  type: string
+                                  description: Detail_field - json_path
+                                  maxLength: 255
+                              required:
+                                - dependee
+                                - api_name
+                                - json_path
+                            status:
+                              type: string
+                              description: Error Status
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - details
+                            - status
+                    required:
+                      - data
+              examples:
+                ErrorResponse:
+                  value:
+                    code: INVALID_REQUEST_METHOD
+                    details: {}
+                    message: The request method is incorrect.
+                    status: error
+        '401':
+          description: >-
+            The access token is invalid, expired, or does not have the required
+            scope.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: OAuthScopeMismatchError
+                oneOf:
+                  - x-zs-$id: OAuthScopeMismatchErrorDetail
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      The access token you have used to make this API call does
+                      not have the required scope. Generate a new access token
+                      with the required scopes for this API.
+                    properties:
+                      code:
+                        type: string
+                        description: The error code identifying the type of error.
+                        enum:
+                          - OAUTH_SCOPE_MISMATCH
+                      message:
+                        type: string
+                        description: A message describing the error.
+                        maxLength: 255
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Error details.
+                      status:
+                        type: string
+                        description: The status of the response (error).
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+              examples:
+                ForbiddenErrorResponse:
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: invalid oauth scope to access this URL
+                    status: error
+        '403':
+          description: >-
+            Forbidden - The user does not have permission to perform this
+            action.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: NoPermissionError
+                type: object
+                additionalProperties: false
+                description: >-
+                  permission denied. The user does not have permission to cancel
+                  the meeting. Contact your system administrator.
+                properties:
+                  code:
+                    type: string
+                    description: Error code
+                    enum:
+                      - NO_PERMISSION
+                  message:
+                    type: string
+                    description: Error message
+                    maxLength: 255
+                  details:
+                    type: object
+                    additionalProperties: false
+                    description: Error details
+                    properties:
+                      permissions:
+                        type: array
+                        description: Required permissions
+                        maxItems: 10
+                        items:
+                          type: string
+                          description: Permission name
+                          maxLength: 255
+                    required:
+                      - permissions
+                  status:
+                    type: string
+                    description: Error Status
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - details
+                  - status
+              examples:
+                NoPermissionErrorResponse:
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Edit_Events
+                    message: permission denied
+                    status: error
+        '404':
+          description: The request URL is incorrect or the resource was not found.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: InvalidUrlPatternError
+                oneOf:
+                  - x-zs-$id: InvalidUrlPatternErrorDetail
+                    type: object
+                    additionalProperties: false
+                    description: The request URL is incorrect.
+                    properties:
+                      code:
+                        type: string
+                        description: The error code identifying the type of error.
+                        enum:
+                          - INVALID_URL_PATTERN
+                      message:
+                        type: string
+                        description: A message describing the error.
+                        maxLength: 255
+                      details:
+                        type: object
+                        additionalProperties: false
+                        description: Error details.
+                      status:
+                        type: string
+                        description: The status of the response (error).
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - details
+                      - status
+              examples:
+                InvalidUrlPattern:
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.Modules.Events.UPDATE
+security:
+  - OAuth2:
+      - ZohoCRM.Modules.Events.UPDATE
+components:
+  parameters:
+    Event:
+      name: event
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+        x-zs-$id: EventId
+      description: This refers to the Event's id that need to be cancel
+      x-zs-llm-description: >-
+        The unique ID of the Event (Meeting) record to cancel. Obtain this by
+        calling GET /Events API to list events, or use the ID from a previously
+        created event response.
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.Modules.Events.UPDATE: Update access to Meetings module

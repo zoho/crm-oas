@@ -1,0 +1,2321 @@
+openapi: 3.1.0
+info:
+  title: Search Records
+  description: >-
+    The Search Records API retrieves records that match the specified search
+    parameters within a single module in your Zoho CRM organization. It supports
+    criteria-based filtering, full-text word search, and lookup by email or
+    phone number.
+  version: '8'
+  summary: >-
+    Zoho CRM Search API allows you to search for records in a specified module
+    using various criteria and parameters.
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production server for the Zoho CRM API. The URL includes the datacenter
+      domain and API version.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: >-
+          The top-level domain of the Zoho CRM datacenter where the organization
+          is hosted.
+
+          Possible values:
+
+          **com** - United States.
+
+          **eu** - European Union.
+
+          **in** - India.
+
+          **cn** - China.
+
+          **au** - Australia.
+      version:
+        default: v8
+        description: The version of the Zoho CRM API to use. Defaults to **v8**.
+paths:
+  /{module}/bulk/search:
+    post:
+      tags:
+        - Search
+      summary: Bulk Search Records by Criteria, Word, Email, or Phone
+      operationId: bulkSearchRecords
+      description: >-
+        Searches for records in the specified module that match the given search
+        criteria. This API accepts the same search parameters as the GET
+        /{module}/search API, but they are provided in the request body instead
+        of query parameters. Use this API when the search criteria are too long
+        to be passed as query parameters. You must specify at least one of the
+        following search parameters: criteria, email, phone, or word. A maximum
+        of 2,000 records can be retrieved per search, with up to 15 criteria
+        conditions. Newly created or updated records may not appear immediately
+        in the search results due to indexing delays.
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/ApprovalState'
+        - $ref: '#/components/parameters/Criteria'
+        - $ref: '#/components/parameters/Converted'
+        - $ref: '#/components/parameters/SearchWord'
+        - $ref: '#/components/parameters/SearchEmail'
+        - $ref: '#/components/parameters/SearchPhone'
+        - $ref: '#/components/parameters/Fields'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/SortOrder'
+        - $ref: '#/components/parameters/Type'
+      responses:
+        '200':
+          description: >-
+            Successful response containing the list of records matching the
+            search criteria.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: ModuleBulkSearchResponse
+                description: >-
+                  Successful bulk search response containing matched records and
+                  pagination information
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Array of records matching the search criteria
+                    maxItems: 200
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier of the record
+                          maxLength: 50
+                        Owner:
+                          type: object
+                          description: Owner information of the record
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              description: Name of the record owner
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: Unique identifier of the owner
+                              maxLength: 50
+                            email:
+                              type: string
+                              description: Email address of the owner
+                              format: email
+                        Created_Time:
+                          type: string
+                          description: Timestamp when the record was created
+                          format: date-time
+                        Modified_Time:
+                          type: string
+                          description: Timestamp when the record was last modified
+                          format: date-time
+                        Created_By:
+                          type: object
+                          description: User who created the record
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              description: Name of the user who created the record
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: >-
+                                Unique identifier of the user who created the
+                                record
+                              maxLength: 50
+                            email:
+                              type: string
+                              description: Email address of the user who created the record
+                              format: email
+                          required:
+                            - id
+                        Modified_By:
+                          type: object
+                          description: User who last modified the record
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              description: Name of the user who last modified the record
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: >-
+                                Unique identifier of the user who last modified
+                                the record
+                              maxLength: 50
+                            email:
+                              type: string
+                              description: >-
+                                Email address of the user who last modified the
+                                record
+                              format: email
+                      required:
+                        - id
+                      additionalProperties: true
+                      description: >-
+                        Record object containing module-specific fields and
+                        system fields
+                  info:
+                    type: object
+                    description: Pagination and response metadata
+                    additionalProperties: false
+                    properties:
+                      per_page:
+                        type: integer
+                        description: Number of records per page
+                        format: int32
+                      count:
+                        type: integer
+                        description: Number of records in current response
+                        format: int32
+                      page:
+                        type: integer
+                        description: Current page number
+                        format: int32
+                      more_records:
+                        type: boolean
+                        description: Indicates if more records are available
+                      sort_by:
+                        type: string
+                        description: Field used for sorting the records
+                        maxLength: 100
+                      sort_order:
+                        type: string
+                        description: Order of sorting the records
+                        enum:
+                          - asc
+                          - desc
+                required:
+                  - data
+              examples:
+                LeadBulkSearchResult:
+                  summary: Sample lead bulk search result
+                  value:
+                    data:
+                      - id: <phone_number_or_numberic_id_or_random_id_26>
+                        Owner:
+                          name: John Smith
+                          id: <phone_number_or_numberic_id_or_random_id_27>
+                          email: john.smith@zylker.com
+                        Company: Zylker
+                        Email: john.smith@zylker.com
+                        Lead_Status: Qualified
+                        Created_Time: '2023-01-15T10:30:00+00:00'
+                        Modified_Time: '2023-01-20T14:45:00+00:00'
+                        Created_By:
+                          name: John Smith
+                          id: <phone_number_or_numberic_id_or_random_id_27>
+                        Modified_By:
+                          name: John Smith
+                          id: <phone_number_or_numberic_id_or_random_id_27>
+                    info:
+                      per_page: 200
+                      count: 1
+                      page: 1
+                      more_records: false
+        '204':
+          description: >-
+            No Content - The request was successful, but no records matched the
+            search criteria. This may occur due to indexing delays when
+            searching for recently created/modified records.
+        '400':
+          description: >-
+            Bad Request - The request could not be processed due to invalid
+            input, missing mandatory parameters, or malformed search criteria.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ModuleBulkSearchBadRequestErrorResponse
+                oneOf:
+                  - $ref: '#/components/schemas/MissingRequiredParameterErrorResponse'
+                  - $ref: '#/components/schemas/InvalidModuleErrorResponse'
+              examples:
+                MissingParameter:
+                  summary: Missing required search parameter
+                  value:
+                    status: error
+                    code: EXPECTED_PARAM_MISSING
+                    message: one of the expected parameter is missing
+                    details:
+                      param_names:
+                        - criteria
+                        - email
+                        - phone
+                        - word
+                InvalidModule:
+                  summary: Invalid module specified
+                  value:
+                    status: error
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    details:
+                      resource_path_index: 0
+        '401':
+          description: >-
+            Unauthorized - Authentication failed or insufficient OAuth scope
+            permissions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                OauthScopeMismatch:
+                  summary: Missing required OAuth scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: Unauthorized
+                    status: error
+        '403':
+          description: >-
+            Forbidden - User lacks permission to access the requested module or
+            perform the search operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                NoPermission:
+                  summary: Insufficient permissions for module access
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: Permission denied to read
+                    status: error
+        '404':
+          description: >-
+            Not Found - The requested URL pattern is invalid or the specified
+            resource does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InvalidUrlPattern:
+                  summary: Invalid API endpoint URL
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+        '429':
+          description: >-
+            Too Many Requests - Rate limit exceeded. Wait before making
+            additional requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                RateLimitExceeded:
+                  summary: API rate limit exceeded
+                  value:
+                    code: RATE_LIMIT_EXCEEDED
+                    details: {}
+                    message: Too many requests. Please try again later.
+                    status: error
+        '500':
+          description: >-
+            Internal Server Error - An unexpected error occurred on the server.
+            Contact support if the issue persists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalError:
+                  summary: Unexpected server error
+                  value:
+                    code: INTERNAL_ERROR
+                    details: {}
+                    message: Internal Server Error
+                    status: error
+        '502':
+          description: >-
+            Bad Gateway - Temporary service dependency failure. The request
+            should be retried.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ServiceUnavailable:
+                  summary: Upstream service failure
+                  value:
+                    code: SERVICE_UNAVAILABLE
+                    details: {}
+                    message: Service temporarily unavailable
+                    status: error
+        '503':
+          description: >-
+            Service Unavailable - The service is temporarily unavailable due to
+            maintenance or capacity issues.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                MaintenanceMode:
+                  summary: Service under maintenance
+                  value:
+                    code: SERVICE_UNAVAILABLE
+                    details: {}
+                    message: Service temporarily unavailable for maintenance
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.READ
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Deals.READ
+        - OAuth2:
+            - ZohoCRM.modules.Tasks.READ
+        - OAuth2:
+            - ZohoCRM.modules.Events.READ
+        - OAuth2:
+            - ZohoCRM.modules.Calls.READ
+        - OAuth2:
+            - ZohoCRM.modules.Products.READ
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.READ
+        - OAuth2:
+            - ZohoCRM.modules.Campaigns.READ
+        - OAuth2:
+            - ZohoCRM.modules.Cases.READ
+        - OAuth2:
+            - ZohoCRM.modules.Solutions.READ
+        - OAuth2:
+            - ZohoCRM.modules.Pricebooks.READ
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.READ
+        - OAuth2:
+            - ZohoCRM.modules.Salesorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.Purchaseorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.Invoices.READ
+        - OAuth2:
+            - ZohoCRM.modules.Forecasts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Activities.READ
+        - OAuth2:
+            - ZohoCRM.modules.Notes.READ
+        - OAuth2:
+            - ZohoCRM.modules.Attachments.READ
+        - OAuth2:
+            - ZohoCRM.modules.custom.READ
+        - OAuth2:
+            - ZohoCRM.users.READ
+        - OAuth2:
+            - ZohoCRM.modules.READ
+            - ZohoCRM.users.READ
+      x-zs-llm-description: >-
+        Use this tool when you want to bulk search records matching for the
+        given criteria within a single module in CRM using a POST request with
+        the search parameters supplied in the request body (useful when the
+        criteria payload is too large for a query string).
+  /{module}/search:
+    get:
+      tags:
+        - Search
+      summary: Search Records by Criteria, Word, Email, or Phone
+      operationId: searchRecords
+      description: >-
+        To search for records within a specified module in your Zoho CRM
+        organization using criteria-based conditions, full-text word search, or
+        lookup by email or phone number.
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/ApprovalState'
+        - $ref: '#/components/parameters/Criteria'
+        - $ref: '#/components/parameters/Converted'
+        - $ref: '#/components/parameters/SearchWord'
+        - $ref: '#/components/parameters/SearchEmail'
+        - $ref: '#/components/parameters/SearchPhone'
+        - $ref: '#/components/parameters/Fields'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/SortOrder'
+        - $ref: '#/components/parameters/Type'
+        - $ref: '#/components/parameters/IncludeLiteUsers'
+        - $ref: '#/components/parameters/RoleId'
+      responses:
+        '200':
+          description: >-
+            Returns the list of records that match the search criteria, along
+            with pagination metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: ModuleSearchResponse
+                description: >-
+                  Represents the successful response returned by the search
+                  operation, containing the matched records and pagination
+                  metadata.
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Represents the list of records matching the search
+                      criteria.
+                    maxItems: 200
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Represents the unique ID of the record.
+                          maxLength: 50
+                        Owner:
+                          type: object
+                          description: Represents the owner of the record.
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              description: Represents the name of the record owner.
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: Represents the unique ID of the record owner.
+                              maxLength: 50
+                            email:
+                              type: string
+                              description: >-
+                                Searches for records using an email address. The
+                                API searches across all email fields in the
+                                specified module and returns matching records.
+                              format: email
+                        Created_Time:
+                          type: string
+                          description: Represents the creation timestamp of the record.
+                          format: date-time
+                        Modified_Time:
+                          type: string
+                          description: >-
+                            Represents the date and time when the record was
+                            last modified.
+                          format: date-time
+                        Created_By:
+                          type: object
+                          description: Represents the user who created the record.
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              description: >-
+                                Represents the name of the user who created the
+                                record.
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the user who created
+                                the record.
+                              maxLength: 50
+                            email:
+                              type: string
+                              description: >-
+                                Searches for records using an email address. The
+                                API searches across all email fields in the
+                                specified module and returns matching records.
+                              format: email
+                          required:
+                            - id
+                        Modified_By:
+                          type: object
+                          description: Represents the user who last modified the record.
+                          additionalProperties: false
+                          properties:
+                            name:
+                              type: string
+                              description: >-
+                                Represents the name of the user who last
+                                modified the record.
+                              maxLength: 255
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the user who last
+                                modified the record.
+                              maxLength: 50
+                            email:
+                              type: string
+                              description: >-
+                                Searches for records using an email address. The
+                                API searches across all email fields in the
+                                specified module and returns matching records.
+                              format: email
+                      required:
+                        - id
+                      additionalProperties: true
+                      description: >-
+                        Represents a record that matches the search criteria.
+                        Contains standard system fields and module-specific
+                        fields for the matched record.
+                  info:
+                    type: object
+                    description: >-
+                      Represents the pagination and sort metadata for the
+                      response.
+                    additionalProperties: false
+                    properties:
+                      per_page:
+                        type: integer
+                        description: >-
+                          Specify how many records to return per page. The
+                          default and the maximum possible value is 200.
+                        format: int32
+                      count:
+                        type: integer
+                        description: >-
+                          Represents the number of records returned in the
+                          current page.
+                        format: int32
+                      page:
+                        type: integer
+                        description: Represents the current page number of the response.
+                        format: int32
+                      more_records:
+                        type: boolean
+                        description: >-
+                          Indicates whether more records are available beyond
+                          the current page.
+
+                          Possible values:
+
+                          **true** - More records are available.
+
+                          **false** - No more records are available.
+                      sort_by:
+                        type: string
+                        description: >-
+                          Represents the field used to sort the records in the
+                          response.
+                        maxLength: 100
+                      sort_order:
+                        type: string
+                        description: >-
+                          Represents the sort direction applied to the records
+                          in the response.
+
+                          Possible values:
+
+                          **asc** - Ascending order.
+
+                          **desc** - Descending order.
+                        enum:
+                          - asc
+                          - desc
+                required:
+                  - data
+              examples:
+                LeadSearchResult:
+                  summary: Sample lead search result
+                  value:
+                    data:
+                      - id: '5843104000000624035'
+                        Owner:
+                          name: John Smith
+                          id: '5843104000000411001'
+                          email: john.smith@example.com
+                        Company: Zylker
+                        Email: lead@zylker.com
+                        Lead_Status: Qualified
+                        Created_Time: '2023-01-15T10:30:00+00:00'
+                        Modified_Time: '2023-01-20T14:45:00+00:00'
+                        Created_By:
+                          name: John Smith
+                          id: '5843104000000411001'
+                        Modified_By:
+                          name: John Smith
+                          id: '5843104000000411001'
+                    info:
+                      per_page: 200
+                      count: 1
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows a successful search response returning a single lead
+                    record with standard system fields and pagination metadata.
+        '204':
+          description: >-
+            No matching records found. This may occur if no records match the
+            search criteria or if recently created or modified records have not
+            yet been indexed. Resolution: Verify the search parameters and
+            retry.
+        '400':
+          description: >-
+            The request could not be processed due to invalid, missing, or
+            unsupported search parameters. Resolution: Ensure that at least one
+            search parameter (criteria, email, phone, or word) is included and
+            contains a valid value.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ModuleSearchBadRequestErrorResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: InvalidRequestErrorResponse
+                    description: >-
+                      Represents the error response returned when the search
+                      request contains an invalid value for one or more
+                      parameters.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |-
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request encountered an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the response.
+
+                          Possible values:
+
+                          **INVALID_REQUEST** - The request contains one or more
+                          invalid parameter values.
+                        enum:
+                          - INVALID_REQUEST
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          request.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: Represents additional details about the error.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                  - type: object
+                    x-zs-$id: NotSupportedErrorResponse
+                    description: >-
+                      Represents the error response returned when the search
+                      operation is not supported for the specified module.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |-
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request encountered an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the response.
+
+                          Possible values:
+
+                          **NOT_SUPPORTED** - The search operation is not
+                          supported for the specified module.
+                        enum:
+                          - NOT_SUPPORTED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the
+                          unsupported operation.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the error,
+                          including the name of the module that does not support
+                          search.
+                        additionalProperties: false
+                        properties:
+                          module:
+                            type: string
+                            description: >-
+                              Represents the API name of the module that does
+                              not support the search operation.
+                            maxLength: 100
+                        required:
+                          - module
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: SearchMissingRequiredParameterErrorResponse
+                    description: >-
+                      Represents the error response returned when at least one
+                      of the required search parameters (criteria, email, phone,
+                      or word) is missing from the request.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |-
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request encountered an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the response.
+
+                          Possible values:
+
+                          **EXPECTED_PARAM_MISSING** - At least one of the
+                          required search parameters is absent from the request.
+                        enum:
+                          - EXPECTED_PARAM_MISSING
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the missing
+                          parameter.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the error,
+                          including the names of the missing search parameters.
+                        additionalProperties: false
+                        properties:
+                          param_names:
+                            type: array
+                            description: >-
+                              Represents the list of search parameters that are
+                              missing from the request.
+
+                              Possible values in the array: **criteria**,
+                              **email**, **phone**, **word**.
+                            maxItems: 4
+                            items:
+                              type: string
+                              description: >-
+                                Represents the name of a missing search
+                                parameter.
+                              enum:
+                                - criteria
+                                - email
+                                - phone
+                                - word
+                        required:
+                          - param_names
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: SearchInvalidModuleErrorResponse
+                    description: >-
+                      Represents the error response returned when the specified
+                      module API name does not exist or is not a searchable
+                      module.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |-
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request encountered an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the response.
+
+                          Possible values:
+
+                          **INVALID_MODULE** - The specified module does not
+                          exist or is not searchable.
+                        enum:
+                          - INVALID_MODULE
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          module.
+                        maxLength: 1000
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the error,
+                          including the resource path index where the invalid
+                          module value was found.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            description: >-
+                              Represents the index position in the request URL
+                              path where the invalid module value was found.
+                            format: int32
+                        required:
+                          - resource_path_index
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: InvalidQueryErrorResponse
+                    description: >-
+                      Represents the error response returned when the search
+                      criteria query is syntactically or semantically invalid.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |-
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request encountered an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the response.
+
+                          Possible values:
+
+                          **INVALID_QUERY** - The search criteria contains an
+                          invalid condition, operator, or field reference.
+                        enum:
+                          - INVALID_QUERY
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the query
+                          issue.
+                        enum:
+                          - the field in restricted in GDPR
+                          - the field in restricted in Hipaa
+                          - Invalid query formed
+                      details:
+                        oneOf:
+                          - type: object
+                            x-zs-$id: DataTypeMismatchErrorDetails
+                            description: >-
+                              Represents the error details returned when a field
+                              value in the search criteria does not match the
+                              expected data type.
+                            additionalProperties: false
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: >-
+                                  Represents the expected data type for the
+                                  field referenced in the search criteria.
+                                maxLength: 100
+                              reason:
+                                type: string
+                                description: >-
+                                  Represents the reason the search criteria is
+                                  invalid due to a data type mismatch.
+                                maxLength: 500
+                            required:
+                              - expected_data_type
+                              - reason
+                              - api_name
+                          - type: object
+                            x-zs-$id: InvalidOperatorErrorDetails
+                            description: >-
+                              Represents the error details for an unsupported
+                              operator in the search criteria.
+                            additionalProperties: false
+                            properties:
+                              operator:
+                                type: string
+                                description: >-
+                                  Represents the invalid operator used in the
+                                  search criteria.
+                                maxLength: 50
+                              reason:
+                                type: string
+                                description: >-
+                                  Represents the reason the operator used in the
+                                  search criteria is invalid.
+                                maxLength: 500
+                            required:
+                              - operator
+                              - reason
+                              - api_name
+                          - type: object
+                            x-zs-$id: GeneralQueryErrorDetails
+                            description: >-
+                              Represents the error details returned when the
+                              search criteria cannot be processed due to a
+                              general query failure.
+                            additionalProperties: false
+                            properties:
+                              reason:
+                                type: string
+                                description: >-
+                                  Represents the reason the search criteria
+                                  failed to process.
+                                maxLength: 500
+                            required:
+                              - api_name
+                          - type: object
+                            x-zs-$id: EmptyQueryErrorDetails
+                            additionalProperties: false
+                            maxProperties: 0
+                            description: >-
+                              Represents empty details object for malformed
+                              query.
+                        description: >-
+                          Represents the query error details. The content varies
+                          based on the type of query error encountered.
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: InvalidQueryErrorResponseInOperatorViolations
+                    description: >-
+                      Represents the error response returned when the IN
+                      operator in the search criteria exceeds the maximum
+                      allowed value count.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |-
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request encountered an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the response.
+
+                          Possible values:
+
+                          **INVALID_QUERY** - The IN operator criteria exceeds
+                          the allowed value count.
+                        enum:
+                          - INVALID_QUERY
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the IN
+                          operator violation.
+                        enum:
+                          - Only 100 values are allowed in "IN" criteria
+                          - Invalid query formed
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the error,
+                          including the name of the field whose IN operator
+                          criteria exceeded the allowed value count.
+                        additionalProperties: false
+                        properties:
+                          param_name:
+                            type: string
+                            description: >-
+                              Represents the name of the field whose IN operator
+                              criteria exceeded the allowed value count.
+                            maxLength: 100
+                        required:
+                          - api_name
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: LimitReachedErrorResponse
+                    description: >-
+                      Represents the error response returned when the number of
+                      records to iterate through exceeds the maximum limit of
+                      2,000.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |-
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request encountered an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the response.
+
+                          Possible values:
+
+                          **LIMIT_REACHED** - The number of records to iterate
+                          through exceeds the maximum limit.
+                        enum:
+                          - LIMIT_REACHED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the limit
+                          reached condition.
+                        enum:
+                          - maximum response iteration limit reached
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the error,
+                          including the maximum iteration limit value.
+                        additionalProperties: false
+                        properties:
+                          limit:
+                            type: string
+                            description: >-
+                              Represents the maximum number of records that can
+                              be iterated through in a single search operation.
+
+                              Possible values:
+
+                              **2000** - The maximum iteration limit for search
+                              results.
+                            enum:
+                              - '2000'
+                        required:
+                          - limit
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: CriteriaLimitExceededErrorResponse
+                    description: >-
+                      Represents the error response returned when the search
+                      criteria contains more than 15 conditions.
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: |-
+                          Represents the status of the response.
+                          Possible values:
+                          **error** - The request encountered an error.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code for the response.
+
+                          Possible values:
+
+                          **CRITERIA_LIMIT_EXCEEDED** - The search criteria
+                          contains more than the allowed number of conditions.
+                        enum:
+                          - CRITERIA_LIMIT_EXCEEDED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the criteria
+                          limit exceeded condition.
+                        enum:
+                          - >-
+                            no of criterium that can be given exceed the limit
+                            15
+                      details:
+                        type: object
+                        description: Represents additional details about the error.
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: GenericBadRequestErrorResponse
+                    description: >-
+                      Represents the error response returned for invalid request
+                      scenarios not covered by other specific error codes.
+                    additionalProperties: false
+                description: >-
+                  Represents the error response returned when the search request
+                  is invalid. The specific error format depends on the type of
+                  validation failure.
+              examples:
+                MissingParameter:
+                  summary: Missing required search parameter
+                  value:
+                    status: error
+                    code: EXPECTED_PARAM_MISSING
+                    message: one of the expected parameter is missing
+                    details:
+                      param_names:
+                        - criteria
+                        - email
+                        - phone
+                        - word
+                  description: >-
+                    Shows the error response when none of the required search
+                    parameters (criteria, email, phone, or word) are included in
+                    the request.
+                InvalidModule:
+                  summary: Invalid module specified
+                  value:
+                    status: error
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    details:
+                      resource_path_index: 0
+                  description: >-
+                    Shows the error response when a non-existent or unsearchable
+                    module API name is provided.
+        '401':
+          description: >-
+            Authentication failed or the access token does not include the
+            required OAuth scope. Resolution: Generate a new access token that
+            includes the required module-level READ scope and retry the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                OauthScopeMismatch:
+                  summary: Missing required OAuth scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: Unauthorized
+                    status: error
+                  description: >-
+                    Shows the error response when the access token does not
+                    include a valid module-level READ scope.
+        '403':
+          description: >-
+            The authenticated user does not have permission to access the
+            specified module. Resolution: Contact the Zoho CRM administrator to
+            grant the required module access.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                NoPermission:
+                  summary: Insufficient permissions for module access
+                  value:
+                    code: NO_PERMISSION
+                    details: {}
+                    message: Permission denied to read
+                    status: error
+                  description: >-
+                    Shows the error response when the authenticated user does
+                    not have the required permission to access the module.
+        '404':
+          description: >-
+            The request URL is invalid or the specified module does not exist.
+            Resolution: Verify that the module API name and URL structure are
+            correct.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InvalidUrlPattern:
+                  summary: Invalid API endpoint URL
+                  value:
+                    code: INVALID_URL_PATTERN
+                    details: {}
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                  description: >-
+                    Shows the error response when the request URL does not match
+                    a valid API endpoint pattern.
+        '429':
+          description: >-
+            The API request rate limit has been exceeded. Resolution: Reduce the
+            frequency of API calls and retry the request after the rate limit
+            window resets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                RateLimitExceeded:
+                  summary: API rate limit exceeded
+                  value:
+                    code: RATE_LIMIT_EXCEEDED
+                    details: {}
+                    message: Too many requests. Please try again later.
+                    status: error
+                  description: >-
+                    Shows the error response when the API request rate limit has
+                    been exceeded.
+        '500':
+          description: >-
+            An unexpected error occurred on the server. Resolution: Retry the
+            request. If the issue persists, contact Zoho CRM support.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InternalError:
+                  summary: Unexpected server error
+                  value:
+                    code: INTERNAL_ERROR
+                    details: {}
+                    message: Internal Server Error
+                    status: error
+                  description: >-
+                    Shows the error response when an unexpected internal server
+                    error is encountered.
+        '502':
+          description: >-
+            A temporary upstream dependency failure occurred. Resolution: Retry
+            the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ServiceUnavailable:
+                  summary: Upstream service failure
+                  value:
+                    code: SERVICE_UNAVAILABLE
+                    details: {}
+                    message: Service temporarily unavailable
+                    status: error
+                  description: >-
+                    Shows the error response when a temporary upstream
+                    dependency failure causes the request to fail.
+        '503':
+          description: >-
+            The service is temporarily unavailable due to scheduled maintenance
+            or capacity constraints. Resolution: Retry the request after the
+            maintenance window ends.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                MaintenanceMode:
+                  summary: Service unavailable for maintenance
+                  value:
+                    code: SERVICE_UNAVAILABLE
+                    details: {}
+                    message: Service temporarily unavailable for maintenance
+                    status: error
+                  description: >-
+                    Shows the error response when the service is unavailable due
+                    to scheduled maintenance.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.READ
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Deals.READ
+        - OAuth2:
+            - ZohoCRM.modules.Tasks.READ
+        - OAuth2:
+            - ZohoCRM.modules.Events.READ
+        - OAuth2:
+            - ZohoCRM.modules.Calls.READ
+        - OAuth2:
+            - ZohoCRM.modules.Products.READ
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.READ
+        - OAuth2:
+            - ZohoCRM.modules.Campaigns.READ
+        - OAuth2:
+            - ZohoCRM.modules.Cases.READ
+        - OAuth2:
+            - ZohoCRM.modules.Solutions.READ
+        - OAuth2:
+            - ZohoCRM.modules.Pricebooks.READ
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.READ
+        - OAuth2:
+            - ZohoCRM.modules.Salesorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.Purchaseorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.Invoices.READ
+        - OAuth2:
+            - ZohoCRM.modules.Forecasts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Activities.READ
+        - OAuth2:
+            - ZohoCRM.modules.Notes.READ
+        - OAuth2:
+            - ZohoCRM.modules.Attachments.READ
+        - OAuth2:
+            - ZohoCRM.modules.custom.READ
+        - OAuth2:
+            - ZohoCRM.users.READ
+        - OAuth2:
+            - ZohoCRM.modules.READ
+            - ZohoCRM.users.READ
+      x-zs-llm-description: >-
+        Use this tool when you want to search records matching for the given
+        criteria in param within single module in CRM
+components:
+  parameters:
+    Type:
+      name: type
+      in: query
+      required: false
+      description: >-
+        Specify the user type to filter the search results by.
+
+        Possible values: **ActiveAndDeactive**, **CurrentUser**,
+        **DeletedUsers**, **ParentRoleUsers**, **ChildRoleUsers**,
+        **DeactiveUsers**, **NotConfirmedUsers**, **ConfirmedUsers**,
+        **ActiveUsers**, **AdminUsers**, **ActiveConfirmedAdmins**,
+        **ActiveConfirmedUsers**, **DeveloperUsers**, **SubordinateRoleUsers**,
+        **AllUsers**, **AllActiveUsers**.
+
+
+        **Note**
+
+
+        - Only one of the mandatory parameters (`criteria`, `email`, `phone`, or
+        `word`) can be used in a single request.
+
+        - If multiple parameters are provided, the API processes them in the
+        following priority order:
+           1. `criteria`
+           2. `email`
+           3. `phone`
+           4. `word`
+        - Only the highest-priority parameter in the request is processed.
+
+
+        - The `page` and `per_page` parameters help retrieve records based on
+        their position in Zoho CRM.
+
+        - A single API call can fetch a maximum of 200 records.
+
+        - To retrieve more records, adjust the `page` and `per_page` values.
+
+           Example: To fetch 400 records:
+
+           - First API call: `page=1&per_page=200` -> Fetches records 1-200
+           - Second API call: `page=2&per_page=200` -> Fetches records 201-400
+
+           By making two API calls, all 400 records can be retrieved.
+
+        - The Search API allows you to search for and retrieve a maximum of
+        2,000 records. If the search exceeds 2,000 records, the API returns a
+        `LIMIT_REACHED` error.
+
+
+        - Values of fields containing sensitive health data are retrieved only
+        when the **Restrict Data Access through API** option in the compliance
+        settings is disabled. If the option is enabled, the field value is
+        returned as `null`. Refer to [HIPAA compliance
+        documentation](https://www.zoho.com/crm/developer/docs/api/v8/hipaa-compliance.html)
+        for more details.
+
+
+        - When you create or edit a record and search for it immediately, you
+        may receive a `204 NO CONTENT` response due to indexing delays. To fetch
+        records without delay, use the [Query
+        API](https://www.zoho.com/crm/developer/docs/api/v8/Get-Records-through-COQL-Query.html).
+
+        - The `in` operator supports up to 100 values.
+
+        - The `full_name` field contains the concatenated values of the `First
+        Name` and `Last Name` fields.
+
+
+        - `full_name` is a read-only field available only in the `Leads`,
+        `Contacts`, and `Users` modules.
+
+
+        To retrieve subform records that match your search criteria, use the API
+        name of the corresponding subform module.
+
+
+        To retrieve multi-select lookup (MxN) records that match your search
+        criteria, use the API name of the corresponding linking module.
+      schema:
+        type: string
+        maxLength: 50
+        enum:
+          - ActiveAndDeactive
+          - CurrentUser
+          - DeletedUsers
+          - ParentRoleUsers
+          - ChildRoleUsers
+          - DeactiveUsers
+          - NotConfirmedUsers
+          - ConfirmedUsers
+          - ActiveUsers
+          - AdminUsers
+          - ActiveConfirmedAdmins
+          - ActiveConfirmedUsers
+          - DeveloperUsers
+          - SubordinateRoleUsers
+          - AllUsers
+          - AllActiveUsers
+      examples:
+        ActiveUsers:
+          summary: Get only active users
+          value: ActiveUsers
+        AdminUsers:
+          summary: Get admin users only
+          value: AdminUsers
+        ConfirmedUsers:
+          summary: Get confirmed users
+          value: ConfirmedUsers
+        AllUsers:
+          summary: Get all users regardless of status
+          value: AllUsers
+    IncludeLiteUsers:
+      name: include_lite_users
+      in: query
+      required: false
+      description: Indicates whether lite users should be included in the search results.
+      schema:
+        type: boolean
+        default: false
+    RoleId:
+      name: role_id
+      in: query
+      required: false
+      description: >-
+        Filter users by role ID. This parameter is supported only for the Users
+        module.
+      schema:
+        type: string
+        format: int64
+        maxLength: 20
+    Module:
+      name: module
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the module to search within. Refer to [Get
+        Modules](https://www.zoho.com/crm/developer/docs/api/v8/modules-api.html)
+        to retrieve a list of available modules.
+      schema:
+        type: string
+        maxLength: 100
+      examples:
+        Leads:
+          value: Leads
+          summary: Search within Leads module
+        Contacts:
+          value: Contacts
+          summary: Search within Contacts module
+        Accounts:
+          value: Accounts
+          summary: Search within Accounts module
+    ApprovalState:
+      name: approval_state
+      in: query
+      required: false
+      description: >-
+        Specify the approval state to filter records by. The search returns only
+        records in the specified approval state.
+
+        Possible values: **approval_process_pending**, **webform_invalid**,
+        **review_process_pending**, **webform_invalid_approval**,
+        **zia_vision_validation**, **review_process_rejected**,
+        **webform_unapproved**, **email_parser_waiting**, **approved**,
+        **merge_pending**, **email_parser_rejected**, **zia_vision_rejected**,
+        **zia_vision_pending**, **approval_process_rejected**,
+        **webform_double_optin**.
+      schema:
+        type: string
+        maxLength: 50
+        enum:
+          - approval_process_pending
+          - webform_invalid
+          - review_process_pending
+          - webform_invalid_approval
+          - zia_vision_validation
+          - review_process_rejected
+          - webform_unapproved
+          - email_parser_waiting
+          - approved
+          - merge_pending
+          - email_parser_rejected
+          - zia_vision_rejected
+          - zia_vision_pending
+          - approval_process_rejected
+          - webform_double_optin
+      examples:
+        Approved:
+          value: approved
+          summary: Get only approved records
+        Pending:
+          value: approval_process_pending
+          summary: Get records pending approval
+        Rejected:
+          value: approval_process_rejected
+          summary: Get rejected records
+    Criteria:
+      name: criteria
+      in: query
+      required: false
+      description: >+
+        Specify a criteria string to filter records using field-specific
+        conditions and operators.
+
+        Performs a search using the following format:
+
+
+        `(({field_API_name}:{operator}:{value}) and/or
+        ({field_API_name}:{operator}:{value}))`
+
+
+        Replace `{field_API_name}`, `{operator}`, and `{value}` with the
+
+        appropriate field API name, condition, and value.
+
+        -   You can search using a maximum of 10 criteria, with the same or
+            different fields.
+        -   The only operator supported for encrypted fields is `equals`.
+
+
+        When using the `equals` operator in the Search API, it behaves like
+
+        `contains`, retrieving records that include the specified value.
+
+        For a single condition, if the condition is:
+
+
+        `(Company:equals:ABC)`
+
+
+        the response includes records with `ABC` as well as `ABC Inc.` in the
+
+        `Company` field.
+
+        For multiple conditions, `equals` continues to behave like `contains`.
+
+
+        **For example:**
+
+        `((Company:equals:ABC) and (First_Name:starts_with:M))`
+
+        This retrieves records where:
+
+
+        -   `First_Name` starts with `M`
+
+        -   `Company` contains `ABC` (for example, `ABC` or `ABC Inc.`)
+
+
+        ** Note**: This behavior does not apply to picklist fields.
+
+
+        The `in` operator checks whether a field value matches any value in a
+        given list.
+
+        **For example:**
+
+
+        `(Full_Name:in:Patricia,Boyle,Kate)`
+
+
+        This retrieves records where the `Full_Name` is `Patricia`, `Boyle`, or
+
+        `Kate`.
+
+
+        When a single-line field value contains characters such as:
+
+
+        `{ } [ ] ^ : - / ! ? * _ @` or spaces,
+
+
+        the Search API may return records with similar-looking values, even when
+
+        the characters are not an exact match.
+
+
+        For example:
+
+
+        -   Record A: `sales-team@zoho.com`
+
+        -   Record B: `sales_team@zoho.com`
+
+
+        A search using:
+
+
+        `equals:sales-team@zoho.com`
+
+
+        may return both records.
+
+
+        **Escaping Special Characters**
+
+
+        When using parentheses `(` `)`, commas `,`, or a backslash `\` as the
+
+        last character in a search value:
+
+
+        1.  Escape special characters using a backslash (`\`).
+
+        2.  Encode the value before making the API request.
+
+        3.  Select the value of the criteria, right-click the value, and choose
+            the `EncodeURIComponent` option.
+
+        **Example 1: Escaping Parentheses and Commas**
+
+
+        Search term:
+
+
+        `((Last_Name:equals:Burns,B) and (First_Name:starts_with:M))`
+
+
+        Escape the comma:
+
+
+        `((Last_Name:equals:Burns\,B) and (First_Name:starts_with:M))`
+
+
+        Encode the value:
+
+
+        `((Last_Name:equals:Burns%5C%2CB) and (First_Name:starts_with:M))`
+
+
+        **Example 2: Escaping a Backslash at the End**
+
+
+        Search term:
+
+
+        `(Last_Name:equals:K\)`
+
+
+        Escape the backslash:
+
+
+        `(Last_Name:equals:K\\)`
+
+
+        Encode the value:
+
+
+        `(Last_Name:equals:K%5C%5C)`
+
+
+        **Supported Data Types**
+
+
+        -   `picklist`
+
+        -   `owner_lookup`
+
+        -   `user_lookup`
+
+        -   `lookup`
+
+        -   `phone`
+
+        -   `email`
+
+        -   `date`
+
+        -   `datetime`
+
+        -   `text`
+
+        -   `textarea`
+
+        -   `integer`
+
+        -   `currency`
+
+        -   `decimal`
+
+        -   `multiselectpicklist`
+
+        -   `bigint`
+
+        -   `percent`
+
+        -   `formula`
+
+        -   `website`
+
+        -   `boolean`
+
+        -   `double`
+
+
+        **Supported Operators**
+
+
+        -   `equals`
+
+        -   `starts_with`
+
+        -   `in`
+
+        -   `not_equal`
+
+        -   `greater_equal`
+
+        -   `greater_than`
+
+        -   `less_equal`
+
+        -   `less_than`
+
+        -   `between`
+
+
+        Refer to the following note for operator support by field type.
+
+        * **Date, DateTime:** `equals`, `not_equal`, `greater_equal`,
+        `greater_than`, `less_equal`, `less_than`, `between`, `in`
+
+        * **Integer, Currency, Decimal:** `equals`, `not_equal`,
+        `greater_equal`, `greater_than`, `less_equal`, `less_than`, `between`,
+        `in`
+
+        * **Boolean:** `equals`, `not_equal`
+
+        * **textarea:** `equals`, `not_equal`, `starts_with`
+
+        * **Lookup (user/owner):** `equals`, `not_equal`, `in`
+
+        * **Picklist, Autonumber:** `equals`, `not_equal`, `in`
+
+        * **Text, Email, Phone, Website:** `equals`, `not_equal`, `starts_with`,
+        `in`
+
+        * **multiselectpicklist:** `equals`, `not_equal`, `in`, `starts_with`
+
+        * **bigint:** `equals`, `not_equal`, `greater_than`, `greater_equal`,
+        `less_than`, `less_equal`, `between`, `in`
+
+        * **percent:** `equals`, `not_equal`, `greater_than`, `greater_equal`,
+        `less_than`, `less_equal`, `between`, `in`
+
+        * **formula:** Operators depend on the formula return type. Check the
+        corresponding data type's supported operators.
+
+      schema:
+        type: string
+        maxLength: 3000
+      examples:
+        SimpleCriteria:
+          value: (Company:equals:Zylker)
+          summary: Simple equality condition
+        ComplexCriteria:
+          value: ((Company:equals:Zylker) and (Lead_Status:equals:Qualified))
+          summary: Multiple conditions with AND operator
+        DateRange:
+          value: >-
+            ((Created_Time:greater_equal:2023-01-01T00:00:00+00:00) and
+            (Created_Time:less_equal:2023-12-31T23:59:59+00:00))
+          summary: Date range criteria
+        InOperator:
+          value: (Lead_Status:in:Qualified,Contacted,Converted)
+          summary: Using IN operator for multiple values
+    SearchEmail:
+      name: email
+      in: query
+      required: false
+      description: >-
+        Specify the email address to search for across all email-type fields in
+        the module. Partial matches are supported and searches multiple email
+        fields simultaneously.  *Mandatory if criteria, phone, and word are not
+        present.*
+      schema:
+        type: string
+        maxLength: 255
+        format: string
+      examples:
+        ExactEmail:
+          value: john.doe@example.com
+          summary: Search for exact email address
+        DomainSearch:
+          value: '@company.com'
+          summary: Search for all emails from a domain
+        PartialEmail:
+          value: john.doe
+          summary: Partial email search (finds john.doe@any-domain.com)
+    SearchPhone:
+      name: phone
+      in: query
+      required: false
+      description: >-
+        Specify the phone number to search for across all phone-type fields in
+        the module. The value must be at least three characters long and may
+        include digits, spaces, hyphens, parentheses, and the plus sign.
+        Supports various phone number formats including international, national,
+        and partial numbers.
+
+        *Mandatory if criteria, email, and word are not present.*
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 50
+        pattern: ^[+]?[0-9\s\-\(\)\.]+$
+      examples:
+        International:
+          value: +1-555-123-4567
+          summary: International format with country code
+        National:
+          value: (555) 123-4567
+          summary: US national format with parentheses
+        DigitsOnly:
+          value: '5551234567'
+          summary: Digits only format
+        Partial:
+          value: 555-123
+          summary: Partial phone number search
+    SearchWord:
+      name: word
+      in: query
+      required: false
+      description: >-
+        Specify the word or phrase to search for across all searchable text
+        fields in the module. The value must be at least two characters long.
+        Performs a global search with minimum 2 characters required. This is the
+        broadest search method but may be slower than specific field searches.
+
+        *Mandatory if criteria, email, and phone are not present.*
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 100
+      examples:
+        CompanyName:
+          value: Zylker
+          summary: Search for company name across fields
+        PersonName:
+          value: John Doe
+          summary: Search for person name across fields
+        ProductTerm:
+          value: software
+          summary: Search for product-related terms
+        Phrase:
+          value: marketing campaign
+          summary: Search for multi-word phrases
+    Fields:
+      name: fields
+      in: query
+      required: false
+      description: >-
+        Specify a comma-separated list of field API names to include in the
+        response. If omitted, the response includes all fields accessible to the
+        current user.
+      schema:
+        type: string
+        maxLength: 2000
+      examples:
+        BasicFields:
+          value: First_Name,Last_Name,Email,Phone
+          summary: Basic contact information fields
+        LeadFields:
+          value: Company,Lead_Status,Lead_Source,Created_Time
+          summary: Essential lead tracking fields
+        AccountFields:
+          value: Account_Name,Industry,Annual_Revenue,Phone
+          summary: Key account information fields
+        Minimal:
+          value: id,Created_Time,Modified_Time
+          summary: Minimal system fields only
+    Page:
+      name: page
+      in: query
+      required: false
+      description: >-
+        Specify the page number to retrieve for paginated results. The minimum
+        value is 1. Defaults to 1.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        default: 1
+      examples:
+        FirstPage:
+          value: 1
+          summary: First page of results (default)
+        SecondPage:
+          value: 2
+          summary: Second page of results
+        TenthPage:
+          value: 10
+          summary: Jump to tenth page
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      description: >-
+        Specify the number of records to return per page. The minimum value is
+        1, the maximum is 200, and the default is 200.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 200
+        default: 200
+      examples:
+        SmallBatch:
+          value: 10
+          summary: Small batch for testing or preview
+        MediumBatch:
+          value: 50
+          summary: Medium batch for regular processing
+        LargeBatch:
+          value: 100
+          summary: Large batch for bulk operations
+        Maximum:
+          value: 200
+          summary: Maximum records per page (default)
+    SortBy:
+      name: sort_by
+      in: query
+      required: false
+      description: Specify the API name of the field to sort the search results by.
+      schema:
+        type: string
+        maxLength: 100
+        default: id
+      examples:
+        ById:
+          value: id
+          summary: Sort by record ID (default)
+        ByName:
+          value: Last_Name
+          summary: Sort by last name for contacts
+        ByCompany:
+          value: Company
+          summary: Sort by company name
+        ByCreated:
+          value: Created_Time
+          summary: Sort by creation date
+        ByModified:
+          value: Modified_Time
+          summary: Sort by last modification date
+    SortOrder:
+      name: sort_order
+      in: query
+      required: false
+      description: >-
+        Specify the direction in which to sort the results. Defaults to
+        **desc**.
+
+        Possible values:
+
+        **asc** - Ascending order (A-Z, 1-9).
+
+        **desc** - Descending order (Z-A, 9-1).
+      schema:
+        type: string
+        maxLength: 10
+        enum:
+          - asc
+          - desc
+        default: desc
+      examples:
+        Descending:
+          value: desc
+          summary: Descending order (newest/highest first, default)
+        Ascending:
+          value: asc
+          summary: Ascending order (oldest/lowest first)
+    Converted:
+      name: converted
+      in: query
+      required: false
+      description: >-
+        Specify whether to filter records by their conversion status. Applicable
+        only for the Leads module.
+
+        Possible values:
+
+        **true** - Returns only converted leads.
+
+        **false** - Returns only unconverted leads.
+
+        **both** - Returns all leads regardless of conversion status.
+
+        Defaults to **false**.
+      schema:
+        type: string
+        maxLength: 10
+        enum:
+          - 'true'
+          - 'false'
+          - both
+        default: 'false'
+      examples:
+        OnlyConverted:
+          value: 'true'
+          summary: Get only converted records (e.g., converted leads)
+        OnlyUnconverted:
+          value: 'false'
+          summary: Get only non-converted records (default)
+        AllRecords:
+          value: both
+          summary: Get all records regardless of conversion status
+  headers: {}
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.READ: >-
+              Grants permission to search and read records from all modules in
+              the Zoho CRM organization.
+            ZohoCRM.modules.Leads.READ: >-
+              Grants permission to search and read Leads records in the Zoho CRM
+              organization.
+            ZohoCRM.modules.Contacts.READ: >-
+              Grants permission to search and read Contacts records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Accounts.READ: >-
+              Grants permission to search and read Accounts records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Deals.READ: >-
+              Grants permission to search and read Deals records in the Zoho CRM
+              organization.
+            ZohoCRM.modules.Tasks.READ: >-
+              Grants permission to search and read Tasks records in the Zoho CRM
+              organization.
+            ZohoCRM.modules.Events.READ: >-
+              Grants permission to search and read Events records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Calls.READ: >-
+              Grants permission to search and read Calls records in the Zoho CRM
+              organization.
+            ZohoCRM.modules.Products.READ: >-
+              Grants permission to search and read Products records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Vendors.READ: >-
+              Grants permission to search and read Vendors records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Campaigns.READ: >-
+              Grants permission to search and read Campaigns records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Cases.READ: >-
+              Grants permission to search and read Cases records in the Zoho CRM
+              organization.
+            ZohoCRM.modules.Solutions.READ: >-
+              Grants permission to search and read Solutions records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Pricebooks.READ: >-
+              Grants permission to search and read Price Books records in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Quotes.READ: >-
+              Grants permission to search and read Quotes records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Salesorders.READ: >-
+              Grants permission to search and read Sales Orders records in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Purchaseorders.READ: >-
+              Grants permission to search and read Purchase Orders records in
+              the Zoho CRM organization.
+            ZohoCRM.modules.Invoices.READ: >-
+              Grants permission to search and read Invoices records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Forecasts.READ: >-
+              Grants permission to search and read Forecasts records in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Activities.READ: >-
+              Grants permission to search and read Activities records in the
+              Zoho CRM organization.
+            ZohoCRM.modules.Notes.READ: >-
+              Grants permission to search and read Notes in the Zoho CRM
+              organization.
+            ZohoCRM.modules.Attachments.READ: >-
+              Grants permission to search and read Attachments in the Zoho CRM
+              organization.
+            ZohoCRM.modules.custom.READ: >-
+              Grants permission to search and read records from custom modules
+              in the Zoho CRM organization.
+            ZohoCRM.users.READ: >-
+              Grants permission to read user records in the Zoho CRM
+              organization.
+            ZohoCRM.users.ALL: Grants full access to user records in the Zoho CRM organization.
+  schemas:
+    ErrorDetails:
+      type: object
+      description: >-
+        Represents additional details about the error, including information
+        about the specific parameter or value that caused the issue.
+      additionalProperties: false
+    MissingRequiredParameterErrorResponse:
+      type: object
+      x-zs-$id: MissingRequiredParameterErrorResponse
+      description: Missing required parameter error response
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: Error status indicator
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code indicating missing parameters
+          enum:
+            - EXPECTED_PARAM_MISSING
+        message:
+          type: string
+          description: Human-readable error message
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details including missing parameter names
+          additionalProperties: false
+          properties:
+            param_names:
+              type: array
+              description: List of missing parameter names
+              maxItems: 4
+              items:
+                type: string
+                description: Parameter name
+                enum:
+                  - criteria
+                  - email
+                  - phone
+                  - word
+          required:
+            - param_names
+      required:
+        - status
+        - code
+        - message
+        - details
+    InvalidModuleErrorResponse:
+      type: object
+      x-zs-$id: InvalidModuleErrorResponse
+      description: Invalid module error response
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: Error status indicator
+          enum:
+            - error
+        code:
+          type: string
+          description: Error code indicating invalid module
+          enum:
+            - INVALID_MODULE
+        message:
+          type: string
+          description: Human-readable error message
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details including resource path information
+          additionalProperties: false
+          properties:
+            resource_path_index:
+              type: integer
+              description: Index of the invalid resource path segment
+              format: int32
+          required:
+            - resource_path_index
+      required:
+        - status
+        - code
+        - message
+        - details
+    ErrorResponse:
+      x-zs-$id: StandardErrorResponse
+      type: object
+      description: >-
+        Represents the standard error response structure returned by the API,
+        containing the error code, the message, and the response status.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Represents the error code for the response.
+          enum:
+            - INVALID_DATA
+            - INVALID_QUERY
+            - EXPECTED_PARAM_MISSING
+            - LIMIT_REACHED
+            - NOT_SUPPORTED
+            - INVALID_REQUEST_METHOD
+            - AUTHORIZATION_FAILED
+            - OAUTH_SCOPE_MISMATCH
+            - NO_PERMISSION
+            - INVALID_URL_PATTERN
+            - INTERNAL_ERROR
+            - RATE_LIMIT_EXCEEDED
+            - SERVICE_UNAVAILABLE
+            - INVALID_MODULE
+        details:
+          $ref: '#/components/schemas/ErrorDetails'
+        message:
+          type: string
+          description: Represents the error message describing the reason for the failure.
+          maxLength: 1000
+        status:
+          type: string
+          description: |-
+            Represents the status of the response.
+            Possible values:
+            **error** - The request encountered an error.
+          enum:
+            - error
+          default: error
+      required:
+        - code
+        - details
+        - message
+        - status

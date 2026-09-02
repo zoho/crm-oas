@@ -1,0 +1,24 @@
+# Notes
+
+- [OpenAPI specification](notes.yaml)
+- [Notes](operations/getNotesModule/operation.md)
+  - Retrieves a list of notes.
+  - [Examples](operations/getNotesModule/examples/)
+- [Create Notes](operations/createNotesModule/operation.md)
+  - Creates one or more note records.
+  - [Examples](operations/createNotesModule/examples/)
+- [Update Notes](operations/updateNotesModule/operation.md)
+  - Updates one or more existing note records. Either note content or note title must be provided (at least one is mandatory) for each note.
+  - [Examples](operations/updateNotesModule/examples/)
+- [Notes](operations/deleteNotesModule/operation.md)
+  - Permanently deletes one or more notes using comma-separated note IDs.
+  - [Examples](operations/deleteNotesModule/examples/)
+- [Get a Specific Note](operations/getNoteById/operation.md)
+  - Retrieves details of a specific note by its ID.
+  - [Examples](operations/getNoteById/examples/)
+- [Update a Specific Note](operations/updateNoteById/operation.md)
+  - Updates a specific note by its ID. Either note content or note title must be provided (at least one is mandatory).
+  - [Examples](operations/updateNoteById/examples/)
+- [Delete a Specific Note](operations/deleteNoteById/operation.md)
+  - Permanently deletes a specific note by its ID.
+  - [Examples](operations/deleteNoteById/examples/)

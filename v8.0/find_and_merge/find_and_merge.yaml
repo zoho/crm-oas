@@ -1,0 +1,2220 @@
+openapi: 3.1.0
+info:
+  title: Find And Merge
+  description: >-
+    This API merges up to three duplicate records into a single one, deleting
+    the duplicates. You can specify one as the master record which is to be
+    retained post-merge, and the other two as child records which are to be
+    deleted. You can specify fields from the child records whose values are to
+    be used for the merged record, and retain the master record values for the
+    remaining fields.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Represents the API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: Represents the API Server URL TLD
+      version:
+        default: v8
+        description: Represents the API Version
+paths:
+  /{module}/{masterRecordId}/actions/merge:
+    get:
+      summary: Get Merge Job Status
+      description: >-
+        To retrieve the status of a scheduled merge job in your Zoho CRM
+        organization. Use the optional job_id query parameter to filter results
+        to a specific job.
+      operationId: getMergeJobStatus
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+        - $ref: '#/components/parameters/MasterRecordId'
+        - $ref: '#/components/parameters/Module'
+      responses:
+        '200':
+          description: >-
+            Returns the current status of merge jobs for the specified master
+            record. 
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: FindAndMergeGetMergeJobStatusResponse
+                description: >-
+                  Represents the response body containing the list of merge job
+                  status records for the specified master record. 
+                additionalProperties: false
+                properties:
+                  merge:
+                    type: array
+                    description: >-
+                      Contains the list of merge job status objects returned for
+                      the specified master record.  
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Each object represents an individual merge job record,
+                        including its unique identifier and current processing
+                        status. 
+                      additionalProperties: false
+                      properties:
+                        job_id:
+                          type: string
+                          description: 'Represents the unique identifier of the merge job.  '
+                          pattern: ^[0-9]+$
+                          maxLength: 50
+                        status:
+                          type: string
+                          description: >
+                            Represents the current processing status of the
+                            merge job. 
+
+                            Possible values:
+
+                            **SCHEDULED** - The merge job is queued and waiting
+                            to be processed.
+
+                            **running** - The merge job is currently being
+                            processed.
+
+                            **completed** - The merge job has finished
+                            successfully.
+
+                            **failed** - The merge job encountered an error and
+                            did not complete. 
+                          enum:
+                            - SCHEDULED
+                            - running
+                            - completed
+                            - failed
+                      required:
+                        - job_id
+                        - status
+                required:
+                  - merge
+              examples:
+                ScheduledJob:
+                  summary: 'Example of merge job in scheduled state. '
+                  value:
+                    merge:
+                      - job_id: '1041770000009251159'
+                        status: SCHEDULED
+                  description: >-
+                    Shows a merge job that has been queued for processing with
+                    its assigned job ID and scheduled status. 
+                FailedJob:
+                  summary: 'Example of merge job with a failed status. '
+                  value:
+                    merge:
+                      - job_id: '1234567890'
+                        status: failed
+                  description: >-
+                    Shows a failed merge job response with the job ID and failed
+                    status. 
+                RunningJob:
+                  summary: 'Example of merge job currently in progress. '
+                  value:
+                    merge:
+                      - job_id: '1234567890'
+                        status: running
+                  description: >-
+                    Shows a merge job that is currently being processed with its
+                    job ID and running status. 
+                CompletedJob:
+                  summary: 'Example of a merge job completed successfully. '
+                  value:
+                    merge:
+                      - job_id: '1234567890'
+                        status: completed
+                  description: >-
+                    Shows a completed merge job with its unique job ID and final
+                    status. 
+        '204':
+          description: >-
+            Indicates that no merge jobs were found for the specified master
+            record. 
+        '400':
+          description: >
+            Returned when the request contains invalid parameters, module, or a
+            business rule prevents the merge operation. 
+
+            **Resolution**: The request must be corrected based on the error
+            code and the message returned in the response body. 
+          content:
+            application/json:
+              schema:
+                x-zs-$id: FindAndMergeGetMergeJobStatusErrorResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: FindAndMergeStandardErrorResponse
+                    description: >-
+                      Represents a standard error response returned when the
+                      module name is invalid, the master record is not found, or
+                      the operation is not permitted. 
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >
+                          Represents the error code that identifies the type of
+                          failure. 
+
+                          Possible values:
+
+                          **INVALID_DATA** - The request contains invalid or
+                          malformed data.
+
+                          **INVALID_MODULE** - The specified module name is not
+                          valid.
+
+                          **NOT_ALLOWED** - The requested operation is not
+                          permitted. 
+                        enum:
+                          - INVALID_DATA
+                          - INVALID_MODULE
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context information about the
+                          error, such as the field API name, JSON path, and
+                          constraint limits that caused the validation failure. 
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the zero-based index of the path
+                              parameter that caused the error, where 0
+                              corresponds to the module API name parameter and 1
+                              corresponds to the master record ID in the
+                              parameter. 
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field or resource
+                              that caused the validation error. 
+                            maxLength: 100
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the field in the
+                              request that caused the validation error. 
+                            maxLength: 200
+                          maximum_length:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the maximum allowed length for the
+                              field that caused the validation error. 
+                          minimum_length:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the minimum required length for the
+                              field that caused the validation error. 
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message that describes the issue
+                          in detail.  
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the API request.  
+
+                          **error** - The request failed due to a validation
+                          error or other issue.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: FindAndMergeMergeArrayErrorResponse
+                    description: >-
+                      Represents an error response returned when individual
+                      field-level or record-level validation errors occur within
+                      the merge operation. 
+                    additionalProperties: false
+                    properties:
+                      merge:
+                        type: array
+                        description: >-
+                          Contains the list of error details for each merge
+                          operation that failed validation.  
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: >-
+                            Each object represents an individual error that
+                            occurred during a merge operation, including the
+                            error code, details, and a descriptive message. 
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >
+                                Represents the error code that identifies the
+                                type of failure for the merge operation.  
+
+                                Possible values:
+
+                                **MANDATORY_NOT_FOUND** - A required field or
+                                property is missing from the request.
+
+                                **NOT_ALLOWED** - The operation is not permitted
+                                due to a business rule constraint.
+
+                                **INVALID_DATA** - The request contains invalid
+                                data.
+
+                                **DUPLICATE_DATA** - Duplicate values were
+                                detected for a field that must be unique.
+
+                                **DEPENDENT_FIELD_MISSING** - A field that
+                                depends on another field is missing from the
+                                request.
+
+                                **LIMIT_EXCEEDED** - A size or count limit has
+                                been exceeded.
+                              enum:
+                                - MANDATORY_NOT_FOUND
+                                - NOT_ALLOWED
+                                - INVALID_DATA
+                                - DUPLICATE_DATA
+                                - DEPENDENT_FIELD_MISSING
+                                - LIMIT_EXCEEDED
+                            details:
+                              type: object
+                              description: >-
+                                Contains detailed information about the field or
+                                resource that caused the error in the merge
+                                operation. 
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the field that
+                                    caused the validation error in the merge
+                                    operation. 
+                                  maxLength: 100
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    Represents the JSON path to the field in the
+                                    request body that caused the validation
+                                    error. 
+                                  maxLength: 200
+                                resource_path_index:
+                                  type: integer
+                                  format: int32
+                                  description: >-
+                                    Represents the zero-based index of the path
+                                    parameter that caused the error. 
+                                maximum_length:
+                                  type: integer
+                                  format: int32
+                                  description: >-
+                                    Represents the maximum allowed length for
+                                    the field that caused the validation error. 
+                                minimum_length:
+                                  type: integer
+                                  format: int32
+                                  description: >-
+                                    Represents the minimum required length for
+                                    the field that caused the validation error. 
+                                MAXIMUM_SIZE:
+                                  type: string
+                                  description: >-
+                                    Represents the maximum allowed size for file
+                                    or image uploads associated with the merge
+                                    operation. 
+                                  maxLength: 50
+                                limit_due_to:
+                                  type: array
+                                  description: >-
+                                    Contains the list of fields whose combined
+                                    file sizes caused the upload size limit to
+                                    be exceeded. 
+                                  maxItems: 20
+                                  items:
+                                    type: object
+                                    description: >-
+                                      Each object represents a field whose file
+                                      or image upload size contributed to
+                                      exceeding the maximum allowed upload
+                                      limit. 
+                                    additionalProperties: false
+                                    properties:
+                                      api_name:
+                                        type: string
+                                        description: >-
+                                          Represents the API name of the field
+                                          that contributed to exceeding the upload
+                                          size limit.  
+                                        maxLength: 100
+                                      json_path:
+                                        type: string
+                                        description: >-
+                                          Represents the JSON path to the field in
+                                          the request body that contributed to
+                                          exceeding the upload size limit.  
+                                        maxLength: 200
+                                    required:
+                                      - api_name
+                                      - json_path
+                                data:
+                                  type: array
+                                  description: >-
+                                    Contains the list of records that are
+                                    associated with external configurations,
+                                    such as CPQ rules, that prevent the merge
+                                    operation from completing. 
+                                  maxItems: 10
+                                  items:
+                                    type: object
+                                    description: >-
+                                      Represents a child record that has one or
+                                      more CPQ rule associations that prevented
+                                      the merge, identified by its record ID and
+                                      associated configuration details. 
+                                    additionalProperties: false
+                                    properties:
+                                      id:
+                                        type: string
+                                        description: >-
+                                          Represents the unique numeric identifier
+                                          of the child record that has CPQ
+                                          associations preventing the merge.  
+                                        pattern: ^[0-9]+$
+                                        maxLength: 50
+                                      _associated_places:
+                                        type: array
+                                        description: >-
+                                          Contains the list of CPQ configurations
+                                          or external rule associations that
+                                          prevent this record from being merged. 
+                                        maxItems: 50
+                                        items:
+                                          type: object
+                                          description: >-
+                                            Each object represents a single CPQ
+                                            configuration association, including the
+                                            association type and the specific
+                                            resources involved. 
+                                          additionalProperties: false
+                                          properties:
+                                            type:
+                                              type: string
+                                              description: >-
+                                                Represents the type of CPQ configuration
+                                                that is associated with the record, such
+                                                as product configurators or pricing
+                                                rules.  
+                                              maxLength: 100
+                                            resources:
+                                              type: array
+                                              description: >-
+                                                Contains the list of CPQ resources, such
+                                                as product configurators or pricing
+                                                rules, that are associated with the
+                                                record.  
+                                              maxItems: 50
+                                              items:
+                                                type: object
+                                                description: >-
+                                                  Each object represents an individual CPQ
+                                                  resource associated with the record,
+                                                  identified by its unique ID and display
+                                                  name. 
+                                                additionalProperties: false
+                                                properties:
+                                                  id:
+                                                    type: string
+                                                    description: >-
+                                                      Represents the unique numeric identifier
+                                                      of the CPQ resource.  
+                                                    pattern: ^[0-9]+$
+                                                    maxLength: 50
+                                                  name:
+                                                    type: string
+                                                    description: >-
+                                                      Represents the display name of the CPQ
+                                                      resource.  
+                                                    maxLength: 200
+                                                required:
+                                                  - id
+                                                  - name
+                                          required:
+                                            - type
+                                            - resources
+                                    required:
+                                      - id
+                                dependee:
+                                  type: object
+                                  description: >-
+                                    Contains the API name and JSON path of the
+                                    field that another field depends on,
+                                    returned when a dependent field is missing
+                                    from the request. 
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the field
+                                        that the missing dependent field depends
+                                        on.  
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path to the field
+                                        that the missing dependent field depends
+                                        on.  
+                                      maxLength: 200
+                                  required:
+                                    - api_name
+                                    - json_path
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message that describes the
+                                specific validation failure for this merge
+                                operation.  
+                              maxLength: 500
+                            status:
+                              type: string
+                              description: >
+                                Represents the status of the merge operation. 
+
+                                Possible values: 
+
+                                **error** - The merge operation failed due to a
+                                validation error.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - status
+                    required:
+                      - merge
+                description: >-
+                  Represents the error response body returned when the request
+                  fails due to validation errors, invalid data, or business rule
+                  violations. 
+              examples:
+                InvalidModule:
+                  summary: 'Example of an invalid module name in request URL. '
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      resource_path_index: 0
+                    message: the module name given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the INVALID_MODULE error when the module name provided
+                    in the request URL is not a valid CRM module. 
+                MasterRecordNotFound:
+                  summary: 'Example of master record not found in the module. '
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                    message: Master record is not found
+                    status: error
+                  description: >-
+                    Shows the INVALID_DATA error when the master record
+                    specified in the request URL cannot be found. 
+                MasterRecordNotAvailable:
+                  summary: 'Example of master record ID not available. '
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                    message: Master record id is not available
+                    status: error
+                  description: >-
+                    Shows the INVALID_DATA error when the master record ID
+                    specified in the request URL does not exist in the module. 
+                ChildRecordIdMissing:
+                  summary: 'Example of child record ID missing from data array. '
+                  value:
+                    merge:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].data[0].id
+                        message: required id not found
+                        status: error
+                  description: >-
+                    Shows the MANDATORY_NOT_FOUND error when the child record ID
+                    is empty or not provided in the data array. 
+                RecordAlreadyBeingMerged:
+                  summary: >-
+                    Example of the error saying that the record is already being
+                    merged. 
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].data[0].id
+                        message: This record id is not allowed to be merged
+                        status: error
+                  description: >-
+                    Shows the error when a record in the request is already in
+                    the process of being merged and cannot be used in another
+                    merge operation. 
+                ClosingDateNotAllowed:
+                  summary: 'Example of Closing Date field specified in merge request. '
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Closing date will be automatically populated based on
+                          master record
+                        status: error
+                  description: >-
+                    Shows the NOT_ALLOWED error when the Closing Date field is
+                    specified in the request. Do not specify the closing date
+                    field, as it is automatically populated from the master
+                    record. 
+                StageFieldNotAllowed:
+                  summary: >-
+                    Example of Stage being mentioned when child and master
+                    record have different pipelines. 
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Stage field will be automatically populated based on
+                          chosen Pipeline
+                        status: error
+                  description: >-
+                    Shows the error when the Stage field is specified in the
+                    request body for records with different pipelines, as the
+                    Stage field gets automatically populated based on the chosen
+                    Pipeline. 
+                ProbabilityRevenueNotAllowed:
+                  summary: >-
+                    Example of errors related to Expected Revenue and
+                    Probability fields. 
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Probability and Expected Revenue fields will be
+                          automatically populated based on chosen Stage
+                        status: error
+                  description: >-
+                    Shows the error when the request includes the Expected
+                    Revenue or Probability field, which are automatically
+                    populated based on the chosen Stage. 
+                ClosedDealNotAllowed:
+                  summary: 'Example for an attempt to merge a closed deal. '
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      api_name: record
+                      resource_path_index: 1
+                    message: Only Open Deals can be merged
+                    status: error
+                  description: >-
+                    Shows the NOT_ALLOWED error when an attempt is made to merge
+                    a closed deal, as only open deals can be merged. 
+                DuplicateRecordIds:
+                  summary: 'Example of duplicate record IDs in merge request. '
+                  value:
+                    merge:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].data[0].id
+                        message: Valid record ids need to be given for merging
+                        status: error
+                  description: >-
+                    Shows the DUPLICATE_DATA error when the same record ID is
+                    provided for two or more merge requests. 
+                DuplicateFieldMention:
+                  summary: 'Example of duplicate field API name in merge request. '
+                  value:
+                    merge:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: When one field is mentioned more than once
+                        status: error
+                  description: >-
+                    Shows the DUPLICATE_DATA error when the same field API name
+                    is specified more than once in the merge configuration. 
+                MergeArraySizeExceeded:
+                  summary: 'Example of merge array containing more than one object. '
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Shows the INVALID_DATA error when the merge array contains
+                    more than one object. 
+                ApiNameNotMentioned:
+                  summary: 'Example of API name missing from configuration. '
+                  value:
+                    merge:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: API name of the field is not mentioned
+                        status: error
+                  description: >-
+                    Shows the MANDATORY_NOT_FOUND error when the api_name field
+                    is missing from the request. 
+                DataArraySizeExceeded:
+                  summary: >-
+                    Example of data array exceeding maximum of two child
+                    records. 
+                  value:
+                    merge:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: data
+                          json_path: $.merge[0].data
+                          maximum_length: 2
+                        message: ' More than 2 child record ids cannot be merged.'
+                        status: error
+                  description: >-
+                    Shows the INVALID_DATA error when more than two child record
+                    IDs are provided in the data array. 
+                MasterRecordApiNameMissing:
+                  summary: >-
+                    Example of API name missing from master_record_fields
+                    entry. 
+                  value:
+                    merge:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].master_record_fields[0].api_name
+                        message: API name not mentioned for the master record
+                        status: error
+                  description: >-
+                    Shows the MANDATORY_NOT_FOUND error when the api_name field
+                    is missing from an entry in the master_record_fields array. 
+                DataArrayEmpty:
+                  summary: 'Example of data array empty or missing from request. '
+                  value:
+                    merge:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: data
+                          json_path: $.merge[0].data
+                          minimum_length: 1
+                        message: ' Atleast one child record id is required to be merged.'
+                        status: error
+                  description: >-
+                    Shows the INVALID_DATA error when the data array is empty or
+                    not included in the request body. 
+                FileUploadDataMissingMaster:
+                  summary: >-
+                    Example of _data array missing for master record file upload
+                    field. 
+                  value:
+                    merge:
+                      - code: DEPENDENT_FIELD_MISSING
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].master_record_fields[0]._data
+                          dependee:
+                            api_name: api_name
+                            json_path: $.merge[0].master_record_fields[0].api_name
+                        message: _data array is not mentioned for the master record
+                        status: error
+                  description: >-
+                    Shows the DEPENDENT_FIELD_MISSING error when a file or image
+                    upload field is specified for the master record in the
+                    master_record_fields array but the required _data array is
+                    not provided. 
+                FileUploadDataMissingChild:
+                  summary: >-
+                    Example of _data array missing for child record file upload
+                    field. 
+                  value:
+                    merge:
+                      - code: DEPENDENT_FIELD_MISSING
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].data[0]._fields[0]._data
+                          dependee:
+                            api_name: api_name
+                            json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: _data array is not mentioned for the child record
+                        status: error
+                  description: >-
+                    Shows the DEPENDENT_FIELD_MISSING error when a file or image
+                    upload field is specified for a child record in the _fields
+                    array but the required _data array is not provided. 
+                CpqAssociationError:
+                  summary: 'Example of child record has CPQ rule associations. '
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          data:
+                            - _associated_places:
+                                - resources:
+                                    - name: asdfsdf
+                                      id: '111111000000071837'
+                                  type: product_configurators
+                                - resources:
+                                    - name: PR -sample
+                                      id: '111111000000072007'
+                                  type: pricing_rules
+                              id: '111111000000071814'
+                          api_name: data
+                          json_path: $.merge[0].data
+                        message: >-
+                          unable to merge records since there are association in
+                          child records
+                        status: error
+                  description: >-
+                    Shows the NOT_ALLOWED error when a child record has
+                    associations in CPQ product configurators or pricing rules
+                    that prevent the merge. 
+                FileSizeLimitExceeded:
+                  summary: >-
+                    Example of total file size across merge participants exceeds
+                    limit. 
+                  value:
+                    merge:
+                      - code: LIMIT_EXCEEDED
+                        details:
+                          MAXIMUM_SIZE: 30 MB
+                          limit_due_to:
+                            - api_name: File_Upload_30MB
+                              json_path: $.merge[0].data[0]._fields[0].api_name
+                            - api_name: File_Upload_30MB
+                              json_path: $.merge[0].data[1]._fields[1].api_name
+                            - api_name: File_Upload_30MB
+                              json_path: $.merge[0].master_record_fields[1].api_name
+                        message: Attachment size limit exceeded
+                        status: error
+                  description: >-
+                    Shows the LIMIT_EXCEEDED error when the combined size of
+                    file or image upload fields across all merge participants
+                    exceeds the maximum allowed limit. 
+                ReportingToChildOnly:
+                  summary: 'Example of only Reporting To is given for child record. '
+                  value:
+                    merge:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Reporting to and account should belong to the same
+                          record
+                        status: error
+                  description: >-
+                    Shows the error when the Reporting To field is specified for
+                    a child record without specifying the Account field, which
+                    must belong to the same record. 
+                ReportingToWithAccountMismatch:
+                  summary: >-
+                    Example of Reporting To configured for child and Account for
+                    master (or vice versa). 
+                  value:
+                    merge:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Reporting to and account should belong to the same
+                          record
+                        status: error
+                  description: >-
+                    Shows the error when the Reporting To field is specified for
+                    one record and the Account field for the other, as both must
+                    belong to the same record. 
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.custom.READ
+        - OAuth2:
+            - ZohoCRM.modules.leads.READ
+        - OAuth2:
+            - ZohoCRM.modules.contacts.READ
+        - OAuth2:
+            - ZohoCRM.modules.accounts.READ
+        - OAuth2:
+            - ZohoCRM.modules.potentials.READ
+        - OAuth2:
+            - ZohoCRM.modules.vendors.READ
+    post:
+      summary: Merge Records
+      description: >-
+        To merge duplicate records in your Zoho CRM organization into a single
+        master record. Supports field-level value selection from child records
+        and file attachment management. If a child record has more than 1000
+        related records, the merge processes asynchronously and returns a job_id
+        for status tracking.
+      operationId: mergeRecords
+      parameters:
+        - $ref: '#/components/parameters/MasterRecordId'
+        - $ref: '#/components/parameters/Module'
+        - name: feature
+          in: query
+          required: false
+          description: >-
+            Triggers the web record approval flow instead of the standard merge
+            flow.
+          schema:
+            type: string
+            enum:
+              - web_record_approval
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Specify the merge configuration for the records to be
+                consolidated.
+              additionalProperties: false
+              properties:
+                merge:
+                  type: array
+                  description: >-
+                    Specify the configurations for the merge. The array must
+                    contain exactly one object. 
+                  maxItems: 1
+                  items:
+                    type: object
+                    description: >-
+                      Each object specifies the configuration for a single merge
+                      operation, including the child records to be merged and
+                      the field value selections for the merged record. 
+                    additionalProperties: false
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Specify the child records to be merged into the master
+                          record. The array must contain a minimum of one and a
+                          maximum of two child record objects. 
+                        minItems: 1
+                        maxItems: 2
+                        items:
+                          type: object
+                          description: >-
+                            Each object specifies the child record identifier
+                            and the fields whose values should be used in the
+                            merged record. 
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Specify the unique identifier of the child
+                                record to be merged. 
+                              pattern: ^[0-9]+$
+                              maxLength: 50
+                            _fields:
+                              type: array
+                              description: >-
+                                Specify the API names of the fields from the
+                                child record whose values you wish to merge into
+                                the master record. 
+                              maxItems: 100
+                              items:
+                                type: object
+                                description: >-
+                                  Each object specifies the API name of the
+                                  field and, for file upload or image upload
+                                  fields, the attachment IDs to retain. 
+                                additionalProperties: false
+                                properties:
+                                  api_name:
+                                    type: string
+                                    description: >-
+                                      Represents the API name of the fields in
+                                      the child record that you want to include
+                                      in the merge. 
+                                    maxLength: 100
+                                  _data:
+                                    oneOf:
+                                      - type: array
+                                        x-zs-$id: FileUploadDataArray
+                                        description: >-
+                                          It represents the unique ID of a file or
+                                          attachment. This field is specifically
+                                          used for File Upload and Image Upload
+                                          fields in a record. Use [GET Records
+                                          API](record.yaml#$.paths./{module}.get)
+                                          to retrieve the unique IDs of the files
+                                          or attachments. 
+                                        maxItems: 50
+                                        items:
+                                          type: object
+                                          description: >-
+                                            Each object specifies the unique
+                                            identifier of the file or image
+                                            attachment. 
+                                          additionalProperties: false
+                                          properties:
+                                            id:
+                                              type: string
+                                              description: >-
+                                                Specify the unique numeric identifier of
+                                                the file or image attachment. 
+                                              pattern: ^[0-9]+$
+                                              maxLength: 50
+                                          required:
+                                            - id
+                                      - type: 'null'
+                                        x-zs-$id: FileUploadDataNull
+                                        description: >-
+                                          Set to null to delete all file or image
+                                          attachments for this field in the merged
+                                          record. 
+                                    description: >-
+                                      It represents the unique ID of a file or
+                                      attachment. This field is specifically
+                                      used for File Upload and Image Upload
+                                      fields in a record. Use [GET Records
+                                      API](record.yaml#$.paths./{module}.get) to
+                                      retrieve the unique IDs of the files or
+                                      attachments. 
+                                required:
+                                  - api_name
+                          required:
+                            - id
+                      master_record_fields:
+                        type: array
+                        description: >-
+                          Specify the fields from the master record whose values
+                          should be retained in the merged record. Use this for
+                          file upload or image upload fields in the master
+                          record. 
+                        maxItems: 100
+                        items:
+                          type: object
+                          description: >-
+                            Each object specifies the API name of a master
+                            record field like file upload or image upload
+                            fields, the attachment IDs to retain. 
+                          additionalProperties: false
+                          properties:
+                            api_name:
+                              type: string
+                              description: >-
+                                Specify the API name of the master record field
+                                to retain in the merged record. 
+                              maxLength: 100
+                            _data:
+                              oneOf:
+                                - type: array
+                                  description: >
+                                    Specify the file or image attachment IDs to
+                                    retain for this master record field, or set
+                                    to null to delete all attachments for this
+                                    field in the merged record. 
+
+
+                                    > Notes
+
+                                    > - If an image upload or file upload is not
+                                    specified, all the images/files in the
+                                    master record will be retained.
+
+                                    > - If **'_data': null** is provided, all
+                                    the images/files for that specific field
+                                    will be deleted.
+
+                                    > - If a child record has more than **1000
+                                    records** in any of its related lists, then
+                                    the merge action will be **scheduled**. This
+                                    meas that it performs an asynchronous
+                                    action, and the response to your request
+                                    will not be available immediately. Instead,
+                                    you will receive a unique **job_id** in the
+                                    response. You can use this job_id to
+                                    retrieve the status of your merge action.
+                                    For details, please refer to the [Get
+                                    Records Merge Status
+                                    API](find_and_merge.yaml#$.paths./{module}/{masterRecordId}/actions/merge.get).
+
+                                    > - The **merge** JSON array can only
+                                    contain one object, while the **data** JSON
+                                    array can have a maximum of two child
+                                    records. Exceeding these limits will result
+                                    in errors.
+
+                                    > - Each field should only be mentioned once
+                                    across the **master_record_fields** and
+                                    **data** arrays.
+
+                                    > - Only open deals can be merged; closed
+                                    deals will trigger an error.
+
+                                    > - The closing date, stage, probability,
+                                    and expected revenue fields will be
+                                    automatically populated based on the master
+                                    record and should not be specified in the
+                                    request.
+
+                                    > - Records currently locked or in an
+                                    approval/review process cannot be merged. 
+                                      Specify the file or image attachment   IDs  to retain for this master record field, or set to null to delete all attachments for this field in the merged record. 
+
+                                      > Notes
+                                      > - If an image upload or file upload is not specified, all the images/files in the master record will be retained.
+                                      > - If **'_data': null** is provided, all the images/files for that specific field will be deleted.
+                                      > - If a child record has more than **1000 records** in any of its related lists, then the merge action will be **scheduled**. This meas that it performs an asynchronous action, and the response to your request will not be available immediately. Instead, you will receive a unique **job_id** in the response. You can use this job_id to retrieve the status of your merge action. For details, please refer to the [Get Records Merge Status API](find_and_merge.yaml#$.paths./{module}/{masterRecordId}/actions/merge.get).
+                                      > - The **merge** JSON array can only contain one object, while the **data** JSON array can have a maximum of two child records. Exceeding these limits will result in errors.
+                                      > - Each field should only be mentioned once across the **master_record_fields** and **data** arrays.
+                                      > - Only open deals can be merged; closed deals will trigger an error.
+                                      > - The closing date, stage, probability, and expected revenue fields will be automatically populated based on the master record and should not be specified in the request.
+                                      > - Records currently locked or in an approval/review process cannot be merged. 
+                                  x-zs-$id: MasterRecordFileUploadDataArray
+                                  maxItems: 50
+                                  items:
+                                    type: object
+                                    description: >-
+                                      Specify the unique identifier of the file
+                                      or image attachment to retain in the
+                                      master record. 
+                                    additionalProperties: false
+                                    properties:
+                                      id:
+                                        type: string
+                                        description: >-
+                                          Specify the unique identifier of the
+                                          file or image attachment to retain. 
+                                        pattern: ^[0-9]+$
+                                        maxLength: 50
+                                    required:
+                                      - id
+                                - type: 'null'
+                                  x-zs-$id: MasterRecordFileUploadDataNull
+                                  description: >-
+                                    Set to null to delete all file or image
+                                    attachments for this master record field in
+                                    the merged record. 
+                              description: >
+                                Specify the file or image attachment IDs to
+                                retain for this master record field, or set to
+                                null to delete all attachments for this field in
+                                the merged record. 
+
+
+                                > Notes
+
+                                > - If an image upload or file upload is not
+                                specified, all the images/files in the master
+                                record will be retained.
+
+                                > - If **'_data': null** is provided, all the
+                                images/files for that specific field will be
+                                deleted.
+
+                                > - If a child record has more than **1000
+                                records** in any of its related lists, then the
+                                merge action will be **scheduled**. This meas
+                                that it performs an asynchronous action, and the
+                                response to your request will not be available
+                                immediately. Instead, you will receive a unique
+                                **job_id** in the response. You can use this
+                                job_id to retrieve the status of your merge
+                                action. For details, please refer to the [Get
+                                Records Merge Status
+                                API](find_and_merge.yaml#$.paths./{module}/{masterRecordId}/actions/merge.get).
+
+                                > - The **merge** JSON array can only contain
+                                one object, while the **data** JSON array can
+                                have a maximum of two child records. Exceeding
+                                these limits will result in errors.
+
+                                > - Each field should only be mentioned once
+                                across the **master_record_fields** and **data**
+                                arrays.
+
+                                > - Only open deals can be merged; closed deals
+                                will trigger an error.
+
+                                > - The closing date, stage, probability, and
+                                expected revenue fields will be automatically
+                                populated based on the master record and should
+                                not be specified in the request.
+
+                                > - Records currently locked or in an
+                                approval/review process cannot be merged. 
+                          required:
+                            - api_name
+                    required:
+                      - data
+              required:
+                - merge
+            examples:
+              BasicMerge:
+                summary: 'Example of a basic merge operation with field selection. '
+                value:
+                  merge:
+                    - data:
+                        - _fields:
+                            - api_name: Last_Name
+                          id: '111111000000116110'
+                      master_record_fields:
+                        - api_name: Company
+                description: >-
+                  Shows a merge request specifying one child record and
+                  selecting a field from the child and a field from the master
+                  record. 
+              FileUploadMerge:
+                summary: 'Example of a merge with file upload field configuration. '
+                value:
+                  merge:
+                    - data:
+                        - _fields:
+                            - api_name: Image_Upload_1
+                              _data:
+                                - id: '5364788765222'
+                          id: '111111000000116110'
+                      master_record_fields:
+                        - api_name: Image_Upload_1
+                          _data:
+                            - id: '5364788765222'
+                description: >-
+                  Shows a merge request specifying file attachment IDs to retain
+                  for an image upload field on both the child and master
+                  record. 
+              FileDeleteMerge:
+                summary: 'Example of merge operation with file deletion. '
+                value:
+                  merge:
+                    - data:
+                        - _fields:
+                            - api_name: Company
+                          id: '111111000000116110'
+                      master_record_fields:
+                        - api_name: Image_Upload_1
+                          _data: null
+                description: >-
+                  Shows a merge request where the _data field is set to null to
+                  delete all attachments for an image upload field in the master
+                  record. 
+            x-zs-llm-examples:
+              - BasicMerge
+              - FileDeleteMerge
+              - FileUploadMerge
+        required: true
+        description: >-
+          The request body contains the data required to perform the
+          operation.  
+      responses:
+        '201':
+          description: >-
+            Returns the result of a merge operation that was either completed
+            synchronously (with SUCCESS code and merged record ID) or scheduled
+            for asynchronous processing (with SCHEDULED code and job_id). 
+          content:
+            application/json:
+              schema:
+                x-zs-$id: FindAndMergeMergeRecordsResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: FindAndMergeMergeRecordsCompletedResponse
+                    description: >-
+                      Response when the merge operation is completed or
+                      scheduled for processing. 
+                    additionalProperties: false
+                    properties:
+                      merge:
+                        type: array
+                        description: >-
+                          Contains the list of merge operation results
+                          indicating whether the merge completed or was
+                          scheduled.  
+                        maxItems: 1
+                        items:
+                          oneOf:
+                            - x-zs-$id: FindAndMergeMergeRecordsCompletedResult
+                              type: object
+                              description: >-
+                                Successful merge completion response, returned
+                                when the merge was processed synchronously. 
+                              additionalProperties: false
+                              properties:
+                                code:
+                                  type: string
+                                  description: >
+                                    Represents the success code for a completed
+                                    merge. 
+
+                                    Possible values: 
+
+                                    **SUCCESS** - The records were merged
+                                    successfully.
+                                  enum:
+                                    - SUCCESS
+                                details:
+                                  type: object
+                                  description: >-
+                                    Contains the details of the completed merge,
+                                    including the ID of the master record
+                                    retained after the merge.  
+                                  additionalProperties: false
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the unique identifier of the
+                                        master record retained after the merge. 
+                                      pattern: ^[0-9]+$
+                                      maxLength: 50
+                                      x-zs-$id: FindAndMergeId
+                                  required:
+                                    - id
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the success message for the
+                                    completed merge operation. 
+                                  maxLength: 500
+                                status:
+                                  type: string
+                                  description: >
+                                    Represents the status of the merge
+                                    operation. 
+
+                                    Possible values:
+
+                                    **success** - The merge completed
+                                    successfully.
+                                  enum:
+                                    - success
+                              required:
+                                - code
+                                - details
+                                - message
+                                - status
+                            - type: object
+                              x-zs-$id: FindAndMergeMergeRecordsScheduledResult
+                              description: >-
+                                Scheduled merge operation response, returned
+                                when the merge was queued for asynchronous
+                                processing. 
+                              additionalProperties: false
+                              properties:
+                                code:
+                                  type: string
+                                  description: >
+                                    Represents the code indicating that the
+                                    merge was scheduled for background
+                                    processing. 
+
+                                    Possible values:
+
+                                    **SCHEDULED** - The merge operation was
+                                    queued for asynchronous processing.
+                                  enum:
+                                    - SCHEDULED
+                                details:
+                                  type: object
+                                  description: >-
+                                    Contains the details of the scheduled merge,
+                                    including the job ID for tracking the merge
+                                    status.
+                                  additionalProperties: false
+                                  properties:
+                                    job_id:
+                                      type: string
+                                      description: >-
+                                        Represents the unique identifier of the
+                                        scheduled merge job. Use this ID with
+                                        the [Get Merge Job Status
+                                        API](find_and_merge.yaml#$.paths./{module}/{masterRecordId}/actions/merge.get)
+                                        to check the status of the merge. 
+                                      pattern: ^[0-9]+$
+                                      maxLength: 50
+                                  required:
+                                    - job_id
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the message about the scheduled
+                                    merge operation.
+                                  maxLength: 500
+                                status:
+                                  type: string
+                                  description: >
+                                    Represents the status of the scheduling
+                                    operation. 
+
+                                    Possible values:
+
+                                    **success** - The merge was successfully
+                                    scheduled.
+                                  enum:
+                                    - success
+                              required:
+                                - code
+                                - details
+                                - message
+                                - status
+                          description: >-
+                            Each object represents a merge result item
+                            indicating whether the operation completed
+                            synchronously or was scheduled for processing.   
+                    required:
+                      - merge
+                description: >-
+                  Response when the merge operation was initiated - either
+                  completed synchronously or scheduled asynchronously. 
+              examples:
+                MergeCompleted:
+                  summary: Example of merge operation completed successfully.
+                  value:
+                    merge:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000116112'
+                        message: The records has been merged successfully
+                        status: success
+                  description: >-
+                    Shows the response when the merge was completed
+                    synchronously, returning a SUCCESS code with the retained
+                    master record ID.
+                MergeScheduled:
+                  summary: Example of merge operation scheduled for processing.
+                  value:
+                    merge:
+                      - code: SCHEDULED
+                        details:
+                          job_id: '1234567890'
+                        message: The records have been scheduled in a scheduler
+                        status: success
+                  description: >-
+                    Shows the response when the merge was scheduled for
+                    processing, returning a SCHEDULED code and job_id.
+        '400':
+          description: >-
+            Shows a bad request due to validation errors, invalid data, or
+            business rule violations. Returns either a standard top-level error
+            object or a merge array with per-operation error details.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: FindAndMergeMergeRecordsErrorResponse
+                oneOf:
+                  - x-zs-$id: FindAndMergeMergeRecordsStandardErrorResponse
+                    type: object
+                    description: Standard error response for invalid data or module errors.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >
+                          Represents the error code that identifies the type of
+                          failure. 
+
+                          Possible values:
+
+                          **INVALID_DATA** - The request contains invalid or
+                          malformed data.
+
+                          **INVALID_MODULE** - The specified module name is not
+                          valid.
+
+                          **NOT_ALLOWED** - The requested operation is not
+                          permitted.
+                        enum:
+                          - INVALID_DATA
+                          - INVALID_MODULE
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: >-
+                          Contains additional context information about the
+                          error, such as the field name, JSON path, and
+                          constraint limits that caused the validation failure.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the zero-based index of the path
+                              parameter that caused the error.
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field or resource
+                              that caused the validation error.
+                            maxLength: 100
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the field in the
+                              request that caused the validation error.
+                            maxLength: 200
+                          maximum_length:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the maximum allowed length for the
+                              field that caused the validation error.
+                          minimum_length:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the minimum required length for the
+                              field that caused the validation error.
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message that describes the issue
+                          in detail. 
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >
+                          Represents the status of the API request. 
+
+                          Possible values:
+
+                          **error** - The request failed due to a validation
+                          error or other issue.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - message
+                      - status
+                  - x-zs-$id: FindAndMergeMergeRecordsMergeArrayErrorResponse
+                    type: object
+                    description: >-
+                      Error response with merge array structure, returned when
+                      errors are specific to individual merge operations.
+                    additionalProperties: false
+                    properties:
+                      merge:
+                        type: array
+                        description: >-
+                          Contains the list of error details for each merge
+                          operation that failed validation. 
+                        maxItems: 10
+                        items:
+                          type: object
+                          description: >-
+                            Each object represents an individual error that
+                            occurred during a merge operation, including the
+                            error code, details, and a descriptive message.
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: >
+                                Represents the error code that identifies the
+                                type of failure for the merge operation. 
+
+                                Possible values:
+
+                                **MANDATORY_NOT_FOUND** - A required field or
+                                property is missing from the request.
+
+                                **NOT_ALLOWED** - The operation is not permitted
+                                due to a business rule constraint.
+
+                                **INVALID_DATA** - The request contains invalid
+                                or malformed data.
+
+                                **DUPLICATE_DATA** - Duplicate values were
+                                detected for a field that must be unique.
+
+                                **DEPENDENT_FIELD_MISSING** - A field that
+                                depends on another field is missing from the
+                                request.
+
+                                **LIMIT_EXCEEDED** - A size or count limit has
+                                been exceeded.
+                              enum:
+                                - MANDATORY_NOT_FOUND
+                                - NOT_ALLOWED
+                                - INVALID_DATA
+                                - DUPLICATE_DATA
+                                - DEPENDENT_FIELD_MISSING
+                                - LIMIT_EXCEEDED
+                            details:
+                              type: object
+                              description: >-
+                                Contains detailed error information for the
+                                failed merge operation, including the field
+                                name, JSON path, and constraint limits.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the field that
+                                    caused the validation error.
+                                  maxLength: 100
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    Represents the JSON path to the field in the
+                                    request that caused the validation error.
+                                  maxLength: 200
+                                resource_path_index:
+                                  type: integer
+                                  format: int32
+                                  description: >-
+                                    Represents the zero-based index of the path
+                                    parameter that caused the error.
+                                maximum_length:
+                                  type: integer
+                                  format: int32
+                                  description: >-
+                                    Represents the maximum allowed length for
+                                    the field that caused the validation error.
+                                minimum_length:
+                                  type: integer
+                                  format: int32
+                                  description: >-
+                                    Represents the minimum required length for
+                                    the field that caused the validation error.
+                                MAXIMUM_SIZE:
+                                  type: string
+                                  description: >-
+                                    Represents the maximum allowed total file
+                                    size for the file upload or image upload
+                                    field that caused the limit exceeded error.
+                                  maxLength: 50
+                                limit_due_to:
+                                  type: array
+                                  description: >-
+                                    Contains the list of fields that contributed
+                                    to the file size limit being exceeded.
+                                  maxItems: 20
+                                  items:
+                                    type: object
+                                    description: >-
+                                      Represents a field that contributed to the
+                                      file size limit being exceeded, identified
+                                      by its API name and JSON path.
+                                    additionalProperties: false
+                                    properties:
+                                      api_name:
+                                        type: string
+                                        description: >-
+                                          Represents the API name of the field
+                                          that contributed to the file size limit
+                                          being exceeded. 
+                                        maxLength: 100
+                                      json_path:
+                                        type: string
+                                        description: >-
+                                          Represents the JSON path to the field
+                                          that contributed to the file size limit
+                                          being exceeded. 
+                                        maxLength: 200
+                                    required:
+                                      - api_name
+                                      - json_path
+                                data:
+                                  type: array
+                                  description: >-
+                                    Contains the list of child records that are
+                                    associated with CPQ rules, preventing the
+                                    merge operation.
+                                  maxItems: 10
+                                  items:
+                                    type: object
+                                    description: >-
+                                      Represents a child record that has CPQ
+                                      associations blocking the merge operation.
+                                    additionalProperties: false
+                                    properties:
+                                      id:
+                                        type: string
+                                        description: >-
+                                          Represents the unique identifier of the
+                                          child record that has CPQ associations. 
+                                        pattern: ^[0-9]+$
+                                        maxLength: 50
+                                      _associated_places:
+                                        type: array
+                                        description: >-
+                                          Contains the list of CPQ configurations
+                                          and rules that are associated with the
+                                          record, preventing the merge.
+                                        maxItems: 50
+                                        items:
+                                          type: object
+                                          description: >-
+                                            Each object represents a CPQ association
+                                            entry, including its type and the
+                                            specific resources that reference this
+                                            record.
+                                          additionalProperties: false
+                                          properties:
+                                            type:
+                                              type: string
+                                              description: >-
+                                                Represents the type of CPQ association,
+                                                such as the product configurator or
+                                                pricing rule category. 
+                                              maxLength: 100
+                                            resources:
+                                              type: array
+                                              description: >-
+                                                Contains the list of CPQ resources that
+                                                reference this record, such as product
+                                                configurators or pricing rules.
+                                              maxItems: 50
+                                              items:
+                                                type: object
+                                                description: >-
+                                                  Each object represents an individual CPQ
+                                                  resource that references this record,
+                                                  identified by its ID and name.
+                                                additionalProperties: false
+                                                properties:
+                                                  id:
+                                                    type: string
+                                                    description: >-
+                                                      Represents the unique identifier of the
+                                                      CPQ resource. 
+                                                    pattern: ^[0-9]+$
+                                                    maxLength: 50
+                                                  name:
+                                                    type: string
+                                                    description: >-
+                                                      Represents the name of the CPQ resource
+                                                      that references this record. 
+                                                    maxLength: 200
+                                                required:
+                                                  - id
+                                                  - name
+                                          required:
+                                            - type
+                                            - resources
+                                    required:
+                                      - id
+                                dependee:
+                                  type: object
+                                  description: >-
+                                    Contains the information about the field
+                                    that the missing dependent field depends on.
+                                  additionalProperties: false
+                                  properties:
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the field
+                                        that the missing dependent field depends
+                                        on. 
+                                      maxLength: 100
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path to the field
+                                        that the missing dependent field depends
+                                        on. 
+                                      maxLength: 200
+                                  required:
+                                    - api_name
+                                    - json_path
+                            message:
+                              type: string
+                              description: >-
+                                Represents the error message for the failed
+                                merge operation. 
+                              maxLength: 500
+                            status:
+                              type: string
+                              description: >
+                                Represents the status of the merge operation. 
+
+                                Possible values:
+
+                                **error** - The operation failed due to a
+                                validation error.
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - message
+                            - status
+                    required:
+                      - merge
+                description: >-
+                  Error response for a merge request that failed due to
+                  validation errors, invalid data, or business rule violations.
+              examples:
+                MasterRecordNotAvailable:
+                  summary: Example of master record ID is not available.
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 1
+                    message: Master record id is not available
+                    status: error
+                  description: >-
+                    Shows the error when the master record ID specified in the
+                    URL path does not correspond to an existing record.
+                ChildRecordIdMissing:
+                  summary: Example of child record ID is empty or not available.
+                  value:
+                    merge:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].data[0].id
+                        message: required id not found
+                        status: error
+                  description: >-
+                    Shows the error when the child record ID is missing or empty
+                    in the data array.
+                InvalidModule:
+                  summary: Example of invalid module name provided.
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      resource_path_index: 0
+                    message: the module name given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the error when the module name in the request URL is
+                    not a valid module.
+                RecordAlreadyBeingMerged:
+                  summary: Example of record is already being merged.
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].data[0].id
+                        message: This record id is not allowed to be merged
+                        status: error
+                  description: >-
+                    Shows the error when a record in the request is already in
+                    the process of being merged and cannot be included in
+                    another merge operation.
+                ClosingDateNotAllowed:
+                  summary: Example of closing date is mentioned for deals module.
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Closing date will be automatically populated based on
+                          master record
+                        status: error
+                  description: >-
+                    Shows the error when the Closing Date field is included in
+                    the merge request for the Deals module, as it is
+                    automatically populated from the master record.
+                StageFieldNotAllowed:
+                  summary: >-
+                    Example of stage being mentioned when child and master
+                    record have different pipelines.
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Stage field will be automatically populated based on
+                          chosen Pipeline
+                        status: error
+                  description: >-
+                    Shows the error when the Stage field is included in the
+                    merge request for records with different pipelines, as it is
+                    automatically populated based on the chosen Pipeline.
+                ProbabilityRevenueNotAllowed:
+                  summary: >-
+                    Example of Expected Revenue and Probability fields are
+                    mentioned.
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Probability and Expected Revenue fields will be
+                          automatically populated based on chosen Stage
+                        status: error
+                  description: >-
+                    Shows the error when the Expected Revenue or Probability
+                    field is included in the merge request, as these fields are
+                    automatically populated based on the chosen Stage.
+                ClosedDealNotAllowed:
+                  summary: >-
+                    Example of closed deal is mentioned in the request body to
+                    merge.
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      api_name: record
+                      resource_path_index: 1
+                    message: Only Open Deals can be merged
+                    status: error
+                  description: >-
+                    Shows the error when a closed deal record is included in the
+                    merge request, as only open deals can be merged.
+                DuplicateRecordIds:
+                  summary: Example of all mentioned record IDs are the same.
+                  value:
+                    merge:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].data[0].id
+                        message: Valid record ids need to be given for merging
+                        status: error
+                  description: >-
+                    Shows the error when the master record ID and all child
+                    record IDs are identical, as valid distinct record IDs are
+                    required.
+                DuplicateFieldMention:
+                  summary: Example of one particular field is mentioned more than once.
+                  value:
+                    merge:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: When one field is mentioned more than once
+                        status: error
+                  description: >-
+                    Shows the error when the same field API name is specified
+                    more than once across the data and master_record_fields
+                    arrays.
+                MergeArraySizeExceeded:
+                  summary: Example of merge array size is larger than one.
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Shows the error when the merge array in the request body
+                    contains more than one object.
+                ApiNameNotMentioned:
+                  summary: Example of API name of a field that is not mentioned.
+                  value:
+                    merge:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: API name of the field is not mentioned
+                        status: error
+                  description: >-
+                    Shows the error when a field in the _fields array does not
+                    include the required api_name property.
+                DataArraySizeExceeded:
+                  summary: Example of the data size array more than 2.
+                  value:
+                    merge:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: data
+                          json_path: $.merge[0].data
+                          maximum_length: 2
+                        message: ' More than 2 child record ids cannot be merged.'
+                        status: error
+                  description: >-
+                    Shows the error when the data array contains more than two
+                    child record objects, exceeding the maximum allowed size.
+                MasterRecordApiNameMissing:
+                  summary: >-
+                    Example of API name being not mentioned in
+                    master_record_fields array.
+                  value:
+                    merge:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].master_record_fields[0].api_name
+                        message: API name not mentioned for the master record
+                        status: error
+                  description: >-
+                    Shows the error when an entry in the master_record_fields
+                    array does not include the required api_name property.
+                DataArrayEmpty:
+                  summary: Example of data array being not mentioned or empty.
+                  value:
+                    merge:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: data
+                          json_path: $.merge[0].data
+                          minimum_length: 1
+                        message: ' Atleast one child record id is required to be merged.'
+                        status: error
+                  description: >-
+                    Shows the error when the data array is missing or empty in
+                    the merge request.
+                FileUploadDataMissingMaster:
+                  summary: >-
+                    Example of File/Image upload field being mentioned in master
+                    record but _data array not given.
+                  value:
+                    merge:
+                      - code: DEPENDENT_FIELD_MISSING
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].master_record_fields[0]._data
+                          dependee:
+                            api_name: api_name
+                            json_path: $.merge[0].master_record_fields[0].api_name
+                        message: _data array is not mentioned for the master record
+                        status: error
+                  description: >-
+                    Shows the error when a file upload or image upload field is
+                    specified in master_record_fields but the _data array is
+                    missing.
+                FileUploadDataMissingChild:
+                  summary: >-
+                    Example of File/Image upload field being mentioned in data
+                    array but _data array not given.
+                  value:
+                    merge:
+                      - code: DEPENDENT_FIELD_MISSING
+                        details:
+                          api_name: id
+                          json_path: $.merge[0].data[0]._fields[0]._data
+                          dependee:
+                            api_name: api_name
+                            json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: _data array is not mentioned for the child record
+                        status: error
+                  description: >-
+                    Shows the error when a file upload or image upload field is
+                    specified for a child record in _fields but the _data array
+                    is missing.
+                CpqAssociationError:
+                  summary: Example of records being associated with CPQ rules.
+                  value:
+                    merge:
+                      - code: NOT_ALLOWED
+                        details:
+                          data:
+                            - _associated_places:
+                                - resources:
+                                    - name: asdfsdf
+                                      id: '111111000000071837'
+                                  type: product_configurators
+                                - resources:
+                                    - name: PR -sample
+                                      id: '111111000000072007'
+                                  type: pricing_rules
+                              id: '111111000000071814'
+                          api_name: data
+                          json_path: $.merge[0].data
+                        message: >-
+                          unable to merge records since there are association in
+                          child records
+                        status: error
+                  description: >-
+                    Shows the error when a child record is associated with CPQ
+                    configurations such as product configurators or pricing
+                    rules, preventing the merge.
+                FileSizeLimitExceeded:
+                  summary: >-
+                    Example of total size of files/images in a field exceeding
+                    maximum upload size.
+                  value:
+                    merge:
+                      - code: LIMIT_EXCEEDED
+                        details:
+                          MAXIMUM_SIZE: 30 MB
+                          limit_due_to:
+                            - api_name: File_Upload_30MB
+                              json_path: $.merge[0].data[0]._fields[0].api_name
+                            - api_name: File_Upload_30MB
+                              json_path: $.merge[0].data[1]._fields[1].api_name
+                            - api_name: File_Upload_30MB
+                              json_path: $.merge[0].master_record_fields[1].api_name
+                        message: Attachment size limit exceeded
+                        status: error
+                  description: >-
+                    Shows the error when the combined size of files or images
+                    across the specified fields exceeds the maximum upload size
+                    limit, listing each contributing field.
+                ReportingToChildOnly:
+                  summary: Example of providing only Reporting To for child record.
+                  value:
+                    merge:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Reporting to and account should belong to the same
+                          record
+                        status: error
+                  description: >-
+                    Shows the error when the Reporting To field is specified for
+                    only a child record, without specifying the Account field
+                    for the same record.
+                ReportingToWithAccountMismatch:
+                  summary: >-
+                    Example of configuring Reporting To for child and Account
+                    for master (or vice versa).
+                  value:
+                    merge:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.merge[0].data[0]._fields[0].api_name
+                        message: >-
+                          Reporting to and account should belong to the same
+                          record
+                        status: error
+                  description: >-
+                    Shows the error when the Reporting To and Account fields are
+                    specified for different records, as both must belong to the
+                    same record.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.custom.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.leads.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.contacts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.accounts.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.potentials.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.vendors.CREATE
+security:
+  - OAuth2:
+      - ZohoCRM.modules.custom.READ
+  - OAuth2:
+      - ZohoCRM.modules.leads.READ
+  - OAuth2:
+      - ZohoCRM.modules.contacts.READ
+  - OAuth2:
+      - ZohoCRM.modules.accounts.READ
+  - OAuth2:
+      - ZohoCRM.modules.potentials.READ
+  - OAuth2:
+      - ZohoCRM.modules.vendors.READ
+  - OAuth2:
+      - ZohoCRM.modules.custom.CREATE
+  - OAuth2:
+      - ZohoCRM.modules.leads.CREATE
+  - OAuth2:
+      - ZohoCRM.modules.contacts.CREATE
+  - OAuth2:
+      - ZohoCRM.modules.accounts.CREATE
+  - OAuth2:
+      - ZohoCRM.modules.potentials.CREATE
+  - OAuth2:
+      - ZohoCRM.modules.vendors.CREATE
+components:
+  parameters:
+    Module:
+      name: module
+      in: path
+      required: true
+      description: |
+        Specify the CRM module name containing the records to be merged.
+        Possible values:
+        **Accounts** - Accounts module.
+        **Contacts** - Contacts module.
+        **Leads** - Leads module.
+        **Deals** - Deals module.
+        **Vendors** - Cases module.
+        Additionally, **custom modules** are also supported in this API.  
+      schema:
+        type: string
+        description: Valid CRM module name
+        enum:
+          - Accounts
+          - Contacts
+          - Leads
+          - Deals
+          - Cases
+          - Campaigns
+    JobId:
+      name: job_id
+      in: query
+      required: false
+      description: >-
+        The ID represents the unique identifier of your scheduled merge job,
+        which you get from the response of the [Merge Records
+        API](find_and_merge.yaml#$.paths./{module}/{masterRecordId}/actions/merge.get). 
+      schema:
+        type: string
+        description: Unique identifier for merge job
+        pattern: ^[0-9]+$
+        maxLength: 50
+    MasterRecordId:
+      name: masterRecordId
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the master record to be retained after
+        the merge operation. 
+      schema:
+        type: string
+        description: Master record identifier (int64 as string)
+        pattern: ^[0-9]+$
+        maxLength: 50
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.custom.READ: Read access to CRM custom module records for merge operations
+            ZohoCRM.modules.leads.READ: Read access to CRM leads module records for merge operations
+            ZohoCRM.modules.contacts.READ: Read access to CRM contacts module records for merge operations
+            ZohoCRM.modules.accounts.READ: Read access to CRM accounts module records for merge operations
+            ZohoCRM.modules.potentials.READ: Read access to CRM potentials module records for merge operations
+            ZohoCRM.modules.vendors.READ: Read access to CRM vendors module records for merge operations
+            ZohoCRM.modules.custom.CREATE: Write access to CRM custom module records for merge operations
+            ZohoCRM.modules.leads.CREATE: Write access to CRM leads module records for merge operations
+            ZohoCRM.modules.contacts.CREATE: Write access to CRM contacts module records for merge operations
+            ZohoCRM.modules.accounts.CREATE: Write access to CRM accounts module records for merge operations
+            ZohoCRM.modules.potentials.CREATE: Write access to CRM potentials module records for merge operations
+            ZohoCRM.modules.vendors.CREATE: Write access to CRM vendors module records for merge operations
+            ZohoCRM.modules.all: Full access to CRM modules for merge operations

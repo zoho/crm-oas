@@ -1,0 +1,33 @@
+# Scoring Rules
+
+- [OpenAPI specification](scoring_rules.yaml)
+- [Scoring Rules](operations/getScoringRules/operation.md)
+  - To retrieve a list of Scoring Rules configured in your Zoho CRM organization.
+  - [Examples](operations/getScoringRules/examples/)
+- [Scoring Rules](operations/putScoringRules/operation.md)
+  - Updates one or more scoring rules. Returns 200 (all success) or 207 (partial success).
+  - [Examples](operations/putScoringRules/examples/)
+- [Scoring Rules](operations/postScoringRules/operation.md)
+  - Creates one or more scoring rules for specified modules and layouts. Only Leads and Contacts modules support signal rules. Deals, Accounts and Custom Modules do not support signal rules.
+  - [Examples](operations/postScoringRules/examples/)
+- [Scoring Rules](operations/deleteScoringRules/operation.md)
+  - Permanently deletes multiple scoring rules
+  - [Examples](operations/deleteScoringRules/examples/)
+- [Get scoring rule by ID](operations/getScoringRuleById/operation.md)
+  - To retrieve the details of a specific Scoring Rule by its ID in your Zoho CRM organization.
+  - [Examples](operations/getScoringRuleById/examples/)
+- [Update a scoring rules by ID](operations/putScoringRuleById/operation.md)
+  - To update a specific Scoring Rule by its ID in your Zoho CRM organization.
+  - [Examples](operations/putScoringRuleById/examples/)
+- [Delete a scoring rules by ID](operations/deleteScoringRuleById/operation.md)
+  - Permanently deletes a single scoring rule identified by ruleId
+  - [Examples](operations/deleteScoringRuleById/examples/)
+- [Activate a scoring rule](operations/putActivate/operation.md)
+  - Activates an inactive scoring rule identified by `ruleId`, enabling it to start evaluating and scoring CRM records based on its configured criteria.
+  - [Examples](operations/putActivate/examples/)
+- [Deactivate a scoring rule](operations/deleteActivate/operation.md)
+  - Deactivates an active scoring rule identified by `ruleId`, suspending its scoring evaluation without deleting it.
+  - [Examples](operations/deleteActivate/examples/)
+- [Clone a scoring rule](operations/postClone/operation.md)
+  - To clone a Scoring Rule in your Zoho CRM organization.
+  - [Examples](operations/postClone/examples/)

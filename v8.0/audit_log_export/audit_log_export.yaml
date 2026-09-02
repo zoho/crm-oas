@@ -1,0 +1,1584 @@
+openapi: 3.1.0
+info:
+  title: Audit Log Export
+  description: >
+    Audit log export records the chronological sequence of user actions
+    performed across modules in Zoho CRM. This API enables developers to
+    schedule export jobs, monitor their status, and retrieve download links for
+    the exported audit log data.
+
+
+    Refer to the [Monitoring Audit
+    Log](https://help.zoho.com/portal/en/kb/crm/security-control/audit-log/articles/monitor-audit-log#View_Audit_Log)
+    for more details. 
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: Production API server for Zoho CRM.
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: The regional top-level domain of the API server.
+      version:
+        default: v8
+        description: The version of the Zoho CRM API.
+paths:
+  /settings/audit_log_export:
+    post:
+      operationId: createAuditLogExport
+      summary: Create an audit log export job
+      description: >-
+        To create an asynchronous audit log export job in your Zoho CRM
+        organization. The system schedules the job and returns a unique job ID
+        with a SCHEDULED status code. Use the[Get Audit Log Export
+        API](audit_log_export.yaml#.$./paths./settings/audit_log_export.get) to
+        poll for completion and retrieve the download links.
+      x-zs-llm-description: >-
+        Creates an asynchronous audit log export job based on filter criteria
+        (module, action, etc.). Returns a job ID with SCHEDULED status. Use
+        getAuditLogExports or getAuditLogExportsById to poll for completion and
+        retrieve download links. Only one active export job is allowed at a
+        time.
+      x-zs-llm-examples:
+        - Default
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.audit_logs.CREATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Represents the request body for creating an audit log export
+                job.
+              properties:
+                audit_log_export:
+                  type: array
+                  description: Specify the list of audit log export job configurations.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: >-
+                      Specify the details for each audit log export job,
+                      including the filter criteria.
+                    properties:
+                      criteria:
+                        $ref: '#/components/schemas/AuditLogCriterion'
+                    required:
+                      - criteria
+                    additionalProperties: false
+              required:
+                - audit_log_export
+              additionalProperties: false
+            examples:
+              Default:
+                summary: Create audit log export with criteria filters.
+                value:
+                  audit_log_export:
+                    - criteria:
+                        group_operator: and
+                        group:
+                          - field:
+                              api_name: module
+                            comparator: in
+                            value:
+                              - api_name: Leads
+                              - api_name: Contacts
+                          - field:
+                              api_name: action
+                            comparator: in
+                            value:
+                              - added
+                              - updated
+                description: >-
+                  Shows an audit log export request with group filter criteria
+                  combining module and action filters.
+        description: >-
+          The request body must contain an audit_log_export array. You can
+          include a maximum of 100 objects per request.
+      responses:
+        '200':
+          description: >-
+            Returns the scheduled status and unique job ID for each submitted
+            audit log export request.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: CreateAuditLogExportResponse
+                description: >-
+                  Represents the success response for creating an audit log
+                  export job.
+                properties:
+                  audit_log_export:
+                    type: array
+                    description: Represents the list of audit log export job responses.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        Represents the response details of a single audit log
+                        export job.
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Specifies the status code of the export job
+                            creation.
+
+                            Possible values:
+
+                            SCHEDULED - The audit log export job has been
+                            successfully scheduled.
+                          enum:
+                            - SCHEDULED
+                        details:
+                          type: object
+                          description: >-
+                            Represents additional details for the scheduled
+                            audit log export job.
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the scheduled audit
+                                log export job.
+                              maxLength: 64
+                          additionalProperties: false
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the audit log
+                            export job status.
+                          maxLength: 256
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the export job creation
+                            request.
+
+                            Possible values:
+
+                            success - The audit log export job creation
+                            completed successfully.
+                          enum:
+                            - success
+                      additionalProperties: false
+                additionalProperties: false
+              examples:
+                Success:
+                  summary: Successful audit log export job creation
+                  value:
+                    audit_log_export:
+                      - code: SCHEDULED
+                        details:
+                          id: '1234567890'
+                        message: Audit log export job scheduled successfully.
+                        status: success
+                  description: >-
+                    Shows a success response with a SCHEDULED status code and
+                    unique job ID for the created export job.
+        '400':
+          description: >-
+            The audit log export request is invalid. Resolution: Verify the
+            request body structure, filter criteria, and field values are
+            correctly formatted.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: CreateAuditLogExportBadRequestResponseWrapper
+                description: Bad request response for Create Audit Log Export.
+                oneOf:
+                  - $ref: '#/components/schemas/CreateAuditLogExportDirectError'
+                  - $ref: '#/components/schemas/CreateAuditLogExportWrappedError'
+              examples:
+                MandatoryNotFound:
+                  summary: Request body is missing the audit_log_export key
+                  value:
+                    code: MANDATORY_NOT_FOUND
+                    status: error
+                    message: Required field missing
+                    details:
+                      api_name: audit_log_export
+                      json_path: $.audit_log_export[0]
+                LimitExceeded:
+                  summary: More than one audit_log_export item supplied
+                  value:
+                    audit_log_export:
+                      - code: LIMIT_EXCEEDED
+                        status: error
+                        message: >-
+                          The audit_log_export jsonarray size should not exceed
+                          one
+                        details:
+                          api_name: audit_log_export
+                          json_path: $.audit_log_export[1]
+                          limit: '1'
+                NotAllowed:
+                  summary: Audited time range exceeds 6 months
+                  value:
+                    audit_log_export:
+                      - code: NOT_ALLOWED
+                        status: error
+                        message: >-
+                          Logs only within 6 month intervals are allowed to be
+                          fetched
+                        details:
+                          api_name: value
+                          json_path: $.audit_log_export[0].criteria.value
+                AlreadyScheduled:
+                  summary: An export job is already scheduled
+                  value:
+                    audit_log_export:
+                      - code: ALREADY_SCHEDULED
+                        status: error
+                        message: Export is already scheduled
+                        details:
+                          id: '4670092000004613003'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    get:
+      summary: Get audit log export jobs
+      description: >-
+        To retrieve the list of all audit log export jobs in your Zoho CRM
+        organization, along with their status, filter criteria, and download
+        links.
+      x-zs-llm-description: >-
+        Lists all audit log export jobs with their status, criteria, and
+        download links. Returns 204 when no export jobs exist.
+      operationId: getAuditLogExports
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.audit_logs.READ
+      responses:
+        '200':
+          description: >-
+            Returns the list of audit log export jobs along with their status,
+            filter criteria, and download links.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the success response for retrieving audit log
+                  export jobs.
+                x-zs-$id: GetAuditLogExportsSuccessResponse
+                properties:
+                  audit_log_export:
+                    type: array
+                    description: Represents the list of audit log export jobs.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: Represents the details of a single audit log export job.
+                      properties:
+                        criteria:
+                          $ref: '#/components/schemas/AuditLogCriterionNullable'
+                        id:
+                          type: string
+                          description: >-
+                            Represents the unique ID of the audit log export
+                            job.
+                          maxLength: 64
+                          x-zs-$id: AuditLogExportId
+                        status:
+                          type: string
+                          description: Status of the export job.
+                          enum:
+                            - queued
+                            - scheduled
+                            - running
+                            - suspended
+                            - failed
+                            - finished
+                            - deleted
+                        created_by:
+                          type: object
+                          description: >-
+                            Represents the Zoho CRM user who created the export
+                            job.
+                          properties:
+                            name:
+                              type: string
+                              description: >-
+                                Represents the name of the user who created the
+                                export job.
+                              maxLength: 256
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the user who created
+                                the export job.
+                              maxLength: 64
+                          required:
+                            - id
+                          additionalProperties: false
+                        download_links:
+                          type:
+                            - array
+                            - 'null'
+                          description: >-
+                            Download links for exported audit logs. Null until
+                            the job completes and produces at least one file.
+                          maxItems: 1000
+                          items:
+                            type: string
+                            description: >-
+                              Represents a URL for downloading the exported
+                              audit log result.
+                            maxLength: 2048
+                        job_start_time:
+                          type: string
+                          description: >-
+                            Represents the date and time when the export job
+                            started.
+                          format: date-time
+                        job_end_time:
+                          type: string
+                          description: >-
+                            Represents the date and time when the export job was
+                            completed.
+                          format: date-time
+                        expiry_date:
+                          type:
+                            - string
+                            - 'null'
+                          description: >-
+                            Expiry date for download links. Null until download
+                            links are generated.
+                          format: date-time
+                      required:
+                        - criteria
+                        - download_links
+                      additionalProperties: false
+                additionalProperties: false
+              examples:
+                Success:
+                  summary: Successful retrieval of audit log export jobs
+                  value:
+                    audit_log_export:
+                      - criteria:
+                          group_operator: and
+                          group:
+                            - field:
+                                api_name: module
+                              comparator: in
+                              value:
+                                - api_name: Leads
+                                - api_name: Contacts
+                            - field:
+                                api_name: action
+                              comparator: in
+                              value:
+                                - added
+                                - updated
+                        id: '1234567890'
+                        status: finished
+                        created_by:
+                          name: John Doe
+                          id: '123456'
+                        download_links:
+                          - https://example.com/download/1234567890
+                        job_start_time: '2023-01-01T00:00:00Z'
+                        job_end_time: '2023-01-01T01:00:00Z'
+                        expiry_date: '2023-01-08T00:00:00Z'
+                  description: >-
+                    Shows a completed audit log export job with status, filter
+                    criteria, created_by user, and a download link.
+        '204':
+          description: >-
+            Returns an empty response when no audit log export jobs are
+            available.
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /settings/audit_log_export/{id}:
+    get:
+      summary: Get the Status of the Export Audit Log Job
+      description: >-
+        Retrieves the details of a specific audit log export job in your Zoho
+        CRM organization by its ID, including its status, filter criteria, and
+        download link(s).
+      x-zs-llm-description: >-
+        Retrieves a specific audit log export job by ID. Returns job status,
+        criteria, and download links when complete. Returns 404 with
+        INVALID_URL_PATTERN if the ID does not exist.
+      operationId: getAuditLogExportsById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.audit_logs.READ
+      responses:
+        '200':
+          description: Returns the details of the specified audit log export job.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetAuditLogExportsByIdSuccessResponse
+                description: >-
+                  Represents the success response for retrieving an audit log
+                  export job by ID.
+                properties:
+                  audit_log_export:
+                    type: array
+                    description: >-
+                      Represents the list containing the requested audit log
+                      export job.
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the details of the specified audit log export
+                        job.
+                      properties:
+                        criteria:
+                          $ref: '#/components/schemas/AuditLogCriterionNullable'
+                        id:
+                          type: string
+                          description: >-
+                            Represents the unique ID of the audit log export
+                            job.
+                          maxLength: 64
+                        status:
+                          type: string
+                          description: Status of the export job.
+                          enum:
+                            - queued
+                            - scheduled
+                            - running
+                            - suspended
+                            - failed
+                            - finished
+                            - deleted
+                        created_by:
+                          type: object
+                          description: >-
+                            Represents the Zoho CRM user who created the export
+                            job.
+                          properties:
+                            name:
+                              type: string
+                              description: >-
+                                Represents the name of the user who created the
+                                export job.
+                              maxLength: 256
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique ID of the user who created
+                                the export job.
+                              maxLength: 64
+                          required:
+                            - id
+                          additionalProperties: false
+                        download_links:
+                          type:
+                            - array
+                            - 'null'
+                          description: >-
+                            Download links for exported audit logs. Null until
+                            the job completes and produces at least one file.
+                          maxItems: 1000
+                          items:
+                            type: string
+                            description: >-
+                              Represents a URL for downloading the exported
+                              audit log result.
+                            maxLength: 2048
+                        job_start_time:
+                          type: string
+                          description: >-
+                            Represents the date and time when the export job
+                            started.
+                          format: date-time
+                        job_end_time:
+                          type: string
+                          description: >-
+                            Represents the date and time when the export job was
+                            completed.
+                          format: date-time
+                        expiry_date:
+                          type:
+                            - string
+                            - 'null'
+                          description: >-
+                            Expiry date for download links. Null until download
+                            links are generated.
+                          format: date-time
+                      required:
+                        - criteria
+                        - download_links
+                      additionalProperties: false
+                additionalProperties: false
+              examples:
+                Success:
+                  summary: Successful retrieval of an audit log export job by ID
+                  value:
+                    audit_log_export:
+                      - criteria:
+                          field:
+                            api_name: done_by
+                          comparator: equal
+                          value:
+                            - id: '123456'
+                              name: John Doe
+                        id: '1234567890'
+                        status: finished
+                        created_by:
+                          name: John Doe
+                          id: '123456'
+                        download_links:
+                          - https://example.com/download/1234567890
+                        job_start_time: '2023-01-01T00:00:00Z'
+                        job_end_time: '2023-01-01T01:00:00Z'
+                        expiry_date: '2023-01-08T00:00:00Z'
+                  description: >-
+                    Shows a completed audit log export job retrieved by ID, with
+                    status, download link, and timing details.
+        '204':
+          description: >-
+            Returns an empty response when no export job data is available for
+            the specified ID.
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: >-
+            The specified audit log export job ID does not exist. Resolution: A
+            valid export job ID obtained from the Create Audit Log Export API
+            must be provided.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: GetAuditLogExportsByIdNotFoundResponse
+                description: >-
+                  Represents the not found error response when the specified
+                  export job ID does not exist.
+                properties:
+                  code:
+                    type: string
+                    description: >-
+                      Represents the error code.
+
+                      Possible values:
+
+                      INVALID_URL_PATTERN - The specified audit log export job
+                      ID does not exist.
+                    enum:
+                      - INVALID_URL_PATTERN
+                  details:
+                    type: object
+                    description: Represents additional error details.
+                    additionalProperties: true
+                  message:
+                    type: string
+                    description: Represents the error message.
+                    maxLength: 256
+                  status:
+                    type: string
+                    description: |-
+                      Represents the request status.
+                      Possible values:
+                      error - The request was unsuccessful.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - message
+                  - status
+                additionalProperties: false
+              examples:
+                NotFound:
+                  summary: Export job ID not found
+                  value:
+                    code: INVALID_URL_PATTERN
+                    message: Please check if the URL trying to access is a correct one
+                    status: error
+                    details: {}
+                  description: >-
+                    Shows an error response when the specified audit log export
+                    job ID is not found.
+components:
+  responses:
+    Forbidden:
+      description: >-
+        Forbidden - the current user does not have an administrator profile, or
+        the Audit Logs feature is not available for this organization.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuditLogExportForbiddenResponse'
+          examples:
+            NoPermission:
+              summary: User does not have the required profile permission
+              value:
+                status: error
+                code: NO_PERMISSION
+                message: permission denied
+                details:
+                  permissions:
+                    - profile permission
+  schemas:
+    AuditLogExportForbiddenResponse:
+      type: object
+      x-zs-$id: AuditLogExportForbiddenResponse
+      description: >-
+        Error returned when the user lacks an administrator profile or the Audit
+        Logs feature is unavailable.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - NO_PERMISSION
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: Permissions the current user is missing.
+          properties:
+            permissions:
+              type: array
+              description: Permissions required to perform this operation.
+              maxItems: 25
+              items:
+                type: string
+                description: A required permission.
+                maxLength: 128
+          required:
+            - permissions
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    AuditLogExportErrorFieldPointer:
+      type: object
+      x-zs-$id: AuditLogExportErrorFieldPointer
+      description: Pointer to the request field that caused the error.
+      properties:
+        api_name:
+          type: string
+          description: API name of the field that caused the error.
+          maxLength: 64
+        json_path:
+          type: string
+          description: JSON path of the field within the request body.
+          maxLength: 256
+      required:
+        - api_name
+        - json_path
+      additionalProperties: false
+    CreateAuditLogExportErrorMandatoryNotFound:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorMandatoryNotFound
+      description: A mandatory key inside criteria is missing.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - MANDATORY_NOT_FOUND
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          $ref: '#/components/schemas/AuditLogExportErrorFieldPointer'
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportErrorNotSupported:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorNotSupported
+      description: The supplied field or value is not supported by this API.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - NOT_SUPPORTED
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          $ref: '#/components/schemas/AuditLogExportErrorFieldPointer'
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportErrorNotAllowed:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorNotAllowed
+      description: The audited_time range spans more than 180 days.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - NOT_ALLOWED
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          $ref: '#/components/schemas/AuditLogExportErrorFieldPointer'
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportErrorInvalidData:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorInvalidData
+      description: The supplied value is invalid for the given field or comparator.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: Details of the invalid value.
+          properties:
+            api_name:
+              type: string
+              description: API name of the field that caused the error.
+              maxLength: 64
+            json_path:
+              type: string
+              description: JSON path of the field within the request body.
+              maxLength: 256
+            supported_values:
+              type: array
+              description: >-
+                Values accepted for this field. Present when the value is
+                outside the allowed set.
+              maxItems: 25
+              items:
+                type: string
+                description: An accepted value.
+                maxLength: 64
+            expected_data_type:
+              type: string
+              description: >-
+                Data type expected for this field. Present when the value has
+                the wrong type.
+              maxLength: 32
+          required:
+            - api_name
+            - json_path
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportErrorLimitExceeded:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorLimitExceeded
+      description: An array in the request exceeds its permitted size.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - LIMIT_EXCEEDED
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: Details of the exceeded limit.
+          properties:
+            api_name:
+              type: string
+              description: API name of the array that exceeded its limit.
+              maxLength: 64
+            json_path:
+              type: string
+              description: JSON path of the array within the request body.
+              maxLength: 256
+            limit:
+              type: string
+              description: Maximum number of items permitted.
+              maxLength: 32
+          required:
+            - api_name
+            - json_path
+            - limit
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportErrorExpectedFieldMissing:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorExpectedFieldMissing
+      description: Neither group nor field was supplied inside criteria.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - EXPECTED_FIELD_MISSING
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: Fields of which at least one must be supplied.
+          properties:
+            expected_fields:
+              type: array
+              description: Candidate fields, at least one of which is required.
+              maxItems: 25
+              items:
+                $ref: '#/components/schemas/AuditLogExportErrorFieldPointer'
+          required:
+            - expected_fields
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportErrorAmbiguityDuringProcessing:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorAmbiguityDuringProcessing
+      description: >-
+        Both id and api_name were supplied for a module value but they identify
+        different modules.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: Fields that conflict with one another.
+          properties:
+            ambiguity_due_to:
+              type: array
+              description: The conflicting fields.
+              maxItems: 25
+              items:
+                $ref: '#/components/schemas/AuditLogExportErrorFieldPointer'
+          required:
+            - ambiguity_due_to
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportErrorDependentFieldMissing:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorDependentFieldMissing
+      description: A field was supplied without its dependent field.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - DEPENDENT_FIELD_MISSING
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: The missing field and the field it depends on.
+          properties:
+            dependee:
+              $ref: '#/components/schemas/AuditLogExportErrorFieldPointer'
+            api_name:
+              type: string
+              description: API name of the missing field.
+              maxLength: 64
+            json_path:
+              type: string
+              description: JSON path of the missing field within the request body.
+              maxLength: 256
+            expected_data_type:
+              type: string
+              description: Data type expected for the missing field.
+              maxLength: 32
+          required:
+            - dependee
+            - api_name
+            - json_path
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportErrorDependentMismatch:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorDependentMismatch
+      description: The supplied value is incompatible with the comparator it depends on.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - DEPENDENT_MISMATCH
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: The mismatched field and the field it depends on.
+          properties:
+            dependee:
+              $ref: '#/components/schemas/AuditLogExportErrorFieldPointer'
+            api_name:
+              type: string
+              description: API name of the mismatched field.
+              maxLength: 64
+            json_path:
+              type: string
+              description: JSON path of the mismatched field within the request body.
+              maxLength: 256
+            expected_data_type:
+              type: string
+              description: Data type expected for the mismatched field.
+              maxLength: 32
+          required:
+            - dependee
+            - api_name
+            - json_path
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportErrorAlreadyScheduled:
+      type: object
+      x-zs-$id: CreateAuditLogExportErrorAlreadyScheduled
+      description: An audit log export job is already scheduled for this organization.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - ALREADY_SCHEDULED
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: Identifier of the export job that is already scheduled.
+          properties:
+            id:
+              type: string
+              description: Unique identifier of the already scheduled export job.
+              maxLength: 64
+          required:
+            - id
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportWrappedError:
+      type: object
+      x-zs-$id: CreateAuditLogExportWrappedError
+      description: >-
+        Error raised while validating the export criteria, wrapped in the
+        audit_log_export array.
+      properties:
+        audit_log_export:
+          type: array
+          description: Array containing a single error object.
+          minItems: 1
+          maxItems: 1
+          items:
+            x-zs-$id: CreateAuditLogExportWrappedErrorItem
+            description: The error raised while validating the export request.
+            oneOf:
+              - $ref: >-
+                  #/components/schemas/CreateAuditLogExportErrorMandatoryNotFound
+              - $ref: '#/components/schemas/CreateAuditLogExportErrorNotSupported'
+              - $ref: '#/components/schemas/CreateAuditLogExportErrorNotAllowed'
+              - $ref: '#/components/schemas/CreateAuditLogExportErrorInvalidData'
+              - $ref: '#/components/schemas/CreateAuditLogExportErrorLimitExceeded'
+              - $ref: >-
+                  #/components/schemas/CreateAuditLogExportErrorExpectedFieldMissing
+              - $ref: >-
+                  #/components/schemas/CreateAuditLogExportErrorAmbiguityDuringProcessing
+              - $ref: >-
+                  #/components/schemas/CreateAuditLogExportErrorDependentFieldMissing
+              - $ref: >-
+                  #/components/schemas/CreateAuditLogExportErrorDependentMismatch
+              - $ref: '#/components/schemas/CreateAuditLogExportErrorAlreadyScheduled'
+      required:
+        - audit_log_export
+      additionalProperties: false
+    CreateAuditLogExportDirectErrorMandatoryNotFound:
+      type: object
+      x-zs-$id: CreateAuditLogExportDirectErrorMandatoryNotFound
+      description: The request body is missing the audit_log_export key.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - MANDATORY_NOT_FOUND
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          $ref: '#/components/schemas/AuditLogExportErrorFieldPointer'
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportDirectErrorInvalidData:
+      type: object
+      x-zs-$id: CreateAuditLogExportDirectErrorInvalidData
+      description: The request body has the wrong data type at the top level.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - INVALID_DATA
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: Details of the invalid value.
+          properties:
+            api_name:
+              type: string
+              description: API name of the field that caused the error.
+              maxLength: 64
+            json_path:
+              type: string
+              description: JSON path of the field within the request body.
+              maxLength: 256
+            expected_data_type:
+              type: string
+              description: Data type expected for this field.
+              maxLength: 32
+          required:
+            - api_name
+            - json_path
+            - expected_data_type
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportDirectErrorInvalidRequest:
+      type: object
+      x-zs-$id: CreateAuditLogExportDirectErrorInvalidRequest
+      description: The organization is in read-only mode, so no export can be scheduled.
+      properties:
+        code:
+          type: string
+          description: Error code.
+          enum:
+            - INVALID_REQUEST
+        message:
+          type: string
+          description: Error message.
+          maxLength: 256
+        status:
+          type: string
+          description: Error status.
+          enum:
+            - error
+        details:
+          type: object
+          description: Always an empty object for this error.
+          additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - details
+      additionalProperties: false
+    CreateAuditLogExportDirectError:
+      x-zs-$id: CreateAuditLogExportDirectError
+      description: >-
+        Error raised before the criteria are validated, returned without the
+        audit_log_export wrapper.
+      oneOf:
+        - $ref: >-
+            #/components/schemas/CreateAuditLogExportDirectErrorMandatoryNotFound
+        - $ref: '#/components/schemas/CreateAuditLogExportDirectErrorInvalidData'
+        - $ref: '#/components/schemas/CreateAuditLogExportDirectErrorInvalidRequest'
+    AuditLogModuleValue:
+      type: object
+      x-zs-$id: AuditLogModuleValue
+      description: Module reference. Supply api_name, id, or both.
+      properties:
+        api_name:
+          type: string
+          description: API name of the module.
+          maxLength: 128
+        id:
+          type: string
+          description: Unique identifier of the module.
+          maxLength: 64
+      anyOf:
+        - required:
+            - api_name
+        - required:
+            - id
+      additionalProperties: false
+    AuditLogDoneByValue:
+      type: object
+      x-zs-$id: AuditLogDoneByValue
+      description: User reference for the done_by filter.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the user.
+          maxLength: 64
+        name:
+          type: string
+          description: Display name of the user.
+          maxLength: 256
+      required:
+        - id
+      additionalProperties: false
+    AuditLogActionEqualCriterion:
+      type: object
+      x-zs-$id: AuditLogActionEqualCriterion
+      description: Match audit log entries whose action equals a single value.
+      properties:
+        field:
+          type: object
+          description: Field to apply the filter on.
+          properties:
+            api_name:
+              type: string
+              description: API name of the field.
+              enum:
+                - action
+          required:
+            - api_name
+          additionalProperties: false
+        comparator:
+          type: string
+          description: Comparison operator.
+          enum:
+            - equal
+        value:
+          type: string
+          description: Action to match.
+          enum:
+            - added
+            - updated
+            - deleted
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    AuditLogActionInCriterion:
+      type: object
+      x-zs-$id: AuditLogActionInCriterion
+      description: Match audit log entries whose action is one of several values.
+      properties:
+        field:
+          type: object
+          description: Field to apply the filter on.
+          properties:
+            api_name:
+              type: string
+              description: API name of the field.
+              enum:
+                - action
+          required:
+            - api_name
+          additionalProperties: false
+        comparator:
+          type: string
+          description: Comparison operator.
+          enum:
+            - in
+        value:
+          type: array
+          description: Actions to match.
+          minItems: 1
+          maxItems: 3
+          items:
+            type: string
+            description: Action to match.
+            enum:
+              - added
+              - updated
+              - deleted
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    AuditLogModuleEqualCriterion:
+      type: object
+      x-zs-$id: AuditLogModuleEqualCriterion
+      description: Match audit log entries belonging to a single module.
+      properties:
+        field:
+          type: object
+          description: Field to apply the filter on.
+          properties:
+            api_name:
+              type: string
+              description: API name of the field.
+              enum:
+                - module
+          required:
+            - api_name
+          additionalProperties: false
+        comparator:
+          type: string
+          description: Comparison operator.
+          enum:
+            - equal
+        value:
+          type: array
+          description: Exactly one module reference.
+          minItems: 1
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/AuditLogModuleValue'
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    AuditLogModuleInCriterion:
+      type: object
+      x-zs-$id: AuditLogModuleInCriterion
+      description: Match audit log entries belonging to any of several modules.
+      properties:
+        field:
+          type: object
+          description: Field to apply the filter on.
+          properties:
+            api_name:
+              type: string
+              description: API name of the field.
+              enum:
+                - module
+          required:
+            - api_name
+          additionalProperties: false
+        comparator:
+          type: string
+          description: Comparison operator.
+          enum:
+            - in
+        value:
+          type: array
+          description: Module references to match.
+          minItems: 1
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/AuditLogModuleValue'
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    AuditLogDoneByEqualCriterion:
+      type: object
+      x-zs-$id: AuditLogDoneByEqualCriterion
+      description: Match audit log entries performed by a single user.
+      properties:
+        field:
+          type: object
+          description: Field to apply the filter on.
+          properties:
+            api_name:
+              type: string
+              description: API name of the field.
+              enum:
+                - done_by
+          required:
+            - api_name
+          additionalProperties: false
+        comparator:
+          type: string
+          description: Comparison operator.
+          enum:
+            - equal
+        value:
+          type: array
+          description: Exactly one user reference.
+          minItems: 1
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/AuditLogDoneByValue'
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    AuditLogDoneByInCriterion:
+      type: object
+      x-zs-$id: AuditLogDoneByInCriterion
+      description: Match audit log entries performed by any of several users.
+      properties:
+        field:
+          type: object
+          description: Field to apply the filter on.
+          properties:
+            api_name:
+              type: string
+              description: API name of the field.
+              enum:
+                - done_by
+          required:
+            - api_name
+          additionalProperties: false
+        comparator:
+          type: string
+          description: Comparison operator.
+          enum:
+            - in
+        value:
+          type: array
+          description: User references to match.
+          minItems: 1
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/AuditLogDoneByValue'
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    AuditLogAuditedTimeBetweenCriterion:
+      type: object
+      x-zs-$id: AuditLogAuditedTimeBetweenCriterion
+      description: >-
+        Match audit log entries audited within a time range. The range must not
+        exceed 180 days.
+      properties:
+        field:
+          type: object
+          description: Field to apply the filter on.
+          properties:
+            api_name:
+              type: string
+              description: API name of the field.
+              enum:
+                - audited_time
+          required:
+            - api_name
+          additionalProperties: false
+        comparator:
+          type: string
+          description: Comparison operator.
+          enum:
+            - between
+        value:
+          type: array
+          description: Start and end of the range, as exactly two ISO 8601 timestamps.
+          minItems: 2
+          maxItems: 2
+          items:
+            type: string
+            description: An ISO 8601 timestamp.
+            format: date-time
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    AuditLogSimpleCriterion:
+      x-zs-$id: AuditLogSimpleCriterion
+      description: A single field-level filter condition.
+      oneOf:
+        - $ref: '#/components/schemas/AuditLogActionEqualCriterion'
+        - $ref: '#/components/schemas/AuditLogActionInCriterion'
+        - $ref: '#/components/schemas/AuditLogModuleEqualCriterion'
+        - $ref: '#/components/schemas/AuditLogModuleInCriterion'
+        - $ref: '#/components/schemas/AuditLogDoneByEqualCriterion'
+        - $ref: '#/components/schemas/AuditLogDoneByInCriterion'
+        - $ref: '#/components/schemas/AuditLogAuditedTimeBetweenCriterion'
+    AuditLogGroupedCriterion:
+      type: object
+      x-zs-$id: AuditLogGroupedCriterion
+      description: A group of filter conditions combined with a logical operator.
+      properties:
+        group_operator:
+          type: string
+          description: Logical operator applied between the grouped conditions.
+          enum:
+            - and
+        group:
+          type: array
+          description: Conditions to combine.
+          minItems: 1
+          maxItems: 2
+          items:
+            x-zs-$id: AuditLogGroupedCriterionItem
+            description: A condition within the group.
+            oneOf:
+              - $ref: '#/components/schemas/AuditLogSimpleCriterion'
+              - $ref: '#/components/schemas/AuditLogGroupedCriterion'
+      required:
+        - group_operator
+        - group
+      additionalProperties: false
+    AuditLogCriterion:
+      x-zs-$id: AuditLogCriterion
+      description: Filter criteria for an audit log export job.
+      oneOf:
+        - $ref: '#/components/schemas/AuditLogSimpleCriterion'
+        - $ref: '#/components/schemas/AuditLogGroupedCriterion'
+    AuditLogCriterionNullable:
+      x-zs-$id: AuditLogCriterionNullable
+      description: >-
+        Filter criteria stored for this export job. Null when the job was
+        created without criteria.
+      oneOf:
+        - $ref: '#/components/schemas/AuditLogCriterion'
+        - x-zs-$id: AuditLogCriterionNull
+          description: No criteria were stored for this export job.
+          type: 'null'
+  parameters:
+    Id:
+      name: id
+      description: Specify the unique ID of the audit log export job.
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 64
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.audit_logs.CREATE: Grants permission to create audit log export jobs in Zoho CRM.
+            ZohoCRM.settings.audit_logs.READ: >-
+              Grants permission to retrieve audit log export jobs and their
+              details from Zoho CRM.

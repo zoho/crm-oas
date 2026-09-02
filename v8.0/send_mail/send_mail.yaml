@@ -1,0 +1,497 @@
+openapi: 3.1.0
+info:
+  title: Send Mail
+  description: >-
+    The Send Mail feature in Zoho CRM enables users to send emails directly from
+    a CRM record using templates or custom content. This API enables developers
+    to programmatically send emails to records in any supported CRM module.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Production API server for Zoho CRM. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - jp
+          - ca
+          - sa
+        default: com
+        description: >-
+          The top-level domain of the Zoho API server, determined by the data
+          center location. Possible values: **com**, **eu**, **in**, **cn**,
+          **au**, **jp**, **ca**, **sa**. Default: **com**.
+      version:
+        default: v8
+        description: 'The API version used in the request URL. Default: **v8**.'
+paths:
+  /{moduleName}/{id}/actions/send_mail:
+    post:
+      operationId: sendMail
+      summary: Send an email to a record
+      description: >-
+        To send an email to a specific record in your Zoho CRM organization
+        using a template or custom email content.
+      security:
+        - OAuth2:
+            - ZohoCRM.send_mail.all.CREATE
+      parameters:
+        - $ref: '#/components/parameters/ModuleName'
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        description: The request body must contain a data array with one object.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMailRequest'
+            examples:
+              FullRequest:
+                summary: Comprehensive send mail request with all recipient fields
+                value:
+                  data:
+                    - from:
+                        user_name: Sales
+                        email: sales@company.com
+                      to:
+                        - user_name: Lead
+                          email: lead@client.com
+                      cc:
+                        - email: manager@company.com
+                      bcc:
+                        - email: admin@company.com
+                      reply_to:
+                        email: support@company.com
+                      subject: Product Update
+                      content: <h1>Hello</h1>
+                      mail_format: html
+                      org_email: true
+      responses:
+        '200':
+          description: >-
+            Returns the result of the email send operation, including a status
+            code and message for each email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                Success:
+                  summary: Successful email send response
+                  value:
+                    data:
+                      - code: SUCCESS
+                        status: success
+                        message: Mail sent successfully
+                        details:
+                          message_id: 2cceafa...867
+        '400':
+          description: >-
+            The request contains invalid or missing field values.
+            **Resolution:** The required fields must be present in the request
+            and all field values must be valid.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: SendMailError400Wrapper
+                oneOf:
+                  - $ref: '#/components/schemas/StandardErrorResponse'
+                  - $ref: '#/components/schemas/FlatErrorResponse'
+              examples:
+                MandatoryMissing:
+                  summary: Missing required field error
+                  value:
+                    data:
+                      - code: MANDATORY_NOT_FOUND
+                        message: required field not found
+                        status: error
+        '403':
+          description: >-
+            Permission denied to send email using this account. **Resolution:**
+            The CRM administrator must grant the required permission to the
+            user's profile, and the OAuth token must include the
+            ZohoCRM.send_mail.all.CREATE scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlatErrorResponse'
+              examples:
+                NoPermission:
+                  summary: Permission denied error
+                  value:
+                    code: NO_PERMISSION
+                    message: permission denied
+                    status: error
+components:
+  parameters:
+    ModuleName:
+      name: moduleName
+      in: path
+      description: >-
+        Specify the API name of the Zoho CRM module for which the record exists.
+        Refer to the [Get Modules](modules.yaml#$.paths./settings/modules.get)
+        resource for valid values. Supported modules: Leads, Contacts, Deals,
+        Accounts, Sales Orders, Purchase Orders, Invoices, Quotes, Cases,
+        Vendors, and Custom Modules.
+      required: true
+      schema:
+        type: string
+        maxLength: 100
+        description: Module API name
+    Id:
+      name: id
+      in: path
+      description: Specify the unique ID of the record to send the email to.
+      required: true
+      schema:
+        type: string
+        maxLength: 100
+        description: Record ID
+  schemas:
+    SendMailRequest:
+      x-zs-$id: SendMailRequest
+      type: object
+      description: >-
+        Represents the top-level request body for the Send Mail API, containing
+        the email configuration objects.
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          description: Contains the list of email configuration objects to send.
+          maxItems: 1
+          items:
+            type: object
+            description: Represents the email configuration for a single send-mail request.
+            additionalProperties: false
+            required:
+              - from
+              - to
+            properties:
+              from:
+                $ref: '#/components/schemas/EmailUser'
+              to:
+                type: array
+                description: Represents the list of primary recipients of the email.
+                maxItems: 50
+                items:
+                  $ref: '#/components/schemas/EmailUser'
+              cc:
+                type: array
+                description: >-
+                  Represents the list of CC (carbon copy) recipients for the
+                  email.
+                maxItems: 50
+                items:
+                  $ref: '#/components/schemas/EmailUser'
+              bcc:
+                type: array
+                description: >-
+                  Represents the list of BCC (blind carbon copy) recipients for
+                  the email.
+                maxItems: 50
+                items:
+                  $ref: '#/components/schemas/EmailUser'
+              reply_to:
+                $ref: '#/components/schemas/EmailUser'
+              subject:
+                type: string
+                description: Represents the subject line of the email.
+                maxLength: 1000
+              content:
+                type: string
+                description: Represents the body content of the email.
+                maxLength: 100000
+              mail_format:
+                type: string
+                description: >-
+                  Represents the format of the email body. Possible values:
+                  **html** - HTML-formatted email. **text** - Plain text email.
+                enum:
+                  - html
+                  - text
+              org_email:
+                type: boolean
+                description: >-
+                  Indicates whether to send the email using the organization
+                  email address instead of the sender individual email address.
+                  Possible values: **true** - Sends the email using the
+                  organization email address. **false** - Sends the email using
+                  the sender individual email address.
+              scheduled_time:
+                type: string
+                description: >-
+                  Represents the scheduled date and time to send the email, in
+                  ISO 8601 date-time format.
+                format: date-time
+              consent_email:
+                type: boolean
+                description: >-
+                  Indicates whether the email is a GDPR consent email. Possible
+                  values: **true** - The email is a GDPR consent request.
+                  **false** - The email is not a GDPR consent request.
+              template:
+                type: object
+                description: >-
+                  Represents the Email Template to use for the email. Refer to
+                  the [Get Email
+                  Templates](email_templates.yaml#$.paths./settings/email_templates.get)
+                  resource for valid values.
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    description: >-
+                      Represents the unique identifier of the Email Template.
+                      Refer to the [Get Email
+                      Templates](email_templates.yaml#$.paths./settings/email_templates.get)
+                      resource for valid values.
+                    maxLength: 100
+              inventory_details:
+                type: object
+                description: >-
+                  Represents the inventory template details to attach to the
+                  email.
+                additionalProperties: false
+                properties:
+                  inventory_template:
+                    type: object
+                    description: >-
+                      Represents the inventory template to attach to the email.
+                      Refer to the [Get Inventory
+                      Templates](inventory_templates.yaml#$.paths./settings/inventory_templates.get)
+                      resource for valid values.
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                        description: >-
+                          Represents the unique identifier of the inventory
+                          template. Refer to the [Get Inventory
+                          Templates](inventory_templates.yaml#$.paths./settings/inventory_templates.get)
+                          resource for valid values.
+                        maxLength: 100
+                      name:
+                        type: string
+                        description: Represents the name of the inventory template.
+                        maxLength: 100
+                  paper_type:
+                    type: string
+                    description: >-
+                      Represents the paper size for the inventory template
+                      attachment. Possible values: **default** - Uses the
+                      default paper size. **A4** - A4 paper size. **us_letter**
+                      - US Letter paper size.
+                    enum:
+                      - default
+                      - A4
+                      - us_letter
+                  view_type:
+                    type: string
+                    description: >-
+                      Represents the page orientation for the inventory template
+                      attachment. Possible values: **portrait** - Portrait
+                      orientation. **landscape** - Landscape orientation.
+                    enum:
+                      - portrait
+                      - landscape
+              data_subject_request:
+                type: object
+                description: >-
+                  Represents the GDPR data subject request associated with the
+                  email.
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    description: >-
+                      Represents the unique identifier of the GDPR data subject
+                      request.
+                    maxLength: 100
+                  type:
+                    type: string
+                    description: >-
+                      Represents the type of GDPR data subject request. Possible
+                      values: **access** - A data access request. **rectify** -
+                      A data rectification request. **export** - A data export
+                      request.
+                    enum:
+                      - access
+                      - rectify
+                      - export
+              attachments:
+                type: array
+                description: >-
+                  Represents the list of files to attach to the email,
+                  referenced by their Zoho File System (ZFS) IDs.
+                maxItems: 10
+                items:
+                  type: object
+                  description: >-
+                    Represents a file attachment referenced by its Zoho File
+                    System (ZFS) ID.
+                  additionalProperties: false
+                  properties:
+                    id:
+                      type: string
+                      description: >-
+                        Represents the unique identifier of the file in the Zoho
+                        File System (ZFS).
+                      maxLength: 255
+    EmailUser:
+      x-zs-$id: EmailUser
+      type: object
+      description: >-
+        Represents an email user with an email address and an optional display
+        name.
+      additionalProperties: false
+      required:
+        - email
+      properties:
+        user_name:
+          type: string
+          description: Represents the display name of the user.
+          maxLength: 255
+        email:
+          type: string
+          description: Represents the email address of the user.
+          maxLength: 255
+    SuccessResponse:
+      x-zs-$id: SuccessResponse
+      type: object
+      description: Represents the response returned after the email sends successfully.
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          description: >-
+            Represents the list of mail-send results, one item per email
+            request.
+          maxItems: 10
+          items:
+            type: object
+            description: Represents the result status for a single email send attempt.
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: >-
+                  Represents the status code for the send operation. Possible
+                  values: **SUCCESS** - The email was sent successfully.
+                enum:
+                  - SUCCESS
+              status:
+                type: string
+                description: >-
+                  Represents the status of the email send operation. Possible
+                  values: **success** - The email was sent successfully.
+                enum:
+                  - success
+              message:
+                type: string
+                description: Represents the status message for the send operation.
+                maxLength: 500
+              details:
+                type: object
+                description: >-
+                  Represents additional metadata returned for the send
+                  operation, including the message identifier.
+                additionalProperties: false
+                properties:
+                  message_id:
+                    type: string
+                    description: >-
+                      Represents the unique message identifier assigned to the
+                      sent email.
+                    maxLength: 255
+    StandardErrorResponse:
+      x-zs-$id: StandardErrorResponse
+      type: object
+      description: >-
+        Represents a standard error response that wraps one or more error detail
+        objects in a data array.
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          description: >-
+            Represents the list of error details returned for the failed
+            request. Always returned in the response.
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+    FlatErrorResponse:
+      x-zs-$id: FlatErrorResponse
+      type: object
+      description: >-
+        Represents a flat (non-array) error response returned when a
+        request-level error occurs.
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code for the request failure. Always returned
+            in the response.
+          maxLength: 100
+        details:
+          type: object
+          description: Represents additional context about the error.
+          additionalProperties: true
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the failure. Always returned
+            in the response.
+          maxLength: 1000
+        status:
+          type: string
+          description: Represents the status of the error response.
+          maxLength: 100
+    ErrorDetail:
+      x-zs-$id: ErrorDetail
+      type: object
+      description: >-
+        Represents the details of a single error returned in a standard error
+        response.
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Represents the error code for the specific issue encountered.
+          maxLength: 100
+        details:
+          type: object
+          description: Represents additional context about the error.
+          additionalProperties: true
+        message:
+          type: string
+          description: Represents the error message describing the issue.
+          maxLength: 1000
+        status:
+          type: string
+          description: Represents the status of the error response.
+          maxLength: 100
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: Zoho OAuth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.send_mail.all.CREATE: Send mail

@@ -1,0 +1,1684 @@
+openapi: 3.1.0
+info:
+  title: Mass Update API
+  description: >-
+    Mass Update APIs in Zoho CRM helps you to apply a uniform field value to a
+    batch of records selected either by record IDs (up to 500 records per
+    request) or by a custom view ID (up to 50,000 records per job).
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /{module}/actions/mass_update:
+    post:
+      summary: Mass update records
+      description: >-
+        To update a specific field value across multiple records of a module in
+        your Zoho CRM organization in a single API call. The operation supports
+        two modes. In the non-scheduler mode, the caller supplies a list of
+        record IDs in the `ids` array and the system updates those records
+        synchronously, with a maximum of 500 records per request. In the
+        scheduler mode, the caller supplies a Custom View ID in `cvid` and the
+        request schedules an asynchronous background job that processes up to
+        50,000 records matching the view; the response returns a `job_id` that
+        can be passed to the corresponding GET endpoint to track the job's
+        progress. The Deals module accepts up to three fields per request; all
+        other supported modules accept only one field per request. Email,
+        lookup, multi-line, layout, and line item fields cannot be mass updated.
+      operationId: massUpdateRecords
+      parameters:
+        - $ref: '#/components/parameters/Module'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: >-
+                Represents the mass update request payload. The payload must
+                include the `data` array along with either `ids` for a
+                synchronous update or `cvid` for an asynchronous scheduled
+                update. `ids` and `cvid` are mutually exclusive.
+              type: object
+              properties:
+                data:
+                  description: >-
+                    Specify the array of objects, where each object maps a
+                    field's API name to the new value to be applied across the
+                    targeted records. The key must be provided along with either
+                    `ids` or `cvid`.
+                  type: array
+                  items:
+                    description: |
+                      Each object maps one or more field API names to the new
+                      values to be applied. 
+
+
+                      > **Note**:
+
+                      > The Deals module allows up to three fields per object;
+                      all other supported modules allow only one field per
+                      object.
+                      > Email, lookup, multi-line, layout, and line item fields
+                      cannot be mass updated.
+                    type: object
+                    additionalProperties: true
+                  maxItems: 1
+                ids:
+                  description: |
+                    Specify the record IDs to be mass updated synchronously. Use
+                    `ids` for non-scheduler updates that target a small batch of
+                    records and require immediate processing. Use the [Get
+                    Records API](record.yaml#$.paths./{module}.get) to get the
+                    valid IDs of the required records.
+
+
+                    > **Note**:
+
+                    > - You can use either **ids** key or the **cvid** key, you
+                    cannot use them both in a request.
+
+                    > - Scheduler type(using record IDs):
+
+                    >    - You can mass update a maximum of 50,000 records in a
+                    single API call.
+
+                    >    - Automation rules are triggered automatically when the
+                    record count is less than 1000. When the record count is
+                    greater than 1000, automation rules do not get triggered.
+
+                    >    - If some of the records have invalid data, only those
+                    records will not be processed in the API call.
+
+                    > - Non-scheduler type(using CVID and territory ID):
+
+                    >    - You can mass update a maximum of 500 records in a
+                    single API call.
+
+                    >    - Automation rules such as approvals, blueprints, and
+                    workflows are triggered automatically.
+
+                    >    - When you want to mass update records in a territory,
+                    you must specify the custom view ID.
+
+                    > - You cannot mass update Email, lookup fields, layout
+                    fields, multi-line fields, and line items.
+
+                    > - You can mass update up to three fields in the Deals
+                    module and only one field in all other modules in a single
+                    API call.
+                  type: array
+                  items:
+                    description: >-
+                      Each string specifies the unique ID of a record to be
+                      updated.
+                    x-zs-$ref:
+                      resource: record
+                      origins:
+                        - operationId: getRecords
+                          propertyId: RecordsId
+                    type: string
+                    format: int64
+                  maxItems: 500
+                cvid:
+                  description: >
+                    Specify the Custom View ID whose matching records must be
+                    mass updated. Use `cvid` to schedule an asynchronous
+                    background job that processes the records in the Custom
+                    View. Use the [Get Custom View
+                    API](custom_views.yaml#$.paths./settings/custom_views.get)
+                    to get the ID of the requires custom view. 
+
+
+                    The response returns a `job_id` that can be passed to [Get
+                    Mass Update Status
+                    API](mass_update.yaml#$.paths./{module}/actions/mass_update.get)
+                    to track the progress of the scheduled job.
+
+
+                    > **Note**:
+
+                    > The cvid key is supported for mass update via API in the
+                    following editions:
+
+                    > - Enterprise
+
+                    > - Ultimate
+
+                    > - CRM Plus
+
+                    > - Zoho One Enterprise
+                  type: string
+                  pattern: ^[0-9]+$
+                  format: int64
+                territory:
+                  description: >-
+                    Specify the territory whose records must be mass updated.
+                    This key is valid only when you provide a Custom View ID in
+                    `cvid`.
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: >-
+                        Specify the unique ID of the territory. Use the [Get
+                        Territories
+                        API](territories.yaml#$.paths./settings/territories.get)
+                        to get the ID of the required territory.
+                      pattern: ^[0-9]+$
+                      format: int64
+                    include_child:
+                      type: boolean
+                      description: |
+                        Specify whether to include the records of the child
+                        territories in the mass update.
+
+                        Possible values:
+
+                        **true** - Include the records of the child territories.
+
+                        **false** - Restrict the mass update to the records in
+                        the specified territory only.
+                  additionalProperties: false
+                  required:
+                    - id
+              additionalProperties: false
+              required:
+                - data
+              oneOf:
+                - required:
+                    - ids
+                  properties:
+                    territory:
+                      description: >-
+                        Ensures that the `territory` key is not provided along
+                        with the `ids` key.
+                      not: {}
+                  x-zs-$id: MassUpdateRequestWithIds
+                  description: >-
+                    Represents the synchronous variant of the request payload,
+                    provided when records are targeted by a list of record IDs.
+                    This variant does not accept the `territory` key.
+                - required:
+                    - cvid
+                  x-zs-$id: MassUpdateRequestWithCvid
+                  description: >-
+                    Represents the scheduled variant of the request payload,
+                    provided when records are targeted by a Custom View ID. This
+                    variant accepts the optional `territory` key.
+            examples:
+              BasicFieldUpdate:
+                value:
+                  data:
+                    - Venue: Estancia
+                  ids:
+                    - '1990117000035808053'
+                    - '1990117000035808020'
+                description: >-
+                  Illustrates a synchronous mass update that sets the `Venue`
+                  field to `Zylker` on the two records identified by their IDs
+                  in the `ids` array.
+                summary: Example of updating a single field across multiple records.
+              NestedObjectUpdate:
+                value:
+                  data:
+                    - Pipeline: '1990117000027199960'
+                      Stage: Value Proposition
+                      Layout:
+                        id: '1990117000000095023'
+                        display_label: Standard
+                  ids:
+                    - '1990117000035107169'
+                description: >-
+                  Illustrates a synchronous mass update that sets multiple
+                  fields on a single record, including a `Layout` field whose
+                  value is provided as an object with `id` and `display_label`. 
+                summary: An example of updating fields that reference nested objects.
+              CvidUpdate:
+                value:
+                  data:
+                    - Age: '12121'
+                  cvid: '1990117000000091529'
+                description: >-
+                  Illustrates a scheduler-type request that mass updates the
+                  `Age` field on all records matching the provided Custom View
+                  ID. 
+                summary: >-
+                  An example of scheduling an asynchronous mass update using a
+                  Custom View.
+        required: true
+        description: |
+          The request body contains the data required to perform the operation.
+
+
+          Mass update of records happens in two ways:
+
+
+          **Scheduler type**: When you specify a custom view ID and territory
+          ID, a job is scheduled in the background and the system returns a
+          "job_id". Use this job_id in the [Get Mass Update Status
+          API](mass_update.yaml#$.paths./{module}/actions/mass_update.get) to
+          get the status of the job. You can update a maximum of **50,000
+          records** in this type.
+
+
+          **Non-scheduler type**: When you specify the record IDs, system
+          updates the records instantly. You can update a maximum of **500
+          records** in a single API call in this type of mass update.
+      responses:
+        '200':
+          description: Returns the outcome of the mass update operation.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MassUpdate200Response
+                description: >-
+                  Represents the response wrapper returned when the mass update
+                  operation is accepted, containing one or more outcome entries
+                  for the processed records or the scheduled job.
+                type: object
+                properties:
+                  data:
+                    description: >-
+                      Represents the array that contains one response object per
+                      record processed or one entry describing the scheduled
+                      job.
+                    type: array
+                    items:
+                      description: >-
+                        Represents a single response entry, containing either
+                        the scheduled job details (when the request was made
+                        using `cvid`) or the updated record details (when the
+                        request was made using `ids`).
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          description: Represents the result code for the individual entry.
+                          enum:
+                            - SUCCESS
+                        details:
+                          description: 'Represents additional details about the response. '
+                          type: object
+                          additionalProperties: true
+                          oneOf:
+                            - x-zs-$id: MassUpdate200AsyncDetails
+                              description: >-
+                                Represents the scheduler-type details, returned
+                                when the mass update is scheduled via a Custom
+                                View ID. Contains the `job_id` that can later be
+                                used to track the job's progress using the [Get
+                                Mass Update Status
+                                API](mass_update.yaml#$.paths./{module}/actions/mass_update.get). 
+                              type: object
+                              properties:
+                                job_id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique ID of the scheduled
+                                    mass update job. Pass this value as the
+                                    `job_id` query parameter to [Get Mass Update
+                                    Status
+                                    API](mass_update.yaml#$.paths./{module}/actions/mass_update.get)
+                                    to retrieve the job's current status and
+                                    record counts.
+                                  pattern: ^[0-9]+$
+                                  format: int64
+                              additionalProperties: false
+                              required:
+                                - job_id
+                            - x-zs-$id: MassUpdate200SyncDetails
+                              description: >-
+                                Represents the non-scheduler-type details,
+                                returned when the API processes individual
+                                records synchronously. 
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  description: >-
+                                    Represents the unique ID of the record that
+                                    the mass update operation modified.
+                                  pattern: ^[0-9]+$
+                                  format: int64
+                                Modified_Time:
+                                  type: string
+                                  format: date-time
+                                  description: >-
+                                    Represents the date and time, in ISO 8601
+                                    format, when the record was last modified by
+                                    the mass update operation.
+                                Modified_By:
+                                  description: >-
+                                    Represents the user who performed the mass
+                                    update on the record.
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the unique ID of the user who
+                                        modified the record.
+                                      pattern: ^[0-9]+$
+                                      format: int64
+                                    name:
+                                      type: string
+                                      description: >-
+                                        Represents the display name of the user
+                                        who modified the record.
+                                      format: string
+                                  additionalProperties: false
+                                  required:
+                                    - id
+                                    - name
+                                Created_By:
+                                  description: >-
+                                    Represents the user who originally created
+                                    the record.
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the unique ID of the user who
+                                        created the record.
+                                      pattern: ^[0-9]+$
+                                      format: int64
+                                    name:
+                                      type: string
+                                      description: >-
+                                        Represents the display name of the user
+                                        who created the record.
+                                      format: string
+                                  additionalProperties: false
+                                  required:
+                                    - id
+                                    - name
+                                Created_Time:
+                                  type: string
+                                  format: date-time
+                                  description: >-
+                                    Represents the date and time, in ISO 8601
+                                    format, when the record was originally
+                                    created.
+                              additionalProperties: false
+                              required:
+                                - id
+                                - Modified_Time
+                                - Modified_By
+                                - Created_By
+                                - Created_Time
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the result of the
+                            operation.
+                          format: string
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the operation for this
+                            entry.
+                          enum:
+                            - success
+                      additionalProperties: false
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                    maxItems: 500
+                additionalProperties: false
+                required:
+                  - data
+              examples:
+                SuccessfulMassUpdate:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2025-11-26T14:37:55+05:30'
+                          Modified_By:
+                            name: Dharun Kumar Dharun Kumar 95
+                            id: '1990117000000450001'
+                          Created_Time: '2025-11-25T15:07:02+05:30'
+                          id: '1990117000035808053'
+                          Created_By:
+                            name: Dharun Kumar Dharun Kumar 95
+                            id: '1990117000000450001'
+                        message: record updated
+                        status: success
+                  description: >-
+                    Illustrates a successful response for a non-scheduler-type
+                    request, returning the result of the updated record,
+                    including its ID, creation and modification timestamps, and
+                    the users who created and modified the record.
+                  summary: >-
+                    An example of successful synchronous mass update of a
+                    record.
+        '207':
+          description: >-
+            Returns a multi-status response when some records are updated
+            successfully while others fail.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MassUpdate207Response
+                description: >-
+                  Represents the response wrapper returned when a
+                  non-scheduler-type mass update results in mixed responses,
+                  containing at least one successfully updated record and at
+                  least one failed record.
+                type: object
+                properties:
+                  data:
+                    description: >-
+                      Represents the array that contains one response object per
+                      record processed, indicating whether the mass update
+                      succeeded or failed for that record.
+                    type: array
+                    allOf:
+                      - contains:
+                          description: >-
+                            Ensures that at least one entry in the array reports
+                            a successful update.
+                          type: object
+                          properties:
+                            status:
+                              description: >-
+                                Represents the status value that must be
+                                `success` for the entry to match this
+                                constraint.
+                              type: string
+                              const: success
+                          additionalProperties: true
+                          required:
+                            - status
+                        minContains: 1
+                        description: >-
+                          Represents the constraint ensuring that the response
+                          contains at least one successfully updated record.
+                      - contains:
+                          description: >-
+                            Ensures that at least one entry in the array reports
+                            a failed update.
+                          type: object
+                          properties:
+                            status:
+                              description: >-
+                                Represents the status value that must be `error`
+                                for the entry to match this constraint.
+                              type: string
+                              const: error
+                          additionalProperties: true
+                          required:
+                            - status
+                        minContains: 1
+                        description: >-
+                          Represents the constraint ensuring that the response
+                          contains at least one record that failed to update.
+                    items:
+                      x-zs-$id: MassUpdate207DataItem
+                      description: >-
+                        Represents a single per-record entry, containing either
+                        the details of the updated record or the error that
+                        prevented the record from being updated.
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          description: |
+                            Represents the result code for the individual
+                            record.
+
+                            Possible values:
+
+                            SUCCESS - The record was updated successfully.
+
+                            MANDATORY_NOT_FOUND - A required property is missing
+                            from the payload for the record.
+
+                            INVALID_DATA - The request data is invalid for the
+                            record.
+
+                            MAPPING_MISMATCH - The provided value violates a
+                            field mapping relationship for the record.
+
+                            RECORD_LOCKED - The record is locked and cannot be
+                            updated.
+
+                            CONVERTED_RECORD - The record has already been
+                            converted and cannot be updated.
+                          enum:
+                            - SUCCESS
+                            - MANDATORY_NOT_FOUND
+                            - INVALID_DATA
+                            - MAPPING_MISMATCH
+                            - RECORD_LOCKED
+                            - CONVERTED_RECORD
+                        details:
+                          type: object
+                          description: >-
+                            Represents additional details about the response.
+                            For an updated record, it contains the record ID
+                            along with its creation and modification details.
+                            For a failed record, it contains the details of the
+                            failure, such as the ID of the record that could not
+                            be updated.
+                          additionalProperties: true
+                        message:
+                          type: string
+                          description: >-
+                            Represents the message describing the result of the
+                            operation for this record.
+                          maxLength: 255
+                        status:
+                          type: string
+                          description: |
+                            Represents the status of the operation for this
+                            record.
+
+                            Possible values:
+
+                            success - The record was updated.
+
+                            error - The record was not updated.
+                          enum:
+                            - success
+                            - error
+                      additionalProperties: false
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                    minItems: 2
+                    maxItems: 500
+                additionalProperties: false
+                required:
+                  - data
+              examples:
+                PartialMassUpdate:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2026-08-12T19:02:29+05:30'
+                          Modified_By:
+                            name: Dharun Kumar Dharun Kumar 95
+                            id: '1990117000000450001'
+                          Created_Time: '2026-08-04T17:55:37+05:30'
+                          id: '1990117000045575047'
+                          Created_By:
+                            name: Dharun Kumar Dharun Kumar 95
+                            id: '1990117000000450001'
+                        message: record updated
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2026-08-12T19:02:29+05:30'
+                          Modified_By:
+                            name: Dharun Kumar Dharun Kumar 95
+                            id: '1990117000000450001'
+                          Created_Time: '2026-08-04T17:55:54+05:30'
+                          id: '1990117000045575059'
+                          Created_By:
+                            name: Dharun Kumar Dharun Kumar 95
+                            id: '1990117000000450001'
+                        message: record updated
+                        status: success
+                      - code: RECORD_LOCKED
+                        details:
+                          action: record_locking
+                          id: '1990117000045639003'
+                        message: >-
+                          Sorry, you cannot perform this operation as the record
+                          is locked.
+                        status: error
+                  description: >-
+                    Illustrates a multi-status response in which two records are
+                    updated successfully and one record fails because it is
+                    locked by the record locking configuration.
+                  summary: >-
+                    An example of two records updated successfully and one
+                    record failing.
+        '400':
+          description: >-
+            Returns an error when the mass update request cannot be processed,
+            either at the request level (such as a scheduling conflict or an
+            unsupported module) or for individual records (such as missing
+            mandatory fields, invalid data, locked records, or converted
+            records).
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MassUpdate400Responses
+                oneOf:
+                  - type: object
+                    x-zs-$id: MassUpdate400InvalidCvid
+                    description: >-
+                      Returned when the supplied Custom View ID is syntactically
+                      a valid bigint but does not resolve to an existing custom
+                      view.
+                    properties:
+                      code:
+                        description: Represents the error code for the response.
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                      message:
+                        description: Represents the error message for the response.
+                        type: string
+                        enum:
+                          - the cvid given seems to be invalid
+                      status:
+                        description: Represents the overall status of the API response.
+                        type: string
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details identifying the invalid
+                          cvid request key.
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the key that caused the
+                              error.
+                            enum:
+                              - cvid
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the invalid key in the
+                              request.
+                            enum:
+                              - $.cvid
+                        additionalProperties: false
+                        required:
+                          - api_name
+                          - json_path
+                    additionalProperties: false
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: MassUpdate400AlreadyScheduled
+                    description: >-
+                      Returned when a mass update job is already scheduled or
+                      running for the supplied Custom View ID.
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code returned when a mass update
+                          job is already running for the provided Custom View.
+                        type: string
+                        enum:
+                          - ALREADY_SCHEDULED
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message indicating that a mass
+                          update job is already scheduled for the provided
+                          Custom View.
+                        format: string
+                      status:
+                        description: Represents the overall status of the API response.
+                        type: string
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the scheduling
+                          conflict, including the request parameter that
+                          triggered the error.
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the key that caused the
+                              scheduling conflict.
+                            enum:
+                              - cvid
+                        additionalProperties: false
+                        required:
+                          - api_name
+                    additionalProperties: false
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: MassUpdate400InvalidModule
+                    description: >-
+                      Returned when the module API name in the request URL is
+                      invalid.
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code returned when the module
+                          specified in the request URL is invalid or not
+                          supported by the Mass Update API.
+                        type: string
+                        enum:
+                          - INVALID_MODULE
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the module
+                          validation failure.
+                        format: string
+                      status:
+                        description: Represents the overall status of the API response.
+                        type: string
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the invalid
+                          module, including the index of the unsupported segment
+                          in the request path.
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the zero-based index of the unsupported
+                              segment in the request URL path.
+                        additionalProperties: false
+                        required:
+                          - resource_path_index
+                    additionalProperties: false
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: MassUpdate400ModuleNotSupported
+                    description: >-
+                      Returned when mass update is not supported for the
+                      requested module, such as Services or Appointments.
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code returned when the module
+                          specified in the request URL is not supported by the
+                          Mass Update API.
+                        type: string
+                        enum:
+                          - NOT_SUPPORTED
+                      message:
+                        description: >-
+                          Represents the error message indicating that the
+                          module is not supported by the Mass Update API.
+                        type: string
+                        enum:
+                          - the given module is not supported for this api
+                          - the given module is not supported in api
+                      status:
+                        description: Represents the overall status of the API response.
+                        type: string
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional details about the unsupported
+                          module, including the index of the unsupported segment
+                          in the request path.
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            const: 0
+                            description: >-
+                              Represents the zero-based index of the unsupported
+                              segment in the request URL path.
+                        additionalProperties: false
+                        required:
+                          - resource_path_index
+                    additionalProperties: false
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - x-zs-$id: MassUpdate400Response
+                    type: object
+                    description: >-
+                      Represents the per-record error envelope returned when one
+                      or more records fail to be mass updated, with one error
+                      entry per failed record.
+                    properties:
+                      data:
+                        type: array
+                        description: >-
+                          Represents the array of per-record error responses
+                          returned when one or more records fail to be mass
+                          updated.
+                        items:
+                          description: >-
+                            Represents a single per-record error entry. Each
+                            object describes the specific failure that occurred
+                            for the corresponding record in the request.
+                          oneOf:
+                            - type: object
+                              x-zs-$id: MassUpdate400MandatoryNotFound
+                              description: >-
+                                Returned when a required property is missing
+                                from the payload for a record.
+                              properties:
+                                code:
+                                  description: >-
+                                    Represents the error code returned when a
+                                    required property is missing from the
+                                    payload for a record.
+                                  type: string
+                                  enum:
+                                    - MANDATORY_NOT_FOUND
+                                details:
+                                  description: >-
+                                    Represents additional details about the
+                                    missing mandatory property.
+                                  type: object
+                                  properties: {}
+                                  additionalProperties: false
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message indicating that
+                                    a required property is missing from the
+                                    payload.
+                                  format: string
+                                status:
+                                  description: >-
+                                    Represents the status of the operation for
+                                    this record.
+                                  type: string
+                                  enum:
+                                    - error
+                              additionalProperties: false
+                              required:
+                                - code
+                                - details
+                                - message
+                                - status
+                            - type: object
+                              x-zs-$id: MassUpdate400InvalidData
+                              description: >-
+                                Returned when the request data is invalid for a
+                                record, including an unknown record ID, an
+                                unsupported field value, a value that exceeds
+                                the allowed length or numeric range, or a
+                                non-subordinate user provided for a user lookup
+                                field.
+                              properties:
+                                code:
+                                  description: >-
+                                    Represents the error code returned when the
+                                    request data fails validation for a record.
+                                  type: string
+                                  enum:
+                                    - INVALID_DATA
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents additional details about the
+                                    invalid data, including the invalid record
+                                    ID, field API name, or the constraint that
+                                    was violated.
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the unique ID of the record
+                                        for which the validation failed.
+                                      pattern: ^[0-9]+$
+                                      format: int64
+                                    limit:
+                                      type: integer
+                                      format: int32
+                                      description: >-
+                                        Represents the maximum allowed limit
+                                        that was exceeded for the field.
+                                      minimum: 1
+                                    maximum_length:
+                                      type: integer
+                                      format: int32
+                                      description: >-
+                                        Represents the maximum number of
+                                        characters allowed for the field value.
+                                      minimum: 1
+                                    maximum_decimal_place:
+                                      type: integer
+                                      format: int32
+                                      description: >-
+                                        Represents the maximum number of decimal
+                                        places allowed for the field value.
+                                      minimum: 0
+                                    range:
+                                      type: object
+                                      description: >-
+                                        Represents the inclusive numeric range
+                                        within which the field value must fall.
+                                      properties:
+                                        from:
+                                          type: integer
+                                          format: int64
+                                          description: >-
+                                            Represents the minimum allowed value,
+                                            inclusive, for the field.
+                                        to:
+                                          type: integer
+                                          format: int64
+                                          description: >-
+                                            Represents the maximum allowed value,
+                                            inclusive, for the field.
+                                      required:
+                                        - from
+                                        - to
+                                      additionalProperties: false
+                                  additionalProperties: false
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    validation failure for the record.
+                                  format: string
+                                status:
+                                  description: >-
+                                    Represents the status of the operation for
+                                    this record.
+                                  type: string
+                                  enum:
+                                    - error
+                              additionalProperties: false
+                              required:
+                                - code
+                                - details
+                                - message
+                                - status
+                            - type: object
+                              x-zs-$id: MassUpdate400MappingMismatch
+                              description: >-
+                                Returned when there is a mapping mismatch
+                                between fields for a record, such as a `Stage`
+                                value that does not belong to the selected
+                                `Pipeline` or a picklist value that is not
+                                present in the supplied `Layout`.
+                              properties:
+                                code:
+                                  description: >-
+                                    Represents the error code returned when the
+                                    provided value violates a field mapping
+                                    relationship.
+                                  type: string
+                                  enum:
+                                    - MAPPING_MISMATCH
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents additional details about the
+                                    mapping mismatch, including the API name of
+                                    the field that does not match the mapping,
+                                    the field that owns the mapping
+                                    relationship, and the JSON path of the
+                                    mismatched element.
+                                  properties:
+                                    mapped_field:
+                                      type: string
+                                      description: >-
+                                        Represents the field that owns the
+                                        mapping relationship.
+                                      format: string
+                                    api_name:
+                                      type: string
+                                      description: >-
+                                        Represents the API name of the field
+                                        whose value does not match the mapping.
+                                      format: string
+                                    json_path:
+                                      type: string
+                                      description: >-
+                                        Represents the JSON path to the
+                                        mismatched element in the request body.
+                                      format: string
+                                  additionalProperties: false
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing the
+                                    mapping mismatch.
+                                  format: string
+                                status:
+                                  description: >-
+                                    Represents the status of the operation for
+                                    this record.
+                                  type: string
+                                  enum:
+                                    - error
+                              additionalProperties: false
+                              required:
+                                - code
+                                - details
+                                - message
+                                - status
+                            - type: object
+                              x-zs-$id: MassUpdate400NotSupported
+                              description: >-
+                                Returned when the requested operation or module
+                                is not supported for a record. The Services and
+                                Appointments modules are not supported by the
+                                Mass Update API.
+                              properties:
+                                code:
+                                  description: |
+                                    Represents the error code returned when the
+                                    requested operation or module is not
+                                    supported by the Mass Update API.
+
+                                    Possible values:
+
+                                    NOT_SUPPORTED - The requested operation is
+                                    not supported for the targeted record or
+                                    module.
+
+                                    INVALID_MODULE - The module is not supported
+                                    by the Mass Update API.
+                                  type: string
+                                  enum:
+                                    - NOT_SUPPORTED
+                                    - INVALID_MODULE
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message describing why
+                                    the operation or module is not supported.
+                                  format: string
+                                status:
+                                  description: >-
+                                    Represents the status of the operation for
+                                    this record.
+                                  type: string
+                                  enum:
+                                    - error
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents additional details about the
+                                    unsupported request, including the index of
+                                    the unsupported segment in the request URL
+                                    path.
+                                  additionalProperties: false
+                                  required:
+                                    - resource_path_index
+                              additionalProperties: false
+                              required:
+                                - code
+                                - message
+                                - status
+                                - details
+                            - type: object
+                              x-zs-$id: MassUpdate400RecordLocked
+                              description: >-
+                                Returned when the record is locked by the record
+                                locking configuration or a GDPR setting and
+                                cannot be modified by the mass update operation.
+                              properties:
+                                code:
+                                  description: >-
+                                    Represents the error code returned when the
+                                    record is locked and cannot be updated.
+                                  type: string
+                                  enum:
+                                    - RECORD_LOCKED
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message indicating that
+                                    the record is locked.
+                                  format: string
+                                status:
+                                  description: >-
+                                    Represents the status of the operation for
+                                    this record.
+                                  type: string
+                                  enum:
+                                    - error
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents additional details about the
+                                    locked record, including the ID of the
+                                    locked record and the action that placed the
+                                    lock.
+                                  properties:
+                                    action:
+                                      type: string
+                                      description: >-
+                                        Represents the action that placed the
+                                        lock on the record.
+                                      enum:
+                                        - record_locking
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the unique ID of the locked
+                                        record that could not be updated.
+                                      pattern: ^[0-9]+$
+                                      format: int64
+                                  additionalProperties: false
+                                  required:
+                                    - action
+                                    - id
+                              additionalProperties: false
+                              required:
+                                - code
+                                - message
+                                - status
+                                - details
+                            - type: object
+                              x-zs-$id: MassUpdate400ConvertedRecord
+                              description: >-
+                                Returned when the record (for example, a
+                                converted Lead) has already been converted and
+                                cannot be modified by the mass update operation.
+                              properties:
+                                code:
+                                  description: >-
+                                    Represents the error code returned when the
+                                    record has already been converted and cannot
+                                    be updated.
+                                  type: string
+                                  enum:
+                                    - CONVERTED_RECORD
+                                message:
+                                  type: string
+                                  description: >-
+                                    Represents the error message indicating that
+                                    the record has already been converted and
+                                    cannot be updated.
+                                  format: string
+                                status:
+                                  description: >-
+                                    Represents the status of the operation for
+                                    the record.
+                                  type: string
+                                  enum:
+                                    - error
+                                details:
+                                  type: object
+                                  description: >-
+                                    Represents additional details about the
+                                    converted record, including its unique ID.
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: >-
+                                        Represents the unique ID of the record
+                                        that has already been converted.
+                                      pattern: ^[0-9]+$
+                                      format: int64
+                                  additionalProperties: false
+                                  required:
+                                    - id
+                              additionalProperties: false
+                              required:
+                                - code
+                                - message
+                                - status
+                                - details
+                        maxItems: 500
+                    required:
+                      - data
+                    additionalProperties: false
+                description: >-
+                  Represents the error response wrapper for a failed mass update
+                  request. The response is one of the request-level error
+                  variants (`ALREADY_SCHEDULED`, `INVALID_MODULE`) or a
+                  per-record error envelope that lists individual record
+                  failures.
+              examples:
+                NoRecordsFound:
+                  value:
+                    data:
+                      - code: INVALID_DATA
+                        details:
+                          id: '19901170000358080'
+                        message: the id given seems to be invalid
+                        status: error
+                  description: >-
+                    Illustrates a per-record `INVALID_DATA` error returned when
+                    the provided record ID does not exist in the targeted
+                    module. The remaining valid record IDs in the same request
+                    are still processed.
+                  summary: Example of a record ID supplied in the request is invalid.
+                MandatoryFieldMissing:
+                  value:
+                    data:
+                      - code: MANDATORY_NOT_FOUND
+                        details: {}
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Illustrates a per-record error returned when a required
+                    field is missing from the update payload.
+                  summary: An example of mandatory field missing in the payload.
+                InvalidFieldValue:
+                  value:
+                    data:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: Pipeline
+                          id: '1990117000035827873'
+                        message: picklist not found in record layout
+                        status: error
+                  description: >-
+                    Illustrates a per-record error returned when the provided
+                    picklist value for the `Pipeline` field is not present in
+                    the layout assigned to the record.
+                  summary: >-
+                    An example of picklist value not present in the record
+                    layout.
+                NonSubordinateUser:
+                  summary: >-
+                    An example of non-subordinate user assigned to a user lookup
+                    field.
+                  description: |
+                    Illustrates a per-record error returned when a user assigned
+                    to a user lookup field is not eligible under the calling
+                    user's hierarchy permissions.
+
+
+                    This error can occur in the following cases:
+
+
+                    - **Role hierarchy permission: List Subordinates Only**
+
+                    The calling user can assign only users who are their
+                    subordinates in the role hierarchy.
+
+                    - **Territory hierarchy permission: Territories and
+                    Sub-Territory Users Only**
+
+                    The calling user can assign only users who belong to their
+                    territory or its sub-territories.
+
+                    For example, consider the following territory hierarchy:
+                        - Root Territory
+                            - Territory A (User1, User2)
+                                 - Territory B (User3, User4)
+                            - Territory C (User5, User6)
+                    A user in Territory A can assign users from Territory A and
+                    Territory B, but cannot assign users from Territory C.
+                  value:
+                    data:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.data[0].User_lookup.id
+                        message: Non Subordinate User Found
+                        status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.mass_update.UPDATE
+        - OAuth2:
+            - ZohoCRM.mass_update.Leads.UPDATE
+    get:
+      summary: Get mass update job status
+      description: >-
+        To retrieve the current status and record-processing counts of an
+        asynchronous mass update job that was previously scheduled in your Zoho
+        CRM organization. The job is identified by the `job_id` returned in the
+        response of the scheduler-type mass update request. The response reports
+        the job state along with the total, updated, not-updated, and failed
+        record counts so that the caller can track progress until the job
+        completes.
+      operationId: getMassUpdateStatus
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: >-
+            Returns the current state and record-processing counts of the
+            requested mass update job.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MassUpdateStatus200Response
+                description: >-
+                  The request body contains the data required to perform the
+                  operation.
+                type: object
+                properties:
+                  data:
+                    description: >-
+                      Represents the array that contains the status object for
+                      the requested mass update job.
+                    type: array
+                    items:
+                      description: >-
+                        Represents the status object that contains the current
+                        state and processed-record counts for the mass update
+                        job.
+                      type: object
+                      properties:
+                        Status:
+                          type: string
+                          description: |
+                            Represents the current state of the mass update job.
+
+                            Possible values:
+
+                            COMPLETED - The mass update job has finished
+                            processing all records.
+
+                            SCHEDULED - The mass update job has been queued and
+                            is waiting to start.
+
+                            QUEUED - The mass update job is queued in the
+                            system.
+
+                            RUNNING - The mass update job is currently
+                            processing records.
+
+                            SUSPENDED - The mass update job has been paused.
+
+                            FAILED - The mass update job has terminated due to a
+                            failure.
+                          enum:
+                            - COMPLETED
+                            - SCHEDULED
+                            - QUEUED
+                            - RUNNING
+                            - SUSPENDED
+                            - FAILED
+                        Failed_Count:
+                          type: integer
+                          format: int32
+                          description: >-
+                            Represents the number of records that failed to
+                            update due to validation errors or other processing
+                            failures during the mass update job.
+                        Updated_Count:
+                          type: integer
+                          format: int32
+                          description: >-
+                            Represents the number of records that were
+                            successfully updated by the mass update job.
+                        Not_Updated_Count:
+                          type: integer
+                          format: int32
+                          description: >-
+                            Represents the number of records that are not yet
+                            updated by the mass update job.
+                        Total_Count:
+                          type: integer
+                          format: int32
+                          description: >-
+                            Represents the total number of records that were
+                            scheduled to be mass updated by the job.
+                      required:
+                        - Failed_Count
+                        - Updated_Count
+                        - Total_Count
+                        - Not_Updated_Count
+                        - Status
+                      additionalProperties: false
+                    maxItems: 1
+                required:
+                  - data
+                additionalProperties: false
+              examples:
+                ScheduledJob:
+                  value:
+                    data:
+                      - Status: SCHEDULED
+                        Failed_Count: 0
+                        Updated_Count: 0
+                        Not_Updated_Count: 18
+                        Total_Count: 18
+                  description: >-
+                    Illustrates the response when the mass update job is in the
+                    SCHEDULED state. The `Total_Count` reports the number of
+                    records queued for the job, and the `Not_Updated_Count`
+                    matches the total because record processing has not started
+                    yet.
+                  summary: An example of mass update job in SCHEDULED state.
+        '400':
+          description: |
+            Returns an error when the request fails because of a missing or
+            invalid `job_id` parameter or an unsupported module.
+
+            **Resolution**: Use the job ID received in the response of [Mass
+            Update API](mass_update.yaml#$./{module}/actions/mass_update.post).
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MassUpdateStatus400Response
+                oneOf:
+                  - type: object
+                    x-zs-$id: MassUpdateMandatoryNotFound
+                    description: >-
+                      Returned when the required `job_id` query parameter is
+                      missing from the request URL.
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code returned when a required
+                          parameter is missing from the request.
+                        type: string
+                        enum:
+                          - MANDATORY_NOT_FOUND
+                      details:
+                        description: >-
+                          Represents additional details about the missing
+                          mandatory parameter, including the name of the
+                          parameter that was not provided.
+                        type: object
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the validation
+                          failure for the missing parameter.
+                        format: string
+                      status:
+                        description: Represents the overall status of the API response.
+                        type: string
+                        enum:
+                          - error
+                        format: string
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: MassUpdateInvalidJobId
+                    description: >-
+                      Returned when the `job_id` value provided in the request
+                      is invalid or does not correspond to a scheduled mass
+                      update job.
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code returned when the provided
+                          parameter value fails validation.
+                        type: string
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        description: >-
+                          Represents additional details about the invalid
+                          parameter, including the name of the parameter whose
+                          value failed validation.
+                        type: object
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the invalid
+                          parameter value.
+                        format: string
+                      status:
+                        description: Represents the overall status of the API response.
+                        type: string
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: MassUpdateInvalidModule
+                    description: >-
+                      Returned when the module API name in the request URL is
+                      invalid.
+                    properties:
+                      code:
+                        description: >-
+                          Represents the error code returned when the module
+                          specified in the request URL is invalid or not
+                          supported.
+                        type: string
+                        enum:
+                          - INVALID_MODULE
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the module
+                          validation failure.
+                        format: string
+                      status:
+                        description: Represents the overall status of the API response.
+                        type: string
+                        enum:
+                          - error
+                      details:
+                        description: >-
+                          Represents additional details about the invalid
+                          module, including the index of the unsupported segment
+                          in the request path.
+                        type: object
+                        required:
+                          - resource_path_index
+                        additionalProperties: false
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                    additionalProperties: false
+                description: >-
+                  Represents the response wrapper for a failed mass update
+                  status request, returning one of the validation or module
+                  errors that prevented the request from being processed.
+              examples:
+                InvalidJobId:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      param_name: job_id
+                    message: The jobid given seems to be invalid
+                    status: error
+                  description: >-
+                    Illustrates the error returned when the `job_id` query
+                    parameter is invalid or does not match any scheduled mass
+                    update job.
+                  summary: An example of invalid job_id being provided in the request.
+      security:
+        - OAuth2:
+            - ZohoCRM.mass_update.READ
+        - OAuth2:
+            - ZohoCRM.mass_update.Leads.READ
+components:
+  parameters:
+    Module:
+      name: module
+      in: path
+      required: true
+      description: >-
+        Specify the API name of the CRM module on which the mass update
+        operation must be performed. Use the [Get Modules
+        API](modules.yaml#$.paths./settings/modules.get) to fetch the valid API
+        name of the module. 
+      schema:
+        type: string
+        enum:
+          - Leads
+          - Accounts
+          - Contacts
+          - Deals
+          - Campaigns
+          - Tasks
+          - Calls
+          - Meetings
+          - Cases
+          - Solutions
+          - Products
+          - Vendors
+          - Price_Books
+          - Quotes
+          - Sales_Orders
+          - Purchase_Orders
+          - Invoices
+          - Custom
+    JobId:
+      name: job_id
+      in: query
+      required: true
+      description: >-
+        Specify the unique ID of the mass update job whose status must be
+        retrieved. This is the `job_id` returned in the response of the [Mass
+        Update API](mass_update.yaml#$/{module}/actions/mass_update.post)
+        request.
+      schema:
+        type: string
+        format: int64
+        pattern: ^[0-9]+$
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.mass_update.UPDATE: >-
+              Grants permission to mass update records across all modules in the
+              Zoho CRM organization.
+            ZohoCRM.mass_update.Leads.UPDATE: >-
+              Grants permission to mass update records in the specified module
+              of the Zoho CRM organization.
+            ZohoCRM.mass_update.READ: >-
+              Grants permission to retrieve the status of mass update jobs
+              across all modules in the Zoho CRM organization.
+            ZohoCRM.mass_update.Leads.READ: >-
+              Grants permission to retrieve the status of mass update jobs in
+              the specified module of the Zoho CRM organization.

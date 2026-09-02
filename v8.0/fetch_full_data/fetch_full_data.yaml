@@ -1,0 +1,722 @@
+openapi: 3.1.0
+info:
+  title: Fetch Full Data
+  description: >-
+    The Fetch Full Data API retrieves the complete content of rich text
+    multi-line fields for one or more CRM records. Rich text fields support
+    formatted text of up to 50,000 characters including HTML elements, and are
+    suited for entries requiring styling and organization such as product
+    descriptions or client communications. This API exclusively fetches rich
+    text fields - retrieval of any other field types is not supported. Only rich
+    text multi-line fields are supported; multi-line fields of other types such
+    as small and large cannot be retrieved. Requires the OAuth scope
+    ZohoCRM.modules.ALL or ZohoCRM.modules.{module_name}.READ.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /{moduleApiName}/actions/fetch_full_data:
+    get:
+      summary: Rich text field content for multiple records
+      operationId: fetchFullDataForMultipleRecords
+      parameters:
+        - $ref: '#/components/parameters/ModuleApiName'
+        - $ref: '#/components/parameters/Fields'
+          required: true
+        - $ref: '#/components/parameters/Ids'
+      description: >-
+        Retrieves the full content of rich text multi-line fields for multiple
+        records in a single request. Both the 'ids' and 'fields' query
+        parameters are mandatory. You can specify up to 200 record IDs in the
+        'ids' parameter and up to 8 rich text field API names in the 'fields'
+        parameter. This API exclusively fetches rich text fields - other field
+        types are not supported. Only data from rich text multi-line fields can
+        be retrieved; multi-line fields of other types (small, large) are not
+        supported.
+      x-zs-llm-description: >-
+        Use this endpoint to fetch full rich-text values for multiple records in
+        one call. Provide moduleApiName, ids, and explicit fields to avoid
+        oversized payloads and to stay within field count limits.
+      responses:
+        '200':
+          description: >-
+            Successful response containing the full HTML-formatted content of
+            the requested rich text fields for the specified records. Each
+            record object includes the record ID and the values of the requested
+            rich text fields.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: FetchFullDataMultipleRecordsResponse
+                type: object
+                description: >-
+                  Wrapper object for the response. Contains a 'data' array of
+                  record objects, each holding the record ID and the rich text
+                  field values.
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      An array of record objects, each containing the record ID
+                      and the values of the requested rich text fields. Returns
+                      up to 200 records matching the specified IDs.
+                    maxItems: 200
+                    items:
+                      type: object
+                      description: >-
+                        A record object containing the record's unique ID and
+                        the full content of each requested rich text field. The
+                        rich text field property names correspond to the API
+                        names of the fields in the module.
+                      properties:
+                        id:
+                          type: string
+                          description: >-
+                            The unique identifier of the record whose rich text
+                            field data is being returned.
+                          format: int64
+                      additionalProperties:
+                        type: string
+                        description: >-
+                          The full HTML-formatted content of a rich text field.
+                          The property name corresponds to the API name of the
+                          rich text field in the module. The value is null if
+                          the field has no content. Each rich text field
+                          supports up to 50,000 characters.
+                        maxLength: 50000
+                      required:
+                        - id
+                required:
+                  - data
+              examples:
+                MultipleRecords:
+                  value:
+                    data:
+                      - id: '1043386000018763408'
+                        Rich_Text_1: <b>Bold Content</b>
+                        Rich_Text_2: <i>Italic Content</i>
+                      - id: '1043386000018763409'
+                        Rich_Text_1: '<p><b>Specifications:</b> Tonnage: 300</p>'
+                        Rich_Text_2: <p><b>Controller:</b> V22 Control</p>
+        '204':
+          $ref: '#/components/responses/NoContentResponse'
+        '400':
+          description: >-
+            Bad Request. Returned when a required parameter is missing, the
+            module API name is invalid, or the request exceeds parameter limits
+            (more than 200 record IDs or more than 8 field API names).
+          content:
+            application/json:
+              schema:
+                x-zs-$id: FetchFullDataMultipleRecordsErrorResponse
+                description: >-
+                  Error response for the multiple-records fetch full data
+                  operation. Includes INVALID_MODULE, REQUIRED_PARAM_MISSING,
+                  and INVALID_REQUEST error variants.
+                oneOf:
+                  - x-zs-$id: InvalidModuleErrorResponse
+                    type: object
+                    description: >-
+                      Returned when the module API name specified in the path is
+                      not a valid CRM module. Verify the module API name and
+                      retry the request.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_MODULE
+                        description: >-
+                          Error code indicating that the module API name
+                          specified in the request path is not recognized as a
+                          valid CRM module.
+                      details:
+                        type: object
+                        description: Error details with resource path index
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: Index of the resource path that caused the error.
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: Status of the response
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: RequiredParamMissingErrorResponse
+                    description: >-
+                      Returned when the 'fields' or 'ids' parameter is missing.
+                      Both parameters are mandatory when retrieving rich text
+                      fields for multiple records. The 'param_name' in the
+                      details object identifies which parameter is missing.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - REQUIRED_PARAM_MISSING
+                        description: >-
+                          Error code indicating that a required query parameter
+                          ('fields' or 'ids') is missing from the request.
+                      details:
+                        type: object
+                        description: Error details with parameter name
+                        additionalProperties: false
+                        properties:
+                          param_name:
+                            type: string
+                            description: The name of the missing parameter.
+                            maxLength: 100
+                        required:
+                          - param_name
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: Status of the response
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: InvalidRequestErrorResponse
+                    description: >-
+                      Returned when the request cannot be processed. This occurs
+                      when more than 200 record IDs are passed in the 'ids'
+                      parameter, or more than 8 field API names are passed in
+                      the 'fields' parameter. Reduce the number of IDs or fields
+                      and retry.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_REQUEST
+                        description: >-
+                          Error code indicating the request is invalid.
+                          Triggered when the number of record IDs exceeds 200 or
+                          the number of field API names exceeds 8.
+                      details:
+                        type: object
+                        description: Additional details about the error.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: Status of the response
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+              examples:
+                InvalidModule:
+                  summary: Invalid Module
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      resource_path_index: 0
+                    message: the module name given seems to be invalid
+                    status: error
+                RequiredParamMissing:
+                  summary: Required Parameter Missing
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: fields
+                    message: One of the expected parameter is missing
+                    status: error
+                InvalidRequest:
+                  summary: Invalid Request
+                  value:
+                    code: INVALID_REQUEST
+                    details: {}
+                    message: >-
+                      unable to process your request. please verify whether you
+                      have entered proper method name, parameter and parameter
+                      values.
+                    status: error
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.READ
+  /{moduleApiName}/{id}/actions/fetch_full_data:
+    get:
+      summary: Rich text field content for a specific record
+      operationId: fetchFullDataForSingleRecord
+      parameters:
+        - $ref: '#/components/parameters/ModuleApiName'
+        - $ref: '#/components/parameters/Fields'
+        - $ref: '#/components/parameters/Id'
+      description: >-
+        Retrieves the full content of rich text multi-line fields for a specific
+        record identified by its record ID in the path. The 'fields' query
+        parameter is optional for this endpoint - if omitted, all rich text
+        fields of the record are returned. When specified, only the listed rich
+        text fields are fetched. This API exclusively fetches rich text fields -
+        other field types are not supported. Only data from rich text multi-line
+        fields can be retrieved; multi-line fields of other types (small, large)
+        are not supported.
+      x-zs-llm-description: >-
+        Use this endpoint to fetch full rich-text field content for one record.
+        Prefer passing fields explicitly when only selected rich-text columns
+        are needed; omit fields only when complete rich-text retrieval is
+        required.
+      responses:
+        '200':
+          description: >-
+            Successful response containing the full HTML-formatted content of
+            the rich text fields for the specified record. If the 'fields'
+            parameter was omitted, all rich text fields of the record are
+            included.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: FetchFullDataSingleRecordResponse
+                description: >-
+                  Wrapper object for the response. Contains a 'data' array with
+                  a single record object holding the record ID and its rich text
+                  field values.
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      An array containing a single record object with the record
+                      ID and the values of the requested rich text fields.
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: >-
+                        A record object containing the record's unique ID and
+                        the full content of each requested rich text field. The
+                        rich text field property names correspond to the API
+                        names of the fields in the module.
+                      properties:
+                        id:
+                          type: string
+                          description: >-
+                            The unique identifier of the record whose rich text
+                            field data is being returned.
+                          format: int64
+                      additionalProperties:
+                        type: string
+                        description: >-
+                          The full HTML-formatted content of a rich text field.
+                          The property name corresponds to the API name of the
+                          rich text field in the module. The value is null if
+                          the field has no content. Each rich text field
+                          supports up to 50,000 characters.
+                        maxLength: 50000
+                      required:
+                        - id
+                required:
+                  - data
+              examples:
+                SingleRecord:
+                  value:
+                    data:
+                      - id: '1043386000018763408'
+                        Rich_Text_1: <b>Bold Content</b>
+                        Rich_Text_2: <i>Italic Content</i>
+        '204':
+          $ref: '#/components/responses/NoContentResponse'
+        '400':
+          description: >-
+            Bad Request. Returned when the module API name is invalid or the
+            request cannot be processed due to incorrect method name, parameter,
+            or parameter values.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: FetchFullDataSingleRecordErrorResponse
+                description: >-
+                  Error response for the single-record fetch full data
+                  operation. Includes INVALID_MODULE and INVALID_REQUEST error
+                  variants.
+                oneOf:
+                  - x-zs-$id: InvalidModule400ErrorResponse
+                    type: object
+                    description: >-
+                      Returned when the module API name specified in the path is
+                      not a valid CRM module. Verify the module API name and
+                      retry the request.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_MODULE
+                        description: >-
+                          Error code indicating that the module API name
+                          specified in the request path is not recognized as a
+                          valid CRM module.
+                      details:
+                        type: object
+                        description: Error details with resource path index
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: Index of the resource path that caused the error.
+                        required:
+                          - resource_path_index
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: Status of the response
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: RequiredParam400MissingErrorResponse
+                    description: >-
+                      Returned when the request cannot be processed due to an
+                      incorrect method name, parameter, or parameter value.
+                      Verify the request URL and parameters and retry.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - INVALID_REQUEST
+                        description: >-
+                          Error code indicating the request is invalid due to
+                          incorrect method name, parameter, or parameter values.
+                      details:
+                        type: object
+                        description: Additional details about the error.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: Human-readable error message
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: Status of the response
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+              examples:
+                InvalidModule:
+                  summary: Invalid Module
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      resource_path_index: 0
+                    message: the module name given seems to be invalid
+                    status: error
+                InvalidRequest:
+                  summary: Invalid Request
+                  value:
+                    code: INVALID_REQUEST
+                    details: {}
+                    message: >-
+                      unable to process your request. please verify whether you
+                      have entered proper method name, parameter and parameter
+                      values.
+                    status: error
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.READ
+security:
+  - OAuth2:
+      - ZohoCRM.modules.READ
+components:
+  parameters:
+    ModuleApiName:
+      name: moduleApiName
+      in: path
+      required: true
+      description: >-
+        The API name of the CRM module containing the record(s) whose rich text
+        fields you want to retrieve (e.g., Leads, Contacts, Deals, Accounts).
+        This is a mandatory path parameter.
+      schema:
+        type: string
+        maxLength: 50
+      examples:
+        Leads:
+          value: Leads
+          summary: Leads module
+        Contacts:
+          value: Contacts
+          summary: Contacts module
+    Id:
+      name: id
+      in: path
+      required: true
+      description: >-
+        The unique identifier of the record whose rich text field content you
+        want to retrieve. Must be a valid numeric record ID. If the ID is
+        invalid, an INVALID_DATA error (HTTP 400) is returned.
+      schema:
+        type: string
+        pattern: ^[0-9]+$
+        minLength: 1
+        maxLength: 20
+      examples:
+        LeadId:
+          value: '3652397000000624001'
+          summary: Typical lead record ID
+        ContactId:
+          value: '3652397000000624002'
+          summary: Typical contact record ID
+    Ids:
+      name: ids
+      in: query
+      required: true
+      schema:
+        type: string
+        format: int64
+      description: >-
+        Mandatory when retrieving rich text fields for multiple records. A
+        comma-separated list of unique record IDs whose rich text field values
+        you want to retrieve. You can specify up to 200 record IDs. Exceeding
+        this limit results in an INVALID_REQUEST error.
+      examples:
+        SingleId:
+          value: '3652397000000624001'
+          summary: A single record ID
+        MultipleIds:
+          value: 3652397000000624001,3652397000000624002,3652397000000624003
+          summary: A comma-separated list of multiple record IDs
+    Fields:
+      name: fields
+      in: query
+      schema:
+        type: string
+        maxLength: 1000
+      description: >-
+        A comma-separated list of rich text field API names whose values you
+        want to retrieve. Mandatory when retrieving rich text fields for
+        multiple records (maximum 8 field API names). Optional when retrieving
+        rich text fields for a specific record - if omitted, all rich text
+        fields of the record are returned.
+      examples:
+        SingleField:
+          value: RichTextField1
+          summary: A single rich text field API name
+        MultipleFields:
+          value: RichTextField1,RichTextField2,RichTextField3
+          summary: A comma-separated list of multiple rich text field API names
+  responses:
+    NoContentResponse:
+      description: >-
+        No content. Returned when no record is found for the specified record
+        ID, or when the specified fields contain no data.
+    InternalServerError:
+      description: >-
+        Internal Server Error. An unexpected and unhandled exception occurred on
+        the server. Contact the support team if this error persists.
+      content:
+        application/json:
+          schema:
+            type: object
+            x-zs-$id: InternalServerErrorResponse
+            description: >-
+              Internal server error response. Indicates an unexpected and
+              unhandled exception on the server. Contact the Zoho CRM support
+              team if this error persists.
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Error code indicating the type of error.
+                maxLength: 500
+              message:
+                type: string
+                description: Human-readable error message.
+                maxLength: 500
+              details:
+                type: object
+                description: Additional details about the error.
+                additionalProperties: true
+              status:
+                type: string
+                description: Status of the error response.
+                enum:
+                  - error
+            required:
+              - code
+              - message
+              - details
+              - status
+          examples:
+            ErrorExample:
+              value:
+                code: INTERNAL_ERROR
+                message: Internal Server Error
+                details: {}
+                status: error
+    UnauthorizedError:
+      description: >-
+        Unauthorized. Returned when the access token is missing or invalid
+        (AUTHENTICATION_FAILURE), or when the OAuth token does not include the
+        required scope ZohoCRM.modules.ALL or ZohoCRM.modules.{module_name}.READ
+        (OAUTH_SCOPE_MISMATCH). Generate a new token with the correct scope to
+        resolve.
+      content:
+        application/json:
+          schema:
+            x-zs-$id: UnauthorizedErrorResponse
+            description: >-
+              Unauthorized error response. Contains either an
+              AUTHENTICATION_FAILURE error when no valid access token is
+              provided, or an OAUTH_SCOPE_MISMATCH error when the token lacks
+              the required scope (ZohoCRM.modules.ALL or
+              ZohoCRM.modules.{module_name}.READ).
+            oneOf:
+              - type: object
+                x-zs-$id: AuthenticationFailureErrorResponse
+                description: >-
+                  Returned when the access token is not passed in the
+                  Authorization header of the request. Include a valid Zoho
+                  OAuth access token to resolve.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - AUTHENTICATION_FAILURE
+                    description: >-
+                      Error code indicating that the request failed
+                      authentication because no valid access token was provided
+                      in the Authorization header.
+                  details:
+                    type: object
+                    description: Additional details about the error.
+                    additionalProperties: true
+                  message:
+                    type: string
+                    description: A message describing the authentication failure.
+                    maxLength: 500
+                  status:
+                    type: string
+                    description: The status of the response.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+              - type: object
+                x-zs-$id: OAuthScopeMismatchErrorResponse
+                description: >-
+                  Returned when the OAuth token does not include the required
+                  scope. The required scope is ZohoCRM.modules.ALL or
+                  ZohoCRM.modules.{module_name}.READ. Generate a new token with
+                  a valid scope to resolve.
+                additionalProperties: false
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - OAUTH_SCOPE_MISMATCH
+                    description: >-
+                      Error code indicating that the OAuth token does not
+                      include the required scope (ZohoCRM.modules.ALL or
+                      ZohoCRM.modules.{module_name}.READ) to access this
+                      endpoint.
+                  details:
+                    type: object
+                    description: Additional details about the error.
+                    additionalProperties: true
+                  message:
+                    type: string
+                    description: A message describing the OAuth scope mismatch.
+                    maxLength: 500
+                  status:
+                    type: string
+                    description: The status of the response.
+                    enum:
+                      - error
+                required:
+                  - code
+                  - details
+                  - message
+                  - status
+          examples:
+            AuthenticationFailure:
+              summary: Authentication Failure
+              value:
+                code: AUTHENTICATION_FAILURE
+                details: {}
+                message: Authentication failed
+                status: error
+            OAuthScopeMismatch:
+              summary: OAuth Scope Mismatch
+              value:
+                code: OAUTH_SCOPE_MISMATCH
+                details: {}
+                message: invalid oauth scope to access this URL
+                status: error
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.READ: READ all CRM modules

@@ -1,0 +1,82 @@
+Error response with code INVALID_DATA: Invalid data (Field: type)
+
+```json
+{
+  "workflow_rules": [
+    {
+      "code": "INVALID_DATA",
+      "message": "invalid data",
+      "details": {
+        "api_name": "type",
+        "supported_values": [
+          "create",
+          "edit",
+          "create_or_edit",
+          "delete",
+          "field_update",
+          "rollup_summary_update",
+          "section_update",
+          "date_or_datetime",
+          "score_increase",
+          "score_update",
+          "score_decrease",
+          "recommendation",
+          "field_update",
+          "score_increase",
+          "score_decrease",
+          "score_update",
+          "scheduled_call_field_update",
+          "scheduled_call_section_update",
+          "scheduled_call_edit",
+          "scheduled_call_createedit",
+          "outgoing_call_ring",
+          "outgoing_call_start",
+          "outgoing_call_section_update",
+          "outgoing_call_createedit",
+          "outgoing_call_field_update",
+          "outgoing_call_edit",
+          "incoming_call_ring",
+          "incoming_call_start",
+          "incoming_call_edit",
+          "incoming_call_field_update",
+          "incoming_call_createedit",
+          "incoming_call_section_update",
+          "anyaction",
+          "delete",
+          "missed_call",
+          "create",
+          "reschedule",
+          "cancel",
+          "reassign",
+          "delete",
+          "overdue",
+          "marked_as_complete",
+          "anyaction",
+          "email_received",
+          "mail_sent",
+          "mail_sent_clicked",
+          "mail_sent_replied",
+          "mail_sent_opened",
+          "mail_sent_bounced",
+          "email_received_notreplied",
+          "email_received_opened_notreplied",
+          "mail_sent_replied_within",
+          "mail_sent_opened_notreplied",
+          "mail_sent_notreplied",
+          "mail_sent_notopened",
+          "fb_post_on_page",
+          "fb_comment_on_page",
+          "fb_like_on_post",
+          "fb_send_message",
+          "tw_mention_on",
+          "tw_retweet_on_tweet",
+          "tw_comment_on_tweet",
+          "tw_send_message"
+        ],
+        "json_path": "$.workflow_rules[*].execute_when.type"
+      },
+      "status": "error"
+    }
+  ]
+}
+```

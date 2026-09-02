@@ -1,0 +1,2188 @@
+openapi: 3.1.0
+info:
+  title: Change Owner
+  description: >-
+    The Change Owner API enables you to transfer record ownership within
+    supported Zoho CRM modules. Use the single-record endpoint to change the
+    owner of one record, or the bulk endpoint to update up to 500 records in a
+    single request. You can optionally notify the new owner via email and
+    transfer ownership of related module records alongside the primary record.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /{module}/{record}/actions/change_owner:
+    post:
+      summary: Change Owner
+      description: >-
+        To change the owner of a specific record in the specified CRM module in
+        your Zoho CRM organization. Note: The module name `Deals` is accepted
+        and internally resolved to `Potentials`. `Meetings` is internally
+        resolved to `Events`.
+      operationId: changeSingleRecordOwner
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - $ref: '#/components/parameters/Record'
+        - name: notify
+          in: query
+          deprecated: true
+          required: false
+          schema:
+            type: boolean
+          description: Deprecated — use the `notify` field in the request body instead.
+        - name: owner_id
+          in: query
+          deprecated: true
+          required: false
+          schema:
+            type: string
+            maxLength: 19
+          description: Deprecated — use the `owner.id` field in the request body instead.
+        - name: related_modules
+          in: query
+          deprecated: true
+          required: false
+          schema:
+            type: string
+            maxLength: 2000
+          description: >-
+            Deprecated — use the `related_modules` array in the request body
+            instead.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Specify the owner details for the single record owner change
+                request.
+              additionalProperties: false
+              properties:
+                owner:
+                  type: object
+                  description: Specify the details of the new owner for the record.
+                  additionalProperties: false
+                  properties:
+                    id:
+                      type: string
+                      description: Specify the user ID of the new owner.
+                      maxLength: 19
+                  required:
+                    - id
+                notify:
+                  type:
+                    - boolean
+                    - 'null'
+                  description: >-
+                    Specify whether to notify the new owner via email when the
+                    record is assigned.\nPossible values:\n**true** - The new
+                    owner is notified via email.\n**false** - The new owner is
+                    not notified via email.
+                related_modules:
+                  type: array
+                  description: >-
+                    Specify the related modules for which you want to transfer
+                    record ownership along with the main record.
+                  maxItems: 5
+                  items:
+                    type: object
+                    description: >-
+                      Specify the API name and record ID of a related module
+                      record to transfer to the new owner.
+                    additionalProperties: false
+                    properties:
+                      api_name:
+                        type: string
+                        description: >-
+                          Specify the API name of the related module for which
+                          the records are transferred.\nPossible
+                          values:\n**Tasks**\n**Events**\n**Calls**\n**Contacts**\n**Deals**
+                        enum:
+                          - Tasks
+                          - Events
+                          - Calls
+                          - Contacts
+                          - Deals
+                      id:
+                        type: string
+                        description: >-
+                          Specify the record ID of the related module record to
+                          transfer to the new owner.
+                        maxLength: 19
+              required:
+                - owner
+            examples:
+              ChangeOwnerExample:
+                value:
+                  owner:
+                    id: '5725767000000291001'
+                  notify: true
+                  related_modules:
+                    - api_name: Tasks
+                      id: '5725767000000293001'
+                    - api_name: Events
+                      id: '5725767000000293005'
+        required: true
+      responses:
+        '200':
+          description: >-
+            Returns the result of the owner change operation for the specified
+            record.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: SuccessResponse
+                description: Successful owner change response
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Data containing the result of the owner change operation
+                    maxItems: 1
+                    items:
+                      type: object
+                      description: Represents a successful owner change response.
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: >-
+                            Represents the response code indicating the outcome
+                            of the request. Possible values: **SUCCESS** - The
+                            owner change operation completed successfully.
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: >-
+                            Represents the details of the record for which the
+                            owner change was applied.
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the record
+                                for which the owner change was applied.
+                              maxLength: 19
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: >-
+                            Represents a brief message confirming the outcome of
+                            the owner change operation.
+                          maxLength: 500
+                        status:
+                          type: string
+                          description: >-
+                            Represents the status of the operation. Possible
+                            values: **success** - The owner change operation
+                            completed without errors.
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+              examples:
+                SuccessResponse:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '475418000007459055'
+                        message: owner is successfully updated
+                        status: success
+        '400':
+          description: >-
+            Invalid request. The module is unsupported, the data is invalid, or
+            a required field is missing.\n**Resolution:** The module API name in
+            the request URL must be valid and the owner ID must be specified
+            correctly.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: MutipleErrorResponses
+                oneOf:
+                  - type: object
+                    x-zs-$id: ErrorResponseForUnsupportedOperationsOrInvalidModule
+                    description: >-
+                      Represents an error response for unsupported operations or
+                      an invalid module.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          failure. \nPossible values:\n**NOT_SUPPORTED** - The
+                          specified module or operation is not
+                          supported.\n**INVALID_DATA** - The input data is
+                          invalid.\n**INVALID_MODULE** - The module API name in
+                          the request URL is invalid.\n**API_NOT_SUPPORTED** -
+                          The Change Owner API is not supported in the requested
+                          API version (minimum version 3 required for customer
+                          calls).
+                        enum:
+                          - NOT_SUPPORTED
+                          - INVALID_DATA
+                          - INVALID_MODULE
+                          - API_NOT_SUPPORTED
+                      details:
+                        type: object
+                        description: Represents additional context about the error.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the index of the resource path in the
+                              request that caused the error.
+                          supported_version:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the minimum supported API version.
+                              Returned with the API_NOT_SUPPORTED error code.
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: Errorresponseforinvaliddataormandatoryfieldnotfound
+                    description: >-
+                      Represents an error response for invalid data or a
+                      mandatory field that was not found.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          failure. \nPossible values:\n**INVALID_DATA** - The
+                          input data provided is invalid.\n**NOT_SUPPORTED** -
+                          The specified module or operation is not
+                          supported.\n**MANDATORY_NOT_FOUND** - A required field
+                          is missing from the request.
+                        enum:
+                          - INVALID_DATA
+                          - NOT_SUPPORTED
+                          - MANDATORY_NOT_FOUND
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the invalid or
+                          missing field.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field that caused
+                              the error.
+                            maxLength: 200
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the field in the
+                              request body that caused the error.
+                            maxLength: 500
+                          owner_status:
+                            type: string
+                            description: >-
+                              Represents the owner-restriction context that
+                              triggered the owner validation error. Possible
+                              values: **include_subordinate_owners** - Indicates
+                              that ownership can be assigned only to users who
+                              are subordinates of the current user based on the
+                              role or territory hierarchy. **inactive** -
+                              Indicates that the new owner's user account is not
+                              active. Returned only when the error is caused by
+                              a subordinate-owner or inactive-owner permission
+                              check.
+                            maxLength: 200
+                        required:
+                          - api_name
+                          - json_path
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: Errorresponseformissingexpectedfields
+                    description: >-
+                      Represents an error response when a required field in the
+                      request is missing.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          failure. \nPossible
+                          values:\n**EXPECTED_FIELD_MISSING** - A required field
+                          in the related modules object is missing from the
+                          request.
+                        enum:
+                          - EXPECTED_FIELD_MISSING
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the details about the missing expected
+                          fields.
+                        additionalProperties: false
+                        properties:
+                          expected_fields:
+                            type: array
+                            description: >-
+                              Represents the list of expected fields that are
+                              missing from the request.
+                            maxItems: 100
+                            items:
+                              type: object
+                              description: >-
+                                Represents an expected field that is missing
+                                from the request.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the missing
+                                    expected field.
+                                  maxLength: 200
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    Represents the JSON path to the missing
+                                    expected field in the request body.
+                                  maxLength: 500
+                              required:
+                                - api_name
+                                - json_path
+                        required:
+                          - expected_fields
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: Errorresponseforambiguousdataduringprocessing
+                    description: >-
+                      Represents an error response when the request contains
+                      ambiguous data that cannot be processed.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          failure. \nPossible
+                          values:\n**AMBIGUITY_DURING_PROCESSING** - The request
+                          contains ambiguous data that cannot be resolved.
+                        enum:
+                          - AMBIGUITY_DURING_PROCESSING
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the details about the ambiguous data in the
+                          request.
+                        additionalProperties: false
+                        properties:
+                          ambiguity_due_to:
+                            type: array
+                            description: >-
+                              Represents the list of fields that contain
+                              ambiguous values in the request.
+                            maxItems: 100
+                            items:
+                              type: object
+                              description: >-
+                                Represents a field that contains ambiguous data
+                                in the request.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the field
+                                    containing ambiguous data.
+                                  maxLength: 200
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    Represents the JSON path to the field
+                                    containing ambiguous data in the request
+                                    body.
+                                  maxLength: 500
+                              required:
+                                - api_name
+                                - json_path
+                        required:
+                          - ambiguity_due_to
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: ErrorResponseForRecordInStopProcessingState
+                    description: >-
+                      Returned when the record is in a stop-processing state and
+                      the Change Owner action is blocked.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Error code indicating the record is in a
+                          stop-processing state. Possible values:
+                          **CANNOT_PROCESS** - The record's privacy settings
+                          block the Change Owner action.
+                        enum:
+                          - CANNOT_PROCESS
+                      details:
+                        type: object
+                        description: Additional context identifying the affected record.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              The ID of the record that is in stop-processing
+                              state.
+                            maxLength: 19
+                          index:
+                            type: integer
+                            format: int32
+                            description: The zero-based index of the record in the request.
+                      message:
+                        type: string
+                        description: >-
+                          Error message describing why the Change Owner action
+                          was blocked.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Response status. Possible values: **error** - The
+                          operation did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: ErrorResponseForRecordLockedSingle
+                    description: >-
+                      Returned when the record is locked (for example, by an
+                      active Find & Merge operation or a record-locking
+                      preference) and the Change Owner action is blocked.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Error code indicating the record is locked. Possible
+                          values: **RECORD_LOCKED** - The record is locked and
+                          cannot be reassigned.
+                        enum:
+                          - RECORD_LOCKED
+                      details:
+                        type: object
+                        description: Additional context identifying the locked record.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: The ID of the locked record.
+                            maxLength: 19
+                          action:
+                            type: string
+                            description: >-
+                              The action that caused the locking conflict, for
+                              example **merge** or **record_locking**.
+                            maxLength: 100
+                        required:
+                          - id
+                          - action
+                      message:
+                        type: string
+                        description: >-
+                          Error message describing why the Change Owner action
+                          was blocked.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Response status. Possible values: **error** - The
+                          operation did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: ErrorResponseForServiceProviderOwnerRestriction
+                    description: >-
+                      Returned when the new owner is a Service Provider user and
+                      the target module does not allow Service Provider
+                      ownership.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Error code indicating the ownership restriction.
+                          Possible values: **NOT_ALLOWED** - Service Provider
+                          users can only be assigned as owner of Tasks, Events,
+                          Calls, and Appointments.
+                        enum:
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: >-
+                          Additional context identifying the owner field that
+                          caused the error.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field that caused
+                              the error.
+                            maxLength: 200
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the field in the
+                              request body that caused the error.
+                            maxLength: 500
+                        required:
+                          - api_name
+                          - json_path
+                      message:
+                        type: string
+                        description: Error message describing the ownership restriction.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Response status. Possible values: **error** - The
+                          operation did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+              examples:
+                NotSupportedError:
+                  value:
+                    code: NOT_SUPPORTED
+                    details:
+                      resource_path_index: 0
+                    message: The requested operation is not supported
+                    status: error
+                ApiNotSupportedError:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      supported_version: 3
+                    message: Change Owner is not supported in this API version
+                    status: error
+                InvalidDataError:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: owner
+                      json_path: $.owner.id
+                    message: Invalid data provided
+                    status: error
+                NonSubordinateUser:
+                  summary: Owner is not a subordinate of the current user
+                  description: >-
+                    Returned when owner-restriction settings prevent assigning
+                    to a non-subordinate user (role hierarchy or territory
+                    hierarchy restriction).
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                      owner_status: include_subordinate_owners
+                    message: >-
+                      The user to whom you are trying to transfer the records is
+                      not a subordinate.
+                    status: error
+                RecordLockedError:
+                  summary: The record is locked
+                  description: >-
+                    Returned when the record is locked, for example by an active
+                    Find & Merge operation or a record-locking preference.
+                  value:
+                    code: RECORD_LOCKED
+                    details:
+                      id: '4987786000003224629'
+                      action: record_locking
+                    message: >-
+                      Sorry, you cannot perform this operation as the record is
+                      locked.
+                    status: error
+                InactiveOwnerError:
+                  summary: New owner's user account is not active
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                      owner_status: inactive
+                    message: >-
+                      The user to whom you are trying to transfer the records is
+                      not active.
+                    status: error
+                LiteUserOwnerError:
+                  summary: New owner is a Lite user
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                    message: >-
+                      The user to whom you are trying to transfer the records is
+                      a Lite User.
+                    status: error
+                ServiceProviderOwnerError:
+                  summary: >-
+                    New owner is a Service Provider user not allowed for this
+                    module
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                    message: >-
+                      Service Provider User can only be assigned to tasks,
+                      meetings, calls, and appointments
+                    status: error
+        '403':
+          description: >-
+            Permission denied to change record ownership in this
+            module.\n**Resolution:** The CRM administrator must grant the
+            required permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ErrorResponse403
+                oneOf:
+                  - type: object
+                    x-zs-$id: Errorresponsewhenuserlacksrequiredpermissions
+                    description: >-
+                      Represents an error response when the user lacks the
+                      required permission to change record ownership.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          permission failure. \nPossible
+                          values:\n**NO_PERMISSION** - The user's CRM profile
+                          lacks the required permission to change record
+                          ownership.
+                        enum:
+                          - NO_PERMISSION
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the permission
+                          issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional details about the missing
+                          permissions.
+                        additionalProperties: false
+                        properties:
+                          permissions:
+                            type: array
+                            description: >-
+                              Represents the list of required permissions that
+                              the user's profile is missing.
+                            maxItems: 1
+                            items:
+                              type: string
+                              description: >-
+                                Represents the name of a required permission
+                                that is missing from the user's profile.
+                              maxLength: 200
+                        required:
+                          - permissions
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: >-
+                      ErrorResponseWhenOperationNotAllowedForModuleCannotPerformAction
+                    description: >-
+                      Represents the error response returned when the Change
+                      Owner operation is not allowed for the specified module
+                      even though the user has the required permission.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating that the Change
+                          Owner operation cannot be performed on the module.
+                          Possible values: **CANNOT_PERFORM_ACTION** - The
+                          specified module does not permit the Change Owner
+                          action.
+                        enum:
+                          - CANNOT_PERFORM_ACTION
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing why the Change
+                          Owner operation cannot be performed on the specified
+                          module.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. Possible
+                          values: **error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the operation that
+                          is not allowed on the module.
+                        additionalProperties: true
+                    required:
+                      - code
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: ErrorResponseForTransfereeNoModulePermission
+                    description: Error response for transferee with no module permission
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: Error code indicating the type of error
+                        enum:
+                          - CANNOT_ASSIGN
+                      details:
+                        type: object
+                        description: Additional details about the error
+                        additionalProperties: false
+                        properties:
+                          permissions:
+                            type: array
+                            description: >-
+                              List of permissions that the transferee lacks for
+                              the module, causing the error
+                            maxItems: 1
+                            items:
+                              type: string
+                              description: >-
+                                Permission name that the transferee lacks for
+                                the module
+                              maxLength: 250
+                        required:
+                          - permissions
+                      message:
+                        type: string
+                        description: Error message describing the issue
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: Status of the response
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: ErrorResponseForClosedOrDeletedTargetUser
+                    description: >-
+                      Returned when the target user account is closed or
+                      deleted.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Error code indicating the target user is closed or
+                          deleted. Possible values: **INVALID_DATA** - The
+                          supplied owner ID refers to a closed or deleted user.
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        description: >-
+                          Additional context identifying the invalid owner
+                          field.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              The API name of the field that contains the
+                              invalid owner reference.
+                            maxLength: 200
+                          json_path:
+                            type: string
+                            description: >-
+                              The JSON path to the field that contains the
+                              invalid owner reference.
+                            maxLength: 500
+                          owner_status:
+                            type: string
+                            description: >-
+                              Indicates the state of the target user. Possible
+                              values: **deleted** - The user account is closed
+                              or deleted.
+                            enum:
+                              - deleted
+                        required:
+                          - api_name
+                          - json_path
+                          - owner_status
+                      message:
+                        type: string
+                        description: >-
+                          Error message describing why the owner assignment was
+                          rejected.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Response status. Possible values: **error** - The
+                          operation did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+              examples:
+                NoPermissionError:
+                  value:
+                    code: NO_PERMISSION
+                    message: You do not have permission to perform this operation
+                    status: error
+                    details:
+                      permissions:
+                        - Crm_Implied_Change_Owner_Leads
+                ClosedOrDeletedUserError:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                      owner_status: deleted
+                    message: >-
+                      The user to whom you are trying to transfer the records
+                      has closed their account.
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.change_owner.CREATE
+  /{module}/actions/change_owner:
+    post:
+      summary: Change Owner
+      description: >-
+        Updates the owner of multiple records in the module. Note: The module
+        name `Deals` is accepted and internally resolved to `Potentials`.
+        `Meetings` is internally resolved to `Events`.
+      operationId: changeOwnerBulk
+      parameters:
+        - $ref: '#/components/parameters/Module'
+        - name: ids
+          in: query
+          deprecated: true
+          required: false
+          schema:
+            type: string
+            maxLength: 9975
+          description: Deprecated — use the `ids` array in the request body instead.
+        - name: notify
+          in: query
+          deprecated: true
+          required: false
+          schema:
+            type: boolean
+          description: Deprecated — use the `notify` field in the request body instead.
+        - name: owner_id
+          in: query
+          deprecated: true
+          required: false
+          schema:
+            type: string
+            maxLength: 19
+          description: Deprecated — use the `owner.id` field in the request body instead.
+        - name: related_modules
+          in: query
+          deprecated: true
+          required: false
+          schema:
+            type: string
+            maxLength: 2000
+          description: >-
+            Deprecated — use the `related_modules` array in the request body
+            instead.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Specify the record IDs and owner details for the bulk owner
+                change request.
+              additionalProperties: false
+              properties:
+                ids:
+                  type: array
+                  description: >-
+                    Specify the IDs of the records for which you want to change
+                    the owner.
+                  maxItems: 500
+                  items:
+                    type: string
+                    description: Specify a record ID.
+                    maxLength: 19
+                owner:
+                  type: object
+                  description: Specify the details of the new owner for the records.
+                  additionalProperties: false
+                  properties:
+                    id:
+                      type: string
+                      description: Specify the user ID of the new owner.
+                      maxLength: 19
+                  required:
+                    - id
+                notify:
+                  type:
+                    - boolean
+                    - 'null'
+                  description: >-
+                    Specify whether to notify the new owner via email when the
+                    records are assigned.\nPossible values:\n**true** - The new
+                    owner is notified via email.\n**false** - The new owner is
+                    not notified via email.
+                related_modules:
+                  type: array
+                  description: >-
+                    Specify the related modules for which you want to transfer
+                    record ownership along with the main record.
+                  maxItems: 5
+                  items:
+                    type: object
+                    description: >-
+                      Specify the API name and record ID of a related module
+                      record to transfer to the new owner.
+                    additionalProperties: false
+                    properties:
+                      api_name:
+                        type: string
+                        description: >-
+                          Specify the API name of the related module for which
+                          the records are transferred.\nPossible
+                          values:\n**Tasks**\n**Events**\n**Calls**\n**Contacts**\n**Deals**
+                        enum:
+                          - Tasks
+                          - Events
+                          - Calls
+                          - Contacts
+                          - Deals
+                      id:
+                        type: string
+                        description: >-
+                          Specify the record ID of the related module record to
+                          transfer to the new owner.
+                        maxLength: 19
+              required:
+                - ids
+                - owner
+            examples:
+              BulkChangeOwnerExample:
+                value:
+                  ids:
+                    - '5725767000000291001'
+                    - '5725767000000291002'
+                  owner:
+                    id: '5725767000000291003'
+                  notify: true
+                  related_modules:
+                    - api_name: Tasks
+                      id: '5725767000000293001'
+                    - api_name: Calls
+                      id: '5725767000000294001'
+        required: true
+      responses:
+        '200':
+          description: >-
+            Returns the result of the owner change operation for the requested
+            records.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: SuccessResponseBulk
+                description: Successful owner change response
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Data containing the result of the owner change operation
+                    maxItems: 500
+                    items:
+                      type: object
+                      description: Result of the owner change operation for the record
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Response code indicating success
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: Details of the updated record
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: The ID of the updated record
+                              maxLength: 19
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: Success message
+                          maxLength: 500
+                        status:
+                          type: string
+                          description: Status of the operation
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+              examples:
+                SuccessResponse:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '475418000007459055'
+                        message: owner is successfully updated
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          id: '475418000007459060'
+                        message: owner is successfully updated
+                        status: success
+        '202':
+          description: >-
+            Partial success (direct API calls) — one or more records failed
+            while others succeeded. Same body shape as 207.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: BulkChangeOwnerPartialResponseDirect
+                description: >-
+                  Partial bulk change-owner response returned to direct API
+                  callers.
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Per-record outcome array containing a mix of success and
+                      error objects.
+                    maxItems: 500
+                    items:
+                      type: object
+                      description: Per-record outcome entry.
+                      additionalProperties: true
+                      properties:
+                        code:
+                          type: string
+                          maxLength: 100
+                          description: >-
+                            Outcome code for this record. `SUCCESS` on success;
+                            an error code such as `CANNOT_PROCESS`,
+                            `NOT_MERGED`, or `CANNOT_PERFORM_ACTION` on failure.
+                        status:
+                          type: string
+                          description: Status of the operation for this record.
+                          enum:
+                            - success
+                            - error
+              examples:
+                PartialSuccessResponse:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '4987786000003224001'
+                        message: owner is successfully updated
+                        status: success
+                      - code: CANNOT_PROCESS
+                        details:
+                          id: '4987786000003224629'
+                          index: 1
+                        message: The record is in stop-processing state.
+                        status: error
+        '207':
+          description: >-
+            Partial success (client SDK calls) — one or more records failed
+            while others succeeded. Each element in `data` carries an individual
+            `code` and `status` indicating the per-record outcome.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: BulkChangeOwnerPartialResponseSDK
+                description: >-
+                  Partial bulk change-owner response returned to client SDK
+                  callers.
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: >-
+                      Per-record outcome array containing a mix of success and
+                      error objects.
+                    maxItems: 500
+                    items:
+                      type: object
+                      description: Per-record outcome entry.
+                      additionalProperties: true
+                      properties:
+                        code:
+                          type: string
+                          maxLength: 100
+                          description: >-
+                            Outcome code for this record. `SUCCESS` on success;
+                            an error code such as `CANNOT_PROCESS`,
+                            `NOT_MERGED`, or `CANNOT_PERFORM_ACTION` on failure.
+                        status:
+                          type: string
+                          description: Status of the operation for this record.
+                          enum:
+                            - success
+                            - error
+              examples:
+                PartialSuccessResponse:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '4987786000003224001'
+                        message: owner is successfully updated
+                        status: success
+                      - code: CANNOT_PROCESS
+                        details:
+                          id: '4987786000003224629'
+                          index: 1
+                        message: The record is in stop-processing state.
+                        status: error
+        '400':
+          description: >-
+            Invalid request. The module is unsupported, the data is invalid, or
+            a required field is missing.\n**Resolution:** The module API name in
+            the request URL must be valid, the record IDs must exist, and the
+            owner ID must be specified correctly.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: BadRequestResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: Errorresponseforunsupportedoperationsorinvalidmodule
+                    description: >-
+                      Error response for unsupported operations, invalid module,
+                      or unsupported API version.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          failure. \nPossible values:\n**NOT_SUPPORTED** - The
+                          specified module or operation is not
+                          supported.\n**INVALID_DATA** - The input data is
+                          invalid.\n**INVALID_MODULE** - The module API name in
+                          the request URL is invalid.\n**API_NOT_SUPPORTED** -
+                          The Change Owner API is not supported in the requested
+                          API version (minimum version 3 required for customer
+                          calls).
+                        enum:
+                          - NOT_SUPPORTED
+                          - INVALID_DATA
+                          - INVALID_MODULE
+                          - API_NOT_SUPPORTED
+                      details:
+                        type: object
+                        description: Represents additional context about the error.
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the index of the resource path in the
+                              request that caused the error.
+                          supported_version:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Minimum supported API version. Returned with the
+                              API_NOT_SUPPORTED error code.
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: ErrorresponseforinvaliddataormandatoryfieldnotFound
+                    description: >-
+                      Represents an error response for invalid data or a
+                      mandatory field that was not found.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          failure. \nPossible values:\n**INVALID_DATA** - The
+                          input data provided is invalid.\n**NOT_SUPPORTED** -
+                          The specified module or operation is not
+                          supported.\n**MANDATORY_NOT_FOUND** - A required field
+                          is missing from the request.
+                        enum:
+                          - INVALID_DATA
+                          - NOT_SUPPORTED
+                          - MANDATORY_NOT_FOUND
+                      details:
+                        type: object
+                        description: >-
+                          Represents additional context about the invalid or
+                          missing field.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field that caused
+                              the error.
+                            maxLength: 200
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the field in the
+                              request body that caused the error.
+                            maxLength: 500
+                          owner_status:
+                            type: string
+                            description: >-
+                              Represents the owner-restriction context that
+                              triggered the owner validation error. Possible
+                              values: **include_subordinate_owners** - Indicates
+                              that ownership can be assigned only to users who
+                              are subordinates of the current user based on the
+                              role or territory hierarchy. **inactive** -
+                              Indicates that the new owner's user account is not
+                              active. Returned only when the error is caused by
+                              a subordinate-owner or inactive-owner permission
+                              check.
+                            maxLength: 200
+                        required:
+                          - api_name
+                          - json_path
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: ErrorresponseformissingexpectedFields
+                    description: >-
+                      Represents an error response when a required field in the
+                      request is missing.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          failure. \nPossible
+                          values:\n**EXPECTED_FIELD_MISSING** - A required field
+                          in the related modules object is missing from the
+                          request.
+                        enum:
+                          - EXPECTED_FIELD_MISSING
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the details about the missing expected
+                          fields.
+                        additionalProperties: false
+                        properties:
+                          expected_fields:
+                            type: array
+                            description: >-
+                              Represents the list of expected fields that are
+                              missing from the request.
+                            maxItems: 100
+                            items:
+                              type: object
+                              description: >-
+                                Represents an expected field that is missing
+                                from the request.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the missing
+                                    expected field.
+                                  maxLength: 200
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    Represents the JSON path to the missing
+                                    expected field in the request body.
+                                  maxLength: 500
+                              required:
+                                - api_name
+                                - json_path
+                        required:
+                          - expected_fields
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: ErrorresponseforambiguousdataduringProcessing
+                    description: >-
+                      Represents an error response when the request contains
+                      ambiguous data that cannot be processed.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          failure. \nPossible
+                          values:\n**AMBIGUITY_DURING_PROCESSING** - The request
+                          contains ambiguous data that cannot be resolved.
+                        enum:
+                          - AMBIGUITY_DURING_PROCESSING
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the details about the ambiguous data in the
+                          request.
+                        additionalProperties: false
+                        properties:
+                          ambiguity_due_to:
+                            type: array
+                            description: >-
+                              Represents the list of fields that contain
+                              ambiguous values in the request.
+                            maxItems: 100
+                            items:
+                              type: object
+                              description: >-
+                                Represents a field that contains ambiguous data
+                                in the request.
+                              additionalProperties: false
+                              properties:
+                                api_name:
+                                  type: string
+                                  description: >-
+                                    Represents the API name of the field
+                                    containing ambiguous data.
+                                  maxLength: 200
+                                json_path:
+                                  type: string
+                                  description: >-
+                                    Represents the JSON path to the field
+                                    containing ambiguous data in the request
+                                    body.
+                                  maxLength: 500
+                              required:
+                                - api_name
+                                - json_path
+                        required:
+                          - ambiguity_due_to
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: ErrorresponseforinvaliddatatypeMismatch
+                    description: Error response for invalid data type in the request
+                    additionalProperties: false
+                    properties:
+                      data:
+                        type: object
+                        description: Error details for invalid data type.
+                        additionalProperties: false
+                        properties:
+                          code:
+                            type: string
+                            description: Error code indicating the type of error
+                            enum:
+                              - INVALID_DATA
+                          details:
+                            type: object
+                            description: Additional details about the data type mismatch
+                            additionalProperties: false
+                            properties:
+                              expected_data_type:
+                                type: string
+                                description: Denotes the expected data type of the field.
+                                maxLength: 50
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field that
+                                  caused the error.
+                                maxLength: 200
+                              json_path:
+                                type: string
+                                description: JSON path to the field that caused the error
+                                maxLength: 500
+                            required:
+                              - expected_data_type
+                              - api_name
+                              - json_path
+                          message:
+                            type: string
+                            description: Error message describing the issue
+                            maxLength: 500
+                          status:
+                            type: string
+                            description: Represents the status of the response
+                            enum:
+                              - error
+                        required:
+                          - code
+                          - details
+                          - message
+                          - status
+                    required:
+                      - data
+                  - type: object
+                    x-zs-$id: ErrorresponseforRecordLockingConflict
+                    description: Error response when one or more records are locked
+                    additionalProperties: false
+                    properties:
+                      data:
+                        type: array
+                        description: List of records that are locked
+                        maxItems: 500
+                        items:
+                          type: object
+                          description: Details of a record that is locked
+                          additionalProperties: false
+                          properties:
+                            code:
+                              type: string
+                              description: Error code indicating the type of error
+                              enum:
+                                - RECORD_LOCKED
+                            details:
+                              type: object
+                              description: Additional details about the locked record
+                              additionalProperties: false
+                              properties:
+                                action:
+                                  type: string
+                                  description: The action that caused the locking conflict
+                                  maxLength: 100
+                                id:
+                                  type: string
+                                  description: Represents the ID of the locked record
+                                  maxLength: 19
+                              required:
+                                - action
+                                - id
+                            message:
+                              type: string
+                              description: Inidcates the error message describing the issue
+                              maxLength: 500
+                            status:
+                              type: string
+                              description: Denotes the status of the response
+                              enum:
+                                - error
+                          required:
+                            - code
+                            - details
+                            - message
+                            - status
+                    required:
+                      - data
+                  - type: object
+                    x-zs-$id: ErrorResponseBulkForRecordInStopProcessingState
+                    description: >-
+                      Returned (per record) when a record is in a
+                      stop-processing state and the Change Owner action is
+                      blocked.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Error code indicating the record is in a
+                          stop-processing state. Possible values:
+                          **CANNOT_PROCESS** - The record's privacy settings
+                          block the Change Owner action.
+                        enum:
+                          - CANNOT_PROCESS
+                      details:
+                        type: object
+                        description: Additional context identifying the affected record.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              The ID of the record that is in stop-processing
+                              state.
+                            maxLength: 19
+                          index:
+                            type: integer
+                            format: int32
+                            description: The zero-based index of the record in the request.
+                      message:
+                        type: string
+                        description: >-
+                          Error message describing why the Change Owner action
+                          was blocked.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Response status. Possible values: **error** - The
+                          operation did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: ErrorResponseBulkForServiceProviderOwnerRestriction
+                    description: >-
+                      Returned when the new owner is a Service Provider user and
+                      the target module does not allow Service Provider
+                      ownership.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Error code indicating the ownership restriction.
+                          Possible values: **NOT_ALLOWED** - Service Provider
+                          users can only be assigned as owner of Tasks, Events,
+                          Calls, and Appointments.
+                        enum:
+                          - NOT_ALLOWED
+                      details:
+                        type: object
+                        description: >-
+                          Additional context identifying the owner field that
+                          caused the error.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Represents the API name of the field that caused
+                              the error.
+                            maxLength: 200
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path to the field in the
+                              request body that caused the error.
+                            maxLength: 500
+                        required:
+                          - api_name
+                          - json_path
+                      message:
+                        type: string
+                        description: Error message describing the ownership restriction.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Response status. Possible values: **error** - The
+                          operation did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+              examples:
+                NotSupportedError:
+                  value:
+                    code: NOT_SUPPORTED
+                    details:
+                      resource_path_index: 0
+                    message: The requested operation is not supported
+                    status: error
+                ApiNotSupportedError:
+                  value:
+                    code: API_NOT_SUPPORTED
+                    details:
+                      supported_version: 3
+                    message: Change Owner is not supported in this API version
+                    status: error
+                CannotProcessError:
+                  value:
+                    code: CANNOT_PROCESS
+                    details:
+                      id: '4987786000003224629'
+                      index: 0
+                    message: The record is in stop-processing state.
+                    status: error
+                InvalidDataError:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: owner
+                      json_path: $.owner.id
+                    message: Invalid data provided
+                    status: error
+                NonSubordinateUser:
+                  summary: Owner is not a subordinate of the current user.
+                  description: >-
+                    Returned when owner-restriction settings prevent assigning
+                    to a non-subordinate user (role hierarchy or territory
+                    hierarchy restriction).
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                      owner_status: include_subordinate_owners
+                    message: >-
+                      The user to whom you are trying to transfer the records is
+                      not a subordinate.
+                    status: error
+                InactiveOwnerError:
+                  summary: New owner's user account is not active
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                      owner_status: inactive
+                    message: >-
+                      The user to whom you are trying to transfer the records is
+                      not active.
+                    status: error
+                LiteUserOwnerError:
+                  summary: New owner is a Lite user
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                    message: >-
+                      The user to whom you are trying to transfer the records is
+                      a Lite User.
+                    status: error
+                ServiceProviderOwnerError:
+                  summary: >-
+                    New owner is a Service Provider user not allowed for this
+                    module
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                    message: >-
+                      Service Provider User can only be assigned to tasks,
+                      meetings, calls, and appointments
+                    status: error
+                InvalidDataTypeError:
+                  value:
+                    data:
+                      code: INVALID_DATA
+                      details:
+                        expected_data_type: long
+                        api_name: ids
+                        json_path: $.ids[1]
+                      message: invalid data
+                      status: error
+                RecordLockingConflictError:
+                  value:
+                    data:
+                      - code: RECORD_LOCKED
+                        details:
+                          action: record_locking
+                          id: '4987786000003224629'
+                        message: >-
+                          Sorry, you cannot perform this operation as the record
+                          is locked.
+                        status: error
+        '403':
+          description: >-
+            Permission denied to change record ownership in this
+            module.\n**Resolution:** The CRM administrator must grant the
+            required permission to the user's profile.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: ForbiddenResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: ErrorresponsewhenuserlacksrequiredPermissions
+                    description: >-
+                      Represents an error response when the user lacks the
+                      required permission to change record ownership.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code indicating the cause of the
+                          permission failure. \nPossible
+                          values:\n**NO_PERMISSION** - The user's CRM profile
+                          lacks the required permission to change record
+                          ownership.
+                        enum:
+                          - NO_PERMISSION
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message describing the permission
+                          issue.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Represents the status of the response. \nPossible
+                          values:\n**error** - The request encountered an error
+                          and did not complete.
+                        enum:
+                          - error
+                      details:
+                        type: object
+                        description: >-
+                          Represents the additional details about the missing
+                          permissions.
+                        additionalProperties: false
+                        properties:
+                          permissions:
+                            type: array
+                            description: >-
+                              Represents the list of required permissions that
+                              the user's profile is missing.
+                            maxItems: 1
+                            items:
+                              type: string
+                              description: >-
+                                Represents the name of a required permission
+                                that is missing from the user's profile.
+                              maxLength: 200
+                        required:
+                          - permissions
+                    required:
+                      - code
+                      - message
+                      - status
+                      - details
+                  - type: object
+                    x-zs-$id: ErrorResponseBulkForTransfereeNoModulePermission
+                    description: >-
+                      Returned when the new owner lacks view permission for the
+                      target module or a specified related module.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Error code indicating a permission gap on the new
+                          owner. Possible values: **CANNOT_ASSIGN** - The new
+                          owner does not have view access to the required
+                          module.
+                        enum:
+                          - CANNOT_ASSIGN
+                      details:
+                        type: object
+                        description: Additional context listing the missing permissions.
+                        additionalProperties: false
+                        properties:
+                          permissions:
+                            type: array
+                            description: List of permissions that the new owner lacks.
+                            maxItems: 10
+                            items:
+                              type: string
+                              description: Name of a missing permission.
+                              maxLength: 200
+                        required:
+                          - permissions
+                      message:
+                        type: string
+                        description: >-
+                          Error message describing the missing module
+                          permission.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Response status. Possible values: **error** - The
+                          operation did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: ErrorResponseBulkForRecordPermissionDenied
+                    description: >-
+                      Returned (per record in a partial-failure response) when
+                      the current user lacks permission to change ownership of a
+                      specific record.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Error code indicating a per-record permission denial.
+                          Possible values: **CANNOT_PERFORM_ACTION** - The
+                          current user does not have permission to change
+                          ownership of this record.
+                        enum:
+                          - CANNOT_PERFORM_ACTION
+                      details:
+                        type: object
+                        description: >-
+                          Additional context identifying the record for which
+                          the action was denied.
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              The ID of the record for which the action was
+                              denied.
+                            maxLength: 19
+                          index:
+                            type: integer
+                            format: int32
+                            description: The zero-based index of the record in the request.
+                      message:
+                        type: string
+                        description: >-
+                          Error message describing why the action was denied for
+                          this record.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Response status. Possible values: **error** - The
+                          operation did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                  - type: object
+                    x-zs-$id: ErrorResponseBulkForClosedOrDeletedTargetUser
+                    description: >-
+                      Returned when the target user account is closed or
+                      deleted.
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Error code indicating the target user is closed or
+                          deleted. Possible values: **INVALID_DATA** - The
+                          supplied owner ID refers to a closed or deleted user.
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        description: >-
+                          Additional context identifying the invalid owner
+                          field.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              The API name of the field that contains the
+                              invalid owner reference.
+                            maxLength: 200
+                          json_path:
+                            type: string
+                            description: >-
+                              The JSON path to the field that contains the
+                              invalid owner reference.
+                            maxLength: 500
+                          owner_status:
+                            type: string
+                            description: >-
+                              Indicates the state of the target user. Possible
+                              values: **deleted** - The user account is closed
+                              or deleted.
+                            enum:
+                              - deleted
+                        required:
+                          - api_name
+                          - json_path
+                          - owner_status
+                      message:
+                        type: string
+                        description: >-
+                          Error message describing why the owner assignment was
+                          rejected.
+                        maxLength: 500
+                      status:
+                        type: string
+                        description: >-
+                          Response status. Possible values: **error** - The
+                          operation did not complete.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+              examples:
+                NoPermissionError:
+                  value:
+                    code: NO_PERMISSION
+                    message: You do not have permission to perform this operation
+                    status: error
+                    details:
+                      permissions:
+                        - Crm_Implied_Change_Owner_Leads
+                CannotAssignError:
+                  value:
+                    code: CANNOT_ASSIGN
+                    details:
+                      permissions:
+                        - Crm_Implied_Role_View_Leads
+                    message: >-
+                      The user you are trying to assign does not have permission
+                      for this module.
+                    status: error
+                CannotPerformActionError:
+                  value:
+                    code: CANNOT_PERFORM_ACTION
+                    details:
+                      id: '4987786000003224629'
+                      index: 0
+                    message: >-
+                      You do not have permission to change the owner of this
+                      record.
+                    status: error
+                ClosedOrDeletedUserError:
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      api_name: id
+                      json_path: $.owner.id
+                      owner_status: deleted
+                    message: >-
+                      The user to whom you are trying to transfer the records
+                      has closed their account.
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.change_owner.CREATE
+security:
+  - OAuth2:
+      - ZohoCRM.change_owner.CREATE
+components:
+  parameters:
+    Module:
+      name: module
+      description: Specify the API name of the module.
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+    Record:
+      name: record
+      description: Specify the ID of the record for which you want to change the owner.
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^[0-9]+$
+        maxLength: 19
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.change_owner.CREATE: Permission to change owner of records

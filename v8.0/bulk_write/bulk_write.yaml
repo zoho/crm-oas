@@ -1,0 +1,1405 @@
+openapi: 3.1.0
+info:
+  title: Bulk Write
+  description: >-
+    This API enables developers to insert, update, or upsert large volumes of
+    records in a Zoho CRM module by submitting an asynchronous bulk write job
+    that processes a previously uploaded CSV file. It also exposes the job
+    details endpoint for polling the processing status and retrieving the result
+    archive once the job completes.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/bulk/{version}
+    description: Production server for the Zoho CRM Bulk Write API.
+    variables:
+      dc:
+        description: >-
+          Specify the Zoho data center suffix that hosts the organization, such
+          as **com**, **eu**, **in**, **au**, **jp**, **ca**, or **sa**.
+        default: com
+        enum:
+          - eu
+          - com
+          - au
+          - in
+          - jp
+          - cn
+          - ca
+      version:
+        description: |-
+          Specify the API version segment for the request.
+          Possible values:
+          v8 - Use Bulk Write API version 8.
+        default: v8
+paths:
+  /write:
+    post:
+      summary: Create a bulk write job
+      description: >-
+        To create a bulk write job in your Zoho CRM organization that creates,
+        updates, or upserts records in a target module from a previously
+        uploaded file. The job is processed asynchronously; the response returns
+        the job identifier that the get job details operation uses to poll job
+        status, and an optional callback URL is notified on completion or
+        failure.
+      operationId: createBulkWriteJob
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >-
+                Defines the payload for creating a bulk write job, including the
+                operation type, optional callback configuration, and the list of
+                resource configurations.
+              additionalProperties: false
+              properties:
+                character_encoding:
+                  type:
+                    - string
+                    - 'null'
+                  description: >-
+                    Specify the character encoding of the uploaded file. Zoho
+                    CRM auto-detects the encoding when this value is omitted;
+                    supply a value to override auto-detection and force the file
+                    to be read with the specified charset.
+                  maxLength: 50
+                operation:
+                  type: string
+                  description: >-
+                    Specify the type of bulk write operation to perform on the
+                    file.
+
+                    Possible values:
+
+                    insert - Creates the records from the file as new records in
+                    the target module.
+
+                    update - Updates existing records in the target module
+                    without creating new ones.
+
+                    upsert - Updates existing records and creates new records
+                    that do not exist already.
+                  enum:
+                    - insert
+                    - update
+                    - upsert
+                callback:
+                  type: object
+                  description: >-
+                    Specify the callback configuration that Zoho CRM uses to
+                    notify your endpoint when the bulk write job completes or
+                    fails.
+                  additionalProperties: false
+                  properties:
+                    url:
+                      type: string
+                      description: >-
+                        Specify the URL that receives the job completion
+                        notification. The URL must accept the HTTP POST method
+                        and be reachable from Zoho CRM servers.
+                      format: uri
+                    method:
+                      type: string
+                      description: >-
+                        Specify the HTTP method that Zoho CRM uses to invoke the
+                        callback URL.
+
+                        Possible values:
+
+                        post - Sends the job completion notification as an HTTP
+                        POST request.
+                      enum:
+                        - post
+                  required:
+                    - url
+                    - method
+                resource:
+                  type: array
+                  description: >-
+                    Specify the list of resource configurations to process in
+                    the bulk write job. Each entry describes the target module,
+                    the uploaded file to read, and the field mappings to apply.
+                  maxItems: 100
+                  items:
+                    type: object
+                    description: >-
+                      Specify the configuration for a single bulk write
+                      resource, including the target module, the uploaded file
+                      ID, the matching key, and the field mappings to apply when
+                      the job runs.
+                    additionalProperties: false
+                    properties:
+                      type:
+                        type: string
+                        description: >-
+                          Specify the type of the resource being imported.
+
+                          Possible values:
+
+                          data - Indicates that the resource contains record
+                          data to be written into the target module.
+                        enum:
+                          - data
+                      file_names:
+                        type: array
+                        description: >-
+                          Specify the names of the files inside the uploaded
+                          archive that the bulk write job must process.
+                        maxItems: 10
+                        items:
+                          type: string
+                          description: >-
+                            Represents the name of a single file inside the
+                            uploaded archive that the bulk write job processes.
+                          maxLength: 255
+                      module:
+                        type: object
+                        description: >-
+                          Specify the target CRM module into which the records
+                          from the uploaded file are written.
+                        additionalProperties: false
+                        properties:
+                          api_name:
+                            type: string
+                            description: >-
+                              Specify the API name of the target CRM module into
+                              which records are imported. Refer to the [Get
+                              Modules](modules.yaml#$.paths./settings/modules.get)
+                              resource for valid values.
+                            maxLength: 100
+                        required:
+                          - api_name
+                      file_id:
+                        type: string
+                        description: >-
+                          Specify the identifier of the previously uploaded file
+                          that the bulk write job must read. Obtain this value
+                          from the response of the bulk upload file API.
+                        maxLength: 100
+                      ignore_empty:
+                        type: boolean
+                        description: >-
+                          Specify whether to skip empty cells in the uploaded
+                          file when updating records.
+
+                          Possible values:
+
+                          true - Ignores empty values in a column and updates
+                          only the fields that carry a non-empty value.
+
+                          false - Updates the target field with the empty value
+                          supplied in the file.
+                      find_by:
+                        type: string
+                        description: >-
+                          Specify the field that the bulk write job uses to
+                          locate existing records when performing an update or
+                          upsert operation.
+
+                          Possible values:
+
+                          id - Matches records by their unique record ID in the
+                          target module.
+                        enum:
+                          - id
+                      field_mappings:
+                        type: array
+                        description: >-
+                          Specify the mapping between columns in the uploaded
+                          file and fields on the target module. When omitted,
+                          Zoho CRM auto-maps columns to fields whose API names
+                          match the CSV header.
+                        maxItems: 500
+                        items:
+                          type: object
+                          description: >-
+                            Specify the mapping between a single column in the
+                            uploaded file and a field on the target module.
+                          additionalProperties: false
+                          properties:
+                            api_name:
+                              type: string
+                              description: >-
+                                Specify the API name of the field on the target
+                                module to populate with the column value. Refer
+                                to the [Fields
+                                API](fields.yaml#$.paths./settings/fields.get)
+                                resource for valid values.
+                              maxLength: 100
+                            index:
+                              type: integer
+                              format: int32
+                              description: >-
+                                Specify the zero-based column index in the
+                                uploaded file whose value populates the mapped
+                                field.
+                          required:
+                            - api_name
+                            - index
+                    required:
+                      - type
+                      - file_names
+                      - module
+                      - file_id
+                      - find_by
+              required:
+                - operation
+                - resource
+            examples:
+              BulkWriteRequest:
+                value:
+                  operation: insert
+                  callback:
+                    url: http://requestbin.fullcontact.com/1fcimk51
+                    method: post
+                  resource:
+                    - type: data
+                      file_names:
+                        - data.csv
+                      module:
+                        api_name: Contacts
+                      file_id: '3524001000005697001'
+                      find_by: id
+                      field_mappings:
+                        - api_name: Last_Name
+                          index: 0
+                description: >-
+                  Shows a bulk write request that creates records in the
+                  Contacts module from a previously uploaded file, with one
+                  field mapping and a callback URL.
+                summary: Bulk write request with one resource and one field mapping
+        required: true
+        description: >-
+          The request body must contain a resource array. You can include a
+          maximum of 100 objects per request.
+      responses:
+        '201':
+          description: >-
+            Returns the details of the bulk write job that was scheduled,
+            including its unique identifier and the user who created it.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the success envelope that Zoho CRM returns after
+                  scheduling a bulk write job. Contains the overall status,
+                  response code, message, and the details of the newly scheduled
+                  job.
+                x-zs-$id: BulkWriteCreateResponse
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: >-
+                      Represents the overall status of the bulk write job
+                      creation request. 
+
+                      Possible values:
+
+                      success - Indicates that Zoho CRM scheduled the bulk write
+                      job successfully.
+                    enum:
+                      - success
+                  code:
+                    type: string
+                    description: >-
+                      Represents the response code returned for the bulk write
+                      job creation. 
+
+                      Possible values:
+
+                      **SUCCESS** - Indicates that the bulk write job was
+                      scheduled successfully.
+
+                      **FILE_UPLOAD_SUCCESS** - Indicates that the file
+                      associated with the job was uploaded successfully.
+                    enum:
+                      - SUCCESS
+                      - FILE_UPLOAD_SUCCESS
+                  message:
+                    type: string
+                    description: >-
+                      Represents the response message for the bulk write job
+                      creation. 
+
+                      Possible values:
+
+                      **success** - Confirms that Zoho CRM scheduled the bulk
+                      write job.
+
+                      **file uploaded** - Confirms that Zoho CRM accepted the
+                      uploaded file for the job.
+                    enum:
+                      - success
+                      - file uploaded.
+                  details:
+                    type: object
+                    description: >-
+                      Represents the details of the newly scheduled bulk write
+                      job. 
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                        description: >-
+                          Represents the unique identifier of the newly
+                          scheduled bulk write job. Use this value to query the
+                          job status through the get job details operation. 
+                        maxLength: 100
+                      created_by:
+                        type: object
+                        description: >-
+                          Represents the Zoho CRM user who created the bulk
+                          write job. 
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            description: >-
+                              Represents the unique identifier of the Zoho CRM
+                              user who created the bulk write job. Refer to the
+                              [Users API](users.yaml#$.paths./users.get)
+                              endpoint for details. 
+                            maxLength: 100
+                          name:
+                            type: string
+                            description: >-
+                              Represents the display name of the Zoho CRM user
+                              who created the bulk write job. Refer to the
+                              [Users API](users.yaml#$.paths./users.get)
+                              endpoint for details.
+                            maxLength: 100
+                        required:
+                          - id
+                    required:
+                      - id
+                      - created_by
+                required:
+                  - status
+                  - code
+                  - message
+                  - details
+              examples:
+                SuccessResponse:
+                  value:
+                    status: success
+                    code: SUCCESS
+                    message: success
+                    details:
+                      id: '3524001000005697001'
+                      created_by:
+                        id: '3524001000000186003'
+                  description: >-
+                    Returns the unique identifier of the scheduled bulk write
+                    job and the ID of the creating user.
+                  summary: Successful bulk write job creation
+        '400':
+          description: >-
+            The request payload failed validation. Resolution: The cause is
+            identified by the **code** in the response. The offending field,
+            mapping, callback configuration, or file reference must be corrected
+            before retrying the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: BulkWriteCreateErrorResponses
+                oneOf:
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when the callback
+                      URL is invalid, identified by the INVALID_CALLBACK_URL
+                      error code.
+                    x-zs-$id: InvalidCallbackUrlErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **INVALID_CALLBACK_URL** - Indicates that the supplied
+                          callback URL is invalid.
+                        enum:
+                          - INVALID_CALLBACK_URL
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the failure, when
+                          available.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when one or more
+                      supplied values are invalid, identified by the
+                      INVALID_DATA error code.
+                    x-zs-$id: InvalidDataErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **INVALID_DATA** - Indicates that one of the supplied
+                          values is invalid or has an unsupported type.
+                        enum:
+                          - INVALID_DATA
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the failure, when
+                          available.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when a mandatory key
+                      is missing from the request payload, identified by the
+                      MANDATORY_NOT_FOUND error code.
+                    x-zs-$id: MandatoryNotFoundErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **MANDATORY_NOT_FOUND** - Indicates that a mandatory
+                          key was omitted from the request payload.
+                        enum:
+                          - MANDATORY_NOT_FOUND
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the failure, when
+                          available.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the message returned for the missing
+                          mandatory key.
+
+                          Possible values:
+
+                          **Required key parent_column_index** is not available
+                          - Returned when the parent_column_index key is missing
+                          for a lookup mapping.
+
+                          **Required key find_by is not available** - Returned
+                          when the find_by key is missing for an update or
+                          upsert operation.
+                        enum:
+                          - Required key parent_column_index is not available
+                          - Required key find_by is not available
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when two mutually
+                      exclusive keys are supplied together, identified by the
+                      COEXISTENCE_NOT_ALLOWED error code.
+                    x-zs-$id: CoexistenceNotAllowedErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **COEXISTENCE_NOT_ALLOWED** - Indicates that two
+                          mutually exclusive keys were supplied together in the
+                          request.
+                        enum:
+                          - COEXISTENCE_NOT_ALLOWED
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when the uploaded
+                      file format is not supported, identified by the
+                      FILE_NOT_SUPPORTED error code.
+                    x-zs-$id: FileNotSupportedErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **FILE_NOT_SUPPORTED** - Indicates that the uploaded
+                          file format is not supported by the bulk write job.
+                        enum:
+                          - FILE_NOT_SUPPORTED
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the failure, when
+                          available.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when the uploaded
+                      file is not found for the supplied file ID, identified by
+                      the FILE_NOT_FOUND error code.
+                    x-zs-$id: FileNotFoundErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **FILE_NOT_FOUND** - Indicates that no uploaded file
+                          exists for the supplied file ID.
+                        enum:
+                          - FILE_NOT_FOUND
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the failure, when
+                          available.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when the request
+                      payload is malformed, identified by the INVALID_REQUEST
+                      error code.
+                    x-zs-$id: InvalidRequestErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **INVALID_REQUEST** - Indicates that the request
+                          payload is malformed or does not conform to the
+                          documented contract.
+                        enum:
+                          - INVALID_REQUEST
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the failure, when
+                          available.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when a mandatory
+                      field on the target module is not mapped in the
+                      field_mappings array, identified by the
+                      **MANDATORY_FIELDS_NOT_MAPPED** error code.
+                    x-zs-$id: MandatoryFieldsNotMappedErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **MANDATORY_FIELDS_NOT_MAPPED** - Indicates that one
+                          or more mandatory fields on the target module were not
+                          mapped in the field_mappings array.
+                        enum:
+                          - MANDATORY_FIELDS_NOT_MAPPED
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the failure, when
+                          available.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when the supplied
+                      callback HTTP method is not supported, identified by the
+                      INVALID_CALLBACK_METHOD error code.
+                    x-zs-$id: InvalidCallbackMethodErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **INVALID_CALLBACK_METHOD** - Indicates that the
+                          supplied callback HTTP method is not supported.
+                        enum:
+                          - INVALID_CALLBACK_METHOD
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the invalid callback
+                          method, including the list of supported callback
+                          methods.
+                        additionalProperties: false
+                        properties:
+                          supported_callback_methods:
+                            type: array
+                            description: >-
+                              Lists the HTTP methods that the callback URL is
+                              allowed to use.
+                            maxItems: 10
+                            items:
+                              type: string
+                              description: >-
+                                Represents a single HTTP method name supported
+                                by the callback URL.
+                              maxLength: 50
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          error - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when a required key
+                      is missing at a specific JSON path in the payload,
+                      identified by the MISSING_REQUIRED_KEY error code.
+                    x-zs-$id: MissingRequiredKeyErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **MISSING_REQUIRED_KEY** - Indicates that a required
+                          key is missing at the JSON path identified in the
+                          error details.
+                        enum:
+                          - MISSING_REQUIRED_KEY
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the missing required
+                          key, including the JSON path that identifies its
+                          location in the request payload.
+                        additionalProperties: false
+                        properties:
+                          json_path:
+                            type: string
+                            description: >-
+                              Represents the JSON path in the request payload at
+                              which the required key was expected.
+                            maxLength: 500
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when the supplied
+                      module API name does not correspond to any module in the
+                      organization, identified by the MODULE_NOT_AVAILABLE error
+                      code.
+                    x-zs-$id: ModuleNotAvailableErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **MODULE_NOT_AVAILABLE** - Indicates that the supplied
+                          module API name does not match any module available in
+                          the Zoho CRM organization.
+                        enum:
+                          - MODULE_NOT_AVAILABLE
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the failure, when
+                          available.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                  - type: object
+                    description: >-
+                      Represents the error variant returned when the request
+                      body content type is not supported, identified by the
+                      **REQUEST_BODY_NOT_SUPPORTED** error code.
+                    x-zs-$id: RequestBodyNotSupportedErrorResponse
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        description: >-
+                          Represents the error code returned for this failure
+                          mode.
+
+                          Possible values:
+
+                          **REQUEST_BODY_NOT_SUPPORTED** - Indicates that the
+                          request body content type is not supported by this
+                          operation.
+                        enum:
+                          - REQUEST_BODY_NOT_SUPPORTED
+                      details:
+                        type: object
+                        description: >-
+                          Provides additional context about the failure, when
+                          available.
+                        additionalProperties: true
+                      message:
+                        type: string
+                        description: >-
+                          Represents the error message returned for the failure,
+                          describing the validation problem.
+                        maxLength: 1000
+                      status:
+                        type: string
+                        description: |-
+                          Represents the response status for this failure.
+                          Possible values:
+                          **error** - Indicates that the request failed.
+                        enum:
+                          - error
+                description: >-
+                  Represents the validation error envelope returned for a failed
+                  bulk write job creation. Resolves to one of the documented
+                  error variants based on the failure cause.
+              examples:
+                InvalidCallbackUrlError:
+                  value:
+                    code: INVALID_CALLBACK_URL
+                    details: {}
+                    message: Invalid callback URL provided
+                    status: error
+                  description: >-
+                    Demonstrates the error response returned when the supplied
+                    callback URL fails validation.
+                  summary: INVALID_CALLBACK_URL error for an unreachable callback
+      security:
+        - OAuth2:
+            - ZohoCRM.bulk.CREATE
+  /write/{jobId}:
+    get:
+      summary: Get bulk write job details
+      description: >-
+        To retrieve the details of a previously created bulk write job in your
+        Zoho CRM organization, including its current status, per-resource and
+        per-file processing counts, the creator, and the download URL of the
+        result archive once the job completes. The download URL remains
+        accessible for up to seven days after the job completes.
+      operationId: getBulkWriteJobDetails
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: >-
+            Returns the full state and processing result of the bulk write job
+            identified by the supplied **jobId**, including the per-resource and
+            per-file counts and the download URL of the result archive.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: >-
+                  Represents the full state and processing result of a bulk
+                  write job, including the overall status, the per-resource
+                  processing summary, the job creator, and the download URL of
+                  the result archive.
+                x-zs-$id: BulkWriteJobDetailsResponse
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    description: >-
+                      Represents the current overall status of the bulk write
+                      job.  Sample values include **ADDED**, **INPROGRESS**,
+                      **COMPLETED**, and **SKIPPED**.
+                    maxLength: 50
+                  character_encoding:
+                    type: string
+                    description: >-
+                      Represents the character encoding used to read the
+                      uploaded file. Returned with the value detected
+                      automatically by Zoho CRM, or with the value supplied in
+                      the original create request when it was specified.
+                    maxLength: 50
+                  resource:
+                    type: array
+                    description: >-
+                      Represents the list of resource entries processed by the
+                      bulk write job, one entry per resource configuration
+                      submitted in the create request. 
+                    maxItems: 100
+                    items:
+                      type: object
+                      description: >-
+                        Represents the processing record for a single resource
+                        configuration in the bulk write job. 
+                      additionalProperties: false
+                      properties:
+                        status:
+                          type: string
+                          description: >-
+                            Represents the processing status of this resource
+                            entry. 
+
+                            Possible values:
+
+                            **COMPLETED** - All records in the resource were
+                            processed successfully.
+
+                            **ADDED** - The resource was queued for processing.
+
+                            **INPROGRESS** - The resource is currently being
+                            processed.
+
+                            **SKIPPED** - The resource was skipped without being
+                            processed.
+                          enum:
+                            - COMPLETED
+                            - ADDED
+                            - INPROGRESS
+                            - SKIPPED
+                        type:
+                          type: string
+                          description: >-
+                            Represents the type of the processed resource. 
+
+                            Possible values:
+
+                            **data** - Indicates that the resource contained
+                            record data.
+                          enum:
+                            - data
+                        module:
+                          type: object
+                          description: >-
+                            Represents the target CRM module into which the
+                            resource was written. 
+                          additionalProperties: false
+                          properties:
+                            api_name:
+                              type: string
+                              description: >-
+                                Represents the API name of the target CRM module
+                                into which records were written.  Refer to the
+                                [Modules](modules.yaml#$.paths./settings/modules.get)
+                                resource for details.
+                              maxLength: 100
+                            id:
+                              type: string
+                              description: >-
+                                Represents the unique identifier of the target
+                                CRM module. Refer to the
+                                [Modules](modules.yaml#$.paths./settings/modules.get)
+                                resource for details.
+                              maxLength: 100
+                          required:
+                            - api_name
+                        ignore_empty:
+                          type: boolean
+                          description: >-
+                            Indicates whether empty cells in the uploaded file
+                            were skipped when updating records.
+
+                            Possible values:
+
+                            **true** - Empty values in a column were ignored and
+                            only non-empty values were written.
+
+                            **false** - Empty values in a column were written to
+                            the corresponding field.
+                        field_mappings:
+                          type: array
+                          description: >-
+                            Represents the field mappings applied between
+                            columns in the uploaded file and fields on the
+                            target module for this resource.
+                          maxItems: 500
+                          items:
+                            type: object
+                            description: >-
+                              Represents the mapping between a single column in
+                              the uploaded file and a field on the target
+                              module.
+                            additionalProperties: false
+                            properties:
+                              api_name:
+                                type: string
+                                description: >-
+                                  Represents the API name of the field on the
+                                  target module that received the column value.
+                                  Refer to the [Fields
+                                  API](fields.yaml#$.paths./settings/fields.get)
+                                  resource for details.
+                                maxLength: 100
+                              index:
+                                type: integer
+                                format: int32
+                                description: >-
+                                  Represents the zero-based column index in the
+                                  uploaded file whose value was written to the
+                                  mapped field.
+                              format:
+                                type:
+                                  - string
+                                  - 'null'
+                                description: >-
+                                  Represents the value format applied to the
+                                  column when the field requires a specific
+                                  date, datetime, numeric, or currency pattern.
+                                  Returned as **null** when no explicit format
+                                  was supplied.
+                                maxLength: 100
+                              find_by:
+                                type:
+                                  - string
+                                  - 'null'
+                                description: >-
+                                  Represents the field that the bulk write job
+                                  used to match existing records for this
+                                  mapping. Returned as **null** when no matching
+                                  key was supplied.
+                                maxLength: 100
+                              default_value:
+                                type: object
+                                description: >-
+                                  Represents the default value used to populate
+                                  the field when the corresponding column in the
+                                  file was empty.
+                                additionalProperties: false
+                                properties:
+                                  value:
+                                    type: string
+                                    description: >-
+                                      Represents the default value that replaces
+                                      empty cells in the mapped column.
+                                    maxLength: 500
+                                required:
+                                  - value
+                              parent_column_index:
+                                type:
+                                  - integer
+                                  - 'null'
+                                format: int32
+                                description: >-
+                                  Represents the column index of the parent
+                                  record reference when the mapped field is part
+                                  of a subform or related record. Returned as
+                                  **null** when no parent column was supplied.
+                              module:
+                                type:
+                                  - string
+                                  - 'null'
+                                description: >-
+                                  Represents the related module API name
+                                  supplied for lookup-style mappings that
+                                  resolve values against a sibling module.
+                                  Returned as **null** when no related module
+                                  was supplied.
+                                maxLength: 100
+                            required:
+                              - api_name
+                              - index
+                        file:
+                          type: object
+                          description: >-
+                            Represents the per-file processing summary for this
+                            resource entry. 
+                          additionalProperties: false
+                          properties:
+                            status:
+                              type: string
+                              description: >-
+                                Represents the processing status of the file
+                                within this resource entry. 
+
+                                Possible values:
+
+                                **COMPLETED** - The file was fully processed.
+
+                                **ADDED** - The file was queued for processing.
+
+                                **INPROGRESS** - The file is currently being
+                                processed.
+
+                                **SKIPPED** - The file was skipped.
+                              enum:
+                                - COMPLETED
+                                - ADDED
+                                - INPROGRESS
+                                - SKIPPED
+                            name:
+                              type: string
+                              description: >-
+                                Represents the file name read from the uploaded
+                                archive. 
+                              maxLength: 255
+                            added_count:
+                              type: integer
+                              format: int32
+                              description: >-
+                                Represents the number of records that were
+                                created from the file. 
+                            skipped_count:
+                              type: integer
+                              format: int32
+                              description: >-
+                                Represents the number of records that were
+                                skipped during processing.  The error column in
+                                the result file explains why each record was
+                                skipped.
+                            updated_count:
+                              type: integer
+                              format: int32
+                              description: >-
+                                Represents the number of records that were
+                                updated from the file. 
+                            total_count:
+                              type: integer
+                              format: int32
+                              description: >-
+                                Represents the total number of records that were
+                                created, updated, or skipped during processing. 
+                          required:
+                            - status
+                            - name
+                            - added_count
+                            - skipped_count
+                            - updated_count
+                            - total_count
+                        code:
+                          type: string
+                          description: >-
+                            Represents the result code returned by Zoho CRM for
+                            the processing of this resource entry.
+                          maxLength: 100
+                      required:
+                        - status
+                        - type
+                        - module
+                  id:
+                    type: string
+                    description: 'Represents the unique identifier of the bulk write job. '
+                    maxLength: 100
+                  result:
+                    type: object
+                    description: >-
+                      Represents the result metadata of the completed bulk write
+                      job, including the **download URL** of the result archive.
+                    additionalProperties: false
+                    properties:
+                      download_url:
+                        type: string
+                        description: >-
+                          Represents the URL from which the result archive of
+                          the bulk write job can be downloaded. The download URL
+                          is accessible for up to **seven** days after job
+                          completion.
+                        maxLength: 500
+                    required:
+                      - download_url
+                  created_by:
+                    type: object
+                    description: >-
+                      Represents the Zoho CRM user who created the bulk write
+                      job. 
+                    additionalProperties: false
+                    properties:
+                      name:
+                        type: string
+                        description: >-
+                          Represents the display name of the Zoho CRM user who
+                          created the bulk write job.  Refer to the [Users
+                          API](users.yaml#$.paths./users.get) endpoint for
+                          details.
+                        maxLength: 100
+                      id:
+                        type: string
+                        description: >-
+                          Represents the unique identifier of the Zoho CRM user
+                          who created the bulk write job.  Refer to the [Users
+                          API](users.yaml#$.paths./users.get) endpoint for
+                          details.
+                        maxLength: 100
+                    required:
+                      - name
+                      - id
+                  operation:
+                    type: string
+                    description: >-
+                      Represents the type of bulk write operation performed by
+                      the job, such as **insert**, **update**, or **upsert**. 
+                    maxLength: 50
+                  created_time:
+                    type: string
+                    format: date-time
+                    description: >-
+                      Represents the ISO 8601 timestamp at which Zoho CRM
+                      created the bulk write job. 
+                  callback:
+                    type: object
+                    description: >-
+                      Represents the callback configuration registered for the
+                      bulk write job, used to notify the configured URL when the
+                      job completes or fails. 
+                    additionalProperties: false
+                    properties:
+                      url:
+                        type: string
+                        description: >-
+                          Represents the URL that receives the job completion
+                          notification.
+
+                          Possible values:
+
+                          http://requestbin.fullcontact.com/1fcimk51 - Sample
+                          callback URL recorded for the job.
+                        enum:
+                          - http://requestbin.fullcontact.com/1fcimk51
+                      method:
+                        type: string
+                        description: >-
+                          Represents the HTTP method used to invoke the callback
+                          URL.
+
+                          Possible values:
+
+                          post - The callback URL is invoked with an HTTP POST
+                          request.
+                        enum:
+                          - post
+                    required:
+                      - url
+                      - method
+                required:
+                  - status
+                  - resource
+                  - id
+                  - created_by
+                  - operation
+                  - created_time
+                  - callback
+              examples:
+                BulkWriteJobDetailsResponse:
+                  value:
+                    status: COMPLETED
+                    character_encoding: UTF-8
+                    resource:
+                      - status: COMPLETED
+                        type: data
+                        module:
+                          api_name: Contacts
+                          id: '3524001000000002179'
+                        field_mappings:
+                          - api_name: Last_Name
+                            index: 0
+                        file:
+                          status: COMPLETED
+                          name: data.csv
+                          added_count: 100
+                          skipped_count: 0
+                          updated_count: 0
+                          total_count: 100
+                    id: '3524001000005697001'
+                    result:
+                      download_url: >-
+                        https://download.zohocrm.com/v2/bulk/write/3524001000005697001/result
+                    created_by:
+                      name: John Doe
+                      id: '3524001000000186003'
+                    operation: insert
+                    created_time: '2023-01-01T12:00:00Z'
+                    callback:
+                      url: http://requestbin.fullcontact.com/1fcimk51
+                      method: post
+                  description: >-
+                    Returns the full state of a completed bulk write job that
+                    processed one resource containing 100 records in the
+                    Contacts module.
+                  summary: Completed bulk write job with one resource
+      security:
+        - OAuth2:
+            - ZohoCRM.bulk.CREATE
+components:
+  parameters:
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the bulk write job whose details you
+        want to retrieve.
+      schema:
+        type: string
+        maxLength: 100
+  headers: {}
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.bulk.CREATE: >-
+              Grants the client permission to create bulk write jobs and
+              retrieve the details of bulk write jobs in the Zoho CRM
+              organization.

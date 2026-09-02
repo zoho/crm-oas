@@ -1,0 +1,24 @@
+# Unsubscribe Links
+
+- [OpenAPI specification](unsubscribe_links.yaml)
+- [Get Unsubscribe Links](operations/getUnsubscribeLinks/operation.md)
+  - To retrieve the details of all unsubscribe links configured in your CRM account. This API returns a list of unsubscribe links with their complete configuration, including page type, submission behavior, timestamps, and creator information.
+  - [Examples](operations/getUnsubscribeLinks/examples/)
+- [Update Unsubscribe Links](operations/putUnsubscribeLinks/operation.md)
+  - To update one or more unsubscribe links in bulk. You can modify the link's name, page type, custom URL, standard page message, submission action type, redirect URL, or submission message.
+  - [Examples](operations/putUnsubscribeLinks/examples/)
+- [Create Unsubscribe Link](operations/postUnsubscribeLinks/operation.md)
+  - To create an unsubscribe link that can be used in email templates or email footers. You can configure the link to display a standard Zoho CRM unsubscribe page or redirect to a custom webpage.
+  - [Examples](operations/postUnsubscribeLinks/examples/)
+- [Get Unsubscribe Link by ID](operations/getUnsubscribeLinkById/operation.md)
+  - To retrieve the complete configuration details of a specific unsubscribe link using its ID. This includes page settings, submission behavior, timestamps, and creator information.
+  - [Examples](operations/getUnsubscribeLinkById/examples/)
+- [Update Unsubscribe Link by ID](operations/putUnsubscribeLinksById/operation.md)
+  - To update a specific unsubscribe link. You can modify the link's name, page type, custom URL, standard page message, submission action type, redirect URL, or submission message.
+  - [Examples](operations/putUnsubscribeLinksById/examples/)
+- [Delete Unsubscribe Link by ID](operations/deleteUnsubscribeLinksById/operation.md)
+  - To delete a specific unsubscribe link. Note that the default unsubscribe link cannot be deleted.
+  - [Examples](operations/deleteUnsubscribeLinksById/examples/)
+- [Get Unsubscribe Link Associations](operations/getAssociations/operation.md)
+  - To retrieve information about where unsubscribe links are being used (associated places) in your CRM account, such as in email templates.
+  - [Examples](operations/getAssociations/examples/)

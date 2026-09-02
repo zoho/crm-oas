@@ -1,0 +1,10 @@
+INTERNAL_ERROR: Internal Server Error
+
+```json
+{
+  "code": "INTERNAL_ERROR",
+  "details": {},
+  "message": "Internal Server Error",
+  "status": "error"
+}
+```

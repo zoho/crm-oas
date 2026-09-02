@@ -1,0 +1,1413 @@
+openapi: 3.1.0
+info:
+  title: Attachments API
+  description: >-
+    API for managing attachments in Zoho CRM, including uploading, downloading,
+    updating, deleting file and link attachments associated with records.
+  version: '8.0'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+        default: com
+        description: API Server URL TLD
+      version:
+        default: v8
+        description: API Version
+paths:
+  /{moduleApiName}/{recordId}/Attachments/{id}:
+    get:
+      operationId: getAttachmentById
+      summary: Download a specific attachment file
+      description: >-
+        Download the file content of a specific attachment by its ID. This
+        endpoint returns the actual file (image, PDF, document, etc.). Returns
+        an error for link attachments, as they cannot be downloaded.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.attachments.READ
+      parameters:
+        - $ref: '#/components/parameters/RecordId'
+        - $ref: '#/components/parameters/ModuleApiName'
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Successfully downloaded attachment file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                x-zs-$id: AttachmentFileBinary
+                description: The binary content of the attachment file
+            image/png:
+              schema:
+                type: string
+                format: binary
+                x-zs-$id: ImagePngBinary
+                description: PNG image file
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+                x-zs-$id: ImageJpegBinary
+                description: JPEG image file
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+                x-zs-$id: PdfDocumentBinary
+                description: PDF document file
+        '204':
+          description: No Content - Invalid attachment ID
+        '400':
+          description: Bad request - invalid parameters or link attachment download attempt
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetAttachmentByIdErrorResponseWrapper
+                description: Wrapper for get attachment by ID error responses
+                oneOf:
+                  - type: object
+                    x-zs-$id: DownloadNotAllowedError
+                    description: Represents the error response for invalid module name
+                    properties:
+                      code:
+                        type: string
+                        description: Represents the error code
+                        enum:
+                          - DOWNLOAD_NOT_ALLOWED
+                      details:
+                        type: object
+                        description: Represents the additional error details
+                        properties:
+                          param_name:
+                            type: string
+                            description: Represents the name of the missing parameter
+                            maxLength: 100
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: Represents the error message
+                        enum:
+                          - >-
+                            As it is a linked attachment, you can not download
+                            it
+                      status:
+                        type: string
+                        description: Represents the error status
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidRecordIdError
+                    description: Error response for invalid record ID
+                    properties:
+                      status:
+                        type: string
+                        description: Represents the error status
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Error code
+                        enum:
+                          - INVALID_DATA
+                      message:
+                        type: string
+                        description: Error message
+                        enum:
+                          - the related id given seems to be invalid
+                      details:
+                        type: object
+                        description: Represents the additional error details
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: >-
+                              Represents the index of the resource path causing
+                              the error
+                        required:
+                          - resource_path_index
+                        additionalProperties: false
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                    additionalProperties: false
+                  - type: object
+                    x-zs-$id: InvalidModuleError
+                    description: Error response for invalid module name
+                    properties:
+                      code:
+                        type: string
+                        description: Error code
+                        enum:
+                          - INVALID_MODULE
+                      details:
+                        type: object
+                        description: Represents the additional error details
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: Index of the resource path causing the error
+                        required:
+                          - resource_path_index
+                        additionalProperties: false
+                      message:
+                        type: string
+                        description: Error message
+                        enum:
+                          - the module name given seems to be invalid
+                      status:
+                        type: string
+                        description: Represents the error status.
+                        enum:
+                          - error
+                    required:
+                      - code
+                      - details
+                      - message
+                      - status
+                    additionalProperties: false
+              examples:
+                LinkAttachmentError:
+                  summary: Link attachment cannot be downloaded
+                  value:
+                    code: DOWNLOAD_NOT_ALLOWED
+                    details: {}
+                    message: As it is a linked attachment, you can not download it
+                    status: error
+                  description: >-
+                    Error response returned when attempting to download a link
+                    attachment.
+                InvalidRecordId:
+                  summary: Invalid record ID
+                  value:
+                    status: error
+                    code: INVALID_DATA
+                    message: the related id given seems to be invalid
+                    details:
+                      resource_path_index: 1
+                  description: Error response returned when the record ID is invalid.
+                InvalidModule:
+                  summary: Invalid module name
+                  value:
+                    status: error
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    details:
+                      resource_path_index: 0
+                  description: Error response returned when the module name is invalid.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      operationId: deleteAttachment
+      summary: Delete Link Attachment
+      description: >-
+        Deletes a link attachment associated with a specific record in a module.
+        Note that only link attachments can be deleted using this endpoint; file
+        attachments cannot be deleted through this API.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.attachments.DELETE
+        - OAuth2:
+            - ZohoCRM.modules.attachments.ALL
+      parameters:
+        - $ref: '#/components/parameters/RecordId'
+        - $ref: '#/components/parameters/ModuleApiName'
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Successful deletion response
+          content:
+            application/json:
+              schema:
+                type: object
+                x-zs-$id: DeleteAttachmentSuccessResponse
+                description: Successful deletion response
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    description: Array of deletion results
+                    maxItems: 100
+                    items:
+                      type: object
+                      x-zs-$id: DeleteAttachmentSuccessResponseData
+                      description: Deletion status details
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          description: Represents the response code indicating success
+                          enum:
+                            - SUCCESS
+                        details:
+                          type: object
+                          description: Represents the details of the deleted attachment
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                              description: >
+                                ID of the deleted attachment. Use the [Get
+                                Attachments](attachments.yaml#$.paths./{moduleApiName}/{recordId}/Attachments.get)
+                                resource to retrieve attachment IDs.
+                              pattern: ^[0-9]+$
+                              maxLength: 50
+                          required:
+                            - id
+                        message:
+                          type: string
+                          description: Represents the success message
+                          enum:
+                            - record deleted
+                        status:
+                          type: string
+                          description: Represents the operation status
+                          enum:
+                            - success
+                      required:
+                        - code
+                        - details
+                        - message
+                        - status
+                required:
+                  - data
+              examples:
+                SuccessfulDeletion:
+                  summary: Successful attachment deletion
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          id: '2876819000001935002'
+                        message: record deleted
+                        status: success
+                  description: Successful deletion response with attachment ID.
+        '400':
+          description: >-
+            Error response for invalid request, including invalid record ID,
+            invalid module name, or attachment already deleted.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: DeleteAttachmentErrorResponseWrapper
+                description: Wrapper for delete attachment error responses
+                oneOf:
+                  - type: object
+                    x-zs-$id: DeleteAttachmentErrorResponseInvalidRelatedId
+                    description: Error response for invalid related id
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Represents the error status.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Represents the Error code indicating invalid module
+                        enum:
+                          - INVALID_DATA
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue
+                        enum:
+                          - the related id given seems to be invalid
+                          - record not deleted
+                      details:
+                        type: object
+                        description: Represents the additional error details
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: Index of the resource path causing the error
+                        required:
+                          - resource_path_index
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+                  - type: object
+                    x-zs-$id: DeleteAttachmentErrorResponseInvalidModule
+                    description: Error response for invalid module name
+                    additionalProperties: false
+                    properties:
+                      status:
+                        type: string
+                        description: Represents the error status.
+                        enum:
+                          - error
+                      code:
+                        type: string
+                        description: Represents the error code indicating invalid module
+                        enum:
+                          - INVALID_MODULE
+                      message:
+                        type: string
+                        description: Represents the error message describing the issue
+                        enum:
+                          - the module name given seems to be invalid
+                      details:
+                        type: object
+                        description: Represents the additional error details
+                        additionalProperties: false
+                        properties:
+                          resource_path_index:
+                            type: integer
+                            format: int32
+                            description: Index of the resource path causing the error
+                        required:
+                          - resource_path_index
+                    required:
+                      - status
+                      - code
+                      - message
+                      - details
+              examples:
+                InvalidData:
+                  summary: Invalid record ID
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 3
+                    message: record not deleted
+                    status: error
+                  description: Error response returned when the record ID is invalid.
+                InvalidAttachmentId:
+                  summary: Invalid attachment ID
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 3
+                    message: record not deleted
+                    status: error
+                  description: Error response returned when the attachment ID is invalid.
+                AlreadyDeleted:
+                  summary: Attachment already deleted
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 3
+                    message: record not deleted
+                    status: error
+                  description: >-
+                    Error response returned when the attachment has already been
+                    deleted.
+                InvalidModule:
+                  summary: Invalid module name
+                  value:
+                    status: error
+                    code: INVALID_MODULE
+                    message: the module name given seems to be invalid
+                    details:
+                      resource_path_index: 0
+                  description: Error response returned when the module name is invalid.
+  /{moduleApiName}/{recordId}/Attachments:
+    get:
+      operationId: getAttachments
+      summary: Retrieve All Attachments
+      description: Retrieves all attachments associated with a specific record in a module.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.attachments.READ
+        - OAuth2:
+            - ZohoCRM.modules.attachments.ALL
+      parameters:
+        - $ref: '#/components/parameters/RecordId'
+        - $ref: '#/components/parameters/ModuleApiName'
+        - $ref: '#/components/parameters/Fields'
+      responses:
+        '200':
+          description: Successfully retrieved list of attachments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachmentListResponse'
+              examples:
+                MultipleAttachments:
+                  summary: Multiple attachments including file and link types
+                  value:
+                    data:
+                      - Owner:
+                          name: John CRM
+                          id: '2876819000000511001'
+                          email: test@zohocorp.com
+                        Modified_Time: '2025-12-11T11:34:53+05:30'
+                        File_Name: Q4_Report.pdf
+                        $field_states: null
+                        Created_Time: '2025-12-11T11:34:53+05:30'
+                        Size: '1048576'
+                        Parent_Id:
+                          name: John Doe
+                          id: '2876819000001234567'
+                        $editable: true
+                        $file_id: file123
+                        $type: File
+                        $se_module: Leads
+                        Modified_By:
+                          name: John CRM
+                          id: '2876819000000511001'
+                          email: test@zohocorp.com
+                        $state: save
+                        id: '2876819000001935002'
+                        Created_By:
+                          name: John CRM
+                          id: '2876819000000511001'
+                          email: test@zohocorp.com
+                      - Owner:
+                          name: Admin User
+                          id: '2876819000000511002'
+                          email: admin@zohocorp.com
+                        Modified_Time: '2025-12-10T09:20:15+05:30'
+                        File_Name: Google
+                        $field_states: null
+                        Created_Time: '2025-12-10T09:20:15+05:30'
+                        Size: '0'
+                        Parent_Id:
+                          name: Jane Smith
+                          id: '2876819000001234568'
+                        $editable: true
+                        $file_id: null
+                        $type: Link URL
+                        $se_module: Contacts
+                        Modified_By:
+                          name: Admin User
+                          id: '2876819000000511002'
+                          email: admin@zohocorp.com
+                        $state: save
+                        id: '2876819000001935003'
+                        Created_By:
+                          name: Admin User
+                          id: '2876819000000511002'
+                          email: admin@zohocorp.com
+                        $link_url: https://www.google.com
+                    info:
+                      per_page: 200
+                      next_page_token: null
+                      count: 2
+                      page: 1
+                      previous_page_token: null
+                      page_token_expiry: null
+                      more_records: false
+                  description: Response showing both file and link type attachments.
+                EmptyList:
+                  summary: No attachments found
+                  value:
+                    data: []
+                    info:
+                      per_page: 200
+                      next_page_token: null
+                      count: 0
+                      page: 1
+                      previous_page_token: null
+                      page_token_expiry: null
+                      more_records: false
+                  description: Response when no attachments are associated with the record.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      operationId: uploadAttachment
+      summary: Upload an Attachment
+      description: >-
+        Uploads an attachment by providing either a file or a valid URL. Maximum
+        request body size: 100MB.
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.attachments.CREATE
+        - OAuth2:
+            - ZohoCRM.modules.attachments.ALL
+      parameters:
+        - $ref: '#/components/parameters/RecordId'
+        - $ref: '#/components/parameters/ModuleApiName'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              oneOf:
+                - type: object
+                  x-zs-$id: UploadAttachmentByFile
+                  description: Upload attachment by file
+                  properties:
+                    file:
+                      type: string
+                      format: binary
+                      description: The file to upload as an attachment
+                  required:
+                    - file
+                  additionalProperties: false
+                - type: object
+                  x-zs-$id: UploadAttachmentByUrl
+                  description: Upload attachment by URL
+                  properties:
+                    attachmentUrl:
+                      type: string
+                      description: The URL of the attachment to be linked
+                      maxLength: 3000
+                    title:
+                      type:
+                        - string
+                        - 'null'
+                      description: Optional title for the attachment
+                      minLength: 1
+                      maxLength: 255
+                  required:
+                    - attachmentUrl
+                  additionalProperties: false
+              description: Schema used by uploadAttachment.
+            examples:
+              BasicUpload:
+                summary: Upload with title
+                value:
+                  attachmentUrl: https://example.com/document.pdf
+                  title: Q4 Financial Report
+                description: Upload request with an optional title provided.
+              MinimalUpload:
+                summary: Upload without title
+                value:
+                  attachmentUrl: https://example.com/document.pdf
+                description: Upload request with only the required attachment URL.
+              MaxLengthUrl:
+                summary: Maximum length URL
+                value:
+                  attachmentUrl: >-
+                    https://example.com/very/long/path/that/could/reach/maximum/allowed/length/of/2000/characters/...
+                  title: Document with long URL
+                description: >-
+                  Upload request with a URL approaching the maximum allowed
+                  length.
+        required: true
+        description: >-
+          Request payload for uploadAttachment. Provide multipart form-data
+          fields as documented for this operation.
+      responses:
+        '200':
+          description: Attachment uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachmentSuccessResponse'
+              examples:
+                SuccessfulUpload:
+                  value:
+                    data:
+                      - code: SUCCESS
+                        details:
+                          Modified_Time: '2025-12-22T13:14:47+05:30'
+                          Modified_By:
+                            name: John Doe
+                            id: '2876819000000511001'
+                          Created_Time: '2025-12-22T13:14:47+05:30'
+                          id: '2876819000002738705'
+                          Created_By:
+                            name: John Doe
+                            id: '2876819000000511001'
+                        message: attachment uploaded successfully
+                        status: success
+                  description: >-
+                    Successful attachment upload response with details and
+                    timestamps.
+                  summary: Successful attachment upload
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  parameters:
+    ModuleApiName:
+      name: moduleApiName
+      in: path
+      required: true
+      description: >
+        Specify the API name of the module (e.g., `Leads`, `Contacts`,
+        `Accounts`). Use the [Get Modules
+        API](modules.yaml#$.paths./settings/modules.get) to retrieve the module
+        API names.
+      schema:
+        type: string
+        maxLength: 64
+    RecordId:
+      name: recordId
+      in: path
+      required: true
+      description: >
+        Specify the unique identifier of the record. Use the [Get Records
+        API](record.yaml#$.paths./module.get) to retrieve record IDs.
+      schema:
+        type: string
+        maxLength: 64
+    Id:
+      name: id
+      in: path
+      required: true
+      description: >
+        Specify the unique identifier of the attachment. Use the [Get
+        Attachments](attachments.yaml#$.paths./{moduleApiName}/{recordId}/Attachments.get)
+        resource to retrieve attachment IDs.
+      schema:
+        type: string
+        maxLength: 64
+    Fields:
+      name: fields
+      in: query
+      required: false
+      description: >-
+        Specify the fields to retrieve. Use the [Get Fields Metadata
+        API](fields.yaml#$.paths./settings/fields.get) to retrieve the field
+        IDs.
+      schema:
+        type: string
+        maxLength: 100000
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters or request body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            InvalidUrl:
+              summary: Invalid URL format
+              value:
+                status: error
+                code: INVALID_URL_PATTERN
+                message: the given attachment URL is incorrect
+                details: {}
+              description: >-
+                Error response returned when the attachment URL format is
+                invalid.
+            MandatoryNotFound:
+              summary: Required field missing
+              value:
+                status: error
+                code: MANDATORY_NOT_FOUND
+                message: required field not found
+                details: {}
+              description: Error response returned when a required field is missing.
+            InvalidData:
+              summary: Invalid data format
+              value:
+                status: error
+                code: INVALID_DATA
+                message: invalid data provided
+                details: {}
+              description: >-
+                Error response returned when the provided data format is
+                invalid.
+            RequiredParamMissing:
+              summary: Required parameter missing
+              value:
+                code: REQUIRED_PARAM_MISSING
+                details:
+                  param_name: fields
+                message: One of the expected parameter is missing
+                status: error
+              description: Error response returned when a required parameter is missing.
+            InvalidRecordId:
+              summary: Invalid record ID
+              value:
+                status: error
+                code: INVALID_DATA
+                message: the related id given seems to be invalid
+                details:
+                  resource_path_index: 1
+              description: Error response returned when the record ID is invalid.
+            InvalidModule:
+              summary: Invalid module name
+              value:
+                code: INVALID_MODULE
+                details:
+                  resource_path_index: 0
+                message: the module name given seems to be invalid
+                status: error
+              description: Error response returned when the module name is invalid.
+    Unauthorized:
+      description: Unauthorized - authentication credentials are missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            InvalidToken:
+              summary: Invalid or expired access token
+              value:
+                status: error
+                code: INVALID_TOKEN
+                message: invalid oauth token
+                details: {}
+              description: >-
+                Error response returned when the access token is invalid or
+                expired.
+    Forbidden:
+      description: Forbidden - insufficient permissions to perform the operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            InsufficientScope:
+              summary: Insufficient OAuth scope
+              value:
+                status: error
+                code: OAUTH_SCOPE_MISMATCH
+                message: required oauth scope is missing
+                details: {}
+              description: >-
+                Error response returned when the required OAuth scope is
+                missing.
+    NotFound:
+      description: Not found - the specified record or attachment does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            RecordNotFound:
+              summary: Record not found
+              value:
+                status: error
+                code: INVALID_MODULE
+                message: the module name given seems to be invalid
+                details: {}
+              description: Error response returned when the specified record is not found.
+            AttachmentNotFound:
+              summary: Attachment not found
+              value:
+                status: error
+                code: INVALID_DATA
+                message: the id given seems to be invalid
+                details: {}
+              description: >-
+                Error response returned when the specified attachment is not
+                found.
+    PayloadTooLarge:
+      description: Request entity is too large, file size exceeds 100MB limit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BodySizeLimitError'
+          examples:
+            FileSizeExceeded:
+              summary: File size exceeds allowed limit
+              value:
+                status: error
+                code: FILE_SIZE_MORE_THAN_ALLOWED_SIZE
+                message: Please check if the size of the file is in the correct range
+                details: {}
+              description: >-
+                Error response returned when the file size exceeds the 100MB
+                limit.
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            RateLimitExceeded:
+              summary: API rate limit exceeded
+              value:
+                status: error
+                code: RATE_LIMIT_EXCEEDED
+                message: API rate limit exceeded. Please retry after some time
+                details: {}
+              description: Error response returned when the API rate limit is exceeded.
+    InternalServerError:
+      description: Internal server error - unexpected server failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            ServerError:
+              summary: Internal server error
+              value:
+                status: error
+                code: INTERNAL_ERROR
+                message: Internal Server Error
+                details: {}
+              description: Error response returned when an unexpected server error occurs.
+    ServiceUnavailable:
+      description: Service unavailable - server is temporarily unable to handle the request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Maintenance:
+              summary: Service under maintenance
+              value:
+                status: error
+                code: SERVICE_UNAVAILABLE
+                message: Service temporarily unavailable. Please try again later
+                details: {}
+              description: >-
+                Error response returned when the service is temporarily
+                unavailable.
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.attachments.ALL: Full access to attachments
+            ZohoCRM.modules.attachments.READ: Read access to attachments
+            ZohoCRM.modules.attachments.DELETE: Delete access to attachments
+            ZohoCRM.modules.attachments.UPDATE: Update access to attachments
+            ZohoCRM.modules.attachments.CREATE: Create access to attachments
+  schemas:
+    AttachmentListResponse:
+      type: object
+      x-zs-$id: AttachmentListResponse
+      description: Response containing list of attachments for a record
+      properties:
+        data:
+          type: array
+          description: Array of attachment objects
+          maxItems: 1000
+          items:
+            $ref: '#/components/schemas/AttachmentObject'
+        info:
+          $ref: '#/components/schemas/Info'
+      required:
+        - data
+        - info
+      additionalProperties: false
+    AttachmentObject:
+      type: object
+      description: Individual attachment metadata
+      properties:
+        id:
+          type: string
+          description: Represents the unique numeric identifier of the attachment
+          pattern: ^[0-9]+$
+          maxLength: 50
+          examples:
+            - '2876819000001935002'
+        File_Name:
+          type: string
+          description: Represents the name of the attached file
+          examples:
+            - Q4_Report.pdf
+          maxLength: 250
+        Size:
+          type: string
+          description: Represents the size of the attachment in bytes
+          pattern: ^[0-9]+$
+          examples:
+            - '1048576'
+            - '0'
+          maxLength: 50000
+        Created_Time:
+          type: string
+          format: date-time
+          description: >-
+            Represents the timestamp when the attachment was created (ISO 8601
+            with timezone)
+          examples:
+            - '2025-12-11T11:34:53+05:30'
+        Created_By:
+          type: object
+          description: User who created the attachment.
+          properties:
+            id:
+              type: string
+              description: >
+                User ID. Use the [Users API](users.yaml#$.paths./users/bulk.get)
+                to retrieve user IDs.
+              pattern: ^[0-9]+$
+              examples:
+                - '2876819000000511001'
+              maxLength: 50
+            name:
+              type: string
+              description: Represents the user display name
+              examples:
+                - John CRM
+              maxLength: 250
+            email:
+              type: string
+              format: email
+              description: Represents the user email address
+              examples:
+                - user@zohocorp.com
+              maxLength: 100
+          required:
+            - id
+            - name
+          additionalProperties: false
+        Modified_Time:
+          type: string
+          format: date-time
+          description: >-
+            Represents the timestamp when the attachment was last modified (ISO
+            8601 with timezone)
+          examples:
+            - '2025-12-11T11:34:53+05:30'
+        Modified_By:
+          type: object
+          description: User who last modified the attachment.
+          properties:
+            id:
+              type: string
+              description: >
+                User ID. Use the [Users API](users.yaml#$.paths./users/bulk.get)
+                to retrieve user IDs.
+              pattern: ^[0-9]+$
+              examples:
+                - '2876819000000511001'
+              maxLength: 50
+            name:
+              type: string
+              description: Represents the user display name
+              examples:
+                - John CRM
+              maxLength: 250
+            email:
+              type: string
+              format: email
+              description: Represents the user email address
+              examples:
+                - user@zohocorp.com
+              maxLength: 100
+          required:
+            - id
+            - name
+          additionalProperties: false
+        Owner:
+          type: object
+          description: Owner of the attachment
+          properties:
+            id:
+              type: string
+              description: >
+                Owner user ID. Use the [Users
+                API](users.yaml#$.paths./users/bulk.get) to retrieve user IDs.
+              pattern: ^[0-9]+$
+              examples:
+                - '2167200000000463001'
+              maxLength: 50
+            name:
+              type: string
+              description: Represents the owner display name
+              examples:
+                - sangarprasanth.st sangarprasanth.st
+              maxLength: 250
+            email:
+              type: string
+              format: email
+              description: Represents the owner email address
+              examples:
+                - sangarprasanth.st@zohocorp.com
+              maxLength: 100
+          required:
+            - id
+            - name
+          additionalProperties: false
+        Parent_Id:
+          type: object
+          description: Parent record information
+          properties:
+            id:
+              type: string
+              description: >
+                Parent record ID. Use the [Get Records
+                API](record.yaml#$.paths./module.get) to retrieve record IDs.
+              pattern: ^[0-9]+$
+              examples:
+                - '2167200000004094197'
+              maxLength: 50
+            name:
+              type: string
+              description: Represents the parent record name
+              examples:
+                - Rod Alderton
+              maxLength: 250
+          required:
+            - id
+            - name
+          additionalProperties: false
+        $field_states:
+          type:
+            - object
+            - 'null'
+          description: Represents the field states metadata
+          examples:
+            - null
+        $editable:
+          type: boolean
+          description: Indicates if the attachment is editable
+          examples:
+            - true
+            - false
+        $file_id:
+          type:
+            - string
+            - 'null'
+          maxLength: 255
+          description: Represents the file identifier for the attachment
+          examples:
+            - null
+            - file123
+        $type:
+          type: string
+          description: >-
+            Represents the type of the attachment. Possible values: `File` for
+            uploaded files, or `Link URL` for URL-based attachments.
+          examples:
+            - Link URL
+            - File
+          maxLength: 50
+        $se_module:
+          type: string
+          description: Represents the source module name
+          examples:
+            - Leads
+            - Contacts
+            - Accounts
+          maxLength: 100
+        $state:
+          type: string
+          description: Represents the current state of the attachment
+          examples:
+            - save
+          maxLength: 50
+        $link_url:
+          type:
+            - string
+            - 'null'
+          format: uri
+          description: >-
+            Represents the URL for link-type attachments. Null for file
+            attachments.
+          examples:
+            - https://www.google.com
+            - null
+          maxLength: 2000
+        $sharing_permission:
+          type: string
+          description: Represents the sharing permission level for the attachment
+          examples:
+            - full_access
+            - read_only
+          maxLength: 50
+      required:
+        - id
+        - Created_Time
+        - Created_By
+        - Modified_Time
+        - Modified_By
+      additionalProperties: false
+    Info:
+      type: object
+      description: Pagination information for list responses
+      properties:
+        per_page:
+          type: integer
+          format: int32
+          description: Represents the number of records per page
+          minimum: 1
+          maximum: 200
+          examples:
+            - 200
+        next_page_token:
+          type:
+            - string
+            - 'null'
+          maxLength: 1024
+          description: Represents the token to retrieve the next page of results
+          examples:
+            - null
+            - eyJvZmZzZXQiOjIwMH0
+        count:
+          type: integer
+          format: int32
+          description: Represents the number of records returned in the current response
+          minimum: 0
+          examples:
+            - 1
+        page:
+          type: integer
+          format: int32
+          description: Represents the current page number
+          minimum: 1
+          examples:
+            - 1
+        previous_page_token:
+          type:
+            - string
+            - 'null'
+          maxLength: 1024
+          description: Represents the token to retrieve the previous page of results
+          examples:
+            - null
+            - eyJvZmZzZXQiOjB9
+        page_token_expiry:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Represents the expiry timestamp for the page tokens
+          examples:
+            - null
+            - '2025-12-19T14:30:00+05:30'
+        more_records:
+          type: boolean
+          description: Indicates whether more records are available
+          examples:
+            - false
+      required:
+        - per_page
+        - next_page_token
+        - count
+        - page
+        - previous_page_token
+        - page_token_expiry
+        - more_records
+      additionalProperties: false
+    ErrorResponse:
+      type: object
+      x-zs-$id: ErrorResponse
+      description: Generic error response structure
+      properties:
+        status:
+          type: string
+          description: Represents the error status.
+          enum:
+            - error
+        code:
+          type: string
+          description: Represents the error code.
+          enum:
+            - INVALID_URL_PATTERN
+            - MANDATORY_NOT_FOUND
+            - INVALID_DATA
+            - REQUIRED_PARAM_MISSING
+            - INVALID_MODULE
+            - INVALID_TOKEN
+            - OAUTH_SCOPE_MISMATCH
+            - RATE_LIMIT_EXCEEDED
+            - INTERNAL_ERROR
+            - SERVICE_UNAVAILABLE
+        message:
+          type: string
+          description: Represents the error message.
+          enum:
+            - the given attachment URL is incorrect
+            - required field not found
+            - invalid data provided
+            - One of the expected parameter is missing
+            - the related id given seems to be invalid
+            - the module name given seems to be invalid
+            - invalid oauth token
+            - required oauth scope is missing
+            - the id given seems to be invalid
+            - API rate limit exceeded. Please retry after some time
+            - Internal Server Error
+            - Service temporarily unavailable. Please try again later
+        details:
+          type: object
+          description: Represents the additional error details.
+          additionalProperties: false
+          properties:
+            param_name:
+              type: string
+              description: Represents the name of the parameter causing the error.
+              maxLength: 100
+            resource_path_index:
+              type: integer
+              format: int32
+              description: Represents the index of the resource path causing the error
+      required:
+        - status
+        - code
+        - message
+        - details
+      additionalProperties: false
+    AttachmentSuccessResponse:
+      type: object
+      x-zs-$id: AttachmentSuccessResponse
+      description: Successful attachment operation response
+      properties:
+        data:
+          type: array
+          description: Array of upload results
+          maxItems: 100
+          items:
+            type: object
+            description: Upload status details
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                description: Represents the response code
+                enum:
+                  - SUCCESS
+              details:
+                type: object
+                description: Details of the uploaded attachment
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    description: Represents the attachment identifier
+                    pattern: ^[0-9]+$
+                    maxLength: 50
+                  Modified_Time:
+                    type: string
+                    format: date-time
+                    description: Represents the last modification timestamp
+                  Created_Time:
+                    type: string
+                    format: date-time
+                    description: Represents the creation timestamp
+                  Modified_By:
+                    type: object
+                    description: Represents the user who last modified the attachment
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                        description: Represents the user ID
+                        pattern: ^[0-9]+$
+                        maxLength: 50
+                      name:
+                        type: string
+                        description: Represents the user display name
+                        maxLength: 250
+                    required:
+                      - id
+                      - name
+                  Created_By:
+                    type: object
+                    description: Represents the user who created the attachment
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                        description: >
+                          User ID. Use the [Users
+                          API](users.yaml#$.paths./users/bulk.get) to retrieve
+                          user IDs.
+                        pattern: ^[0-9]+$
+                        maxLength: 50
+                      name:
+                        type: string
+                        description: Represents the user display name
+                        maxLength: 250
+                    required:
+                      - id
+                      - name
+                required:
+                  - id
+                  - Modified_Time
+                  - Created_Time
+                  - Modified_By
+                  - Created_By
+              message:
+                type: string
+                description: Represents the success message
+                enum:
+                  - attachment uploaded successfully
+              status:
+                type: string
+                description: Represents the operation status
+                enum:
+                  - success
+            required:
+              - code
+              - details
+              - message
+              - status
+      required:
+        - data
+      additionalProperties: false
+    BodySizeLimitError:
+      type: object
+      x-zs-$id: BodySizeLimitError
+      description: Error response for body size limit exceeded
+      properties:
+        status:
+          type: string
+          description: Represents the error status.
+          enum:
+            - error
+        code:
+          type: string
+          description: Represents the error code
+          enum:
+            - BODY_SIZE_REACHED
+            - FILE_SIZE_MORE_THAN_ALLOWED_SIZE
+        message:
+          type: string
+          description: Represents the error message
+          enum:
+            - The request body limit reached
+            - Request body size exceeds the maximum limit of 100MB
+            - Please check if the size of the file is in the correct range
+        details:
+          type: object
+          description: Represents the additional error details
+          additionalProperties: false
+      required:
+        - status
+        - code
+        - message
+        - details
+      additionalProperties: false

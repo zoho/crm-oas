@@ -1,0 +1,2258 @@
+openapi: 3.1.0
+info:
+  title: Variable Groups
+  description: >-
+    Variable groups in Zoho CRM are named containers that organize CRM variables
+    into logical clusters. This API enables developers to list, retrieve, and
+    update variable groups in a Zoho CRM organization.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: >-
+      Zoho CRM API server. Sample request URL:
+      `https://zohoapis.{dc}/crm/{version}`
+    variables:
+      dc:
+        description: >-
+          Specifies the data center domain for the Zoho CRM API server. Possible
+          values: **com**, **eu**, **in**, **cn**, **au**, **ca**, **jp**.
+          Default: **com**.
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: >-
+          Specifies the API version. Possible values: **v7**, **v7.1**, **v8**.
+          Default: **v8**.
+        default: v8
+paths:
+  /settings/variable_groups:
+    get:
+      summary: Variable Groups
+      description: To retrieve a list of all variable groups in your Zoho CRM organization.
+      operationId: getVariableGroups
+      responses:
+        '200':
+          description: Returns a list of all variable groups in the CRM organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariableGroupListResponse'
+              examples:
+                Success200:
+                  summary: Successful list variable groups response
+                  value:
+                    variable_groups:
+                      - display_label: NewFToNew
+                        api_name: NewFToNew
+                        name: NewFToNew
+                        description: null
+                        id: '111114000000473989'
+                        source: crm
+                      - display_label: NewFToNew2
+                        api_name: NewFToNew2
+                        name: NewFToNew2
+                        description: null
+                        id: '111114000000473995'
+                        source: crm
+                  description: >-
+                    Demonstrates a successful response containing the list of
+                    all variable groups in the organization.
+        '403':
+          description: >-
+            Returns an error response when the client does not have the required
+            permissions.
+
+            **Resolution:** Ensure the OAuth token includes the
+            `ZohoCRM.settings.variable_groups.READ` scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedError'
+              examples:
+                NoPermissionResponse1:
+                  summary: Error response for insufficient permissions
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Variables_Access
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Demonstrates an error response when the client does not have
+                    the required permissions.
+
+                    **Resolution:** Ensure the OAuth token includes the
+                    `ZohoCRM.settings.variable_groups.READ` scope.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variable_groups.READ
+    put:
+      summary: Variable Groups
+      description: >-
+        To update the details of one or more variable groups in your Zoho CRM
+        organization. The request accepts a maximum of 10 variable group items.
+        When individual items succeed or fail independently, the API returns a
+        207 multi-status response with per-item results.
+      operationId: updateVariableGroups
+      requestBody:
+        description: >-
+          Accepts a JSON request body containing an array of up to 10 variable
+          group items to update.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariableGroupUpdateRequestAlt'
+            examples:
+              SamplePutRequest:
+                summary: Sample bulk update variable groups request body
+                value:
+                  variable_groups:
+                    - id: '111111000000117081'
+                      name: VarGroup
+                      api_name: VarGroup
+                      description: description
+                description: >-
+                  Demonstrates a sample request body for the bulk update
+                  variable groups operation.
+      responses:
+        '200':
+          description: >-
+            Returns the operation statuses for all updated variable groups when
+            all items succeed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariableGroupCollectionResponse'
+              examples:
+                Success200:
+                  summary: Successful bulk update variable groups response
+                  value:
+                    variable_groups:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000117081'
+                        message: variable group updated successfully
+                        status: success
+                  description: >-
+                    Demonstrates a successful response after updating all
+                    variable groups in the request.
+        '207':
+          description: >-
+            Returns a multi-status response when individual variable group items
+            in the bulk update have different outcomes, with per-item success or
+            error results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariableGroupMultiStatusResponseAlt'
+              examples:
+                Success207:
+                  summary: Multi-status bulk update variable groups response
+                  value:
+                    variable_groups:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000117081'
+                        message: variable group updated successfully
+                        status: success
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.variable_groups[1].name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Demonstrates a multi-status response when some variable
+                    group items succeed and others fail in the same bulk update
+                    request.
+        '400':
+          description: >-
+            Returns an error response when the request contains invalid or
+            missing data.
+
+            **Resolution:** Verify that all field values are valid and each ID
+            refers to a user-defined variable group.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdatenvalidRequestErrors
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidVariableGroupsTypeError'
+                  - x-zs-$id: UpdatenvalidRequestBodyErrors
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents an error response returned when the
+                      `variable_groups` field in the bulk update request
+                      contains invalid data.
+                    properties:
+                      variable_groups:
+                        type: array
+                        description: >-
+                          Represents an array of error objects, one for each
+                          variable group item in the request that failed
+                          validation.
+                        items:
+                          oneOf:
+                            - $ref: '#/components/schemas/DuplicateVariableGroupError'
+                            - $ref: >-
+                                #/components/schemas/SystemVariableGroupActionNotAllowedError
+                            - $ref: >-
+                                #/components/schemas/MandatoryFieldIdMissingError
+                            - $ref: '#/components/schemas/ApiNamePatternMismatchError'
+                            - $ref: '#/components/schemas/InvalidVariableGroupIdError'
+                            - $ref: '#/components/schemas/ProcessingAmbiguityError'
+                            - $ref: '#/components/schemas/MandatoryFieldMissingError'
+                            - $ref: '#/components/schemas/InvalidFieldDataTypeError'
+                            - $ref: '#/components/schemas/InvalidDataError'
+                          description: >-
+                            Represents a single validation error for a variable
+                            group item in the bulk update request.
+                        maxItems: 25
+                    required:
+                      - variable_groups
+                description: >-
+                  Represents an error response returned when the bulk update
+                  variable groups request fails validation.
+              examples:
+                InvalidDataResponse1:
+                  summary: Error response for invalid variable groups field data
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 10
+                      api_name: variable_groups
+                      json_path: $.variable_groups
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Demonstrates an error response when the `variable_groups`
+                    field in the request contains invalid data.
+
+                    **Resolution:** Verify that the `variable_groups` array
+                    contains valid data for all fields.
+                DuplicateDataResponse1:
+                  summary: Error response for duplicate variable group data
+                  value:
+                    variable_groups:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.variable_groups[0].name
+                        message: duplicate data
+                        status: error
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.variable_groups[1].name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the updated value
+                    duplicates an existing variable group name or API name.
+
+                    **Resolution:** Provide a unique `api_name` or `name` value
+                    that does not conflict with existing variable groups.
+                CannotPerformActionResponse1:
+                  summary: Error response for system variable group action not allowed
+                  value:
+                    variable_groups:
+                      - code: CANNOT_PERFORM_ACTION
+                        details:
+                          api_name: id
+                          json_path: $.variable_groups[0].id
+                        message: >-
+                          the given operation is not supported for system
+                          defined variable group
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the bulk update targets
+                    a system-defined variable group.
+
+                    **Resolution:** System-defined variable groups do not
+                    support modification. Use user-defined variable group IDs.
+                MandatoryNotFoundResponse1:
+                  summary: Error response for missing required ID field
+                  value:
+                    variable_groups:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.variable_groups[0].id
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the required `id` field
+                    is missing from the variable group item.
+
+                    **Resolution:** Include the `id` field in each variable
+                    group update item.
+                DuplicateDataResponse2:
+                  summary: Error response for duplicate field value
+                  value:
+                    variable_groups:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.variable_groups[0].name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the updated fields
+                    contain duplicate values.
+
+                    **Resolution:** Ensure the updated field values are unique
+                    across all variable groups.
+                DuplicateDataResponse3:
+                  summary: Error response for multiple duplicate entries
+                  value:
+                    variable_groups:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.variable_groups[0].api_name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Demonstrates an error response when duplicate data is
+                    detected for multiple variable groups in the request.
+
+                    **Resolution:** Ensure that each variable group item has
+                    unique field values.
+                PatternNotMatchedResponse1:
+                  summary: Error response for API name pattern mismatch
+                  value:
+                    variable_groups:
+                      - code: PATTERN_NOT_MATCHED
+                        details:
+                          api_name: variable_group.api_name
+                          json_path: $.variable_groups[0].variable_group.api_name
+                        message: Please check whether the input values are correct
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the `api_name` value
+                    does not comply with the required naming pattern.
+
+                    **Resolution:** Provide an `api_name` value that matches the
+                    required naming convention.
+                InvalidDataResponse2:
+                  summary: Error response for data exceeding maximum length
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.variable_groups[0].id
+                        message: the id given seems to be invalid
+                        status: error
+                  description: >-
+                    Demonstrates an error response when a field value exceeds
+                    the maximum allowed length.
+
+                    **Resolution:** Reduce the field value length to within the
+                    allowed limit.
+                MandatoryNotFoundResponse2:
+                  summary: Error response for missing required field in update request
+                  value:
+                    variable_groups:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: id
+                          json_path: $.variable_groups[*].id
+                        status: error
+                  description: >-
+                    Demonstrates an error response when a required field is
+                    missing from the request body.
+
+                    **Resolution:** Include all required fields in each variable
+                    group update item.
+                InvalidDataResponse3:
+                  summary: Error response for API name pattern mismatch
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.variable_groups[*].id
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the `api_name` value
+                    does not match the required naming pattern.
+
+                    **Resolution:** Provide an `api_name` value that complies
+                    with the required naming pattern.
+                InvalidDataResponse4:
+                  summary: Error response for ambiguity during processing
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 18
+                          json_path: $.variable_groups[*].id
+                        status: error
+                  description: >-
+                    Demonstrates an error response when ambiguity occurs during
+                    request processing.
+
+                    **Resolution:** Ensure that field references in the request
+                    are unique and non-conflicting.
+                InvalidDataResponse5:
+                  summary: Error response for missing required field
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: rid
+                          expected_data_type: text
+                          json_path: $.variable_groups[*].rid
+                        status: error
+                  description: >-
+                    Demonstrates an error response when a required field is
+                    missing from the request.
+
+                    **Resolution:** Include all required fields in each variable
+                    group item.
+                InvalidDataResponse6:
+                  summary: Error response for missing required field ID
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: rid
+                          maximum_length: 36
+                          json_path: $.variable_groups[*].rid
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the required `id` field
+                    is missing from a variable group item.
+
+                    **Resolution:** Include the required `id` field in each
+                    variable group item.
+                InvalidDataResponse7:
+                  summary: Error response for invalid variable group ID in item
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.variable_groups[*].name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the provided variable
+                    group ID is invalid.
+
+                    **Resolution:** Provide a valid variable group ID in the
+                    request body.
+                InvalidDataResponse8:
+                  summary: Error response for invalid request data
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 50
+                          json_path: $.variable_groups[*].name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the request contains
+                    invalid data.
+
+                    **Resolution:** Review the field values and correct any
+                    invalid entries.
+                InvalidDataResponse9:
+                  summary: Error response for invalid variable groups field type
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: api_name
+                          expected_data_type: text
+                          json_path: $.variable_groups[*].api_name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the `variable_groups`
+                    field contains invalid data type.
+
+                    **Resolution:** Ensure the `variable_groups` field contains
+                    a valid array of objects.
+                InvalidDataResponse10:
+                  summary: Error response for invalid field data type
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          maximum_length: 100
+                          json_path: $.variable_groups[*].api_name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when a field value contains
+                    an invalid data type.
+
+                    **Resolution:** Provide a value with the expected data type
+                    for the field.
+                InvalidDataResponse11:
+                  summary: Error response for invalid field data
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: description
+                          expected_data_type: text
+                          json_path: $.variable_groups[*].description
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the request contains
+                    invalid data for a field.
+
+                    **Resolution:** Verify that all field values match the
+                    expected data types and formats.
+                InvalidDataResponse12:
+                  summary: Error response for invalid variable group ID
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: description
+                          maximum_length: 3000
+                          json_path: $.variable_groups[*].description
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the provided variable
+                    group ID in the request is invalid.
+
+                    **Resolution:** Provide a valid variable group ID in each
+                    item of the request body.
+        '403':
+          description: >-
+            Returns an error response when the client does not have the required
+            permissions.
+
+            **Resolution:** Ensure the OAuth token includes the
+            `ZohoCRM.settings.variable_groups.UPDATE` scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedError'
+              examples:
+                NoPermissionResponse1:
+                  summary: Error response for insufficient permissions
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Variables_Access
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Demonstrates an error response when the client does not have
+                    the required permissions.
+
+                    **Resolution:** Ensure the OAuth token includes the
+                    `ZohoCRM.settings.variable_groups.UPDATE` scope.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variable_groups.UPDATE
+  /settings/variable_groups/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Specifies the unique ID of the variable group to retrieve or update.
+        schema:
+          type: string
+          examples:
+            - '111112000000092007'
+          maxLength: 255
+    get:
+      summary: Get variable group by ID
+      description: >-
+        To retrieve the details of a specific variable group by its ID in your
+        Zoho CRM organization.
+      operationId: getVariableGroupById
+      responses:
+        '200':
+          description: Returns the details of the variable group matching the specified ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariableGroupQueryResponse'
+              examples:
+                Success200:
+                  summary: Successful get variable group by ID response
+                  value:
+                    variable_groups:
+                      - display_label: General
+                        api_name: General
+                        name: General
+                        description: null
+                        id: '111111000000117077'
+                        source: crm
+                  description: >-
+                    Demonstrates a successful response containing the details of
+                    the specified variable group.
+        '204':
+          description: >-
+            Returns no content when no variable group is found for the specified
+            ID.
+        '400':
+          description: >-
+            Returns an error response when the provided ID in the request path
+            is invalid.
+
+            **Resolution:** Verify that the ID is a valid variable group ID
+            before retrying.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidIdentifierError'
+              examples:
+                InvalidDataResponse1:
+                  summary: Error response for invalid variable group ID
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: Invalid ID
+                    status: error
+                  description: >-
+                    Demonstrates an error response when the provided variable
+                    group ID in the request path is invalid.
+
+                    **Resolution:** Provide a valid variable group ID in the
+                    request path.
+        '403':
+          description: >-
+            Returns an error response when the client does not have the required
+            permissions.
+
+            **Resolution:** Ensure the OAuth token includes the
+            `ZohoCRM.settings.variable_groups.READ` scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedError'
+              examples:
+                NoPermissionResponse1:
+                  summary: Error response for insufficient permissions
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Variables_Access
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Demonstrates an error response when the client does not have
+                    the required permissions.
+
+                    **Resolution:** Ensure the OAuth token includes the
+                    `ZohoCRM.settings.variable_groups.READ` scope.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variable_groups.READ
+    put:
+      summary: Update variable group by ID
+      description: >-
+        To update the details of a specific variable group by its ID in your
+        Zoho CRM organization.
+      operationId: updateVariableGroupById
+      requestBody:
+        description: >-
+          Accepts a JSON request body containing the updated variable group
+          fields for the specified variable group.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariableGroupDefinitionRequestAlt'
+            examples:
+              SamplePutRequest:
+                summary: Sample update variable group by ID request body
+                value:
+                  variable_groups:
+                    - name: VarGroup
+                      api_name: VarGroup
+                      description: description
+                description: >-
+                  Demonstrates a sample request body for the update variable
+                  group by ID operation.
+      responses:
+        '200':
+          description: Returns the operation status for the updated variable group.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariableGroupOperationResponse'
+              examples:
+                Success200:
+                  summary: Successful update variable group by ID response
+                  value:
+                    variable_groups:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000117094'
+                        message: variable group updated successfully
+                        status: success
+                  description: >-
+                    Demonstrates a successful response after updating the
+                    specified variable group.
+        '400':
+          description: >-
+            Returns an error response when the request contains invalid or
+            missing data.
+
+            **Resolution:** Verify that all field values are valid and the ID
+            refers to a user-defined variable group.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: UpdateByIdInvalidRequestErrors
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidVariableGroupsTypeError'
+                  - x-zs-$id: UpdateByIdInvalidRequestBodyErrors
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents an error response returned when the
+                      `variable_groups` field in the update by ID request
+                      contains invalid data.
+                    properties:
+                      variable_groups:
+                        type: array
+                        description: >-
+                          Represents an array of error objects, one for each
+                          variable group item in the request that failed
+                          validation.
+                        items:
+                          oneOf:
+                            - $ref: '#/components/schemas/DuplicateVariableGroupError'
+                            - $ref: '#/components/schemas/ApiNamePatternMismatchError'
+                            - $ref: >-
+                                #/components/schemas/SystemVariableGroupActionNotAllowedError
+                            - $ref: '#/components/schemas/InvalidFieldDataTypeError'
+                            - $ref: '#/components/schemas/InvalidDataError'
+                          description: >-
+                            Represents a single validation error for a variable
+                            group item in the update by ID request.
+                        maxItems: 25
+                    required:
+                      - variable_groups
+                  - $ref: '#/components/schemas/InvalidIdentifierError'
+                description: >-
+                  Represents an error response returned when the update variable
+                  group by ID request fails validation.
+              examples:
+                InvalidDataResponse1:
+                  summary: Error response for invalid variable groups field data
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: variable_groups
+                      json_path: $.variable_groups
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Demonstrates an error response when the `variable_groups`
+                    field contains invalid data.
+
+                    **Resolution:** Verify that the `variable_groups` array
+                    contains valid data for all fields.
+                DuplicateDataResponse1:
+                  summary: Error response for duplicate variable group data
+                  value:
+                    variable_groups:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.variable_groups[0].name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the updated `api_name`
+                    or `name` value duplicates an existing variable group.
+
+                    **Resolution:** Provide a unique `api_name` or `name` value
+                    that does not conflict with an existing variable group.
+                DuplicateDataResponse2:
+                  summary: Error response for duplicate field value
+                  value:
+                    variable_groups:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.variable_groups[0].api_name
+                        message: duplicate data
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the updated fields
+                    contain duplicate values for another field.
+
+                    **Resolution:** Ensure the updated field values are unique
+                    across all variable groups in the organization.
+                PatternNotMatchedResponse1:
+                  summary: Error response for API name pattern mismatch
+                  value:
+                    variable_groups:
+                      - code: PATTERN_NOT_MATCHED
+                        details:
+                          api_name: variable_group.api_name
+                          json_path: $.variable_groups[0].variable_group.api_name
+                        message: Please check whether the input values are correct
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the `api_name` value
+                    does not match the required naming pattern.
+
+                    **Resolution:** Provide an `api_name` value that complies
+                    with the required naming pattern.
+                CannotPerformActionResponse1:
+                  summary: Error response for system variable group action not allowed
+                  value:
+                    variable_groups:
+                      - code: CANNOT_PERFORM_ACTION
+                        details:
+                          api_name: id
+                          json_path: $.variable_groups[0].id
+                        message: >-
+                          the given operation is not supported for system
+                          defined variable group
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the update targets a
+                    system-defined variable group.
+
+                    **Resolution:** System-defined variable groups do not
+                    support modification. Use a user-defined variable group ID.
+                InvalidDataResponse2:
+                  summary: Error response for data exceeding maximum length
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: Invalid ID
+                    status: error
+                  description: >-
+                    Demonstrates an error response when a field value exceeds
+                    the maximum allowed length.
+
+                    **Resolution:** Reduce the field value length to within the
+                    allowed limit.
+                InvalidDataResponse3:
+                  summary: Error response for invalid variable group ID
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.variable_groups[*].name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the provided variable
+                    group ID is invalid.
+
+                    **Resolution:** Provide a valid variable group ID in the
+                    request body.
+                InvalidDataResponse4:
+                  summary: Error response for invalid field data type
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 50
+                          json_path: $.variable_groups[*].name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when a field contains an
+                    invalid data type.
+
+                    **Resolution:** Provide a value with the expected data type
+                    for the field.
+                InvalidDataResponse5:
+                  summary: Error response for invalid request data
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: api_name
+                          expected_data_type: text
+                          json_path: $.variable_groups[*].api_name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the request contains
+                    invalid data.
+
+                    **Resolution:** Review the field values and correct any
+                    invalid entries.
+                InvalidDataResponse6:
+                  summary: Error response for ambiguity during processing
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          maximum_length: 100
+                          json_path: $.variable_groups[*].api_name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the ambiguity occurs
+                    while processing the request.
+
+                    **Resolution:** Ensure that field references in the request
+                    are unique and non-conflicting.
+                InvalidDataResponse7:
+                  summary: Error response for missing required field
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: description
+                          expected_data_type: text
+                          json_path: $.variable_groups[*].description
+                        status: error
+                  description: >-
+                    Demonstrates an error response when a required field is
+                    missing from the request.
+
+                    **Resolution:** Include all required fields in each variable
+                    group item.
+                InvalidDataResponse8:
+                  summary: Error response for missing required field ID
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: description
+                          maximum_length: 3000
+                          json_path: $.variable_groups[*].description
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the required `id` field
+                    is missing from the request.
+
+                    **Resolution:** Include the required `id` field in each
+                    variable group item.
+        '403':
+          description: >-
+            Returns an error response when the client does not have the required
+            permissions.
+
+            **Resolution:** Ensure the OAuth token includes the
+            `ZohoCRM.settings.variable_groups.UPDATE` scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedError'
+              examples:
+                NoPermissionResponse1:
+                  summary: Error response for insufficient permissions
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Variables_Access
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Demonstrates an error response when the client does not have
+                    the required permissions.
+
+                    **Resolution:** Ensure the OAuth token includes the
+                    `ZohoCRM.settings.variable_groups.UPDATE` scope.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variable_groups.UPDATE
+  /settings/variable_groups/actions/generate_api_name:
+    post:
+      summary: Generate API Name
+      description: >-
+        To generate an available API name for a new variable group in your Zoho
+        CRM organization. Submit the proposed display name in the request, and
+        the API returns a suggested `api_name` that complies with the naming
+        requirements.
+      operationId: generateAPIName
+      requestBody:
+        description: >-
+          Accepts a JSON request body containing the proposed variable group
+          name for which an available API name is generated.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiNameGenerationRequestAlt'
+            examples:
+              SamplePostRequest:
+                summary: Sample generate API name request body
+                value:
+                  variable_groups:
+                    - name: asdasd
+                description: >-
+                  Demonstrates a sample request body for the generate API name
+                  operation.
+      responses:
+        '200':
+          description: Returns the generated API name for each submitted variable group.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiNameGenerationResponse'
+              examples:
+                Success200:
+                  summary: Successful generate API name response
+                  value:
+                    variable_groups:
+                      - code: SUCCESS
+                        details:
+                          api_name: variable
+                        message: the api name is generated successfully
+                        status: success
+                  description: >-
+                    Demonstrates a successful response containing the generated
+                    API name for the submitted variable group.
+        '400':
+          description: >-
+            Returns an error response when the request contains missing or
+            invalid data.
+
+            **Resolution:** Ensure all required fields are present and contain
+            valid values.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GenerateApiNameInvalidRequestErrors
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidVariableGroupsTypeError'
+                  - x-zs-$id: GenerateApiNameInvalidRequestBodyErrors
+                    type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents an error response returned when the
+                      `variable_groups` field in the generate API name request
+                      contains invalid data.
+                    properties:
+                      variable_groups:
+                        type: array
+                        description: >-
+                          Represents an array of error objects, one for each
+                          variable group item in the request that failed
+                          validation.
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/MandatoryFieldIdMissingError
+                            - $ref: >-
+                                #/components/schemas/InvalidVariableGroupsTypeError
+                            - $ref: '#/components/schemas/MandatoryFieldMissingError'
+                            - $ref: '#/components/schemas/InvalidFieldDataTypeError'
+                            - $ref: '#/components/schemas/InvalidDataError'
+                          description: >-
+                            Represents a single validation error for a variable
+                            group item in the generate API name request.
+                        maxItems: 25
+                    required:
+                      - variable_groups
+                description: >-
+                  Represents an error response returned when the generate API
+                  name request fails validation.
+              examples:
+                InvalidDataResponse1:
+                  summary: Error response for invalid data
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: variable_groups
+                      json_path: $.variable_groups
+                    message: invalid data
+                    status: error
+                  description: >-
+                    Demonstrates an error response when the request contains
+                    invalid data for a field.
+
+                    **Resolution:** Verify that all field values match the
+                    expected data types and formats.
+                MandatoryNotFoundResponse1:
+                  summary: Error response for missing required field ID
+                  value:
+                    variable_groups:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: name
+                          json_path: $.variable_groups[0].name
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the required `id` field
+                    is missing from the request.
+
+                    **Resolution:** Include the required `id` field in each
+                    variable group item.
+                InvalidDataResponse2:
+                  summary: Error response for data exceeding maximum length
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        details:
+                          maximum_length: 50
+                          api_name: name
+                          json_path: $.variable_groups[0].name
+                        message: invalid data
+                        status: error
+                  description: >-
+                    Demonstrates an error response when a field value exceeds
+                    the maximum allowed length.
+
+                    **Resolution:** Reduce the field value length to within the
+                    allowed limit.
+                MandatoryNotFoundResponse2:
+                  summary: Error response for missing required field
+                  value:
+                    variable_groups:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: name
+                          json_path: $.variable_groups[*].name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when a required field is
+                    missing from the request.
+
+                    **Resolution:** Include all required fields in each variable
+                    group item.
+                InvalidDataResponse3:
+                  summary: Error response for invalid field data type
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.variable_groups[*].name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when a field contains an
+                    invalid data type.
+
+                    **Resolution:** Provide a value with the expected data type
+                    for the field.
+                InvalidDataResponse4:
+                  summary: Error response for invalid request data
+                  value:
+                    variable_groups:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 50
+                          json_path: $.variable_groups[*].name
+                        status: error
+                  description: >-
+                    Demonstrates an error response when the request contains
+                    invalid data.
+
+                    **Resolution:** Review the field values and correct any
+                    invalid entries.
+        '403':
+          description: >-
+            Returns an error response when the client does not have the required
+            permissions.
+
+            **Resolution:** Ensure the OAuth token includes the
+            `ZohoCRM.settings.variable_groups.CREATE` scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedError'
+              examples:
+                NoPermissionResponse1:
+                  summary: Error response for insufficient permissions
+                  value:
+                    code: NO_PERMISSION
+                    details:
+                      permissions:
+                        - Crm_Implied_Variables_Access
+                    message: permission denied
+                    status: error
+                  description: >-
+                    Demonstrates an error response when the client does not have
+                    the required permissions.
+
+                    **Resolution:** Ensure the OAuth token includes the
+                    `ZohoCRM.settings.variable_groups.CREATE` scope.
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.variable_groups.CREATE
+components:
+  schemas:
+    InvalidVariableGroupIdError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the provided variable group
+        ID in the request body is invalid.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the field that contains the
+            invalid variable group ID.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains the invalid
+                variable group ID.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that contains the invalid
+                variable group ID.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that the provided variable
+            group ID is invalid.
+          enum:
+            - the id given seems to be invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Variable Group ID Error
+      x-zs-$id: ErrorResponseCore641169645
+    VariableGroupMultiStatusResponseAlt:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the multi-status response body returned when individual
+        variable group items in a bulk update operation have different outcomes.
+      properties:
+        variable_groups:
+          type: array
+          description: >-
+            Represents an array of per-item results for the bulk update
+            operation, where each item can be a success or an error response.
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/VariableGroupOperationStatus'
+              - $ref: '#/components/schemas/ErrorResponseCore1117753881'
+            description: >-
+              Represents a single per-item result in the multi-status response
+              for the bulk update operation.
+          maxItems: 2
+      title: Variable Group Multi-Status Response (Alternate)
+      x-zs-$id: PutvariablegroupsResponse207
+    PermissionDeniedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the client does not have the
+        required permissions to access the variable group settings.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **NO_PERMISSION**.
+          enum:
+            - NO_PERMISSION
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details containing the list of permissions
+            required to access this resource.
+          properties:
+            permissions:
+              type: array
+              description: >-
+                Represents an array of permission names required to perform this
+                operation.
+              items:
+                type: string
+                description: Represents a single required permission name.
+                maxLength: 255
+              maxItems: 25
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that access to the resource
+            is denied.
+          enum:
+            - permission denied
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Permission Denied Error
+      x-zs-$id: ErrorResponseCore637385226
+    ProcessingAmbiguityError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when ambiguity occurs while
+        processing the request, typically when conflicting field references are
+        detected in the same batch.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **AMBIGUITY_DURING_PROCESSING**.
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details containing the list of fields that
+            caused the processing ambiguity.
+          properties:
+            ambiguity_due_to:
+              type: array
+              description: >-
+                Represents an array of field references that caused the
+                processing ambiguity.
+              items:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents a single field reference that contributed to the
+                  processing ambiguity.
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the field that caused the
+                      processing ambiguity.
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path of the field that caused the
+                      processing ambiguity.
+                    maxLength: 1000
+              maxItems: 25
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that ambiguity occurred
+            during request processing.
+          enum:
+            - Ambiguity while processing the request
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Processing Ambiguity Error
+      x-zs-$id: ErrorResponseCore1916271986
+    VariableGroupUpdateRequestAlt:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request body for the bulk update variable groups
+        operation.
+      properties:
+        variable_groups:
+          type: array
+          description: >-
+            Represents an array of variable group update items for batch
+            processing. The array accepts 1 to 10 items.
+          items:
+            $ref: '#/components/schemas/VariableGroupUpdateItemAlt'
+          maxItems: 10
+          minItems: 1
+      required:
+        - variable_groups
+      title: Variable Group Update Request (Alternate)
+    InvalidFieldDataTypeError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when one or more fields contain
+        values with an invalid data type.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the field with an invalid data
+            type.
+          properties:
+            expected_data_type:
+              type: string
+              description: >-
+                Represents the expected data type for the field that contains an
+                invalid value.
+              maxLength: 255
+            api_name:
+              type: string
+              description: Represents the API name of the field with the invalid data type.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field with the invalid data
+                type.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that one or more fields
+            contain values with an invalid data type.
+          enum:
+            - Invalid data type
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Field Data Type Error
+      x-zs-$id: ErrorResponseCore1437544616
+    DuplicateVariableGroupError:
+      type: object
+      x-zs-$id: DuplicateVariableGroupError
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when duplicate data is detected
+        for one or more variable groups in the request.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **DUPLICATE_DATA**.
+          enum:
+            - DUPLICATE_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the duplicate field that
+            caused the error.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains the duplicate
+                value.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that contains the
+                duplicate value.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that duplicate data was
+            detected.
+          enum:
+            - duplicate data
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Duplicate Variable Group Error
+    VariableGroupDefinitionInputAlt:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a single variable group item containing the fields to update
+        when updating a variable group by ID.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the display name of the variable group. This field is
+            nullable.
+          maxLength: 50
+        description:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the description of the variable group. This field is
+            nullable.
+          maxLength: 3000
+        api_name:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the API name for the variable group. The value must
+            comply with the required naming pattern. This field is nullable.
+          maxLength: 100
+      title: Variable Group Definition Input (Alternate)
+    VariableGroupCollectionResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response body for a successful variable group update
+        operation.
+      properties:
+        variable_groups:
+          type: array
+          description: >-
+            Represents an array of per-item operation status objects returned
+            after processing the update request.
+          items:
+            $ref: '#/components/schemas/VariableGroupOperationStatus'
+          maxItems: 1
+      title: Variable Group Collection Response
+      x-zs-$id: PutvariablegroupsResponse200
+    VariableGroupOperationStatus:
+      x-zs-$id: VariableGroupOperationStatus
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the per-item operation result for a variable group action,
+        including the status code, message, and optional field path details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the status code for the individual variable group
+            operation result.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/VariableGroupFieldPathDetails'
+        message:
+          type: string
+          description: >-
+            Represents the message describing the result of the individual
+            variable group operation.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Represents the status of the individual variable group operation
+            result.
+          maxLength: 255
+      title: Variable Group Operation Status
+    ErrorResponseCore1117753881:
+      x-zs-$id: ErrorResponseCore1117753881
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when duplicate data is detected
+        for a variable group item in a multi-status response.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **DUPLICATE_DATA**.
+          enum:
+            - DUPLICATE_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents the validation details for the duplicate field.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains the duplicate
+                value.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that contains the
+                duplicate value.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that duplicate data was
+            detected.
+          enum:
+            - duplicate data
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+    VariableGroupOperationResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response body for a successful update variable group by
+        ID operation.
+      properties:
+        variable_groups:
+          type: array
+          description: >-
+            Represents an array containing the per-item operation status for the
+            updated variable group.
+          items:
+            $ref: '#/components/schemas/VariableGroupOperationStatus'
+          maxItems: 1
+      title: Variable Group Operation Response
+      x-zs-$id: Put111111000000117094Response200
+    InvalidVariableGroupsTypeError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the `variable_groups` field
+        in the request contains an invalid data type or format.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the field with the invalid
+            data type or value.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum allowed length for the field that
+                exceeded the limit.
+            api_name:
+              type: string
+              description: Represents the API name of the field that contains invalid data.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that contains invalid
+                data.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that the `variable_groups`
+            field contains invalid data.
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid variable_groups Type Error
+      x-zs-$id: ErrorResponseCore1251368250
+    VariableGroupUpdateItemAlt:
+      type: object
+      additionalProperties: false
+      description: Represents a single variable group item for batch update operations.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the updated display name for the variable group. This
+            field is nullable.
+          maxLength: 50
+        description:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the updated description for the variable group. This
+            field is nullable.
+          maxLength: 3000
+        id:
+          type: string
+          description: Represents the unique ID of the variable group to update.
+          maxLength: 18
+        api_name:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the API name to update for the variable group. This field
+            is nullable.
+          maxLength: 100
+      required:
+        - id
+      title: Variable Group Update Item (Alternate)
+    VariableGroupApiNameGenerationItemAlt:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a single variable group item submitted for API name
+        generation.
+      properties:
+        name:
+          type: string
+          description: >-
+            Represents the proposed name of the variable group for which an
+            available API name is generated.
+          maxLength: 50
+      required:
+        - name
+      title: Variable Group API Name Generation Item (Alternate)
+    VariableGroupQueryResponse:
+      type: object
+      additionalProperties: false
+      description: Represents the response body for the get variable group by ID operation.
+      properties:
+        variable_groups:
+          type: array
+          description: >-
+            Represents an array containing the variable group matching the
+            specified ID.
+          items:
+            $ref: '#/components/schemas/VariableGroupSummary'
+          maxItems: 1
+      required:
+        - variable_groups
+      title: Variable Group Query Response
+      x-zs-$id: VariableGroupQueryResponse
+    ApiNameGenerationResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response body for a successful generate API name
+        operation.
+      properties:
+        variable_groups:
+          type: array
+          description: >-
+            Represents an array of per-item results containing the generated API
+            names for each submitted variable group.
+          items:
+            $ref: '#/components/schemas/VariableGroupOperationStatus'
+          maxItems: 1
+      title: API Name Generation Response
+      x-zs-$id: GenerateAPINameResponse
+    ApiNamePatternMismatchError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the `api_name` value does not
+        comply with the required naming pattern.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **PATTERN_NOT_MATCHED**.
+          enum:
+            - PATTERN_NOT_MATCHED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the field that caused the
+            pattern mismatch error.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the pattern
+                mismatch.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the pattern
+                mismatch.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that the input value does
+            not match the required naming pattern.
+          enum:
+            - Please check whether the input values are correct
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: API Name Pattern Mismatch Error
+      x-zs-$id: ErrorResponseCore1651416813
+    VariableGroupDefinitionRequestAlt:
+      type: object
+      additionalProperties: false
+      description: Represents the request body for updating a variable group by ID.
+      properties:
+        variable_groups:
+          type: array
+          description: >-
+            Represents an array containing a single variable group definition
+            item for the update by ID operation.
+          items:
+            $ref: '#/components/schemas/VariableGroupDefinitionInputAlt'
+          maxItems: 1
+          minItems: 1
+      required:
+        - variable_groups
+      title: Variable Group Definition Request (Alternate)
+    ApiNameGenerationRequestAlt:
+      type: object
+      additionalProperties: false
+      description: Represents the request body for the generate API name operation.
+      properties:
+        variable_groups:
+          type: array
+          description: >-
+            Represents an array containing a single variable group item
+            submitted for API name generation.
+          items:
+            $ref: '#/components/schemas/VariableGroupApiNameGenerationItemAlt'
+          maxItems: 1
+          minItems: 1
+      required:
+        - variable_groups
+      title: API Name Generation Request (Alternate)
+    InvalidDataError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the request contains invalid
+        data for a field.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the field that contains
+            invalid data.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum allowed length for the field that
+                exceeded the limit.
+            api_name:
+              type: string
+              description: Represents the API name of the field that contains invalid data.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that contains invalid
+                data.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that the request contains
+            invalid data.
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Data Error
+      x-zs-$id: ErrorResponseCore1471813213
+    MandatoryFieldMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when a required field is missing
+        from the request body.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **MANDATORY_NOT_FOUND**.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents the validation details for the missing required field.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the missing required field.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the missing required field.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that a required field is
+            missing from the request.
+          enum:
+            - Required field is missing
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Mandatory Field Missing Error
+      x-zs-$id: ErrorResponseCore579601507
+    VariableGroupSummary:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a summary of a variable group returned in list and retrieval
+        responses.
+      properties:
+        display_label:
+          type: string
+          description: >-
+            Represents the display label of the variable group shown in the CRM
+            interface.
+          maxLength: 100
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the variable group, used to reference the
+            group in API calls.
+          maxLength: 100
+          x-zs-$id: VariableGroupApiName
+        name:
+          type: string
+          description: Represents the internal name of the variable group.
+          maxLength: 50
+        description:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the description of the variable group. This field is
+            nullable.
+          maxLength: 3000
+        id:
+          type: string
+          description: Represents the unique ID of the variable group.
+          maxLength: 19
+          x-zs-$id: VariableGroupId
+        source:
+          type: string
+          description: >-
+            Represents the source of the variable group, indicating whether it
+            is system-defined or user-defined.
+          maxLength: 255
+      required:
+        - api_name
+        - description
+        - display_label
+        - id
+        - name
+        - source
+      title: Variable Group Summary (Lookup)
+    InvalidIdentifierError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the provided ID in the
+        request path is invalid.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details indicating the path segment that
+            contains the invalid identifier.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                Represents the index of the resource path element that contains
+                the invalid ID.
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that the provided ID is
+            invalid.
+          enum:
+            - Invalid ID
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Identifier Error
+      x-zs-$id: ErrorResponseCore96228106
+    VariableGroupFieldPathDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the field path details returned in per-item operation
+        results, providing context about which field the result pertains to.
+      properties:
+        id:
+          type: string
+          description: >-
+            Represents the unique ID of the variable group field that the
+            operation result refers to.
+          maxLength: 255
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the variable group field that the
+            operation result refers to.
+          maxLength: 255
+      title: Variable Group Field Path Details
+    SystemVariableGroupActionNotAllowedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when an update operation targets a
+        system-defined variable group that does not support modification.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **CANNOT_PERFORM_ACTION**.
+          enum:
+            - CANNOT_PERFORM_ACTION
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the system-defined variable
+            group that does not support the operation.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the system-defined variable group
+                that does not support the operation.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field referencing the
+                system-defined variable group.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that the operation is not
+            supported for system-defined variable groups.
+          enum:
+            - >-
+              the given operation is not supported for system defined variable
+              group
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: System Variable Group Action Not Allowed Error
+      x-zs-$id: ErrorResponseCore2122751318
+    VariableGroupListResponse:
+      type: object
+      additionalProperties: false
+      description: Represents the response body for the list variable groups operation.
+      properties:
+        variable_groups:
+          type: array
+          description: >-
+            Represents an array of variable group summary objects returned in
+            the list response.
+          items:
+            $ref: '#/components/schemas/VariableGroupSummary'
+          maxItems: 100
+      required:
+        - variable_groups
+      title: Variable Group List Response
+      x-zs-$id: GetvariablegroupsResponse200
+    MandatoryFieldIdMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the required `id` field is
+        missing from the request body.
+      properties:
+        code:
+          type: string
+          description: Represents the error code **MANDATORY_NOT_FOUND**.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the missing required `id`
+            field.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the missing required field.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the missing required field.
+              maxLength: 1000
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that the required field was
+            not found.
+          enum:
+            - required field not found
+        status:
+          type: string
+          description: >-
+            Represents the status of the error response. The value is always
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Mandatory Field 'id' Missing Error
+      x-zs-$id: ErrorResponseCore119104918
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.variable_groups.UPDATE: Grants access to update variable groups in Zoho CRM settings.
+            ZohoCRM.settings.variable_groups.CREATE: Grants access to create variable groups in Zoho CRM settings.
+            ZohoCRM.settings.variable_groups.READ: Grants read access to variable groups in Zoho CRM settings.
