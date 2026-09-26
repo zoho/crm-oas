@@ -1,0 +1,222 @@
+openapi: 3.1.0
+info:
+  title: Functions
+  description: >-
+    Standalone functions can be exposed as REST APIs in Zoho CRM. This API enables developers to execute such a function with an OAuth
+    access token and receive the function's return value.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: The production API server for Zoho CRM.
+    variables:
+      dc:
+        description: >-
+          The top-level domain suffix of the API server URL, which determines
+          the regional endpoint.
+        default: com
+        enum:
+          - eu
+          - com
+          - au
+          - in
+          - jp
+          - cn
+          - ca
+      version:
+        description: The API version to use for requests. For example, **v8**.
+        default: v8
+paths:
+  /functions/{function_name}/actions/execute:
+    get:
+      summary: Execute a function using the GET method
+      description: >-
+        To execute a standalone function that is exposed as a REST API, using an
+        OAuth access token and the HTTP GET method. OAuth 2.0 must be enabled
+        for the REST API endpoint of the function.
+      operationId: executeFunctionUsingGet
+      parameters:
+        - $ref: '#/components/parameters/FunctionName'
+        - $ref: '#/components/parameters/AuthType'
+        - $ref: '#/components/parameters/Arguments'
+      responses:
+        '200':
+          $ref: '#/components/responses/ExecuteFunctionSuccess'
+        '401':
+          description: >-
+            The access token does not have the required scope. Resolution:
+            Generate a new access token with the
+            **ZohoCRM.functions.execute.READ** scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthScopeMismatchError'
+              examples:
+                OauthScopeMismatch:
+                  summary: The token does not have the ZohoCRM.functions.execute.READ scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: invalid oauth scope to access this URL
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.functions.execute.READ
+    post:
+      summary: Execute a function using the POST method
+      description: >-
+        To execute a standalone function that is exposed as a REST API, using an
+        OAuth access token and the HTTP POST method. OAuth 2.0 must be enabled
+        for the REST API endpoint of the function.
+      operationId: executeFunctionUsingPost
+      parameters:
+        - $ref: '#/components/parameters/FunctionName'
+        - $ref: '#/components/parameters/AuthType'
+        - $ref: '#/components/parameters/Arguments'
+      responses:
+        '200':
+          $ref: '#/components/responses/ExecuteFunctionSuccess'
+        '401':
+          description: >-
+            The access token does not have the required scope. Resolution:
+            Generate a new access token with the
+            **ZohoCRM.functions.execute.CREATE** scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthScopeMismatchError'
+              examples:
+                OauthScopeMismatch:
+                  summary: The token does not have the ZohoCRM.functions.execute.CREATE scope
+                  value:
+                    code: OAUTH_SCOPE_MISMATCH
+                    details: {}
+                    message: invalid oauth scope to access this URL
+                    status: error
+      security:
+        - OAuth2:
+            - ZohoCRM.functions.execute.CREATE
+components:
+  parameters:
+    FunctionName:
+      name: function_name
+      in: path
+      required: true
+      description: Specify the API name of the standalone function to execute.
+      schema:
+        type: string
+        x-zs-$id: FunctionApiName
+    AuthType:
+      name: auth_type
+      in: query
+      required: true
+      description: >-
+        Specify **oauth** to execute the function with an OAuth access token.
+      schema:
+        type: string
+        x-zs-$id: FunctionAuthType
+    Arguments:
+      name: arguments
+      in: query
+      required: false
+      description: >-
+        Specify the function arguments as a URL-encoded JSON object. Keys are
+        the argument names defined in the function. For example,
+        **{"customer_name":"Example"}**.
+      schema:
+        type: string
+        x-zs-$id: FunctionArguments
+  responses:
+    ExecuteFunctionSuccess:
+      description: Returns the output of the executed function.
+      content:
+        application/json:
+          schema:
+            x-zs-$id: ExecuteFunctionResponse
+            type: object
+            additionalProperties: false
+            description: >-
+              Represents the successful response body, containing the
+              function's return value.
+            properties:
+              code:
+                type: string
+                description: Represents the status code of the execution.
+                enum:
+                  - success
+              message:
+                type: string
+                description: Represents the status message of the execution.
+              details:
+                type: object
+                additionalProperties: false
+                description: Represents the result of the execution.
+                properties:
+                  output:
+                    type: string
+                    description: Represents the value returned by the function.
+                  output_type:
+                    type: string
+                    description: Represents the data type of **output**.
+                  id:
+                    type: string
+                    description: >-
+                      Represents an identifier returned with the execution
+                      result.
+                required:
+                  - output
+                  - output_type
+                  - id
+            required:
+              - code
+              - message
+              - details
+          examples:
+            ExecuteFunctionSuccess:
+              summary: Successful execution
+              value:
+                code: success
+                details:
+                  output: '{"status":"ok"}'
+                  output_type: string
+                  id: '7927000000607001'
+                message: function executed successfully
+  schemas:
+    OAuthScopeMismatchError:
+      x-zs-$id: OAuthScopeMismatchError
+      oneOf:
+        - x-zs-$id: OAuthScopeMismatchErrorDetail
+          type: object
+          additionalProperties: false
+          description: >-
+            The access token you have used to make this API call does not have
+            the required scope. Generate a new access token with the required
+            scopes for this API.
+          properties:
+            code:
+              type: string
+              description: The error code identifying the type of error.
+            message:
+              type: string
+              description: A message describing the error.
+            details:
+              type: object
+              additionalProperties: false
+              description: Error details.
+            status:
+              type: string
+              description: The status of the response (error).
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.functions.execute.READ: >-
+              Grants permission to execute standalone functions exposed as REST
+              APIs using the HTTP GET method.
+            ZohoCRM.functions.execute.CREATE: >-
+              Grants permission to execute standalone functions exposed as REST
+              APIs using the HTTP POST method.
