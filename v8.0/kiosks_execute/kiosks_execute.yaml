@@ -1,0 +1,2954 @@
+openapi: 3.1.0
+info:
+  title: Kiosks Execute
+  description: >-
+    Kiosks are interactive, screen-based flows in Zoho CRM that guide users
+    through structured processes such as record lookups, data entry, and
+    decision-driven workflows. This API enables developers to execute, test run,
+    and preview kiosks, as well as retrieve execution records and advance an
+    active kiosk execution from one state to the next.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        description: API Server URL TLD
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: API Version
+        default: v8
+paths:
+  /settings/kiosks/{kioskId}/actions/test_run:
+    post:
+      summary: Initiate a Test Run for a Kiosk
+      description: >
+        To initiate a test run for a kiosk before publishing it in your Zoho CRM
+        organization.
+
+        This operation executes all configured kiosk states and actions on live
+        CRM data in real time. Actions such as creating, updating, or deleting
+        records and sending email notifications are performed immediately and
+        cannot be automatically reversed.
+
+        The response returns the first state of the kiosk. To advance through
+        the remaining states, use the [Update Kiosk Execution
+        API](kiosk_execute.yaml#$.paths./settings/kiosks/{kioskId}/executions/{executionId}/actions/execute.put)
+        with the execution details returned in the response.
+
+        Retrieve the kiosk ID using the [Get Kiosks
+        API](kiosks.yaml#$.paths./settings/kiosks.get) before calling this
+        endpoint.
+
+        Administrator profile, or a profile with the Module Customization or
+        Manage Automation  permission should be enabled.
+      operationId: testRunKiosk
+      parameters:
+        - $ref: '#/components/parameters/KioskIdPathParams'
+      requestBody:
+        description: The request body must contain a kiosk_test_run array with one object.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KioskTestRunPayload'
+            examples:
+              SamplePostRequest:
+                summary: Initiates a kiosk test run with a current record ID
+                value:
+                  kiosk_test_run:
+                    - data:
+                        Current_Record:
+                          id: '2296900000010790475'
+                description: >-
+                  This example submits a kiosk test run request containing a
+                  single entry in the kiosk_test_run array, identifying the
+                  current CRM record by its unique ID. The request initiates the
+                  test run flow and returns the first executable kiosk state.
+            x-zs-llm-examples:
+              - SamplePostRequest
+      responses:
+        '200':
+          description: >-
+            Returns a kiosk_test_run array containing the result of the test run
+            initiation, including the status code, a descriptive message, the
+            execution record ID, the next executable state, and any dependent
+            states executed during the run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KioskTestRunSuccessResponse'
+              examples:
+                Success200:
+                  summary: >-
+                    Successful test run response with next executable state and
+                    dependent states
+                  value:
+                    kiosk_test_run:
+                      - code: SUCCESS
+                        details:
+                          next_executable_state:
+                            name: Screen 1
+                            id: '2296900000011322140'
+                          executed_dependent_states: null
+                          id: '2296900000011324489'
+                        message: Kiosk test run started successfully
+                        status: success
+                  description: >
+                    This example represents a successful kiosk test run response
+                    in which the API confirms the run has started and identifies
+                    the next executable state along with any dependent states
+                    traversed during initiation.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >
+            **No such Kiosk exists.**
+
+
+            **Resolution:** Specify a valid kiosk ID in the request path.
+            Retrieve valid kiosk IDs using the [Get Kiosks
+            API](kiosks.yaml#$.paths./settings/kiosks.get) .
+
+
+            **invalid data.**
+
+
+            **Resolution:** Verify that the kiosk_test_run field in the request
+            body is a valid array within the maximum length permitted.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents one of two error shapes returned when the request
+                  is invalid: an invalid kiosk identifier error, which includes
+                  a resource path index in the details, or an invalid data error
+                  for the kiosk_test_run field, which includes the field name,
+                  maximum length, and JSON path in the details.
+                oneOf:
+                  - $ref: '#/components/schemas/KioskTestRunInvalidKioskError'
+                  - $ref: '#/components/schemas/KioskTestRunInvalidDataTypeError'
+                x-zs-$id: PosttestrunError400
+              examples:
+                InvalidDataResponse1:
+                  summary: INVALID_DATA error when the specified kiosk does not exist
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                  description: >-
+                    This example illustrates a 400 error response returned when
+                    the specified kiosk ID in the request path does not
+                    correspond to an existing kiosk. The details object
+                    identifies the offending path parameter via its resource
+                    path index.
+                InvalidDataResponse2:
+                  summary: >-
+                    INVALID_DATA error when kiosk_test_run field fails a maximum
+                    length validation
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      maximum_length: 1
+                      api_name: kiosk_test_run
+                      json_path: $.kiosk_test_run
+                    message: invalid data
+                    status: error
+                  description: >-
+                    This example illustrates a 400 error response returned when
+                    the kiosk_test_run field in the request body contains a
+                    value that violates a maximum length constraint. The details
+                    object provides the api_name of the offending field and a
+                    json_path indicating its location within the payload.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.CREATE
+  /settings/kiosks/{kioskId}/actions/preview:
+    get:
+      summary: Retrieve the Preview of a Specified Kiosk
+      description: >-
+        Retrieves the configuration and details of the first screen state for a
+        specified Kiosk in Zoho CRM. This API returns only the first screen data
+        required to render the Kiosk and does not trigger any actions or require
+        user interaction. Supported on Standard, Professional, Enterprise, and
+        Ultimate editions.
+      operationId: previewKiosk
+      parameters:
+        - $ref: '#/components/parameters/ParamQueryCurrentRecordId'
+        - $ref: '#/components/parameters/ParamQueryInvokedFrom'
+        - $ref: '#/components/parameters/KioskIdPathParams'
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+      responses:
+        '200':
+          description: >-
+            Returns the configuration and initial screen state details of the
+            specified Kiosk, including a kiosk_preview array that contains the
+            kiosk state, its elements, and available transitions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KioskPreviewSuccessResponse'
+              examples:
+                Success200:
+                  summary: >-
+                    Successful retrieval of a kiosk's first screen state,
+                    elements, and field metadata
+                  value:
+                    kiosk_preview:
+                      - executable_info:
+                          state:
+                            name: Screen 1
+                            id: '2296900000011317679'
+                          transitions:
+                            - prop_name: primary
+                              is_connected_end: true
+                              name: Done
+                              id: '2296900000011317677'
+                        data:
+                          GetRecords_1:
+                            - name: First Name d Last Name d
+                              id: '2296900000000774844'
+                        elements:
+                          - get_record:
+                              selection_details:
+                                selection_type: mandate
+                                result_type: multiple
+                                limit: 10
+                              open_record: true
+                              api_name: GetRecords_1
+                              module:
+                                display_label: Leads
+                                api_name: Leads
+                                name: Leads
+                                id: '2296900000010857048'
+                              name: GetRecords 1
+                              id: '2296900000011317646'
+                              selected_fields:
+                                - ui_type: 1
+                                  api_name: Company
+                                  field_label: Company
+                                  data_type: text
+                                  id: '2296900000010863602'
+                                - ui_type: 27
+                                  api_name: First_Name
+                                  field_label: First Name
+                                  data_type: text
+                                  id: '2296900000010863603'
+                                - ui_type: 8
+                                  api_name: Owner
+                                  field_label: Lead Owner
+                                  data_type: ownerlookup
+                                  id: '2296900000010863601'
+                            type: get_records
+                            value: null
+                            get_record_data:
+                              - First_Name: First Name d
+                                Company: dsdsdsds d
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000000774844'
+                              - First_Name: null
+                                Company: crrmtest
+                                Owner:
+                                  name: Test Kiosk Last Name
+                                  id: '2296900000000727010'
+                                id: '2296900000007352025'
+                              - First_Name: null
+                                Company: crrmtest check
+                                Owner:
+                                  name: Test Kiosk Last Name
+                                  id: '2296900000000727010'
+                                id: '2296900000007341123'
+                              - First_Name: null
+                                Company: crrmtest
+                                Owner:
+                                  name: Test Kiosk Last Name
+                                  id: '2296900000000727010'
+                                id: '2296900000007233167'
+                              - First_Name: null
+                                Company: crrmtest
+                                Owner:
+                                  name: Test Kiosk Last Name
+                                  id: '2296900000000727010'
+                                id: '2296900000004525001'
+                              - First_Name: null
+                                Company: crrmtest
+                                Owner:
+                                  name: Test Kiosk Last Name
+                                  id: '2296900000000727010'
+                                id: '2296900000007233079'
+                              - First_Name: null
+                                Company: crrmtest
+                                Owner:
+                                  name: Test Kiosk Last Name
+                                  id: '2296900000000727010'
+                                id: '2296900000007233101'
+                              - First_Name: null
+                                Company: crrmtest
+                                Owner:
+                                  name: Test Kiosk Last Name
+                                  id: '2296900000000727010'
+                                id: '2296900000007233123'
+                              - First_Name: null
+                                Company: crrmtest
+                                Owner:
+                                  name: Test Kiosk Last Name
+                                  id: '2296900000000727010'
+                                id: '2296900000007233145'
+                              - First_Name: null
+                                Company: cc
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000002844006'
+                              - First_Name: null
+                                Company: cc
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000002598025'
+                              - First_Name: null
+                                Company: cc check app
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000002835242'
+                              - First_Name: null
+                                Company: cc check app
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000002835161'
+                              - First_Name: '34'
+                                Company: df
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000001977122'
+                              - First_Name: null
+                                Company: Salem
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000001227214'
+                              - First_Name: l
+                                Company: Salem
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000001227072'
+                              - First_Name: null
+                                Company: Salem
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000001227017'
+                              - First_Name: null
+                                Company: Salem
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000001186001'
+                              - First_Name: null
+                                Company: Salem
+                                Owner:
+                                  name: Dylan Vasquez
+                                  id: '2296900000000471001'
+                                id: '2296900000000855037'
+                            more_records: false
+                          - field:
+                              allow_multiple_upload: null
+                              field_label: Single Line 1
+                              length: 255
+                              tooltip: null
+                              _merge_field: >-
+                                ${ProcessFlow5.2296900000011317713.2296900000010864732}
+                              number_separator: false
+                              required: false
+                              ui_type: 1
+                              read_only: false
+                              api_name: Screen_1_Single_Line_1
+                              data_type: text
+                              currency: null
+                              id: '2296900000011317738'
+                              _pick_list_type: null
+                              decimal_place: null
+                              pick_list_values: null
+                            type: field
+                            value: '2296900000008663001'
+                        width: 670px
+                        kiosk:
+                          name: new
+                          id: '2296900000011316567'
+                        title: Screen 1
+                        previous_states:
+                          - name: Start
+                            id: '2296900000011317633'
+                            type: start_state
+                          - name: GetRecords 1
+                            id: '2296900000011317668'
+                            type: get_records
+                        button_align: right_to_left
+                  description: >-
+                    Shows a successful response for a kiosk named 'Screen 4'
+                    that includes executable state information, a dynamic
+                    GetRecords result mapped to the Leads module, and a mixed
+                    set of screen elements comprising text, record-lookup, and
+                    field types with associated merge fields and picklist
+                    metadata.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.READ
+  /settings/kiosks/{kioskId}/executions:
+    get:
+      summary: List kiosk executions
+      description: >
+        To retrieve all active executions for a specific kiosk in your Zoho CRM
+        organization. For each execution, the response includes the user who ran
+        the kiosk, the execution start and end times, the current or most
+        recently visited state, and the transition available to execute next.
+        Multiple concurrent executions, such as those initiated by different
+        users, are also returned.
+
+
+        The kiosk must be in published status and have at least one active
+        execution for the request to return results. An execution is considered
+        complete only when the user navigates through all screens and closes the
+        kiosk on the final screen; completed executions are excluded from the
+        response. Executions closed before reaching the final screen remain
+        active and continue to appear in the response.
+      x-zs-llm-description: Lists all executed states and identifies the next actionable state.
+      operationId: getKioskExecutions
+      parameters:
+        - $ref: '#/components/parameters/KioskIdPathParams'
+        - $ref: '#/components/parameters/ParamQueryPage'
+        - $ref: '#/components/parameters/ParamQueryPerPage'
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+      responses:
+        '200':
+          description: >-
+            Returns a list of active kiosk execution records for the specified
+            kiosk, along with pagination details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KioskExecutionsListResponse'
+              examples:
+                Success200:
+                  summary: Successful response with a list of active kiosk executions
+                  value:
+                    kiosk_executions:
+                      - Kiosk_End_Time: '2025-12-09T10:54:52+05:30'
+                        Owner:
+                          name: Dylan Vasquez
+                          id: '2296900000000471001'
+                        executable_info:
+                          state:
+                            name: Screen 1
+                            id: '2296900000011252003'
+                          transitions:
+                            - id: '2296900000011252001'
+                        id: '2296900000011330195'
+                        Kiosk_Start_Time: '2025-12-09T10:54:51+05:30'
+                      - Kiosk_End_Time: '2025-12-09T10:54:26+05:30'
+                        Owner:
+                          name: Dylan Vasquez
+                          id: '2296900000000471001'
+                        executable_info:
+                          state:
+                            name: Screen 1
+                            id: '2296900000011252003'
+                          transitions:
+                            - id: '2296900000011252001'
+                        id: '2296900000011330189'
+                        Kiosk_Start_Time: '2025-12-09T10:54:26+05:30'
+                      - Kiosk_End_Time: '2025-12-09T10:44:56+05:30'
+                        Owner:
+                          name: Dylan Vasquez
+                          id: '2296900000000471001'
+                        executable_info:
+                          state:
+                            name: Screen 1
+                            id: '2296900000011252003'
+                          transitions:
+                            - id: '2296900000011252001'
+                        id: '2296900000011327067'
+                        Kiosk_Start_Time: '2025-12-09T10:44:55+05:30'
+                      - Kiosk_End_Time: '2025-12-09T10:40:46+05:30'
+                        Owner:
+                          name: Dylan Vasquez
+                          id: '2296900000000471001'
+                        executable_info:
+                          state:
+                            name: Screen 1
+                            id: '2296900000011252003'
+                          transitions:
+                            - id: '2296900000011252001'
+                        id: '2296900000011327059'
+                        Kiosk_Start_Time: '2025-12-09T10:40:45+05:30'
+                    info:
+                      per_page: 80
+                      count: 4
+                      page: 1
+                      more_records: false
+                  description: >
+                    Shows a paginated list of three active kiosk execution
+                    records, each including the owner details, the current
+                    state, and the next available transition. The info object
+                    confirms that all records fit within a single page.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >
+            No such Kiosk exists.
+
+            **Resolution:** The kiosk ID in the request URL must be a valid and
+            existing kiosk identifier. A list of valid kiosk IDs can be
+            retrieved using the [Get Kiosks API](
+            kiosks.yaml#$.paths./settings/kiosks.get).
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response body for a 400 Bad Request on
+                  this operation. The oneOf schema resolves to the
+                  KioskTestRunInvalidKioskError shape when the specified kiosk
+                  identifier does not exist.
+                oneOf:
+                  - $ref: '#/components/schemas/KioskTestRunInvalidKioskError'
+                x-zs-$id: GetexecutionsError400
+              examples:
+                InvalidDataResponse1:
+                  summary: INVALID_DATA error response when no matching kiosk exists
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                  description: >-
+                    Shows the INVALID_DATA error response returned when the
+                    specified kiosk ID does not exist in the organization. The
+                    details object includes the resource path index that
+                    identifies the invalid value.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.READ
+  /settings/kiosks/{kioskId}/executions/{executionId}:
+    get:
+      summary: Retrieve a kiosk execution record
+      description: >-
+        To retrieve the details of a specific kiosk execution in your Zoho CRM
+        organization. The response includes all elements and metadata for the
+        state currently being executed, along with the owner of the execution,
+        the execution start and end times, the current or most recently executed
+        state, and the transition that can be executed next. The kiosk must be
+        in published status and have at least one active execution. Available in
+        Standard, Professional, Enterprise, and Ultimate editions.
+      operationId: getKioskExecution
+      parameters:
+        - $ref: '#/components/parameters/KioskIdPathParams'
+        - $ref: '#/components/parameters/ExecutionIdPathParams'
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+        - $ref: '#/components/parameters/ParamQueryNavigatedFromBack'
+      responses:
+        '200':
+          description: >-
+            Returns the elements and metadata for the state being executed
+            within the specified kiosk execution.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KioskExecutionViewResponse'
+                x-zs-$id: Get2296900000011330201Response200
+              examples:
+                Success200:
+                  summary: Successful retrieval of a kiosk execution record
+                  value:
+                    kiosk_executions:
+                      - executable_info:
+                          state:
+                            name: Screen 4
+                            id: '2296900000011330223'
+                          transitions:
+                            - prop_name: primary
+                              is_connected_end: true
+                              name: Done
+                              id: '2296900000011330221'
+                        data:
+                          Kiosk_End_Time: '2025-12-09T12:14:29+05:30'
+                          Owner:
+                            name: Dylan Vasquez
+                            id: '2296900000000471001'
+                            email: muthusamy.s@zohocorp.com
+                          id: '2296900000011330241'
+                          Kiosk_Start_Time: '2025-12-09T12:06:45+05:30'
+                        elements:
+                          - type: text
+                            value: Hi 4
+                        width: 670px
+                        id: '2296900000011330241'
+                        kiosk:
+                          name: ABCC
+                          id: '2296900000011327078'
+                        title: Screen 4
+                        button_align: right_to_left
+                  description: >
+                    Shows a successful response for a kiosk execution retrieval.
+                    The response includes the **kiosk_executions** array
+                    containing execution records with the **Owner**,
+                    **Kiosk_Start_Time**, **Kiosk_End_Time**, current state
+                    details, and available transition identifiers.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            No such Kiosk exists.
+
+            **Resolution:** Verify that the **kioskId** path parameter in the
+            request URL is a valid and existing kiosk ID.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Contains the error response returned when the kiosk ID in the
+                  request does not correspond to an existing kiosk.
+                oneOf:
+                  - $ref: '#/components/schemas/KioskTestRunInvalidKioskError'
+                x-zs-$id: Get2296900000011330201Error400
+              examples:
+                InvalidDataResponse1:
+                  summary: >-
+                    INVALID_DATA error when the specified kiosk ID does not
+                    exist
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                  description: >-
+                    Shows an **INVALID_DATA** error response returned when no
+                    such kiosk exists in Zoho CRM. The kiosk ID in the request
+                    URL must correspond to a valid and existing kiosk.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.READ
+  /settings/kiosks/{kioskId}/executions/{executionId}/actions/execute:
+    put:
+      summary: Update a Kiosk Execution
+      description: >
+        To execute a transition in an ongoing Kiosk execution by submitting the
+        required transition and runtime data, and proceed to the next step of
+        the Kiosk in your Zoho CRM.
+
+        The Kiosk must be in the published status and have an active execution
+        to update its execution state. To obtain the execution_ID, execute the
+        Kiosk using the [Execute a Kiosk
+        API](kiosks_execute.yaml#$.paths./settings/kiosks/{kioskId}/actions/execute.post).
+        If an execution is already in progress, invoke the [Get Executions of a
+        Kiosk
+        API](kiosks_execute.yaml#$.paths./settings/kiosks/{kioskId}/executions.post)
+        to retrieve the execution_ID.
+      operationId: executeKioskState
+      parameters:
+        - $ref: '#/components/parameters/KioskIdPathParams'
+        - $ref: '#/components/parameters/ExecutionIdPathParams'
+      requestBody:
+        description: >-
+          The request body must contain a kiosk_executions array with one
+          object. Each object must include a transition (with a required
+          transition ID) and may include a data object with the current record
+          context and execution ID.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KioskExecutionActionPayload'
+            examples:
+              SamplePutRequest:
+                summary: Execute the Done transition for a kiosk execution
+                value:
+                  kiosk_executions:
+                    - transition:
+                        id: '2296900000011330157'
+                        name: Done
+                      data:
+                        id: '229690000001133230'
+                description: >-
+                  Shows a kiosk execution request with the Done transition ID
+                  and associated execution data ID specified.
+            x-zs-llm-examples:
+              - SamplePutRequest
+      responses:
+        '200':
+          description: >-
+            Returns a kiosk_executions array confirming that the transition was
+            executed successfully. Each item includes the execution status code,
+            a message, and a details object containing the next executable state
+            and any dependent states that were executed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KioskExecutionActionSuccessResponse'
+              examples:
+                Success200:
+                  summary: Successful execution of a Kiosk transition
+                  value:
+                    kiosk_executions:
+                      - code: SUCCESS
+                        details:
+                          next_executable_state:
+                            name: Select Product
+                            id: '2296900000011290813'
+                          executed_dependent_states: null
+                          id: '2296900000011330251'
+                        message: Kiosk transition executed successfully
+                        status: success
+                  description: >-
+                    Shows a successful kiosk transition execution response. The
+                    response confirms the transition was executed and identifies
+                    the next executable state as Select Product.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            Invalid Kiosk transition given for execution.
+
+            **Resolution:** A valid transition ID belonging to the current
+            executable state must be specified in the request body.
+
+
+            No such Kiosk exists.
+
+            **Resolution:** A valid kiosk ID must be specified in the request
+            URL.
+
+
+            Invalid Kiosk execution ID.
+
+            **Resolution:** A valid execution ID must be specified in the
+            request URL.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response body returned when the kiosk
+                  execution request contains invalid input, such as an invalid
+                  kiosk ID, transition ID, or execution ID.
+                oneOf:
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents a 400 error response that contains one or more
+                      kiosk execution errors in the kiosk_executions array.
+                    properties:
+                      kiosk_executions:
+                        type: array
+                        description: >-
+                          Represents the list of error objects returned when the
+                          kiosk execution request fails.
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/ExecutionInvalidTransitionError
+                            - $ref: '#/components/schemas/ExecutionNotAllowedError'
+                          description: >-
+                            Represents an individual error object describing why
+                            the kiosk execution request fails. Each item
+                            corresponds to one of the following conditions: an
+                            invalid transition ID, a non-existent kiosk, or an
+                            invalid execution ID.
+                        maxItems: 25
+                    required:
+                      - kiosk_executions
+                    x-zs-$id: PutexecuteError400Wrapper
+                  - $ref: '#/components/schemas/KioskTestRunInvalidKioskError'
+                  - $ref: '#/components/schemas/ExecutionInvalidIdError'
+                x-zs-$id: PutexecuteError400
+              examples:
+                InvalidDataResponse1:
+                  summary: Invalid transition ID supplied for the kiosk execution
+                  value:
+                    kiosk_executions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.kiosk_executions[0].transition.id
+                        message: Invalid Kiosk transition given for execution
+                        status: error
+                  description: >-
+                    Shows the error returned when the transition ID in the
+                    request body is invalid or does not correspond to a valid
+                    transition for the ongoing kiosk execution. The response
+                    provides the JSON path to the invalid field in the
+                    transition object.
+                InvalidDataResponse2:
+                  summary: Kiosk not found for the given kiosk ID
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                  description: >-
+                    Shows the error returned when the kiosk ID in the request
+                    URL does not match any existing kiosk. The response
+                    identifies the invalid path segment using
+                    resource_path_index 2.
+                InvalidDataResponse3:
+                  summary: Invalid execution ID supplied for the kiosk execution
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 4
+                    message: Invalid Kiosk execution id
+                    status: error
+                  description: >-
+                    Shows the error returned when the execution ID in the
+                    request URL does not correspond to a valid or active kiosk
+                    execution. The response identifies the invalid path segment
+                    using resource_path_index 4.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.UPDATE
+  /settings/kiosks/{kioskId}/actions/execute:
+    post:
+      summary: Execute a Kiosk
+      description: >
+        The execute Kiosk API is used to trigger the execution of a published
+        Kiosk in Zoho CRM.
+
+        This API returns only the first executable state of the Kiosk. To
+        continue the execution through the remaining states, call the [Update a
+        Kiosk Execution
+        API](kiosks_execute.yaml#$.paths./settings/kiosks/{kiosk_id}/executions/{execution_id}/actions/execute.put)
+        until the execution is complete.
+      operationId: executeKiosk
+      parameters:
+        - $ref: '#/components/parameters/KioskIdPathParams'
+      requestBody:
+        description: >-
+          The request body must contain a kiosk_execute array with one object.
+          The object accepts an optional data field that provides the record
+          context for the Kiosk execution, including the current record ID.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KioskExecuteActionPayload'
+            examples:
+              SamplePostRequest:
+                summary: Execute Kiosk request with current record ID
+                value:
+                  kiosk_execute:
+                    - data:
+                        Current_Record:
+                          id: '2296900000010790475'
+                description: >-
+                  Shows a sample request body for executing a Kiosk, providing
+                  the current record ID as the data context for the Kiosk
+                  execution.
+            x-zs-llm-examples:
+              - SamplePostRequest
+      responses:
+        '200':
+          description: >-
+            Returns the execution result for the published Kiosk, including the
+            next executable state, the executed_dependent_states value, and the
+            unique identifier of the execution record.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KioskExecuteActionSuccessResponse'
+              examples:
+                Success200:
+                  summary: Successful Kiosk execution with next executable state
+                  value:
+                    kiosk_execute:
+                      - code: SUCCESS
+                        details:
+                          next_executable_state:
+                            name: Screen 1
+                            id: '2296900000011330159'
+                          executed_dependent_states: null
+                          id: '2296900000011330268'
+                        message: Kiosk transition executed successfully
+                        status: success
+                  description: >-
+                    Shows a successful Kiosk execution response returning the
+                    first executable state. The response includes the next
+                    executable state name and ID, a null
+                    executed_dependent_states value, the execution record ID,
+                    and a success status code.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            The specified Kiosk ID or request body is invalid.
+
+            **Resolution:** A valid Kiosk ID must be specified in the request
+            URL, and the request body must contain a value of the correct data
+            type.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents one of the possible error response shapes returned
+                  for a 400 Bad Request on Kiosk execution. Either the specified
+                  Kiosk ID does not match any existing Kiosk, or the request
+                  body contains a value with an invalid data type.
+                oneOf:
+                  - $ref: '#/components/schemas/KioskTestRunInvalidKioskError'
+                  - $ref: '#/components/schemas/ExecuteInvalidDataTypeError'
+                x-zs-$id: PostexecuteError400
+              examples:
+                InvalidDataResponse1:
+                  summary: 'INVALID_DATA error: no such Kiosk exists'
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                  description: >-
+                    Shows a 400 error response returned when the Kiosk ID in the
+                    request URL does not match any existing Kiosk. The response
+                    includes an INVALID_DATA code and a message indicating that
+                    no such Kiosk exists.
+                InvalidDataResponse2:
+                  summary: 'INVALID_DATA error: invalid data type in request body'
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      expected_data_type: jsonobject
+                    message: body
+                    status: error
+                  description: >-
+                    Shows a 400 error response returned when the request body
+                    contains a value with an invalid data type. The response
+                    includes an INVALID_DATA code and a message indicating the
+                    body value is of an unexpected type.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.CREATE
+components:
+  schemas:
+    PreviewSelectedField:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents metadata for a field included in the preview selection,
+        including the field label, API name, UI type, and data type.
+      properties:
+        ui_type:
+          type: integer
+          format: int32
+          description: >-
+            Represents the UI type identifier that determines how the selected
+            field is rendered in the preview.
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the selected field included in the
+            preview screen.
+          maxLength: 255
+        field_label:
+          type: string
+          description: >-
+            Represents the display label of the selected field as shown in the
+            preview screen.
+          maxLength: 255
+        data_type:
+          type: string
+          description: >-
+            Represents the data type of the selected field, such as text or
+            ownerlookup.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the selected field definition in
+            the preview screen.
+          maxLength: 255
+      required:
+        - api_name
+        - data_type
+        - field_label
+        - id
+        - ui_type
+      title: Preview Selected Field
+    ExecutionTransitionReference:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents transition input providing the transition name and required
+        ID for kiosk execution progression.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the display name of the transition that triggers the
+            current execution step.
+          maxLength: 50
+        id:
+          type: string
+          description: >-
+            Represents the unique identifier of the transition that triggers the
+            current execution step.
+          maxLength: 19
+      required:
+        - id
+      title: Execution Transition Reference
+    ExecuteInvalidDataTypeError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the execute action payload contains fields with invalid
+        data types.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when the payload contains fields
+            with invalid data types.
+
+
+            Possible values:
+
+            INVALID_DATA - One or more fields in the request body carry a value
+            of an unexpected data type.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains validation details identifying the data type discrepancy
+            that caused the error.
+          properties:
+            expected_data_type:
+              type: string
+              description: >
+                Indicates the data type that the field was expected to carry, as
+                defined by the kiosk execution schema.
+              maxLength: 255
+          required:
+            - expected_data_type
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the source of the invalid
+            data type violation.
+
+
+            Possible values:
+
+            body - The invalid data type was detected in the request body.
+          enum:
+            - body
+        status:
+          type: string
+          description: >-
+            Represents the response status returned when an invalid data type
+            error occurs.
+
+
+            Possible values:
+
+            error - The request failed due to one or more fields containing
+            values of an unexpected data type.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Execute Invalid Data Type Error
+      x-zs-$id: ExecuteInvalidDataTypeError
+    ExecutionActionEntry:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an action entry for progressing a kiosk execution, providing
+        the data context and transition information.
+      properties:
+        data:
+          $ref: '#/components/schemas/ExecuteDataContainer'
+          description: Contains information about the current execution
+        transition:
+          $ref: '#/components/schemas/ExecutionTransitionReference'
+          description: Contains the transition information for next execution (Required)
+      required:
+        - transition
+      title: Execution Action Entry
+    KioskExecuteActionSuccessResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates a successful execute action and provides details about the
+        next executable kiosk state.
+      properties:
+        kiosk_execute:
+          type: array
+          description: >-
+            Contains the result of the execute action, including the status,
+            message, and details of the next executable state.
+          items:
+            $ref: '#/components/schemas/ExecuteActionStatusItem'
+          maxItems: 1
+      title: Kiosk Execute Action Success Response
+      x-zs-$id: KioskExecuteActionSuccessResponse
+    ExecuteActionStatusItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the result of an execute action, including the status code,
+        message, and details of the next executable state.
+      properties:
+        code:
+          type: string
+          description: Represents the status code returned for the execute action result.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/TestRunExecutionDetails'
+        message:
+          type: string
+          description: Represents the message describing the outcome of the execute action.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Represents the response status indicating whether the execute action
+            succeeded or encountered an error.
+          maxLength: 255
+      title: Execute Action Status Item
+    PreviewTransitionSummary:
+      type: object
+      additionalProperties: false
+      description: >-
+        Describes a transition in the kiosk preview, including the connection
+        flag, display name, ID, and property name of the transition button.
+      properties:
+        prop_name:
+          type: string
+          description: >
+            Specifies the type of button displayed on the Kiosk screen. Each
+            button corresponds to a transition path that the user can select
+            from the current screen.
+
+            **Possible values:**
+
+
+            **primary** - Displays the button as the primary action on the
+            screen, typically used for actions such as Next, Submit, or Save.
+
+
+            **default** - Displays the button with the standard appearance,
+            suitable for secondary actions.
+
+
+            **outlineprimary** - Displays the button with a primary-colored
+            outline, emphasizing the action without making it the primary
+            button.
+
+
+            **failure** - Displays the button with a solid error-themed style,
+            typically used for destructive or critical actions such as Delete or
+            Reject.
+
+
+            **outlineredlight** - Displays the button with a red outline,
+            typically used for secondary destructive actions such as Cancel,
+            Discard, or Remove.
+          enum:
+            - primary
+            - default
+            - outlineprimary
+            - failure
+            - outlineredlight
+          maxLength: 255
+        is_connected_end:
+          type: boolean
+          description: >
+            Indicates whether this transition leads to a connected end state in
+            the kiosk flow.
+
+
+            Possible values:
+
+            true - The transition leads to a connected end state.
+
+            false - The transition leads to an intermediate state in the kiosk
+            flow.
+        name:
+          type: string
+          description: Represents the display name of the transition in the kiosk preview.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the transition in the kiosk
+            preview.
+          maxLength: 255
+      required:
+        - id
+        - is_connected_end
+        - name
+        - prop_name
+      title: Preview Transition Summary
+    ExecutionTransitionSummary:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a minimal transition reference used in kiosk execution
+        records, containing the transition ID.
+      properties:
+        id:
+          type: string
+          description: >-
+            Represents the unique identifier of the kiosk transition referenced
+            in the execution record.
+          maxLength: 255
+      required:
+        - id
+      title: Execution Transition Summary
+    KioskExecutionView:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the screen and data for a specific execution state, including
+        elements, layout dimensions, screen title, kiosk details, and executable
+        information.
+      properties:
+        executable_info:
+          $ref: '#/components/schemas/PreviewExecutableInfo'
+        data:
+          $ref: '#/components/schemas/ExecutionDataBlock'
+        elements:
+          type: array
+          description: >-
+            An array of UI elements and data sources configured in the Kiosk.
+            Each element has a type field that determines its structure.
+          items:
+            $ref: '#/components/schemas/ExecutionElement'
+          maxItems: 1
+        width:
+          type:
+            - string
+            - 'null'
+          description: Indicates the display width of the kiosk execution state screen.
+          enum:
+            - 670px
+            - 1000px
+            - null
+          maxLength: 255
+        id:
+          type: string
+          description: Contains the unique identifier of the kiosk execution view record.
+          maxLength: 255
+        kiosk:
+          $ref: '#/components/schemas/PreviewKioskSummary'
+        title:
+          type: string
+          description: Represents the display title of the kiosk execution state screen.
+          maxLength: 255
+        button_align:
+          type:
+            - string
+            - 'null'
+          description: >-
+            The alignment of action buttons. Possible values: right_to_left -
+            Buttons are aligned from right to left. left_to_right - Buttons are
+            aligned from left to right. center - Buttons are aligned to the
+            center.
+          enum:
+            - right_to_left
+            - left_to_right
+            - center
+            - null
+          maxLength: 255
+      required:
+        - button_align
+        - data
+        - elements
+        - executable_info
+        - id
+        - kiosk
+        - title
+        - width
+      title: Kiosk Execution View
+    PreviewFieldDefinition:
+      type: object
+      additionalProperties: false
+      description: >-
+        Describes a form or data field in the kiosk preview screen, including
+        its label, API name, data type, UI type, and display constraints.
+      properties:
+        allow_multiple_upload:
+          type: 'null'
+          description: >-
+            Indicates whether the field supports multiple file uploads, when
+            applicable.
+        field_label:
+          type: string
+          description: >-
+            Represents the display label of the field as shown to the user in
+            the kiosk screen.
+          maxLength: 255
+        length:
+          type: integer
+          format: int32
+          description: Indicates the maximum character length configured for the field.
+        tooltip:
+          type: 'null'
+          description: Contains the tooltip text displayed for the field, when applicable.
+        _merge_field:
+          type: string
+          description: >-
+            Represents the merge field template reference used to populate the
+            field value from a linked kiosk process flow.
+          maxLength: 255
+        number_separator:
+          type: boolean
+          description: >-
+            Indicates whether the field uses a number separator for display.
+
+
+            Possible values:
+
+            true - A number separator is applied when displaying the field
+            value.
+
+            false - No number separator is applied.
+        required:
+          type: boolean
+          description: |-
+            Indicates whether the field is required in the kiosk screen.
+
+            Possible values:
+            true - The field must be filled in before the user can proceed.
+            false - The field is optional.
+        ui_type:
+          type: integer
+          format: int32
+          description: >-
+            Represents the UI type identifier that determines how the field is
+            rendered in the kiosk screen.
+        read_only:
+          type: boolean
+          description: |-
+            Indicates whether the field is read-only in the kiosk screen.
+
+            Possible values:
+            true - The field is read-only and cannot be edited by the user.
+            false - The field is editable by the user.
+        api_name:
+          type: string
+          description: Represents the API name of the field as defined in the CRM module.
+          maxLength: 255
+        data_type:
+          type: string
+          description: >-
+            Represents the data type of the field, such as text, integer, or
+            ownerlookup.
+          maxLength: 255
+        currency:
+          type: 'null'
+          description: >-
+            Indicates the currency configuration for the field, when applicable
+            to currency-type fields.
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the field definition in the kiosk
+            screen.
+          maxLength: 255
+        _pick_list_type:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Indicates the picklist type configuration for the field, when
+            applicable.
+          enum:
+            - global_set
+            - local
+            - null
+        decimal_place:
+          type: 'null'
+          description: >-
+            Indicates the number of decimal places configured for the field,
+            when applicable to numeric fields.
+        pick_list_values:
+          type: 'null'
+          description: >-
+            Contains the available picklist values for the field, when
+            applicable to picklist field types.
+      required:
+        - _merge_field
+        - _pick_list_type
+        - allow_multiple_upload
+        - api_name
+        - currency
+        - data_type
+        - decimal_place
+        - field_label
+        - id
+        - length
+        - number_separator
+        - pick_list_values
+        - read_only
+        - required
+        - tooltip
+        - ui_type
+      title: Preview Field Definition
+    PreviewGetRecordConfig:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the configuration for a get record element in the preview
+        screen, including selection details, module information, and the list of
+        selected fields.
+      properties:
+        selection_details:
+          $ref: '#/components/schemas/PreviewSelectionDetails'
+        open_record:
+          type: boolean
+          description: >-
+            Indicates whether the record detail view opens when a user selects a
+            record in the preview.
+
+
+            Possible values:
+
+            true - The record detail view opens on selection.
+
+            false - The record detail view does not open on selection.
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the get record element as defined in the
+            kiosk configuration.
+          maxLength: 255
+        module:
+          $ref: '#/components/schemas/PreviewModuleInfo'
+        name:
+          type: string
+          description: >-
+            Represents the display name of the get record element in the kiosk
+            configuration.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the get record element in the
+            kiosk configuration.
+          maxLength: 255
+        selected_fields:
+          type: array
+          description: >-
+            Contains the list of CRM fields configured for display in the get
+            record element of the preview screen.
+          items:
+            $ref: '#/components/schemas/PreviewSelectedField'
+          maxItems: 3
+      required:
+        - api_name
+        - id
+        - module
+        - name
+        - open_record
+        - selected_fields
+        - selection_details
+      title: Preview Get Record Config
+    PreviewDataSet:
+      type: object
+      additionalProperties: false
+      description: >-
+        Contains the records retrieved by the data elements configured in the
+        Kiosk. This object uses dynamic keys, where each key is the API name of
+        a data element (for example, a Get Records element). Each key maps to an
+        object containing the retrieved record's display name (name) and unique
+        identifier (id).
+      properties:
+        GetRecords_1:
+          type: array
+          description: >-
+            Contains the list of record summaries returned by the GetRecords_1
+            element in the preview screen.
+          items:
+            $ref: '#/components/schemas/PreviewRecordSummary'
+          maxItems: 1
+      required:
+        - GetRecords_1
+      title: Preview Data Set
+    TestRunStatusItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the outcome of a test run entry, including the status code,
+        message, and detailed execution data.
+      properties:
+        code:
+          type: string
+          description: Represents the status code returned for the test run entry.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/TestRunExecutionDetails'
+        message:
+          type: string
+          description: Contains the message describing the outcome of the test run entry.
+          maxLength: 255
+        status:
+          type: string
+          description: Indicates the overall status of the test run entry result.
+          maxLength: 255
+      title: Test Run Status Item
+    ExecuteCurrentRecordRef:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a reference to the current module record used during kiosk
+        execution, including the record ID.
+      properties:
+        id:
+          type:
+            - string
+            - 'null'
+          description: >
+            Represents the unique identifier of the current module record
+            referenced during execution.
+          maxLength: 19
+      title: Execute Current Record Reference
+    PreviewExecutableInfo:
+      type: object
+      additionalProperties: false
+      description: >-
+        Provides the current state and available transitions for the executable
+        context of a kiosk preview.
+      properties:
+        state:
+          $ref: '#/components/schemas/PreviewStateSummary'
+        transitions:
+          type: array
+          description: >-
+            Specifies the list of transitions available from the current state.
+            Each transition contains the display name, unique ID,
+            prop_name,is_connected_end.
+          items:
+            $ref: '#/components/schemas/PreviewTransitionSummary'
+          maxItems: 1
+      required:
+        - state
+        - transitions
+      title: Preview Executable Info
+    KioskPreviewDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the preview screen for a kiosk state, including executable
+        information, prior states, elements, data, layout width, screen title,
+        and button alignment.
+      properties:
+        executable_info:
+          $ref: '#/components/schemas/PreviewExecutableInfo'
+        data:
+          $ref: '#/components/schemas/PreviewDataSet'
+        elements:
+          type: array
+          description: Contains the list of elements rendered on the kiosk preview screen.
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/PreviewElementDataBlock'
+              - $ref: '#/components/schemas/PreviewFieldElement'
+            description: >-
+              Represents one element rendered on the kiosk preview screen, such
+              as a record retrieval block or a form field.
+          maxItems: 2
+        width:
+          type: string
+          description: Indicates the display width of the kiosk preview screen.
+          maxLength: 255
+        kiosk:
+          $ref: '#/components/schemas/PreviewKioskSummary'
+        title:
+          type: string
+          description: Represents the display title of the kiosk preview screen.
+          maxLength: 255
+        previous_states:
+          type: array
+          description: >-
+            Specifies an array containing the states traversed before the
+            current state in the Kiosk execution flow. The states are listed in
+            the order they were executed, starting from the start state and
+            ending with the state immediately preceding the current state.
+          items:
+            $ref: '#/components/schemas/PreviewPreviousStateSummary'
+          maxItems: 2
+        button_align:
+          type: string
+          description: |
+            The alignment of action buttons.
+
+            **Possible values:**
+
+            **right_to_left** - Buttons are aligned from right to left.
+
+            **left_to_right** - Buttons are aligned from left to right.
+
+            **center** - Buttons are aligned to the center.
+          maxLength: 255
+      required:
+        - button_align
+        - data
+        - elements
+        - executable_info
+        - kiosk
+        - previous_states
+        - title
+        - width
+      title: Kiosk Preview Details
+    PreviewSelectionDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Defines the record selection behavior for a get record element in the
+        preview, including the selection type, result type, and record limit.
+      properties:
+        selection_type:
+          type: string
+          description: >-
+            Indicates the selection behavior applied to the records returned by
+            the get record element.
+          maxLength: 255
+        result_type:
+          type: string
+          description: >-
+            Indicates the type of result set returned by the get record element,
+            such as all records.
+          enum:
+            - single
+            - multiple
+            - all
+          maxLength: 255
+        limit:
+          type: integer
+          format: int32
+          description: >-
+            Indicates the maximum number of records to retrieve in the get
+            record element of the preview.
+      required:
+        - limit
+        - result_type
+        - selection_type
+      title: Preview Selection Details
+    PreviewKioskSummary:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a minimal summary of the kiosk in the preview, including the
+        kiosk name and ID.
+      properties:
+        name:
+          type: string
+          description: >-
+            Represents the display name of the kiosk associated with the
+            preview.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the kiosk associated with the
+            preview.
+          maxLength: 255
+      required:
+        - id
+        - name
+      title: Preview Kiosk Summary
+    KioskTestRunInvalidKioskError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the specified kiosk identifier is invalid for a test run.
+        Contains the error code, message, status, and details identifying the
+        invalid path segment.
+      properties:
+        code:
+          type: string
+          description: >
+            Represents the error code returned when the specified kiosk
+            identifier is invalid for a test run.
+
+
+            Possible values:
+
+            INVALID_DATA - The kiosk ID provided in the request URL does not
+            correspond to an existing kiosk.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains validation details identifying the path segment that
+            contains the invalid kiosk identifier.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                Indicates the zero-based index of the URL path segment that
+                contains the invalid kiosk identifier.
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the specified kiosk does
+            not exist.
+
+
+            Possible values:
+
+            No such Kiosk exists - The kiosk ID provided in the request URL does
+            not match any existing kiosk record.
+          enum:
+            - No such Kiosk exists
+        status:
+          type: string
+          description: >-
+            Represents the response status returned when the specified kiosk
+            identifier is invalid.
+
+
+            Possible values:
+
+            error - The request failed because the kiosk ID does not correspond
+            to an existing kiosk.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Kiosk Test Run Invalid Kiosk Error
+      x-zs-$id: KioskTestRunInvalidKioskError
+    KioskTestRunPayload:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload for a kiosk test run, containing one or
+        more test run entries.
+      properties:
+        kiosk_test_run:
+          type: array
+          description: >-
+            Contains one or more test run entries, each providing the data
+            context for initiating a kiosk test run.
+          items:
+            $ref: '#/components/schemas/KioskTestRunEntry'
+          maxItems: 1
+      required:
+        - kiosk_test_run
+      title: Kiosk Test Run Payload
+    ExecutionElement:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a simple element associated with a kiosk execution, including
+        its type classification and associated value.
+      properties:
+        type:
+          type: string
+          description: Indicates the type classification of the execution element.
+          maxLength: 255
+        value:
+          type: string
+          description: Contains the value associated with the execution element.
+          maxLength: 255
+      required:
+        - type
+        - value
+      title: Execution Element
+    TestRunExecutionDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Provides details of a test run execution, including the next executable
+        state, any dependent states that were executed, and the execution record
+        ID.
+      properties:
+        next_executable_state:
+          $ref: '#/components/schemas/NextExecutableStateInfo'
+        executed_dependent_states:
+          type:
+            - array
+            - 'null'
+          description: >-
+            Contains the list of dependent states that were executed as part of
+            the test run, or null if no dependent states were triggered.
+          items:
+            type: object
+            additionalProperties: false
+            description: A dependent state executed during kiosk execution
+            properties:
+              name:
+                type: string
+                description: 'Field: name'
+                maxLength: 255
+              id:
+                type: string
+                description: 'Field: id'
+                maxLength: 255
+              rid:
+                type: string
+                format: uuid
+                description: 'Field: rid'
+                maxLength: 255
+              type:
+                type: string
+                description: 'Field: type'
+                maxLength: 255
+              transition:
+                type: object
+                additionalProperties: false
+                description: 'Field: transition'
+                properties:
+                  name:
+                    type: string
+                    description: 'Field: name'
+                    maxLength: 255
+                  id:
+                    type: string
+                    description: 'Field: id'
+                    maxLength: 255
+                  rid:
+                    type: string
+                    format: uuid
+                    description: 'Field: rid'
+                    maxLength: 255
+                required:
+                  - name
+                  - id
+              details:
+                type: object
+                additionalProperties: true
+                description: 'Field: details — optional state-specific details'
+            required:
+              - name
+              - id
+              - transition
+          maxItems: 10
+        id:
+          type: string
+          description: Contains the unique identifier of the test run execution record.
+          maxLength: 255
+      title: Test Run Execution Details
+    KioskPreviewSuccessResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response for a successful kiosk preview, returning the
+        initial executable screen with associated data, transitions, and layout
+        metadata.
+      properties:
+        kiosk_preview:
+          type: array
+          description: >-
+            Contains the preview details for the initial executable screen,
+            including elements, transitions, data, and layout.
+          items:
+            $ref: '#/components/schemas/KioskPreviewDetails'
+          maxItems: 1
+      required:
+        - kiosk_preview
+      title: Kiosk Preview Success Response
+      x-zs-$id: KioskPreviewSuccessResponse
+    NextExecutableStateInfo:
+      type: object
+      additionalProperties: false
+      description: >-
+        An array of dependent states that were executed during the test run.
+        Each object contains information about the state and the transition
+        taken.
+      properties:
+        name:
+          type: string
+          description: Represents the display name of the next executable kiosk state.
+          maxLength: 255
+        id:
+          type: string
+          description: Contains the unique identifier of the next executable kiosk state.
+          maxLength: 255
+      title: Next Executable State Info
+    ExecutionDataBlock:
+      type: object
+      additionalProperties: false
+      description: >-
+        Contains the runtime data available during the Kiosk execution. This
+        object includes system-generated values (such as execution details,
+        owner information, and record references) along with dynamically
+        generated key-value pairs. The dynamic keys correspond to the API names
+        of the configured Kiosk fields, GetRecords elements, and other runtime
+        values available in the current execution. The fields returned vary
+        depending on the Kiosk configuration and the execution context.
+      properties:
+        Kiosk_End_Time:
+          type: string
+          description: >-
+            Represents the date and time at which the kiosk execution session
+            ended.
+          maxLength: 255
+        Owner:
+          $ref: '#/components/schemas/ExecutionOwnerDetail'
+        id:
+          type: string
+          description: Contains the unique identifier for the kiosk execution instance.
+          maxLength: 255
+        Kiosk_Start_Time:
+          type: string
+          description: >-
+            Represents the date and time at which the kiosk execution session
+            began.
+          maxLength: 255
+      required:
+        - Kiosk_End_Time
+        - Kiosk_Start_Time
+        - Owner
+        - id
+      title: Execution Data Block
+    KioskExecutionsListResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a paginated list of kiosk execution records along with
+        pagination metadata.
+      properties:
+        kiosk_executions:
+          type: array
+          description: >-
+            Contains the list of kiosk execution records returned for the
+            specified kiosk.
+          items:
+            $ref: '#/components/schemas/KioskExecutionRecord'
+          maxItems: 4
+        info:
+          $ref: '#/components/schemas/PaginationInfo'
+      required:
+        - info
+        - kiosk_executions
+      title: Kiosk Executions List Response
+      x-zs-$id: KioskExecutionsListResponse
+    KioskTestRunInvalidDataTypeError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates that the kiosk_test_run field in the request body has an
+        invalid data type. Contains the error code, message, status, and
+        validation details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when the kiosk_test_run field has
+            an invalid data type.
+
+
+            Possible values:
+
+            INVALID_DATA - One or more fields in the test run request body
+            contain a value of an unexpected data type.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains validation details identifying the field that carries the
+            invalid data type.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: >-
+                Indicates the maximum number of items allowed in the
+                kiosk_test_run payload that triggered the invalid data type
+                error.
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains the invalid
+                data type value.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the field in the request body that
+                contains the invalid data type value.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the kiosk_test_run field
+            has an invalid data type.
+
+
+            Possible values:
+
+            invalid data - The kiosk_test_run field in the request body contains
+            a value that does not match the expected data type.
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: >-
+            Represents the response status returned when the kiosk_test_run
+            field has an invalid data type.
+
+
+            Possible values:
+
+            error - The request failed because the kiosk_test_run field contains
+            a value of an invalid data type.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Kiosk Test Run Invalid Data Type Error
+      x-zs-$id: KioskTestRunInvalidDataTypeError
+    ExecutionInvalidIdError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates that the provided execution ID is invalid for the kiosk
+        execution operation.
+      properties:
+        code:
+          type: string
+          description: >-
+            Indicates the error code identifying the nature of the failure.
+
+
+            Possible values:
+
+            INVALID_DATA - The execution ID provided in the request does not
+            correspond to a valid kiosk execution record.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains validation details identifying the invalid execution ID
+            path segment in the request URL.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                Indicates the zero-based index of the URL path segment that
+                contains the invalid execution ID value.
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the execution ID is
+            invalid.
+
+
+            Possible values:
+
+            Invalid Kiosk execution ID - The execution ID provided in the
+            request URL does not match any existing kiosk execution record.
+          enum:
+            - Invalid Kiosk execution id
+        status:
+          type: string
+          description: >-
+            Represents the response status returned when the execution ID is
+            invalid.
+
+
+            Possible values:
+
+            error - The request failed because the provided execution ID does
+            not correspond to a valid kiosk execution record.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Execution Invalid ID Error
+      x-zs-$id: ExecutionInvalidIdError
+    PaginationInfo:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents pagination metadata for list responses, including the current
+        page number, records per page, total count, and whether more records are
+        available.
+      properties:
+        per_page:
+          type: integer
+          format: int32
+          description: >-
+            Indicates the maximum number of kiosk execution records returned per
+            page.
+        count:
+          type: integer
+          format: int32
+          description: >-
+            Indicates the number of kiosk execution records returned in the
+            current page.
+        page:
+          type: integer
+          format: int32
+          description: >-
+            Indicates the current page number in the paginated list of execution
+            records.
+        more_records:
+          type: boolean
+          description: >
+            Indicates whether more execution records are available beyond the
+            current page.
+
+
+            Possible values:
+
+            true - Additional execution records exist beyond the current page.
+
+            false - No additional execution records exist; the current page is
+            the last.
+      required:
+        - count
+        - more_records
+        - page
+        - per_page
+      title: Pagination Info
+    ExecutionInvalidTransitionError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when an invalid transition ID is provided for continuing the
+        kiosk execution.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when an invalid transition ID is
+            provided for kiosk execution.
+
+
+            Possible values:
+
+            INVALID_DATA - The transition ID specified in the request does not
+            correspond to a valid kiosk transition.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains validation details identifying the field that carries the
+            invalid transition ID.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains the invalid
+                transition ID value.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the field in the request body that
+                contains the invalid transition ID value.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when an invalid kiosk
+            transition is specified.
+
+
+            Possible values:
+
+            Invalid Kiosk transition given for execution - The transition ID
+            provided does not correspond to a valid transition for the current
+            kiosk execution state.
+          enum:
+            - Invalid Kiosk transition given for execution
+        status:
+          type: string
+          description: >-
+            Represents the response status returned when an invalid transition
+            error occurs.
+
+
+            Possible values:
+
+            error - The request failed because the specified transition ID is
+            not valid for the current kiosk execution state.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Execution Invalid Transition Error
+      x-zs-$id: ExecutionInvalidTransitionError
+    ExecutionNotAllowedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when the given transition does not belong to the current kiosk
+        state.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details (empty for this error type)
+        message:
+          type: string
+          description: Error message
+          maxLength: 1000
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Execution Not Allowed Error
+      x-zs-$id: ExecutionNotAllowedError
+    KioskExecutionActionPayload:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload for advancing a kiosk execution state,
+        containing one or more execution action entries.
+      properties:
+        kiosk_executions:
+          type: array
+          description: >-
+            Contains one or more execution action entries, each specifying the
+            transition and data context for advancing the kiosk execution to the
+            next state.
+          items:
+            $ref: '#/components/schemas/ExecutionActionEntry'
+          maxItems: 1
+      required:
+        - kiosk_executions
+      title: Kiosk Execution Action Payload
+    PreviewFieldElement:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a field-based element within the kiosk preview screen,
+        including its type classification and current value.
+      properties:
+        field:
+          $ref: '#/components/schemas/PreviewFieldDefinition'
+        type:
+          type: string
+          description: >-
+            Indicates the type classification of the field-based element in the
+            preview screen.
+          maxLength: 255
+        value:
+          type: string
+          description: >-
+            Contains the current value of the field-based element in the preview
+            screen.
+          maxLength: 255
+      required:
+        - field
+        - type
+        - value
+      title: Preview Field Element
+      x-zs-$id: PreviewFieldElement
+    ExecuteActionEntry:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an execute action entry used to process a kiosk state with
+        the provided data context.
+      properties:
+        data:
+          $ref: '#/components/schemas/ExecuteDataContainer'
+          description: >-
+            Specify the data context for the Kiosk execution. If not provided,
+            the Kiosk will execute without a record context.
+      title: Execute Action Entry
+    PreviewPreviousStateSummary:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a summary of a previously executed kiosk state available in
+        the preview, including the state name, ID, and type.
+      properties:
+        name:
+          type: string
+          description: Represents the display name of the previously executed kiosk state.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the previously executed kiosk
+            state.
+          maxLength: 255
+        type:
+          type: string
+          description: >-
+            Indicates the type classification of the previously executed kiosk
+            state, such as start_state or get_records.
+          maxLength: 255
+      required:
+        - id
+        - name
+        - type
+      title: Preview Previous State Summary
+    PreviewElementDataBlock:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a preview element data block that aggregates record retrieval
+        configuration, raw values, record data, and pagination flags for a get
+        record element.
+      properties:
+        get_record:
+          $ref: '#/components/schemas/PreviewGetRecordConfig'
+        type:
+          type: string
+          description: Indicates the type classification of the preview element data block.
+          maxLength: 255
+        value:
+          type: 'null'
+          description: >-
+            Contains the value of the preview element data block, which may be
+            null when the block uses a record retrieval configuration.
+        get_record_data:
+          type: array
+          description: >-
+            Contains the list of CRM records returned by the get record element
+            in the preview screen.
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/PreviewRecordData'
+            description: >-
+              Represents a single CRM record entry returned by the get record
+              element, including key field values and owner details.
+          maxItems: 19
+        more_records:
+          type: boolean
+          description: >-
+            Indicates whether additional CRM records are available beyond those
+            returned in the current preview response.
+
+
+            Possible values:
+
+            true - More records are available and can be retrieved.
+
+            false - All available records have been returned in the current
+            response.
+      required:
+        - get_record
+        - get_record_data
+        - more_records
+        - type
+        - value
+      title: Preview Element Data Block
+      x-zs-$id: PreviewElementDataBlock
+    ExecutionExecutableInfo:
+      type: object
+      additionalProperties: false
+      description: >-
+        Contains information about the current state of the Kiosk execution and
+        the transition that can be executed next.
+      properties:
+        state:
+          $ref: '#/components/schemas/PreviewStateSummary'
+        transitions:
+          type: array
+          description: >-
+            An array of available next transitions from the current state. Each
+            transition object contains the unique identifier of an available
+            transition from the current state.
+          items:
+            $ref: '#/components/schemas/ExecutionTransitionSummary'
+          maxItems: 1
+      required:
+        - state
+        - transitions
+      title: Execution Executable Info
+    PreviewRecordSummary:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a summarized record item returned as part of the preview data
+        set, including the record name and ID.
+      properties:
+        name:
+          type: string
+          description: >-
+            Represents the display name of the record summary item in the
+            preview data.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the record summary item in the
+            preview data.
+          maxLength: 255
+      required:
+        - id
+        - name
+      title: Preview Record Summary
+    PreviewStateSummary:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a summary of a kiosk state referenced in the preview,
+        including the state ID and display name.
+      properties:
+        name:
+          type: string
+          description: >-
+            Represents the display name of the kiosk state referenced in the
+            preview.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the kiosk state referenced in the
+            preview.
+          maxLength: 255
+      required:
+        - id
+        - name
+      title: Preview State Summary
+    KioskTestRunSuccessResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response for a successful kiosk test run, including the
+        status, message, and details of the next executable state.
+      properties:
+        kiosk_test_run:
+          type: array
+          description: >-
+            Contains the result of the test run, including status, message, and
+            details of the next executable state.
+          items:
+            $ref: '#/components/schemas/TestRunStatusItem'
+          maxItems: 1
+      title: Kiosk Test Run Success Response
+      x-zs-$id: KioskTestRunSuccessResponse
+    KioskExecutionViewResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response for a specific kiosk execution state view,
+        containing the elements and metadata for the state being executed.
+      properties:
+        kiosk_executions:
+          type: array
+          description: >-
+            Contains the details of the execution state being rendered,
+            including elements, layout, and data.
+          items:
+            $ref: '#/components/schemas/KioskExecutionView'
+          maxItems: 1
+      required:
+        - kiosk_executions
+      title: Kiosk Execution View Response
+      x-zs-$id: KioskExecutionViewResponse
+    KioskExecutionActionSuccessResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates that an execution action completed successfully and provides
+        details of the next executable state and execution ID.
+      properties:
+        kiosk_executions:
+          type: array
+          description: >-
+            Contains the result of the execution action, including the status,
+            message, and details of the next executable state.
+          items:
+            $ref: '#/components/schemas/ExecutionActionStatusItem'
+          maxItems: 1
+      title: Kiosk Execution Action Success Response
+      x-zs-$id: KioskExecutionActionSuccessResponse
+    PreviewOwnerSummary:
+      type: object
+      additionalProperties: false
+      description: >-
+        Contains information about the owner of the record who initiated this
+        kiosk execution.
+      properties:
+        name:
+          type: string
+          description: Represents the full name of the record owner in the preview.
+          maxLength: 255
+        id:
+          type: string
+          description: Contains the unique identifier of the record owner in the preview.
+          maxLength: 255
+      required:
+        - id
+        - name
+      title: Preview Owner Summary
+    PreviewModuleInfo:
+      type: object
+      additionalProperties: false
+      description: >-
+        Describes the CRM module used in the preview get record element,
+        including its display label, API name, internal name, and ID.
+      properties:
+        display_label:
+          type: string
+          description: >-
+            Represents the display label of the CRM module shown to the user in
+            the preview.
+          maxLength: 255
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the CRM module used in the preview get
+            record element.
+          maxLength: 255
+        name:
+          type: string
+          description: >-
+            Represents the internal name of the CRM module used in the preview
+            get record element.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the CRM module used in the preview
+            get record element.
+          maxLength: 255
+      required:
+        - api_name
+        - display_label
+        - id
+        - name
+      title: Preview Module Info
+    KioskExecutionRecord:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an execution instance of a kiosk, including start and end
+        timestamps, owner information, executable state details, and the
+        execution record ID.
+      properties:
+        Kiosk_End_Time:
+          type: string
+          description: >-
+            The timestamp indicating when the most recently executed state of
+            the Kiosk ended, in ISO 8601 format. The response is sorted in
+            descending order of this field, with the most recent executions
+            listed first.
+          maxLength: 255
+        Owner:
+          $ref: '#/components/schemas/PreviewOwnerSummary'
+        executable_info:
+          $ref: '#/components/schemas/ExecutionExecutableInfo'
+        id:
+          type: string
+          description: The unique identifier of the available transition.
+          maxLength: 255
+        Kiosk_Start_Time:
+          type: string
+          description: >-
+            Represents the date and time at which the kiosk execution record
+            session began.
+          maxLength: 255
+      required:
+        - Kiosk_End_Time
+        - Kiosk_Start_Time
+        - Owner
+        - executable_info
+        - id
+      title: Kiosk Execution Record
+    KioskTestRunEntry:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a test run payload entry that provides the data context
+        needed for executing a kiosk test run.
+      properties:
+        data:
+          $ref: '#/components/schemas/ExecuteDataContainer'
+          description: Contains information about the current record module if any
+      title: Kiosk Test Run Entry
+    PreviewRecordData:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the data returned for a previewed CRM record, including key
+        field values and owner details.
+      properties:
+        First_Name:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the first name of the contact or lead in the previewed
+            CRM record.
+          maxLength: 255
+        Company:
+          type: string
+          description: Represents the company name of the previewed CRM record.
+          maxLength: 255
+        Owner:
+          $ref: '#/components/schemas/PreviewOwnerSummary'
+        id:
+          type: string
+          description: Contains the unique identifier of the previewed CRM record.
+          maxLength: 255
+      required:
+        - Company
+        - First_Name
+        - Owner
+        - id
+      title: Preview Record Data
+      x-zs-$id: PreviewRecordData
+    ExecutionActionStatusItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the result of an execution action, including the status code,
+        message, and details of the next executable state.
+      properties:
+        code:
+          type: string
+          description: Represents the status code returned for the execution action result.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/TestRunExecutionDetails'
+        message:
+          type: string
+          description: Contains the message describing the outcome of the execution action.
+          maxLength: 255
+        status:
+          type: string
+          description: Indicates the overall status of the execution action result.
+          maxLength: 255
+      title: Execution Action Status Item
+    KioskExecuteActionPayload:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload for executing a kiosk, containing one or
+        more execute action entries.
+      properties:
+        kiosk_execute:
+          type: array
+          description: >-
+            The request body must be a JSON object containing the kiosk_execute
+            array. The array contains the  data required to execute the Kiosk.
+          items:
+            $ref: '#/components/schemas/ExecuteActionEntry'
+          maxItems: 1
+      required:
+        - kiosk_execute
+      title: Kiosk Execute Action Payload
+    ExecutionOwnerDetail:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents detailed owner information for a kiosk execution, including
+        name, ID, and email address.
+      properties:
+        name:
+          type: string
+          description: >-
+            Represents the full name of the owner associated with the kiosk
+            execution.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Contains the unique identifier of the owner associated with the
+            kiosk execution.
+          maxLength: 255
+        email:
+          type: string
+          description: >-
+            Represents the email address of the owner associated with the kiosk
+            execution.
+          maxLength: 255
+      required:
+        - email
+        - id
+        - name
+      title: Execution Owner Detail
+    ExecuteDataContainer:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the execution data container, holding the current record
+        reference and the execution instance ID.
+      properties:
+        Current_Record:
+          $ref: '#/components/schemas/ExecuteCurrentRecordRef'
+          description: >-
+            The Current_Record field provides the record context for the Kiosk
+            execution.
+        id:
+          type:
+            - string
+            - 'null'
+          description: Represents the unique identifier of the kiosk execution instance.
+          maxLength: 18
+      title: Execute Data Container
+  parameters:
+    KioskIdPathParams:
+      name: kioskId
+      in: path
+      required: true
+      description: >-
+        Specify the unique identifier of the kiosk for which you want to perform
+        the operation.
+      schema:
+        type: string
+        maxLength: 19
+    ExecutionIdPathParams:
+      name: executionId
+      in: path
+      required: true
+      description: Specify the unique ID of the execution.
+      schema:
+        type: string
+        maxLength: 19
+    ParamQueryCurrentRecordId:
+      name: current_record_id
+      in: query
+      description: >
+        Specifies the ID of the record to use as the Current Record context
+        while previewing the Kiosk. The record must belong to the module
+        configured as the Current Record in the Kiosk.
+
+        If this parameter is not provided, merge fields that reference the
+        Current Record are not evaluated during the Kiosk preview and will
+        return empty values.
+      required: false
+      schema:
+        type: string
+        format: int64
+    ParamQueryInvokedFrom:
+      name: invoked_from
+      in: query
+      description: |
+        Specify the context from which the kiosk preview is being invoked.
+        Possible values:
+        detail_view - The kiosk is invoked from the CRM record detail view.
+        home_page - The Kiosk is invoked from the home page.
+        cscript - The Kiosk is invoked from a Client Script.
+        canvas - The Kiosk is invoked from a Canvas view.
+      required: false
+      schema:
+        type: string
+        enum:
+          - detail_view
+          - home_page
+          - cscript
+          - canvas
+    ParamQueryIncludeInnerDetails:
+      name: include_inner_details
+      in: query
+      description: >-
+        Specify additional inner details to include in the response. Accepts a
+        comma-separated list of dot-notation paths indicating which nested
+        properties should return extended information.
+      required: false
+      schema:
+        type: string
+        maxLength: 500
+    ParamQueryPage:
+      name: page
+      in: query
+      description: Page number for pagination.
+      required: false
+      schema:
+        type: integer
+        format: int32
+    ParamQueryPerPage:
+      name: per_page
+      in: query
+      description: Number of results per page.
+      required: false
+      schema:
+        type: integer
+        format: int32
+    ParamQueryNavigatedFromBack:
+      name: navigated_from_back
+      in: query
+      description: Indicates whether the execution was navigated from a back action.
+      required: false
+      schema:
+        type: boolean
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.kiosks.ALL: >-
+              Grants full access to kiosk settings in Zoho CRM, including
+              create, read, update, and delete operations.
+            ZohoCRM.settings.kiosks.CREATE: >-
+              Grants permission to initiate kiosk executions and test runs in
+              Zoho CRM.
+            ZohoCRM.settings.kiosks.READ: >-
+              Grants permission to retrieve kiosk execution details, preview
+              states, and execution records in Zoho CRM.
+            ZohoCRM.settings.kiosks.UPDATE: >-
+              Grants permission to advance kiosk execution states by executing
+              transitions in Zoho CRM.
+            ZohoCRM.settings.kiosks.DELETE: >-
+              Grants permission to delete kiosk settings and related resources
+              in Zoho CRM.

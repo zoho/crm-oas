@@ -1,0 +1,24 @@
+# Email Notifications
+
+- [OpenAPI specification](email_notifications.yaml)
+- [List Email Notifications](operations/getEmailNotifications/operation.md)
+  - Retrieves the list of email notifications configured in your Zoho CRM organization.
+  - [Examples](operations/getEmailNotifications/examples/)
+- [Create Email Notifications](operations/postEmailNotifications/operation.md)
+  - Creates an email notification action in your Zoho CRM organization by defining its name, associated module, email template, sender details, and recipients. The email notification can be linked to automation rules so that emails are automatically triggered when the specified conditions are met. A pre-existing Email Template is required before creating an email notification; the template ID must be referenced in the request payload.
+  - [Examples](operations/postEmailNotifications/examples/)
+- [Delete Email Notifications](operations/deleteEmailNotifications/operation.md)
+  - To delete one or more email notifications configured in your Zoho CRM organization. Email notifications associated with an Approval Process, Workflow Rule, Blueprint, or CommandCenter automation cannot be deleted until they are disassociated from the corresponding automation.
+  - [Examples](operations/deleteEmailNotifications/examples/)
+- [Get an Email Notification by ID](operations/getEmailNotificationsById/operation.md)
+  - Retrieves the details of a specific email notification configured in your Zoho CRM organization.
+  - [Examples](operations/getEmailNotificationsById/examples/)
+- [Update an Email Notification by ID](operations/updateEmailNotification/operation.md)
+  - Updates an existing email notification in your Zoho CRM organization.
+  - [Examples](operations/updateEmailNotification/examples/)
+- [Delete an Email Notification by ID](operations/deleteEmailNotificationById/operation.md)
+  - Deletes a single email notification configured in your Zoho CRM organization. Email notifications associated with an Approval Process, Workflow Rules, or Blueprint cannot be deleted until they are disassociated from the corresponding automation.
+  - [Examples](operations/deleteEmailNotificationById/examples/)
+- [Get Email Notification Action Usage Reports](operations/getEmailNotificationUsageReports/operation.md)
+  - Retrieves usage statistics for email notification actions executed in your Zoho CRM organization over a specified date range, grouped by date, resource, or type according to the group_by parameter.
+  - [Examples](operations/getEmailNotificationUsageReports/examples/)

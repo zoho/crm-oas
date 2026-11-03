@@ -1,0 +1,27 @@
+# Automation Functions
+
+- [OpenAPI specification](automation_functions.yaml)
+- [Get Automation Function](operations/getAutomationFunctions/operation.md)
+  - To retrieve the details of a specific automation function in your Zoho CRM organization.
+  - [Examples](operations/getAutomationFunctions/examples/)
+- [Update Automation Function](operations/putAutomationFunctions/operation.md)
+  - To update an automation function configuration in your Zoho CRM organization.
+  - [Examples](operations/putAutomationFunctions/examples/)
+- [Delete Automation Function](operations/deleteAutomationFunction/operation.md)
+  - To delete an automation function from your Zoho CRM organization.
+  - [Examples](operations/deleteAutomationFunction/examples/)
+- [Get Automation Functions](operations/getAllAutomationFunctions/operation.md)
+  - To retrieve all automation functions configured in your Zoho CRM organization.
+  - [Examples](operations/getAllAutomationFunctions/examples/)
+- [Update Automation Function](operations/putAutomationFunctionsBodyId/operation.md)
+  - To update an automation function in your Zoho CRM organization.
+  - [Examples](operations/putAutomationFunctionsBodyId/examples/)
+- [Create Automation Function](operations/postAutomationFunctions/operation.md)
+  - To create a custom automation function in your Zoho CRM organization.
+  - [Examples](operations/postAutomationFunctions/examples/)
+- [Delete Functions](operations/deleteAutomationFunctions/operation.md)
+  - To delete one or more automation functions from your Zoho CRM organization.
+  - [Examples](operations/deleteAutomationFunctions/examples/)
+- [Get Associated Modules for Automation Functions](operations/getAssociatedModules/operation.md)
+  - To retrieve the list of modules associated with automation functions in your Zoho CRM organization.
+  - [Examples](operations/getAssociatedModules/examples/)
