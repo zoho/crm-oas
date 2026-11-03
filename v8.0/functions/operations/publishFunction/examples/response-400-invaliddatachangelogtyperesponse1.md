@@ -1,0 +1,17 @@
+INVALID_DATA Error for Invalid Changelog Data Type
+
+```json
+{
+  "metadata": {
+    "code": "INVALID_DATA",
+    "message": "Invalid data type",
+    "details": {
+      "api_name": "changelog",
+      "maximum_length": 250,
+      "expected_data_type": "text",
+      "json_path": "$.publish.changelog"
+    },
+    "status": "error"
+  }
+}
+```

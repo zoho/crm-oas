@@ -1,0 +1,4678 @@
+openapi: 3.1.0
+info:
+  title: Kiosk Get Records API
+  description: >-
+    Unified API specification for managing Get Record components in Zoho CRM
+    Kiosks. This API supports creating, reading, updating, and deleting
+    get_record configurations, as well as managing their associations.
+
+
+    Get Record is a component inside a Kiosk that acts as a record aggregator.
+    It fetches records from a specified CRM module based on configured criteria
+    and selection rules. During kiosk execution, it matches the criteria against
+    the module's records and retrieves all matching entries for use in
+    subsequent actions or display.
+
+
+    Key capabilities:
+
+    - **CRUD Operations** on get_record components within a kiosk
+
+    - **Criteria Configuration** using simple or grouped filter conditions
+
+    - **Selection Rules** for controlling how fetched records are presented
+    (single/multiple/all)
+
+    - **Association Management** for linking kiosks to detail view pages and
+    tracking component dependencies
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server for /crm
+    variables:
+      dc:
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+        description: Data center region
+      version:
+        default: v8
+        description: API version
+paths:
+  /settings/kiosks/{kioskId}/get_records:
+    get:
+      summary: Kiosk GetRecords
+      description: >
+        To retrieve all GetRecords configurations associated with a Kiosk. The
+        response includes details such as criteria, selection configuration,
+        selected fields, module information, and sorting preferences. Use the
+        [Get All Kiosks API](kiosks.yaml#$.paths./settings/kiosks.get) to
+        retrieve the Kiosk ID.
+      operationId: getAllKioskGetRecords
+      parameters:
+        - $ref: '#/components/parameters/ParamPathKioskid'
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+      responses:
+        '200':
+          description: Successfully retrieved all get_record components from the kiosk.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllGetRecordsResponse'
+              examples:
+                Success200:
+                  summary: >-
+                    Success response containing get records with different
+                    criteria types
+                  value:
+                    get_records:
+                      - selection_details:
+                          selection_type: null
+                          result_type: single
+                          limit: 1
+                          range: 1
+                        criteria:
+                          comparator: not_equal
+                          field:
+                            api_name: Annual_Revenue
+                            id: '4676645000000000581'
+                          type: value
+                          value: ${EMPTY}
+                        module:
+                          api_name: Leads
+                          id: '4676645000000000125'
+                        name: GetRecords 4
+                        id: '4676645000000914086'
+                        type: parent
+                        selected_fields: null
+                        sort_order:
+                          order_by_name: descending
+                          order_by_field:
+                            api_name: Modified_Time
+                            id: '4676645000000000595'
+                      - selection_details:
+                          selection_type: mandate
+                          result_type: multiple
+                          limit: 10
+                          range: 100
+                        criteria:
+                          group_operator: AND
+                          group:
+                            - comparator: equal
+                              field:
+                                api_name: Annual_Revenue
+                                id: '4676645000000000581'
+                              type: value
+                              value: '250'
+                            - comparator: not_equal
+                              field:
+                                api_name: City
+                                id: '4676645000000000605'
+                              type: value
+                              value: ${EMPTY}
+                        module:
+                          api_name: Leads
+                          id: '4676645000000000125'
+                        name: GetRecords 3
+                        id: '4676645000000901064'
+                        type: parent
+                        selected_fields: null
+                        sort_order:
+                          order_by_name: descending
+                          order_by_field:
+                            api_name: Modified_Time
+                            id: '4676645000000000595'
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '204':
+          description: No get_record components found in the kiosk.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: Invalid request. The specified kiosk does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecordErrorResponse'
+              examples:
+                InvalidKiosk:
+                  summary: No such Kiosk exists
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.READ
+    post:
+      summary: Kiosk GetRecord
+      description: >
+        To create a
+        [GetRecords](https://help.zoho.com/portal/en/kb/crm/customize-crm-account/kiosk/articles/elements-of-a-kiosk#GetRecords)
+        configuration associated with a Kiosk. It defines how records should be
+        fetched from a module, including criteria, selection behavior, and
+        sorting.
+
+        Use the [Get All Kiosks API](kiosks.yaml#$.paths./settings/kiosks.get)
+        to retrieve the Kiosk ID.
+
+        **Note:**
+         - You can configure GetRecords only for Kiosks in the draft state.
+         - The maximum number of GetRecords configurations allowed per Kiosk depends on the CRM edition:
+            - Enterprise: 50
+            - Professional: 10
+            - Standard: 5
+      operationId: createKioskGetRecord
+      parameters:
+        - $ref: '#/components/parameters/ParamPathKioskid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGetRecordRequest'
+            examples:
+              CreateChildGetRecord:
+                summary: Create a child-type get record with grouped criteria
+                value:
+                  get_records:
+                    - name: GetRecords 3
+                      module:
+                        api_name: Leads
+                        id: '2296900000010857048'
+                        name: Leads
+                      criteria:
+                        group_operator: and
+                        group:
+                          - field:
+                              api_name: Annual_Revenue
+                              id: '2296900000010863615'
+                              field_label: Annual Revenue
+                              data_type: currency
+                              decimal_place: 2
+                            comparator: not_equal
+                            value:
+                              id: '2296900000010863615'
+                              api_name: Annual_Revenue
+                            type: value
+                          - field:
+                              api_name: City
+                              id: '2296900000010863627'
+                              field_label: City
+                              data_type: text
+                            comparator: equal
+                            value:
+                              api_name: users.last_name
+                              id: '2296900000010863437'
+                              data_type: text
+                            type: field
+                      sort_order:
+                        order_by_name: descending
+                        order_by_field:
+                          display_label: Modified Time
+                          api_name: Modified_Time
+                          id: '2296900000010863622'
+                      selection_details:
+                        result_type: multiple
+                        selection_type: mandate
+                        range: 20
+                        limit: 10
+                      selected_fields: []
+                      type: child
+                      parent_record_field:
+                        id: '2296900000011244175'
+                      child_relationship:
+                        id: '2296900000010872872'
+                        display_label: Calls
+            x-zs-llm-examples:
+              - CreateChildGetRecord
+      responses:
+        '201':
+          description: Get record created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateGetRecordResponse'
+              examples:
+                Success201:
+                  summary: Successfully created get record
+                  value:
+                    get_records:
+                      - code: SUCCESS
+                        details:
+                          id: '2296900000011244392'
+                        message: Get record created successfully
+                        status: success
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: Invalid request due to validation errors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecordErrorResponse'
+              examples:
+                InvalidKiosk:
+                  summary: No such Kiosk exists
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                DuplicateName:
+                  summary: Duplicate get record name
+                  value:
+                    get_records:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.get_records[0].name
+                        message: Duplicate get record name
+                        status: error
+                MandatoryFieldMissing:
+                  summary: Required field criteria is missing
+                  value:
+                    get_records:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: criteria
+                          json_path: $.get_records[0].criteria
+                        message: required field not found
+                        status: error
+                InvalidDataType:
+                  summary: Invalid data type for name field
+                  value:
+                    get_records:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.get_records[*].name
+                        status: error
+                DependentMismatch:
+                  summary: Selection range should be 1 for single record
+                  value:
+                    get_records:
+                      - code: DEPENDENT_MISMATCH
+                        details:
+                          dependee:
+                            api_name: result_type
+                            json_path: $.get_records[0].selection_details.result_type
+                          api_name: range
+                          json_path: $.get_records[0].selection_details.range
+                          maximum_value: 1
+                        message: >-
+                          Get Record selection range should be 1 for single
+                          record
+                        status: error
+                DependentFieldMissing:
+                  summary: parent_record_field required when type is child
+                  value:
+                    get_records:
+                      - code: DEPENDENT_FIELD_MISSING
+                        message: Dependent field is missing
+                        details:
+                          dependee:
+                            api_name: type
+                            json_path: $.get_records[*].type
+                          api_name: parent_record_field
+                          json_path: $.get_records[*].parent_record_field
+                        status: error
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.CREATE
+  /settings/kiosks/{kioskId}/get_records/{getRecordId}:
+    get:
+      summary: Retrieve a specific get_record component from a Kiosk
+      description: >
+        To retrieve the details of a specific GetRecords configuration
+        associated with a Kiosk using its GetRecords ID. Use the [Get All Kiosks
+        API](kiosks.yaml#$.paths./settings/kiosks.get) to retrieve the Kiosk ID
+        and the Kiosk GetRecords API to retrieve the GetRecords ID.
+
+        **Note:**
+
+        The response structure is dynamic and depends on the GetRecords
+        configuration. Fields such as criteria, type, and selection_details may
+        vary based on the configured settings.
+      operationId: getKioskGetRecord
+      parameters:
+        - $ref: '#/components/parameters/ParamPathKioskid'
+        - $ref: '#/components/parameters/ParamPathGetRecordid'
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+      responses:
+        '200':
+          description: >
+            Returns the full configuration of the specified get_record
+            component, including its module, type, criteria, sort order,
+            selection details, and selected fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllGetRecordsResponse'
+              examples:
+                Success200:
+                  summary: |
+                    Successful retrieval of a single get_record component by ID
+                  value:
+                    get_records:
+                      - selection_details:
+                          selection_type: null
+                          result_type: single
+                          limit: 1
+                          range: 1
+                        criteria:
+                          comparator: not_equal
+                          field:
+                            api_name: Annual_Revenue
+                            id: '4676645000000000581'
+                          type: value
+                          value: ${EMPTY}
+                        module:
+                          api_name: Leads
+                          id: '4676645000000000125'
+                        name: GetRecords 4
+                        id: '4676645000000914086'
+                        type: parent
+                        selected_fields: null
+                        sort_order:
+                          order_by_name: descending
+                          order_by_field:
+                            api_name: Modified_Time
+                            id: '4676645000000000595'
+                  description: >
+                    Shows a successful retrieval of a single get_record
+                    component with its full configuration, including module,
+                    type, sort order, selection details, selected fields, and
+                    criteria.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >
+            The request is invalid due to a malformed or nonexistent kiosk ID or
+            get_record ID.
+
+            **Resolution:** The caller must verify that the kioskId and
+            getRecordId path parameters reference valid, existing resources
+            before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecordErrorResponse'
+              examples:
+                InvalidKiosk:
+                  summary: |
+                    400 error when the kiosk ID does not exist
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                  description: >
+                    Shows a 400 error response returned when the kioskId path
+                    parameter does not match an existing kiosk. The response
+                    uses the flat error schema with a status of error and a
+                    message indicating the kiosk does not exist.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.READ
+    put:
+      summary: Kiosk GetRecord
+      description: >
+        To update an existing
+        [GetRecords](https://help.zoho.com/portal/en/kb/crm/customize-crm-account/kiosk/articles/elements-of-a-kiosk#GetRecords)
+        configuration associated with a Kiosk. This API supports only draft
+        Kiosks.
+
+
+        You can update the following fields:
+          - name
+          - criteria
+          - sort_order
+          - result_type
+          - limit
+
+        Use the [Get All Kiosks API](kiosks.yaml#$.paths./settings/kiosks.get)
+        to retrieve the Kiosk ID and use the Kiosk GetRecords API to retrieve
+        the available GetRecords configurations for a Kiosk.
+
+
+        **Note:** This API won't work for the Active Kiosks. The system will
+        throw the **NOT_ALLOWED** error.
+      operationId: updateKioskGetRecord
+      parameters:
+        - $ref: '#/components/parameters/ParamPathKioskid'
+        - $ref: '#/components/parameters/ParamPathGetRecordid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGetRecordRequest'
+            examples:
+              UpdateGetRecord:
+                summary: Update a get record with new criteria and selection
+                value:
+                  get_records:
+                    - name: GetRecords 3
+                      module:
+                        api_name: Leads
+                        id: '2296900000010857048'
+                        name: Leads
+                      criteria:
+                        group_operator: and
+                        group:
+                          - field:
+                              api_name: Annual_Revenue
+                              id: '2296900000010863615'
+                              field_label: Annual Revenue
+                              data_type: currency
+                              decimal_place: 2
+                            comparator: not_equal
+                            value:
+                              id: '2296900000010863615'
+                              api_name: Annual_Revenue
+                            type: value
+                          - field:
+                              api_name: City
+                              id: '2296900000010863627'
+                              field_label: City
+                              data_type: text
+                            comparator: equal
+                            value:
+                              api_name: users.last_name
+                              id: '2296900000010863437'
+                              data_type: text
+                            type: field
+                      sort_order:
+                        order_by_name: descending
+                        order_by_field:
+                          display_label: Modified Time
+                          api_name: Modified_Time
+                          id: '2296900000010863622'
+                      selection_details:
+                        result_type: multiple
+                        selection_type: mandate
+                        range: 20
+                        limit: 10
+                      selected_fields: []
+                      type: child
+                      parent_record_field:
+                        id: '2296900000011244175'
+                      child_relationship:
+                        id: '2296900000010872872'
+                        display_label: Calls
+            x-zs-llm-examples:
+              - UpdateGetRecord
+      responses:
+        '200':
+          description: Get record updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateGetRecordResponse'
+              examples:
+                Success200:
+                  summary: Successfully updated get record
+                  value:
+                    get_records:
+                      - code: SUCCESS
+                        details:
+                          id: '2296900000011244362'
+                        message: Get record updated successfully
+                        status: success
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: Invalid request due to validation errors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecordErrorResponse'
+              examples:
+                InvalidKiosk:
+                  summary: No such Kiosk exists
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                DuplicateName:
+                  summary: Duplicate get record name
+                  value:
+                    get_records:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.get_records[0].name
+                        message: Duplicate get record name
+                        status: error
+                DependentMismatch:
+                  summary: Selection range should be 1 for single record
+                  value:
+                    get_records:
+                      - code: DEPENDENT_MISMATCH
+                        details:
+                          dependee:
+                            api_name: result_type
+                            json_path: $.get_records[0].selection_details.result_type
+                          api_name: range
+                          json_path: $.get_records[0].selection_details.range
+                          maximum_value: 1
+                        message: >-
+                          Get Record selection range should be 1 for single
+                          record
+                        status: error
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.UPDATE
+    delete:
+      summary: Kiosk GetRecord
+      description: >
+        To delete a specific
+        [GetRecords](https://help.zoho.com/portal/en/kb/crm/customize-crm-account/kiosk/articles/elements-of-a-kiosk#GetRecords)
+        configuration associated with a Kiosk.
+
+        Use the [GetRecords Associations
+        API](kiosks_get_records.yaml#$.paths./settings/kiosks/{kioskId}/get_records/{getRecordId}/associations.get)
+        to identify all associations of the GetRecords configuration. Remove the
+        associations from the respective Kiosk components, and then delete the
+        GetRecords configuration.
+
+        Use the [Get All Kiosks API](kiosks.yaml#$.paths./settings/kiosks.get)
+        to retrieve the Kiosk ID and use the [Kiosk GetRecords
+        API](kiosks_get_records.yaml#$.paths./settings/kiosks/{kioskId}/get_records.get)
+        to retrieve the GetRecords ID.
+
+        **Note:**
+
+        The response structure is dynamic and depends on the GetRecords
+        configuration. Fields such as criteria, type, and selection_details may
+        vary based on the configured settings.
+      operationId: deleteKioskGetRecord
+      parameters:
+        - $ref: '#/components/parameters/ParamPathKioskid'
+        - $ref: '#/components/parameters/ParamPathGetRecordid'
+      responses:
+        '200':
+          description: Get record deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteGetRecordResponse'
+              examples:
+                Success200:
+                  summary: Successfully deleted get record
+                  value:
+                    get_records:
+                      - code: SUCCESS
+                        details:
+                          id: '4676645000000914120'
+                        message: Get record deleted successfully
+                        status: success
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecordErrorResponse'
+              examples:
+                InvalidData:
+                  summary: invalid data
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 6
+                    message: invalid data
+                    status: error
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.DELETE
+  /settings/kiosks/{kioskId}/get_records/{getRecordId}/associations:
+    get:
+      summary: GetRecords Associations
+      description: >
+        This API returns all the associations of a specific
+        [GetRecords](https://help.zoho.com/portal/en/kb/crm/customize-crm-account/kiosk/articles/elements-of-a-kiosk#GetRecords)
+        configuration. Associations represent where the configuration is being
+        used, such as:
+          - Kiosk states
+          - Actions
+          - Other dependent elements
+
+        This API helps you understand the dependencies of a GetRecords
+        configuration before
+        [modifying](kiosks_states.yaml#$.paths./settings/kiosks/{kioskId}/states/{stateId}.put) 
+        or
+        [deleting](kiosks_states.yaml#$.paths./settings/kiosks/{kioskId}/states/{stateId}.delete)
+        it. 
+
+
+
+        **Note:** Predefined states, start state and end state, cannot be
+        deleted.
+      operationId: getKioskGetRecordAssociations
+      parameters:
+        - $ref: '#/components/parameters/ParamPathKioskid'
+        - $ref: '#/components/parameters/ParamPathGetRecordid'
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+      responses:
+        '200':
+          description: >-
+            Returns the association data for the specified get_record component
+            within the kiosk, including the list of resources and the type of
+            each association.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGetRecordAssociationsResponse'
+              examples:
+                Success200:
+                  summary: >
+                    Successful retrieval of associations for a get_record
+                    component
+                  value:
+                    get_records:
+                      - _associations:
+                          - resources:
+                              - name: GetRecords 8
+                                id: '2296900000011244383'
+                                _details:
+                                  type: get_records
+                            type: kiosk_states
+                        id: '2296900000011244362'
+                  description: >
+                    The response contains association data for the specified
+                    get_record component, with associations grouped by kiosk
+                    states and each group listing the detail view page resources
+                    that reference the component.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            Returned when the request contains invalid path parameters.
+
+            **Resolution:** The kioskId and getRecordId path parameters must
+            reference a valid, existing kiosk and get_record component in the
+            organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecordErrorResponse'
+              examples:
+                InvalidKiosk:
+                  summary: |
+                    400 error when the kiosk ID in the path is invalid
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                  description: >-
+                    Returns a 400 error when the kiosk ID supplied in the
+                    request path does not correspond to any existing kiosk in
+                    the organization. The error body carries an INVALID_DATA
+                    code and a details object that identifies the offending path
+                    segment via a resource path index.
+                InvalidGetRecord:
+                  summary: |
+                    400 error when the get_record ID in the path is invalid
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 4
+                    message: No such Get Record exists in Kiosk
+                    status: error
+                  description: >-
+                    Returns a 400 error when the get_record ID supplied in the
+                    request path does not correspond to any existing get_record
+                    component in the organization. The error body carries an
+                    INVALID_DATA code and a details object that identifies the
+                    offending path segment via a resource path index.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.READ
+  /settings/kiosks/{kioskId}/associations:
+    get:
+      summary: Get Kiosk Associations
+      description: >
+        Retrieves all associations configured for a specific Kiosk in Zoho CRM,
+        including the associated resources and, their additional details.
+
+
+        Use the [Get All Kiosks API](kiosks.yaml#$.paths./settings/kiosks.get)
+        to retrieve the Kiosk ID.
+
+
+        **Note:**
+          - The structure of each resource object is mostly consistent, but _details can vary.
+          - The sequence_number plays an important role in determining execution or display order.
+      operationId: getKioskAssociations
+      parameters:
+        - $ref: '#/components/parameters/ParamPathKioskid'
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+        - $ref: '#/components/parameters/ParamQueryInclude'
+        - $ref: '#/components/parameters/ParamQueryModule'
+      responses:
+        '200':
+          description: >-
+            Returns the association information for the specified kiosk,
+            including detail view page associations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetKioskAssociationsResponse'
+              examples:
+                Success200:
+                  summary: Successful retrieval of kiosk detail view page associations
+                  value:
+                    kiosks:
+                      - _associations:
+                          - resources: null
+                            type: detail_view_page
+                            detail_view_page:
+                              - sequence_number: 1
+                                name: df
+                                id: '2296900000010996416'
+                        id: '2296900000010992001'
+                  description: >-
+                    Shows a successful response containing one kiosk with a
+                    detail view page association, including the sequence number
+                    and page identifier.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            The specified kiosk does not exist.
+
+            **Resolution:** The **kioskId** path parameter must reference an
+            existing kiosk.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecordErrorResponse'
+              examples:
+                InvalidKiosk:
+                  summary: Kiosk does not exist
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                  description: >-
+                    Shows a 400 error response returned when the kioskId path
+                    parameter references a kiosk that does not exist.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.READ
+    put:
+      summary: Kiosk Associations
+      description: >
+        This API allows you to associate an active Kiosk with the Record Detail
+        View Page of a module. Once associated, the Kiosk will be available
+        within the selected module's Record Detail View Page based on the
+        specified layout.
+
+
+        Use the [Get All Kiosks API](kiosks.yaml#$.paths./settings/kiosks.get)
+        to retrieve the Kiosk ID. Ensure that the Kiosk is in the active state
+        before associating it.
+
+
+
+        **Note:**
+          - To delete an existing association, include the _delete key with a null value ("_delete": null) in the request. Refer to the Sample input to disassociate a Kiosk from the Record Detail View Page for an example.  Specify the association id to remove the Record Detail View Page association. Use the [Kiosk Associations API](kiosks_get_records.yaml#$.paths./settings/kiosks/associations.get) to retrieve the ID.
+          - The maximum number of Kiosk associations allowed per layout depends on your CRM edition:
+             - Standard / Professional: 1 association
+             - Enterprise: 3 associations
+             - Ultimate and above: 5 associations
+      operationId: updateKioskAssociations
+      parameters:
+        - $ref: '#/components/parameters/ParamPathKioskid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateKioskAssociationsRequest'
+            examples:
+              AssociateKiosk:
+                summary: Associate kiosk with a detail view page
+                value:
+                  kiosks:
+                    - id: '2296900000011222004'
+                      _associations:
+                        - type: detail_view_page
+                          detail_view_page:
+                            - name: aaa
+                              layout:
+                                id: '2296900000010857368'
+                              module:
+                                api_name: Leads
+                                id: '2296900000010857048'
+                              _delete: null
+            x-zs-llm-examples:
+              - AssociateKiosk
+      responses:
+        '200':
+          description: Kiosk association updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateKioskAssociationsResponse'
+              examples:
+                Success200:
+                  summary: Successfully updated kiosk association
+                  value:
+                    kiosks:
+                      - code: SUCCESS
+                        details:
+                          id: '2296900000011252034'
+                        message: Kiosk component deleted successfully
+                        status: success
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecordErrorResponse'
+              examples:
+                InvalidKiosk:
+                  summary: No such Kiosk exists
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                DuplicateAssociation:
+                  summary: Kiosk already associated with this layout
+                  value:
+                    kiosks:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: id
+                          json_path: >-
+                            $.kiosks[0]._associations.detail_view_page[0].layout.id
+                        message: Kiosk already associated with this layout
+                        status: error
+                MandatoryModuleMissing:
+                  summary: Required field module is missing
+                  value:
+                    kiosks:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: module
+                          json_path: $.kiosks[0]._associations.detail_view_page[0].module
+                        message: required field not found
+                        status: error
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.UPDATE
+  /settings/kiosks/{kioskId}/current_record/associations:
+    get:
+      summary: |
+        Kiosk CurrentRecords Associations
+      description: >
+        To retrieve all associations configured for the current record of the
+        specified kiosk in your Zoho CRM organization.
+
+
+        Use this API to retrieve all the associations configured for the
+        CurrentRecord lookup field in a specific Kiosk. It returns the list of
+        associated resources, including their sequence, name, and ID, that are
+        linked to the CurrentRecord in the Kiosk setup.
+
+
+        **Note:**
+          - The response includes all associations defined for the CurrentRecord in the specified Kiosk.
+          - Each association may contain one or more resources with details such as sequence number, name, and ID.
+      operationId: getKioskCurrentRecordAssociations
+      parameters:
+        - $ref: '#/components/parameters/ParamPathKioskid'
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+      responses:
+        '200':
+          description: >-
+            Returns the association data configured for the current record of
+            the specified kiosk, including the list of resources and the type of
+            the association.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCurrentRecordAssociationsResponse'
+              examples:
+                Success200:
+                  summary: >-
+                    Successful retrieval of current record associations for a
+                    kiosk
+                  value:
+                    current_record:
+                      - _associations:
+                          - resources:
+                              - name: Action 2
+                                id: '2296900000011244496'
+                                _details:
+                                  type: action
+                            type: kiosk_states
+                        id: '2296900000011244473'
+                  description: >-
+                    Returns the current record associations for a kiosk, where
+                    the current record has one association of type kiosk_states
+                    containing one action-type resource.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            Returned when the kioskId path parameter does not correspond to an
+            existing kiosk in the organization.
+
+            **Resolution:** The kioskId path parameter must reference an
+            existing kiosk within the organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecordErrorResponse'
+              examples:
+                InvalidKiosk:
+                  summary: Invalid kiosk identifier — no matching kiosk found
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: No such Kiosk exists
+                    status: error
+                  description: >-
+                    Returned when the kioskId path parameter does not correspond
+                    to an existing kiosk in the organization, resulting in an
+                    INVALID_DATA error.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.READ
+  /settings/kiosks/associations:
+    get:
+      summary: Kiosk Associations
+      description: >
+        To retrieve association information for all kiosks in your Zoho CRM
+        organization, including detail view page associations with linked layout
+        and module details. Use the [Get All Kiosks
+        API](kiosks.yaml#$.paths./settings/kiosks.get) to retrieve the Kiosk ID.
+
+
+
+        **Note:**
+          - The structure of each resource object is mostly consistent, but _details can vary.
+          - The sequence_number plays an important role in determining execution or display order.
+      operationId: getAllKiosksAssociations
+      parameters:
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+        - $ref: '#/components/parameters/ParamQueryModule'
+        - $ref: '#/components/parameters/ParamQueryInclude'
+      responses:
+        '200':
+          description: >
+            Returns a list of all kiosks and their associations, including
+            detail view page entries with linked layout and module details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllKioskAssociationsListResponse'
+              examples:
+                Success200:
+                  summary: >-
+                    All kiosk associations returned with detail view page,
+                    layout, and module info
+                  value:
+                    kiosks:
+                      - _associations:
+                          - resources: null
+                            type: detail_view_page
+                            detail_view_page:
+                              - sequence_number: 1
+                                layout:
+                                  name: Standard
+                                  id: '4676645000000095055'
+                                  status: active
+                                module:
+                                  display_label: Leads
+                                  api_name: Leads
+                                  name: Leads
+                                  id: '4676645000000000125'
+                                name: AS
+                                id: '4676645000001390002'
+                        id: '4676645000001223111'
+                      - _associations:
+                          - resources: null
+                            type: detail_view_page
+                            detail_view_page:
+                              - sequence_number: 2
+                                layout:
+                                  name: Standard
+                                  id: '4676645000000095055'
+                                  status: active
+                                module:
+                                  display_label: Leads
+                                  api_name: Leads
+                                  name: Leads
+                                  id: '4676645000000000125'
+                                name: BS
+                                id: '4676645000001390005'
+                        id: '4676645000001364568'
+                  description: >
+                    Demonstrates a successful response containing a kiosks array
+                    where each entry includes its unique identifier and nested
+                    association objects. Each association provides the type, a
+                    null resources field, and a detail_view_page array with
+                    sequence number, name, ID, and linked layout and module
+                    metadata.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '204':
+          description: |
+            Indicates that no kiosk associations were found for the account.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.kiosks.READ
+components:
+  schemas:
+    CreateGetRecordRequest:
+      type: object
+      additionalProperties: false
+      description: Request body for creating a new get_record component.
+      properties:
+        get_records:
+          type: array
+          description: Array containing the get_record configuration to create.
+          items:
+            $ref: '#/components/schemas/CreateGetRecordPayload'
+          maxItems: 1
+      required:
+        - get_records
+    CreateGetRecordPayload:
+      type: object
+      additionalProperties: false
+      description: >-
+        Payload for creating a get_record component. Defines the module,
+        criteria, selection rules, and sort order.
+      properties:
+        name:
+          type: string
+          description: >-
+            Human-readable name of the get_record component. Must be unique
+            within the kiosk.
+          maxLength: 50
+        module:
+          $ref: '#/components/schemas/ModuleRef'
+          description: Module from which records will be fetched.
+        criteria:
+          $ref: '#/components/schemas/FilterCriterionRequest'
+          description: >-
+            Filter criteria configuration for selecting records. Supports both
+            simple field-based filters and grouped conditions with logical
+            operators (AND/OR). MANDATORY type key is required inside criteria
+            even if it's not mentioned in the schema
+          x-zs-llm-description: Always include 'type' inside criteria, even if not in schema.
+        sort_order:
+          $ref: '#/components/schemas/SortOrder'
+          description: >-
+            Sort order configuration for fetched records. order_by_name is
+            always required. When order_by_name is 'not_sort', order_by_field
+            must not be present. Otherwise, order_by_field is required and its
+            'id' key must be provided
+          x-zs-llm-description: >-
+            order_by_name always required; omit order_by_field when value is
+            'not_sort'.
+        selection_details:
+          $ref: '#/components/schemas/SelectionDetails'
+          description: >-
+            Selection rules controlling how many records are fetched and how
+            users can select from them.
+        selected_fields:
+          type:
+            - array
+            - 'null'
+          description: >-
+            Fields to display when the get_record is shown on a screen. Only
+            needed when associated with a screen state.
+          items:
+            type: string
+            description: API name of a selected field.
+            maxLength: 30
+          maxItems: 50
+        type:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Module type: 'parent' for direct modules (e.g., Leads) or 'child'
+            for related modules (e.g., Calls).
+          enum:
+            - parent
+            - child
+        parent_record_field:
+          $ref: '#/components/schemas/ParentRecordField'
+          description: Reference to the parent module field. Required when type is 'child'.
+        child_relationship:
+          $ref: '#/components/schemas/ChildRelationship'
+          description: Reference to the child relationship. Used when type is 'child'.
+      required:
+        - criteria
+        - module
+        - name
+        - sort_order
+      if:
+        type: object
+        properties:
+          type:
+            const: child
+            description: Type value to match against.
+        description: Check if the module type is child.
+        additionalProperties: true
+      then:
+        type: object
+        required:
+          - parent_record_field
+        description: When type is child, parent_record_field becomes required.
+        additionalProperties: true
+        properties:
+          parent_record_field:
+            description: Reference to the parent module field, required for child type.
+    UpdateGetRecordRequest:
+      type: object
+      additionalProperties: false
+      description: Request body for updating an existing get_record component.
+      properties:
+        get_records:
+          type: array
+          description: Array containing the get_record update payload.
+          items:
+            $ref: '#/components/schemas/UpdateGetRecordPayload'
+          maxItems: 1
+      required:
+        - get_records
+    UpdateGetRecordPayload:
+      type: object
+      additionalProperties: false
+      description: >-
+        Payload for updating a get_record component. All fields are optional -
+        only fields provided will be updated.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: Human-readable name of the get_record component.
+          maxLength: 50
+        module:
+          $ref: '#/components/schemas/ModuleRefUpdate'
+          description: Module from which records will be fetched.
+        criteria:
+          $ref: '#/components/schemas/FilterCriterionRequest'
+          description: Filter criteria configuration for selecting records.
+        sort_order:
+          $ref: '#/components/schemas/SortOrderUpdate'
+          description: Sorting configuration for the fetched records.
+        selection_details:
+          $ref: '#/components/schemas/SelectionDetailsUpdate'
+          description: Selection rules controlling how many records are fetched.
+        selected_fields:
+          type:
+            - array
+            - 'null'
+          description: Fields to display when the get_record is shown on a screen.
+          items:
+            type: string
+            description: API name of a selected field.
+            maxLength: 30
+          maxItems: 50
+        type:
+          type:
+            - string
+            - 'null'
+          description: 'Module type: ''parent'' or ''child''.'
+          enum:
+            - parent
+            - child
+        parent_record_field:
+          $ref: '#/components/schemas/ParentRecordFieldUpdate'
+          description: Reference to the parent module field.
+        child_relationship:
+          $ref: '#/components/schemas/ChildRelationshipUpdate'
+          description: Reference to the child relationship.
+      if:
+        type: object
+        properties:
+          type:
+            const: child
+            description: Type value to match against.
+        description: Check if the module type is child.
+        additionalProperties: true
+      then:
+        type: object
+        required:
+          - parent_record_field
+        description: When type is child, parent_record_field becomes required.
+        additionalProperties: true
+        properties:
+          parent_record_field:
+            description: Reference to the parent module field, required for child type.
+    UpdateKioskAssociationsRequest:
+      type: object
+      additionalProperties: false
+      description: Request body for updating kiosk associations.
+      properties:
+        kiosks:
+          type: array
+          description: Array of kiosk association configurations.
+          items:
+            $ref: '#/components/schemas/KioskAssociationPayload'
+          maxItems: 1
+      required:
+        - kiosks
+    GetAllGetRecordsResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Response containing all get_record components with their full
+        configuration.
+      properties:
+        get_records:
+          type: array
+          description: Array of get_record component details.
+          items:
+            $ref: '#/components/schemas/GETGetRecord'
+          maxItems: 25
+      required:
+        - get_records
+      x-zs-$id: GetAllGetRecordsResponse
+    CreateGetRecordResponse:
+      type: object
+      additionalProperties: false
+      description: Response after successfully creating a get_record component.
+      properties:
+        get_records:
+          type: array
+          description: Array of operation results.
+          items:
+            $ref: '#/components/schemas/GetRecordOperationResult'
+          maxItems: 1
+      x-zs-$id: CreateGetRecordResponse
+    UpdateGetRecordResponse:
+      type: object
+      additionalProperties: false
+      description: Response after successfully updating a get_record component.
+      properties:
+        get_records:
+          type: array
+          description: Array of operation results.
+          items:
+            $ref: '#/components/schemas/GetRecordOperationResult'
+          maxItems: 1
+      x-zs-$id: UpdateGetRecordResponse
+    DeleteGetRecordResponse:
+      type: object
+      additionalProperties: false
+      description: Response after successfully deleting a get_record component.
+      properties:
+        get_records:
+          type: array
+          description: Array of operation results.
+          items:
+            $ref: '#/components/schemas/GetRecordOperationResult'
+          maxItems: 1
+      x-zs-$id: DeleteGetRecordResponse
+    GetGetRecordAssociationsResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing get_record association information.
+      properties:
+        get_records:
+          type: array
+          description: Array of get_record association data.
+          items:
+            $ref: '#/components/schemas/GETGetRecordAssociation'
+          maxItems: 10
+      required:
+        - get_records
+      x-zs-$id: GetGetRecordAssociationsResponse
+    GetKioskAssociationsResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Response containing kiosk association information including detail view
+        page associations.
+      properties:
+        kiosks:
+          type: array
+          description: Array of kiosk association data.
+          items:
+            $ref: '#/components/schemas/GETKioskItem'
+          maxItems: 1
+      required:
+        - kiosks
+      x-zs-$id: GetKioskAssociationsResponse
+    UpdateKioskAssociationsResponse:
+      type: object
+      additionalProperties: false
+      description: Response after successfully updating kiosk associations.
+      properties:
+        kiosks:
+          type: array
+          description: Array of operation results.
+          items:
+            $ref: '#/components/schemas/KioskOperationResult'
+          maxItems: 1
+      x-zs-$id: UpdateKioskAssociationsResponse
+    GetCurrentRecordAssociationsResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing current record association information.
+      properties:
+        current_record:
+          type: array
+          description: Array of current record association data.
+          items:
+            $ref: '#/components/schemas/GETCurrentRecord'
+          maxItems: 10
+      required:
+        - current_record
+      x-zs-$id: GetCurrentRecordAssociationsResponse
+    ModuleRef:
+      type: object
+      additionalProperties: false
+      description: Module reference with required ID for identifying the CRM module.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: Display name of the module.
+          maxLength: 50
+        id:
+          type: string
+          description: Unique identifier of the module.
+          maxLength: 19
+        api_name:
+          type:
+            - string
+            - 'null'
+          description: API name of the module.
+          maxLength: 50
+      required:
+        - id
+    ModuleRefUpdate:
+      type: object
+      additionalProperties: false
+      description: Module reference for update operations. All fields are optional.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: Display name of the module.
+          maxLength: 50
+        id:
+          type:
+            - string
+            - 'null'
+          description: Unique identifier of the module.
+          maxLength: 19
+        api_name:
+          type:
+            - string
+            - 'null'
+          description: API name of the module.
+          maxLength: 50
+    SortOrder:
+      type: object
+      additionalProperties: false
+      description: >-
+        Sort order configuration for fetched records. order_by_name is always
+        required. When order_by_name is 'not_sort', order_by_field must not be
+        present. Otherwise, order_by_field is required and its 'id' key must be
+        provided.
+      x-zs-llm-description: >-
+        order_by_name always required; omit order_by_field when value is
+        'not_sort'.
+      properties:
+        order_by_name:
+          type: string
+          description: Sort direction. Defaults to 'ascending' if not specified.
+          enum:
+            - ascending
+            - not_sort
+            - descending
+          maxLength: 50
+        order_by_field:
+          $ref: '#/components/schemas/OrderByField'
+          description: >-
+            Field used for sorting the records. Must not be provided when
+            order_by_name is 'not_sort'.
+      required:
+        - order_by_name
+      allOf:
+        - if:
+            properties:
+              order_by_name:
+                const: not_sort
+                description: Sort direction value to match.
+            required:
+              - order_by_name
+            description: Check if order_by_name is not_sort.
+          then:
+            properties:
+              order_by_name:
+                description: Sort direction (must be not_sort).
+            description: When not_sort, order_by_field must not be present.
+          else:
+            required:
+              - order_by_field
+            properties:
+              order_by_field:
+                required:
+                  - id
+                description: Order by field constraints when sorting is enabled.
+                properties:
+                  id:
+                    description: Unique identifier of the order by field.
+                  display_label:
+                    description: Display label of the sorting field.
+                  api_name:
+                    description: API name of the sorting field.
+              order_by_name:
+                description: Sort direction when sorting is enabled.
+            description: >-
+              When sorting is enabled, order_by_field is required with a valid
+              id.
+    SortOrderUpdate:
+      type: object
+      additionalProperties: false
+      description: >-
+        Sort order configuration for update operations. All fields are optional.
+        When order_by_name is 'not_sort', order_by_field must not be present. If
+        order_by_field is provided, its 'id' key is mandatory.
+      x-zs-llm-description: >-
+        All optional; drop order_by_field on 'not_sort'; id mandatory if field
+        provided.
+      properties:
+        order_by_name:
+          type:
+            - string
+            - 'null'
+          description: Sort direction.
+          enum:
+            - ascending
+            - not_sort
+            - descending
+          maxLength: 50
+        order_by_field:
+          $ref: '#/components/schemas/OrderByField'
+          description: >-
+            Field used for sorting the records. Must not be provided when
+            order_by_name is 'not_sort'.
+      allOf:
+        - if:
+            properties:
+              order_by_name:
+                const: not_sort
+                description: Sort direction value to match.
+            required:
+              - order_by_name
+            description: Check if order_by_name is not_sort.
+          then:
+            properties:
+              order_by_name:
+                description: Sort direction (must be not_sort).
+            description: When not_sort, order_by_field must not be present.
+        - if:
+            required:
+              - order_by_field
+            description: Check if order_by_field is provided.
+            properties:
+              order_by_field:
+                description: Order by field to check for presence.
+          then:
+            properties:
+              order_by_field:
+                required:
+                  - id
+                description: Order by field constraints.
+                properties:
+                  id:
+                    description: Unique identifier of the order by field.
+                  display_label:
+                    description: Display label of the sorting field.
+                  api_name:
+                    description: API name of the sorting field.
+              order_by_name:
+                description: Sort direction.
+            description: When order_by_field is provided, its id must be specified.
+    OrderByField:
+      type: object
+      additionalProperties: false
+      description: Field reference used for ordering fetched records.
+      properties:
+        display_label:
+          type:
+            - string
+            - 'null'
+          description: Display label of the sorting field.
+          maxLength: 255
+        id:
+          type:
+            - string
+            - 'null'
+          description: Unique identifier of the sorting field.
+          maxLength: 19
+        api_name:
+          type:
+            - string
+            - 'null'
+          description: API name of the sorting field.
+          maxLength: 50
+    SelectionDetails:
+      type: object
+      additionalProperties: false
+      allOf:
+        - if:
+            type: object
+            properties:
+              result_type:
+                const: multiple
+                description: Result type value to match.
+            required:
+              - result_type
+            description: Check if result_type is multiple.
+            additionalProperties: true
+          then:
+            type: object
+            required:
+              - range
+              - selection_type
+            description: >-
+              When result_type is multiple, range and selection_type are
+              required.
+            additionalProperties: true
+            properties:
+              range:
+                description: Maximum number of records to fetch.
+              selection_type:
+                description: User selection behavior.
+        - if:
+            type: object
+            properties:
+              result_type:
+                const: all
+                description: Result type value to match.
+            required:
+              - result_type
+            description: Check if result_type is all.
+            additionalProperties: true
+          then:
+            type: object
+            required:
+              - selection_type
+              - limit
+            properties:
+              selection_type:
+                description: User selection behavior, required for all result_type.
+              limit:
+                description: Maximum records a user can select.
+            description: >-
+              When result_type is all, selection_type and limit are required,
+              range must not be provided.
+            additionalProperties: true
+        - if:
+            type: object
+            properties:
+              result_type:
+                const: single
+                description: Result type value to match.
+            required:
+              - result_type
+            description: Check if result_type is single.
+            additionalProperties: true
+          then:
+            type: object
+            required:
+              - range
+              - limit
+            properties:
+              selection_type:
+                type: 'null'
+                description: Must be null when result_type is single.
+              range:
+                const: 1
+                description: Must be 1 when result_type is single.
+              limit:
+                const: 1
+                description: Must be 1 when result_type is single.
+            description: >-
+              When result_type is single, range and limit must be 1,
+              selection_type must be null.
+            additionalProperties: true
+      description: >-
+        Selection rules for controlling record fetching and user selection
+        during kiosk execution. Rules by result_type - 'multiple': range and
+        selection_type are mandatory; range value must be strictly greater than
+        limit. 'all': selection_type and limit are mandatory; range must NOT be
+        provided. 'single': selection_type must not be provided (must be null);
+        range and limit must both be sent as 1.
+      x-zs-llm-description: >-
+        Validation differs per result_type: multiple, all, and single impose
+        distinct rules.
+      properties:
+        result_type:
+          type: string
+          description: >-
+            Determines how many records are fetched. 'multiple': range and
+            selection_type are mandatory; range must be greater than limit.
+            'all': selection_type and limit are mandatory; range must NOT be
+            sent. 'single': range and limit must both be 1; selection_type must
+            not be sent (must be null).
+          x-zs-llm-description: >-
+            Controls fetch mode; each value imposes distinct range, limit,
+            selection_type rules.
+          enum:
+            - single
+            - multiple
+            - all
+          maxLength: 10
+        selection_type:
+          type:
+            - string
+            - 'null'
+          description: >-
+            User selection behavior: 'mandate' (required), 'optional', or
+            'read_only'. Mandatory when result_type is 'multiple' or 'all'. Must
+            be null (not provided) when result_type is 'single'.
+          x-zs-llm-description: Omit for 'single'; required for 'multiple' and 'all' result types.
+          enum:
+            - mandate
+            - optional
+            - read_only
+        range:
+          type:
+            - integer
+            - 'null'
+          format: int32
+          description: >-
+            Maximum number of records to fetch. Mandatory when result_type is
+            'multiple' (must be greater than limit). Must be 1 when result_type
+            is 'single'. Must NOT be provided when result_type is 'all'.
+          x-zs-llm-description: >-
+            Required for 'multiple' (>limit); value=1 for 'single'; omit for
+            'all'.
+        limit:
+          type:
+            - integer
+            - 'null'
+          format: int32
+          description: >-
+            Maximum number of records the user can select. Must be less than
+            range when result_type is 'multiple'. Mandatory when result_type is
+            'all'. Must be 1 when result_type is 'single'.
+          x-zs-llm-description: >-
+            Required for 'all' and 'single' (value=1); must be below range for
+            'multiple'.
+      required:
+        - result_type
+    SelectionDetailsUpdate:
+      type: object
+      additionalProperties: false
+      allOf:
+        - if:
+            type: object
+            properties:
+              result_type:
+                const: multiple
+                description: Result type value to match.
+            description: Check if result_type is multiple.
+            additionalProperties: true
+          then:
+            type: object
+            required:
+              - selection_type
+            description: When result_type is multiple, selection_type is required.
+            additionalProperties: true
+            properties:
+              selection_type:
+                description: User selection behavior, required for multiple result_type.
+        - if:
+            type: object
+            properties:
+              result_type:
+                const: all
+                description: Result type value to match.
+            description: Check if result_type is all.
+            additionalProperties: true
+          then:
+            type: object
+            required:
+              - selection_type
+            description: When result_type is all, selection_type is required.
+            additionalProperties: true
+            properties:
+              selection_type:
+                description: User selection behavior, required for all result_type.
+      description: Selection rules for update operations. All fields are optional.
+      properties:
+        result_type:
+          type:
+            - string
+            - 'null'
+          description: Determines how many records are fetched.
+          enum:
+            - single
+            - multiple
+            - all
+        selection_type:
+          type:
+            - string
+            - 'null'
+          description: User selection behavior.
+          enum:
+            - mandate
+            - optional
+            - read_only
+        range:
+          type:
+            - integer
+            - 'null'
+          format: int32
+          description: Maximum number of records to fetch.
+        limit:
+          type:
+            - integer
+            - 'null'
+          format: int32
+          description: Maximum number of records the user can select.
+    ParentRecordField:
+      type: object
+      additionalProperties: false
+      description: >-
+        Reference to the parent module's record field. Required when the
+        get_record type is 'child'.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the parent record field.
+          maxLength: 19
+      required:
+        - id
+    ParentRecordFieldUpdate:
+      type: object
+      additionalProperties: false
+      description: Parent record field reference for update operations.
+      properties:
+        id:
+          type:
+            - string
+            - 'null'
+          description: Unique identifier of the parent record field.
+          maxLength: 19
+    ChildRelationship:
+      type: object
+      additionalProperties: false
+      description: >-
+        Reference to the child relationship (e.g., Calls, Tasks) for child-type
+        get_records.
+      properties:
+        display_label:
+          type:
+            - string
+            - 'null'
+          description: Display label of the child relationship.
+          maxLength: 50
+        id:
+          type: string
+          description: Unique identifier of the child relationship.
+          maxLength: 19
+      required:
+        - id
+    ChildRelationshipUpdate:
+      type: object
+      additionalProperties: false
+      description: Child relationship reference for update operations.
+      properties:
+        display_label:
+          type:
+            - string
+            - 'null'
+          description: Display label of the child relationship.
+          maxLength: 50
+        id:
+          type:
+            - string
+            - 'null'
+          description: Unique identifier of the child relationship.
+          maxLength: 19
+    GETGetRecord:
+      type: object
+      additionalProperties: false
+      description: Complete get_record component data as returned in GET responses.
+      properties:
+        selection_details:
+          $ref: '#/components/schemas/GETSelectionDetails'
+        criteria:
+          $ref: '#/components/schemas/FilterCriterionResponse'
+          description: Filter criteria configured for this get_record.
+        module:
+          $ref: '#/components/schemas/GETModule'
+        name:
+          type: string
+          description: Name of the get_record component.
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the get_record component.
+          maxLength: 19
+        type:
+          type: string
+          description: 'Module type: ''parent'' or ''child''.'
+          maxLength: 255
+        selected_fields:
+          type:
+            - array
+            - 'null'
+          description: Fields configured for display. Null if not configured.
+          items:
+            type: string
+            maxLength: 30
+            description: API name of a selected field.
+          maxItems: 50
+        sort_order:
+          $ref: '#/components/schemas/GETSortOrder'
+      required:
+        - criteria
+        - id
+        - module
+        - name
+        - selected_fields
+        - selection_details
+        - sort_order
+        - type
+    GETModule:
+      type: object
+      additionalProperties: false
+      description: Module information in GET responses.
+      properties:
+        api_name:
+          type: string
+          description: API name of the module.
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the module.
+          maxLength: 255
+      required:
+        - api_name
+        - id
+    GETSelectionDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Selection details in GET responses. selection_type can be null for
+        single result_type.
+      properties:
+        selection_type:
+          type:
+            - string
+            - 'null'
+          description: Selection behavior type. Null for single record results.
+          maxLength: 255
+        result_type:
+          type: string
+          description: 'Result type: single, multiple, or all.'
+          maxLength: 255
+        limit:
+          type: integer
+          format: int32
+          description: Selection limit.
+        range:
+          type: integer
+          format: int32
+          description: Fetch range.
+      required:
+        - limit
+        - range
+        - result_type
+        - selection_type
+    GETSortOrder:
+      type: object
+      additionalProperties: false
+      description: >-
+        Sort order information in GET responses. When order_by_name is
+        'not_sort', order_by_field is absent. Otherwise, order_by_field is
+        present and its 'id' is required (enforced by GETOrderByField).
+      properties:
+        order_by_name:
+          type: string
+          description: Sort direction.
+          maxLength: 255
+        order_by_field:
+          $ref: '#/components/schemas/GETOrderByField'
+      required:
+        - order_by_name
+      allOf:
+        - if:
+            properties:
+              order_by_name:
+                const: not_sort
+                description: Sort direction value to match.
+            required:
+              - order_by_name
+            description: Check if order_by_name is not_sort.
+          then:
+            properties:
+              order_by_name:
+                description: Sort direction (must be not_sort).
+            description: When not_sort, order_by_field is absent.
+          else:
+            required:
+              - order_by_field
+            description: When sorting is enabled, order_by_field is required.
+            properties:
+              order_by_field:
+                description: The order by field, required when sorting is enabled.
+              order_by_name:
+                description: Sort direction when sorting is enabled.
+    GETOrderByField:
+      type: object
+      additionalProperties: false
+      description: Order by field information in GET responses.
+      properties:
+        api_name:
+          type: string
+          description: API name of the field.
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the field.
+          maxLength: 255
+      required:
+        - api_name
+        - id
+    GETGetRecordAssociation:
+      type: object
+      additionalProperties: false
+      description: Get record with its association information.
+      properties:
+        _associations:
+          type: array
+          description: List of associations for this get_record.
+          items:
+            $ref: '#/components/schemas/GETAssociation'
+          maxItems: 10
+        id:
+          type: string
+          description: Get record identifier.
+          maxLength: 19
+      required:
+        - _associations
+        - id
+    GETAssociation:
+      type: object
+      additionalProperties: false
+      description: Association entry describing where a component is used.
+      properties:
+        resources:
+          type: array
+          description: Resources that use this component.
+          items:
+            $ref: '#/components/schemas/GETResource'
+          maxItems: 25
+        type:
+          type: string
+          description: Type of association (e.g., 'kiosk_states').
+          maxLength: 255
+      required:
+        - resources
+        - type
+    GETResource:
+      type: object
+      additionalProperties: false
+      description: Resource that references a component.
+      properties:
+        name:
+          type: string
+          description: Name of the resource.
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the resource.
+          maxLength: 255
+        _details:
+          $ref: '#/components/schemas/GETResourceDetails'
+      required:
+        - _details
+        - id
+        - name
+    GETResourceDetails:
+      type: object
+      additionalProperties: false
+      description: Details about the resource type.
+      properties:
+        type:
+          type: string
+          description: Type of the resource (e.g., 'get_records', 'action').
+          maxLength: 255
+      required:
+        - type
+    GETKioskItem:
+      type: object
+      additionalProperties: false
+      description: Kiosk item with its association information.
+      properties:
+        _associations:
+          type: array
+          description: List of associations for this kiosk.
+          items:
+            $ref: '#/components/schemas/GETKioskAssociation'
+          maxItems: 50
+        id:
+          type: string
+          description: Kiosk identifier.
+          maxLength: 255
+      required:
+        - _associations
+        - id
+    GETKioskAssociation:
+      type: object
+      additionalProperties: false
+      description: Kiosk association entry for detail view pages.
+      properties:
+        resources:
+          type: 'null'
+          description: Resources field (null for detail_view_page type).
+        type:
+          type: string
+          description: Type of association.
+          maxLength: 255
+        detail_view_page:
+          type: array
+          description: Detail view page configurations.
+          items:
+            $ref: '#/components/schemas/GETDetailViewPage'
+          maxItems: 50
+      required:
+        - detail_view_page
+        - resources
+        - type
+    GETDetailViewPage:
+      type: object
+      additionalProperties: false
+      description: Detail view page information.
+      properties:
+        sequence_number:
+          type: integer
+          format: int32
+          description: Display sequence number.
+        name:
+          type: string
+          description: Name of the detail view page association.
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier.
+          maxLength: 255
+      required:
+        - id
+        - name
+        - sequence_number
+    GETCurrentRecord:
+      type: object
+      additionalProperties: false
+      description: Current record with its association information.
+      properties:
+        _associations:
+          type: array
+          description: List of associations for the current record.
+          items:
+            $ref: '#/components/schemas/GETAssociation'
+          maxItems: 1
+        id:
+          type: string
+          description: Current record identifier.
+          maxLength: 255
+      required:
+        - _associations
+        - id
+    KioskAssociationPayload:
+      type: object
+      additionalProperties: false
+      description: Payload for configuring kiosk associations.
+      properties:
+        _associations:
+          type: array
+          description: Association configurations.
+          items:
+            $ref: '#/components/schemas/AssociationConfig'
+          maxItems: 1
+        id:
+          description: ID of the kiosk to associate.
+          x-zs-$ref:
+            resource: kiosks
+            origins:
+              - operationId: getAllKiosks
+                propertyId: KiosksId
+          type: string
+          maxLength: 255
+      required:
+        - _associations
+        - id
+    AssociationConfig:
+      type: object
+      additionalProperties: false
+      description: Association configuration specifying association type and target.
+      properties:
+        type:
+          type: string
+          description: Type of association.
+          enum:
+            - detail_view_page
+          maxLength: 20
+        detail_view_page:
+          type: array
+          description: Detail view page configurations.
+          items:
+            $ref: '#/components/schemas/DetailViewPageConfig'
+          maxItems: 1
+      required:
+        - detail_view_page
+        - type
+    DetailViewPageConfig:
+      type: object
+      additionalProperties: false
+      description: Configuration for associating a kiosk with a detail view page.
+      properties:
+        layout:
+          $ref: '#/components/schemas/LayoutRef'
+          description: Layout to associate the kiosk with.
+        name:
+          type: string
+          description: Display name for the association widget on the detail view page.
+          maxLength: 255
+        _delete:
+          type:
+            - string
+            - 'null'
+          description: Set to trigger deletion of this association.
+          maxLength: 255
+        module:
+          $ref: '#/components/schemas/ModuleRefUpdate'
+          description: Module for the detail view page association.
+      required:
+        - layout
+        - module
+        - name
+    LayoutRef:
+      type: object
+      additionalProperties: false
+      description: Layout reference.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the layout.
+          maxLength: 19
+      required:
+        - id
+    GetRecordOperationResult:
+      type: object
+      additionalProperties: false
+      description: Operation result for get_record CRUD operations.
+      properties:
+        code:
+          type: string
+          description: Result code (e.g., 'SUCCESS').
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/OperationResultDetails'
+        message:
+          type: string
+          description: Human-readable result message.
+          maxLength: 255
+        status:
+          type: string
+          description: Status of the operation (e.g., 'success').
+          maxLength: 255
+    OperationResultDetails:
+      type: object
+      additionalProperties: false
+      description: Details of the operation result.
+      properties:
+        id:
+          type: string
+          description: ID of the created, updated, or deleted resource.
+          maxLength: 255
+    KioskOperationResult:
+      type: object
+      additionalProperties: false
+      description: Operation result for kiosk association operations.
+      properties:
+        code:
+          type: string
+          description: Result code.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/OperationResultDetails'
+        message:
+          type: string
+          description: Human-readable result message.
+          maxLength: 255
+        status:
+          type: string
+          description: Status of the operation.
+          maxLength: 255
+    GetRecordErrorResponse:
+      description: >-
+        Unified error response schema for all get_record API errors. Errors may
+        appear at the top level (for path-level errors like invalid kiosk ID) or
+        wrapped in a 'get_records' or 'kiosks' array (for item-level validation
+        errors).
+      title: Get Record Error Response
+      x-error-catalog:
+        - code: INVALID_DATA
+          message: No such Kiosk exists
+          description: >-
+            Returned when the given kiosk ID does not correspond to any existing
+            kiosk.
+        - code: INVALID_DATA
+          message: No such Get Record exists in Kiosk
+          description: >-
+            Returned when the given get_record ID does not exist within the
+            specified kiosk.
+        - code: INVALID_DATA
+          message: invalid data
+          description: >-
+            Returned when the provided data is invalid, with resource_path_index
+            indicating which URL segment is incorrect.
+        - code: INVALID_DATA
+          message: Invalid data type
+          description: >-
+            Returned when a field value has an incorrect data type (e.g., string
+            instead of integer). The expected_data_type field in details
+            indicates the correct type.
+        - code: INVALID_DATA
+          message: Invalid data
+          description: >-
+            Returned when a field value exceeds maximum_length or is otherwise
+            invalid.
+        - code: INVALID_DATA
+          message: Invalid data
+          description: >-
+            Returned when a field value is not in the list of supported_values
+            (e.g., invalid order_by_name, result_type, selection_type, or type).
+        - code: DUPLICATE_DATA
+          message: Duplicate get record name
+          description: Returned when the get_record name already exists within the kiosk.
+        - code: DUPLICATE_DATA
+          message: Kiosk already associated with this layout
+          description: >-
+            Returned when the kiosk is already associated with the specified
+            layout.
+        - code: MANDATORY_NOT_FOUND
+          message: required field not found
+          description: >-
+            Returned when a required field (e.g., criteria, module, name) is
+            missing from the request.
+        - code: MANDATORY_NOT_FOUND
+          message: Required field is missing
+          description: >-
+            Returned when a required sub-field (e.g., module.id,
+            sort_order.order_by_name) is missing.
+        - code: AMBIGUITY_DURING_PROCESSING
+          message: Ambiguity while processing the request
+          description: >-
+            Returned when inter-dependent values (e.g., api_name and id) do not
+            match.
+        - code: EXPECTED_FIELD_MISSING
+          message: Specify atleast one field
+          description: >-
+            Returned when none of the expected identifying fields (e.g.,
+            api_name or id for criteria.field) are provided.
+        - code: DEPENDENT_MISMATCH
+          message: Get Record selection range should be 1 for single record
+          description: >-
+            Returned when the range exceeds 1 for a get_record with result_type
+            'single'.
+        - code: DEPENDENT_MISMATCH
+          message: Dependent info range is missing for getrecord
+          description: >-
+            Returned when the range field is missing for a get_record with
+            result_type 'multiple' or 'all'.
+        - code: DEPENDENT_FIELD_MISSING
+          message: Dependent field is missing
+          description: >-
+            Returned when a dependent field is missing (e.g., selection_type
+            required when result_type is 'multiple', or parent_record_field
+            required when type is 'child').
+      oneOf:
+        - $ref: '#/components/schemas/GetRecordFlatError'
+        - $ref: '#/components/schemas/GetRecordBatchError'
+        - $ref: '#/components/schemas/KioskBatchError'
+      x-zs-$id: GetRecordErrorResponse
+    GetRecordFlatError:
+      type: object
+      additionalProperties: true
+      description: >-
+        Flat error response for path-level errors such as invalid kiosk or get
+        record ID.
+      properties:
+        code:
+          type: string
+          description: Error category code indicating the type of validation failure.
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+            - DEPENDENT_FIELD_MISSING
+            - DEPENDENT_MISMATCH
+            - DUPLICATE_DATA
+            - EXPECTED_FIELD_MISSING
+            - INVALID_DATA
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          description: Contextual details about the error. Structure varies by error type.
+          additionalProperties: true
+          properties:
+            api_name:
+              type: string
+              description: API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path pointing to the problematic field in the request body.
+              maxLength: 1000
+            expected_data_type:
+              type: string
+              description: The expected data type when a type mismatch occurs.
+              maxLength: 255
+            maximum_length:
+              type: integer
+              description: Maximum allowed length when a value exceeds the limit.
+              format: int32
+            resource_path_index:
+              type: integer
+              description: Index in the resource path that is invalid.
+              format: int32
+            supported_values:
+              type: array
+              description: List of supported values when an invalid enum value is provided.
+              items:
+                type: string
+                maxLength: 1000
+                description: A supported enum value.
+              maxItems: 50
+        message:
+          type: string
+          description: Human-readable error message describing what went wrong.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the response. Always 'error' for error responses.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      x-zs-$id: GetRecordFlatError
+    GetRecordErrorItem:
+      type: object
+      additionalProperties: true
+      description: Individual error item within a batch error response array.
+      properties:
+        code:
+          type: string
+          description: Error category code indicating the type of validation failure.
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+            - DEPENDENT_FIELD_MISSING
+            - DEPENDENT_MISMATCH
+            - DUPLICATE_DATA
+            - EXPECTED_FIELD_MISSING
+            - INVALID_DATA
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          description: Contextual details about the error. Structure varies by error type.
+          additionalProperties: true
+          properties:
+            api_name:
+              type: string
+              description: API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: JSON path pointing to the problematic field in the request body.
+              maxLength: 1000
+            expected_data_type:
+              type: string
+              description: The expected data type when a type mismatch occurs.
+              maxLength: 255
+            maximum_length:
+              type: integer
+              description: Maximum allowed length when a value exceeds the limit.
+              format: int32
+            resource_path_index:
+              type: integer
+              description: Index in the resource path that is invalid.
+              format: int32
+            supported_values:
+              type: array
+              description: List of supported values when an invalid enum value is provided.
+              items:
+                type: string
+                maxLength: 1000
+                description: A supported enum value.
+              maxItems: 50
+        message:
+          type: string
+          description: Human-readable error message describing what went wrong.
+          maxLength: 500
+        status:
+          type: string
+          description: Status of the response. Always 'error' for error responses.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      x-zs-$id: GetRecordErrorItem
+    GetRecordBatchError:
+      type: object
+      description: >-
+        Batch error response wrapping item-level validation errors in a
+        get_records array.
+      additionalProperties: false
+      properties:
+        get_records:
+          type: array
+          description: Array of get_record error items.
+          items:
+            $ref: '#/components/schemas/GetRecordErrorItem'
+          maxItems: 1
+      required:
+        - get_records
+      x-zs-$id: GetRecordBatchError
+    KioskBatchError:
+      type: object
+      description: >-
+        Batch error response wrapping item-level validation errors in a kiosks
+        array.
+      additionalProperties: false
+      properties:
+        kiosks:
+          type: array
+          description: Array of kiosk error items.
+          items:
+            $ref: '#/components/schemas/GetRecordErrorItem'
+          maxItems: 1
+      required:
+        - kiosks
+      x-zs-$id: KioskBatchError
+    GetAllKioskAssociationsListResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing association information for all kiosks.
+      properties:
+        kiosks:
+          type: array
+          description: Array of kiosk association data.
+          items:
+            $ref: '#/components/schemas/GETKioskAssociationsListEntry'
+          maxItems: 200
+      required:
+        - kiosks
+      x-zs-$id: GetAllKioskAssociationsListResponse
+    GETKioskAssociationsListEntry:
+      type: object
+      additionalProperties: false
+      description: Kiosk item with its detail view page association information.
+      properties:
+        _associations:
+          type: array
+          description: List of associations for this kiosk.
+          items:
+            $ref: '#/components/schemas/GETKioskDetailViewAssociationFull'
+          maxItems: 50
+        id:
+          type: string
+          description: Kiosk identifier.
+          maxLength: 255
+      required:
+        - _associations
+        - id
+    GETKioskDetailViewAssociationFull:
+      type: object
+      additionalProperties: false
+      description: >-
+        Kiosk association entry including detail view page configurations with
+        layout and module details.
+      properties:
+        resources:
+          type: 'null'
+          description: Resources field (null for detail_view_page type).
+        type:
+          type: string
+          description: Type of association.
+          maxLength: 255
+        detail_view_page:
+          type: array
+          description: Detail view page configurations.
+          items:
+            $ref: '#/components/schemas/GETDetailViewPageWithDetails'
+          maxItems: 50
+      required:
+        - detail_view_page
+        - resources
+        - type
+    GETDetailViewPageWithDetails:
+      type: object
+      additionalProperties: false
+      description: Detail view page information with layout and module details.
+      properties:
+        sequence_number:
+          type: integer
+          format: int32
+          description: Display sequence number.
+        layout:
+          $ref: '#/components/schemas/GETAssociationLayout'
+          description: Layout associated with this detail view page.
+        module:
+          $ref: '#/components/schemas/GETAssociationModule'
+          description: Module associated with this detail view page.
+        name:
+          type: string
+          description: Name of the detail view page association.
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier.
+          maxLength: 255
+      required:
+        - id
+        - layout
+        - module
+        - name
+        - sequence_number
+    GETAssociationLayout:
+      type: object
+      additionalProperties: false
+      description: Layout details in association responses.
+      properties:
+        name:
+          type: string
+          description: Name of the layout.
+          maxLength: 255
+        id:
+          type: string
+          description: Unique identifier of the layout.
+          maxLength: 19
+        status:
+          type: string
+          description: Status of the layout.
+          maxLength: 50
+      required:
+        - id
+        - name
+        - status
+    GETAssociationModule:
+      type: object
+      additionalProperties: false
+      description: Module details in association responses.
+      properties:
+        display_label:
+          type: string
+          description: Display label of the module.
+          maxLength: 255
+        api_name:
+          type: string
+          description: API name of the module.
+          maxLength: 50
+        name:
+          type: string
+          description: Name of the module.
+          maxLength: 50
+        id:
+          type: string
+          description: Unique identifier of the module.
+          maxLength: 19
+      required:
+        - api_name
+        - display_label
+        - id
+        - name
+    FilterFieldBase:
+      type: object
+      x-zs-$id: FilterFieldBase
+      description: >-
+        Represents the base field reference used in filter operations,
+        containing minimal required properties. The field's data_type is not
+        part of this object; resolve it from the corresponding FieldSchema. For
+        formula fields, use formula.return_type as the effective data_type; for
+        rollup_summary fields, use rollup_summary.return_type.
+      properties:
+        id:
+          type: string
+          format: int64
+          description: Represents the unique ID of the field used for filter operations.
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the field used for filter application.
+            Supports relationship notation, for example, Deals__r.Stage.
+      additionalProperties: true
+    SimpleFilterCriterionValueString:
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueString
+      description: >-
+        Represents a string filter criterion value applicable to fields with a
+        data_type of text, textarea, email, phone, website, autonumber,
+        picklist, multiselectpicklist, date, or datetime, as well as any
+        data_type not explicitly covered by SimpleFilterCriterionValueNumber,
+        SimpleFilterCriterionValueBoolean,
+        SimpleFilterCriterionValueObjectRequest,
+        SimpleFilterCriterionValueObjectResponse, or the multiselect lookup
+        value schemas.
+      maxLength: 255
+    SimpleFilterCriterionValueNumber:
+      type: number
+      x-zs-$id: SimpleFilterCriterionValueNumber
+      description: >-
+        Represents a numeric filter criterion value applicable to fields with a
+        data_type of integer, currency, or double.
+    SimpleFilterCriterionValueObjectBase:
+      type: object
+      description: >-
+        Represents the base minified record structure of a lookup module,
+        containing the record's unique identifier and display name.
+      properties:
+        id:
+          type: string
+          format: int64
+          description: Represents the unique ID of the lookup module record.
+        name:
+          type: string
+          maxLength: 255
+          description: Represents the display name of the lookup module record.
+      additionalProperties: true
+    SimpleFilterCriterionValueObjectResponse:
+      x-zs-$id: SimpleFilterCriterionValueObjectResponse
+      allOf:
+        - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectBase'
+        - type: object
+          additionalProperties: true
+          description: >-
+            Represents the constraint that both the ID and name properties are
+            required for the lookup object filter criterion value in response
+            bodies.
+          required:
+            - id
+            - name
+          properties:
+            id: {}
+            name: {}
+      unevaluatedProperties: false
+      description: >-
+        Represents a lookup object filter criterion value for response bodies,
+        applicable when the field's data_type is lookup, ownerlookup, or
+        userlookup. Both the ID and name properties are included.
+    SimpleFilterCriterionValueObjectPredefined:
+      x-zs-$id: SimpleFilterCriterionValueObjectPredefined
+      description: >-
+        Represents a predefined placeholder object filter criterion value for
+        lookup fields, applicable with equal or not_equal comparators when the
+        field's data_type is ownerlookup or userlookup. Two forms are supported:
+        (1) the currently logged-in user, represented by passing only the name
+        property with the predefined value ${CURRENTUSER} and no ID property;
+        and (2) the logged-in user's role, represented by passing the ID
+        property with the predefined value ${CURRENTUSERROLE} and an optional
+        display label in the name property. For specific real users or roles
+        that are not predefined, use SimpleFilterCriterionValueObjectRequest,
+        which requires the ID property.
+      oneOf:
+        - type: object
+          x-zs-$id: SimpleFilterCriterionValueObjectPredefinedCurrentUser
+          description: >-
+            Represents the predefined object form for the currently logged-in
+            user, in which only the name property carries the predefined value
+            ${CURRENTUSER} and no ID property is included.
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              enum:
+                - ${CURRENTUSER}
+              description: >-
+                Represents the predefined placeholder for the currently
+                logged-in user.
+
+                Possible values:
+
+                ${CURRENTUSER} - Represents the currently logged-in user.
+          additionalProperties: false
+        - type: object
+          x-zs-$id: SimpleFilterCriterionValueObjectPredefinedCurrentUserRole
+          description: >-
+            Represents the predefined object form for the currently logged-in
+            user's role, in which the ID property carries the predefined value
+            ${CURRENTUSERROLE} and the name property is an optional display
+            label.
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              enum:
+                - ${CURRENTUSERROLE}
+              description: >-
+                Represents the predefined placeholder for the logged-in user's
+                role record ID.
+
+                Possible values:
+
+                ${CURRENTUSERROLE} - Represents the role of the currently
+                logged-in user.
+            name:
+              type: string
+              maxLength: 255
+              description: >-
+                Represents an optional display label for the predefined role,
+                such as Logged in User Role.
+          additionalProperties: true
+    SimpleFilterCriterionValueBoolean:
+      type: boolean
+      x-zs-$id: SimpleFilterCriterionValueBoolean
+      description: >-
+        Represents a Boolean filter criterion value. Applicable only when the
+        field has a Boolean data type (checkbox field).
+    SimpleFilterCriterionValueGeneralPredefined:
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueGeneralPredefined
+      description: >-
+        Represents a predefined placeholder value applicable to any field
+        data_type with the equal comparator.
+
+        Possible values:
+
+        ${EMPTY} - Matches records where the field has no value.
+
+        ${NOTEMPTY} - Matches records where the field has any non-empty value.
+      enum:
+        - ${EMPTY}
+        - ${NOTEMPTY}
+      x-enumDescriptions:
+        ${EMPTY}: Matches records where the field has no value (null or empty string).
+        ${NOTEMPTY}: Matches records where the field has any non-empty value.
+    SimpleFilterCriterionValueDateTimePredefined:
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueDateTimePredefined
+      description: >-
+        Represents a predefined placeholder value applicable only when the
+        field's data_type is date or datetime, with the equal comparator.
+      enum:
+        - ${TODAY}
+        - ${TOMORROW}
+        - ${TOMORROWPLUS}
+        - ${YESTERDAY}
+        - ${YESTERDAYMINUS}
+        - ${LASTMONTH}
+        - ${THISMONTH}
+        - ${NEXTMONTH}
+        - ${LASTWEEK}
+        - ${THISWEEK}
+        - ${NEXTWEEK}
+        - ${THISYEAR}
+        - ${THISFY}
+        - ${THISFQ}
+        - ${LASTYEAR}
+        - ${PREVFY}
+        - ${PREVFQ}
+        - ${NEXTYEAR}
+        - ${NEXTFY}
+        - ${NEXTFQ}
+        - ${EMPTY}
+        - ${NOTEMPTY}
+      x-enumDescriptions:
+        ${TODAY}: >-
+          Matches records where the date field falls on the current calendar
+          day.
+        ${TOMORROW}: Matches records where the date field falls on the next calendar day.
+        ${TOMORROWPLUS}: >-
+          Matches records where the date field is on tomorrow or any later date
+          (tomorrow onwards).
+        ${YESTERDAY}: >-
+          Matches records where the date field falls on the previous calendar
+          day.
+        ${YESTERDAYMINUS}: >-
+          Matches records where the date field is on yesterday or any earlier
+          date (up to and including yesterday).
+        ${LASTMONTH}: >-
+          Matches records where the date field falls within the entire previous
+          calendar month.
+        ${THISMONTH}: >-
+          Matches records where the date field falls within the current calendar
+          month.
+        ${NEXTMONTH}: >-
+          Matches records where the date field falls within the next calendar
+          month.
+        ${LASTWEEK}: >-
+          Matches records where the date field falls within the previous
+          calendar week (Monday–Sunday).
+        ${THISWEEK}: >-
+          Matches records where the date field falls within the current calendar
+          week.
+        ${NEXTWEEK}: >-
+          Matches records where the date field falls within the next calendar
+          week.
+        ${THISYEAR}: >-
+          Matches records where the date field falls within the current calendar
+          year.
+        ${THISFY}: >-
+          Matches records where the date field falls within the current fiscal
+          year.
+        ${THISFQ}: >-
+          Matches records where the date field falls within the current fiscal
+          quarter.
+        ${LASTYEAR}: >-
+          Matches records where the date field falls within the previous
+          calendar year.
+        ${PREVFY}: >-
+          Matches records where the date field falls within the previous fiscal
+          year.
+        ${PREVFQ}: >-
+          Matches records where the date field falls within the previous fiscal
+          quarter.
+        ${NEXTYEAR}: >-
+          Matches records where the date field falls within the next calendar
+          year.
+        ${NEXTFY}: >-
+          Matches records where the date field falls within the next fiscal
+          year.
+        ${NEXTFQ}: >-
+          Matches records where the date field falls within the next fiscal
+          quarter.
+        ${EMPTY}: Matches records where the date field has no value set.
+        ${NOTEMPTY}: Matches records where the date field has a value set.
+    SimpleFilterCriterionValueNDaysPredefined:
+      maxLength: 255
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueNDaysPredefined
+      description: >-
+        Represents a predefined N-period range placeholder value applicable only
+        when the field's data_type is date or datetime, with the equal
+        comparator. Follows the pattern ${NEXT_N_<PERIOD>:<n>} or
+        ${LAST_N_<PERIOD>:<n>}, where PERIOD is DAYS, WEEKS, MONTHS, or YEARS
+        and n is a positive integer. The current period is always excluded from
+        the range.
+      pattern: ^\$\{(LAST_N_|NEXT_N_)(DAYS|WEEKS|MONTHS|YEARS):([0-9]+)\}$
+    SimpleFilterCriterionValueAgeDuePredefined:
+      maxLength: 255
+      type: string
+      x-zs-$id: SimpleFilterCriterionValueAgeDuePredefined
+      description: >-
+        Represents a predefined age or due-in-days placeholder value applicable
+        only when the field's data_type is date or datetime. Follows the pattern
+        ${AGEINDAYS}+<n> for records where the date field was exactly n days in
+        the past, or ${DUEINDAYS}+<n> for records where the date field is
+        exactly n days in the future. Supported comparators are equal,
+        not_equal, less_than, greater_than, less_equal, and greater_equal.
+      pattern: ^\$\{(AGEINDAYS|DUEINDAYS)\}\+[0-9]+$
+    EqualFilterCriterionResponse:
+      type: object
+      x-zs-$id: EqualFilterCriterionResponse
+      description: >-
+        Represents the response for a filter criterion using the equal
+        comparator. The value type is determined by the field's data_type:
+        SimpleFilterCriterionValueString for text, textarea, email, phone,
+        website, autonumber, picklist, multiselectpicklist, date, or datetime;
+        SimpleFilterCriterionValueNumber for integer, currency, or double;
+        SimpleFilterCriterionValueBoolean for Boolean;
+        SimpleFilterCriterionValueObjectResponse for lookup, ownerlookup, or
+        userlookup; and SimpleFilterCriterionValueObjectPredefined for
+        predefined user or role object placeholders.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the equal filter criterion
+                response.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the equal filter
+            criterion was applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - equal
+          description: >-
+            Represents the equal comparison operator returned for the criterion.
+
+            Possible values:
+
+            equal - Matches records where the field value equals the specified
+            filter value.
+        value:
+          anyOf:
+            - type: array
+              x-zs-$id: EqualFilterCriterionResponseValueArray
+              description: >-
+                Contains an array of filter values returned for the equal
+                comparator.
+              minItems: 1
+              maxItems: 500
+              items:
+                x-zs-$id: EqualFilterCriterionResponseValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+                  - x-zs-$id: EqualFilterCriterionResponseValueArrayItemsObject
+                    anyOf:
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectResponse
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectPredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueBoolean'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectResponse'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueGeneralPredefined'
+            - $ref: >-
+                #/components/schemas/SimpleFilterCriterionValueDateTimePredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNDaysPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the filter value returned for the equal comparator.
+            Contains a scalar or an array of values, depending on the field's
+            data_type.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - value
+            - pre_defined
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+        $disrupted:
+          type: boolean
+          description: >-
+            Indicates whether the equal filter criterion is in a disrupted
+            state, typically due to an invalid or unresolvable field or value
+            reference.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    NotEqualFilterCriterionResponse:
+      type: object
+      x-zs-$id: NotEqualFilterCriterionResponse
+      description: >-
+        Represents the response for a filter criterion using the not_equal
+        comparator. The value type is determined by the field's data_type:
+        SimpleFilterCriterionValueString for text-based types;
+        SimpleFilterCriterionValueNumber for numeric types;
+        SimpleFilterCriterionValueBoolean for Boolean;
+        SimpleFilterCriterionValueObjectResponse for lookup types; and
+        SimpleFilterCriterionValueObjectPredefined for predefined user or role
+        placeholders.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the not-equal filter
+                criterion response.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the not-equal filter
+            criterion was applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - not_equal
+          description: >-
+            Represents the not-equal comparison operator returned for the
+            criterion.
+
+            Possible values:
+
+            not_equal - Matches records where the field value does not equal the
+            specified filter value.
+        value:
+          anyOf:
+            - type: array
+              x-zs-$id: NotEqualFilterCriterionResponseValueArray
+              description: >-
+                Contains an array of filter values returned for the not_equal
+                comparator.
+              minItems: 1
+              maxItems: 500
+              items:
+                x-zs-$id: NotEqualFilterCriterionResponseValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+                  - x-zs-$id: NotEqualFilterCriterionResponseValueArrayItemsObject
+                    anyOf:
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectResponse
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectPredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueBoolean'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectResponse'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the filter value returned for the not_equal comparator.
+            Contains a scalar or an array of values, depending on the field's
+            data_type.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - value
+            - pre_defined
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+        $disrupted:
+          type: boolean
+          description: >-
+            Indicates whether the not-equal filter criterion is in a disrupted
+            state, typically due to an invalid or unresolvable field or value
+            reference.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    EqualityFilterCriterionResponse:
+      x-zs-$id: EqualityFilterCriterionResponse
+      description: >-
+        Represents the response for an equality filter criterion that dispatches
+        to either the EqualFilterCriterionResponse or
+        NotEqualFilterCriterionResponse schema based on the comparator value.
+      oneOf:
+        - $ref: '#/components/schemas/EqualFilterCriterionResponse'
+        - $ref: '#/components/schemas/NotEqualFilterCriterionResponse'
+    TextFilterCriterionResponse:
+      type: object
+      x-zs-$id: TextFilterCriterionResponse
+      description: >-
+        Represents the response for a filter criterion using the like, not_like,
+        starts_with, ends_with, contains, and not_contains comparators. The
+        value is a string scalar or array; SimpleFilterCriterionValueString
+        applies to text-based field types.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the text filter criterion
+                response.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the text filter
+            criterion was applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - like
+            - not_like
+            - starts_with
+            - ends_with
+            - contains
+            - not_contains
+          description: >-
+            Represents the text comparison operator returned for the criterion.
+
+            Possible values:
+
+            like - Matches records where the field value contains the specified
+            pattern.
+
+            not_like - Matches records where the field value does not contain
+            the specified pattern.
+
+            starts_with - Matches records where the field value begins with the
+            specified string.
+
+            ends_with - Matches records where the field value ends with the
+            specified string.
+
+            contains - Matches records where the field value contains the
+            specified string.
+
+            not_contains - Matches records where the field value does not
+            contain the specified string.
+        value:
+          description: >-
+            Represents the string filter value returned for the text comparator.
+            Contains a scalar string or an array of string values.
+          oneOf:
+            - type: array
+              x-zs-$id: TextFilterCriterionResponseValueArray
+              description: >-
+                Contains an array of primitive string values returned for the
+                text filter comparator.
+              minItems: 1
+              maxItems: 500
+              items:
+                x-zs-$id: TextFilterCriterionResponseValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+        $disrupted:
+          type: boolean
+          description: >-
+            Indicates whether the text filter criterion is in a disrupted state,
+            typically due to an invalid or unresolvable field or value
+            reference.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    OrderingFilterCriterionResponse:
+      type: object
+      x-zs-$id: OrderingFilterCriterionResponse
+      description: >-
+        Represents the response for a filter criterion using the less_than,
+        less_equal, greater_than, and greater_equal comparators. The value is a
+        scalar; arrays and objects are not valid.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the ordering filter
+                criterion response.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the ordering filter
+            criterion was applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - less_than
+            - less_equal
+            - greater_than
+            - greater_equal
+          description: >-
+            Represents the ordering comparison operator returned for the
+            criterion.
+
+            Possible values:
+
+            less_than - Matches records where the field value is less than the
+            specified filter value.
+
+            less_equal - Matches records where the field value is less than or
+            equal to the specified filter value.
+
+            greater_than - Matches records where the field value is greater than
+            the specified filter value.
+
+            greater_equal - Matches records where the field value is greater
+            than or equal to the specified filter value.
+        value:
+          anyOf:
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the scalar filter value returned for the ordering
+            comparator.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+        $disrupted:
+          type: boolean
+          description: >-
+            Indicates whether the ordering filter criterion is in a disrupted
+            state, typically due to an invalid or unresolvable field or value
+            reference.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    BetweenFilterCriterionResponse:
+      type: object
+      x-zs-$id: BetweenFilterCriterionResponse
+      description: >-
+        Represents the response for a filter criterion using the between and
+        not_between comparators. The value is an array of exactly two elements —
+        [lower_bound, upper_bound]. The value type is determined by the field's
+        data_type: SimpleFilterCriterionValueString for date or datetime fields,
+        and SimpleFilterCriterionValueNumber for integer, currency, or double
+        fields.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the range filter criterion
+                response.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the range filter
+            criterion was applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - between
+            - not_between
+          description: >-
+            Represents the range comparison operator returned for the criterion,
+            indicating whether the field value falls within or outside the
+            specified bounds.
+
+            Possible values:
+
+            between - Matches records where the field value falls within the
+            specified range.
+
+            not_between - Matches records where the field value falls outside
+            the specified range.
+        value:
+          type: array
+          x-zs-$id: BetweenFilterCriterionResponseValueArray
+          description: >-
+            Contains the two boundary values — [lower_bound, upper_bound] —
+            against which the field was evaluated for the between or not_between
+            comparator.
+          minItems: 2
+          maxItems: 2
+          items:
+            x-zs-$id: BetweenFilterCriterionResponseValueArrayItems
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+        $disrupted:
+          type: boolean
+          description: >-
+            Indicates whether the between filter criterion is in a disrupted
+            state, typically due to an invalid or unresolvable field or value
+            reference.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    SetFilterCriterionResponse:
+      type: object
+      x-zs-$id: SetFilterCriterionResponse
+      description: >-
+        Represents the response for a filter criterion using the in and not_in
+        comparators. The value is an array of primitive values.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the set filter criterion
+                response.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the set filter
+            criterion was applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - in
+            - not_in
+          description: >-
+            Represents the set membership comparison operator returned for the
+            criterion.
+
+            Possible values:
+
+            in - Matches records where the field value is in the specified set
+            of values.
+
+            not_in - Matches records where the field value is not in the
+            specified set of values.
+        value:
+          type: array
+          x-zs-$id: SetFilterCriterionResponseValueArray
+          description: >-
+            Contains an array of primitive filter values returned for the set
+            comparison.
+          minItems: 1
+          maxItems: 500
+          items:
+            x-zs-$id: SetFilterCriterionResponseValueArrayItems
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+        $disrupted:
+          type: boolean
+          description: >-
+            Indicates whether the set filter criterion is in a disrupted state,
+            typically due to an invalid or unresolvable field or value
+            reference.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    MultiSelectLookupFilterCriterionResponse:
+      type: object
+      x-zs-$id: MultiSelectLookupFilterCriterionResponse
+      description: >-
+        Represents the response for a filter criterion using the include_all,
+        include_any, exclude_all, and exclude_any comparators. Applicable only
+        when the field's data_type is multiuserlookup or multiselectlookup.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the multi-select lookup
+                filter criterion response.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the multi-select
+            lookup filter criterion was applied. The field has a data_type of
+            multiuserlookup or multiselectlookup.
+        comparator:
+          type: string
+          enum:
+            - include_all
+            - include_any
+            - exclude_all
+            - exclude_any
+          description: >-
+            Represents the multi-select lookup comparison operator returned for
+            the criterion. Applicable only when the field's data_type is
+            multiuserlookup or multiselectlookup.
+
+            Possible values:
+
+            include_all - Matches records that include all specified lookup
+            values.
+
+            include_any - Matches records that include at least one of the
+            specified lookup values.
+
+            exclude_all - Matches records that exclude all specified lookup
+            values.
+
+            exclude_any - Matches records that exclude at least one of the
+            specified lookup values.
+        value:
+          type: array
+          x-zs-$id: MultiSelectLookupFilterCriterionResponseValueArray
+          description: >-
+            Contains an array of lookup object references returned for the
+            multi-select comparison.
+          minItems: 1
+          maxItems: 500
+          items:
+            x-zs-$id: MultiSelectLookupFilterCriterionResponseValueArrayItems
+            $ref: '#/components/schemas/SimpleFilterCriterionValueObjectResponse'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+        $disrupted:
+          type: boolean
+          description: >-
+            Indicates whether the multi-select lookup filter criterion is in a
+            disrupted state, typically due to an invalid or unresolvable field
+            or value reference.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    SimpleFilterCriterionResponse:
+      x-zs-$id: SimpleFilterCriterionResponse
+      description: >-
+        Represents the response for a simple field-based filter criterion,
+        dispatching to the appropriate comparator-specific response schema.
+      oneOf:
+        - $ref: '#/components/schemas/EqualityFilterCriterionResponse'
+        - $ref: '#/components/schemas/TextFilterCriterionResponse'
+        - $ref: '#/components/schemas/OrderingFilterCriterionResponse'
+        - $ref: '#/components/schemas/BetweenFilterCriterionResponse'
+        - $ref: '#/components/schemas/SetFilterCriterionResponse'
+        - $ref: '#/components/schemas/MultiSelectLookupFilterCriterionResponse'
+    GroupedFilterCriterionResponse:
+      type: object
+      x-zs-$id: GroupedFilterCriterionResponse
+      description: >-
+        Represents the grouped filter criterion returned in the response,
+        containing multiple filter conditions evaluated with a logical operator.
+        Supports recursive nesting for complex filtering logic.
+      properties:
+        group:
+          type: array
+          description: >-
+            Contains an array of filter conditions grouped together and
+            evaluated with the specified logical operator.
+          minItems: 2
+          maxItems: 25
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionResponse'
+              - $ref: '#/components/schemas/GroupedFilterCriterionResponse'
+        group_operator:
+          type: string
+          enum:
+            - AND
+            - OR
+            - and
+            - or
+          description: >-
+            Represents the logical operator applied between the filter
+            conditions in the group.
+
+            Possible values:
+
+            AND - All conditions in the group must be satisfied.
+
+            OR - At least one condition in the group must be satisfied.
+
+            and - Equivalent to AND; all conditions in the group must be
+            satisfied.
+
+            or - Equivalent to OR; at least one condition in the group must be
+            satisfied.
+        $disrupted:
+          type: boolean
+          description: >-
+            Indicates whether the grouped filter criterion is in a disrupted
+            state, typically due to an invalid or unresolvable condition within
+            the group.
+      required:
+        - group
+        - group_operator
+      additionalProperties: false
+    FilterCriterionResponse:
+      x-zs-$id: FilterCriterionResponse
+      description: >-
+        Represents the top-level filter criterion returned in the response,
+        supporting both simple field-based filters and complex grouped filters
+        with logical operators.
+      oneOf:
+        - $ref: '#/components/schemas/SimpleFilterCriterionResponse'
+        - $ref: '#/components/schemas/GroupedFilterCriterionResponse'
+    SimpleFilterCriterionValueObjectRequest:
+      x-zs-$id: SimpleFilterCriterionValueObjectRequest
+      allOf:
+        - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectBase'
+        - type: object
+          additionalProperties: true
+          description: >-
+            Represents the constraint that the ID property is required for the
+            lookup object filter criterion value in request bodies.
+          required:
+            - id
+          properties:
+            id: {}
+      unevaluatedProperties: false
+      description: >-
+        Represents a lookup object filter criterion value for request bodies,
+        applicable when the field's data_type is lookup, ownerlookup, or
+        userlookup. The ID property is required.
+    EqualFilterCriterionRequest:
+      type: object
+      x-zs-$id: EqualFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the equal comparator. The value type
+        is determined by the field's data_type: use
+        SimpleFilterCriterionValueString for text, textarea, email, phone,
+        website, autonumber, picklist, multiselectpicklist, date, or datetime
+        fields; SimpleFilterCriterionValueNumber for integer, currency, or
+        double fields; SimpleFilterCriterionValueBoolean for Boolean fields;
+        SimpleFilterCriterionValueObjectRequest for lookup, ownerlookup, or
+        userlookup fields; and SimpleFilterCriterionValueObjectPredefined for
+        predefined user or role object placeholders. Accepts scalar or array
+        values. Resolve the data_type from the field's FieldSchema.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the equal filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the equal filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - equal
+          description: >-
+            Represents the equal comparison operator applied to the criterion.
+
+            Possible values:
+
+            equal - Matches records where the field value equals the specified
+            filter value.
+        value:
+          anyOf:
+            - type: array
+              x-zs-$id: EqualFilterCriterionRequestValueArray
+              description: Contains an array of filter values for the equal comparator.
+              minItems: 1
+              maxItems: 500
+              items:
+                x-zs-$id: EqualFilterCriterionRequestValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+                  - x-zs-$id: EqualFilterCriterionRequestValueArrayItemsObject
+                    anyOf:
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectRequest
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectPredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueBoolean'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectRequest'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueGeneralPredefined'
+            - $ref: >-
+                #/components/schemas/SimpleFilterCriterionValueDateTimePredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNDaysPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the filter value used in the equal comparator. Accepts a
+            scalar or an array of values, depending on the field's data_type.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    NotEqualFilterCriterionRequest:
+      type: object
+      x-zs-$id: NotEqualFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the not_equal comparator. The value
+        type is determined by the field's data_type: use
+        SimpleFilterCriterionValueString for text, textarea, email, phone,
+        website, autonumber, picklist, multiselectpicklist, date, or datetime
+        fields; SimpleFilterCriterionValueNumber for integer, currency, or
+        double fields; SimpleFilterCriterionValueBoolean for Boolean fields;
+        SimpleFilterCriterionValueObjectRequest for lookup, ownerlookup, or
+        userlookup fields; and SimpleFilterCriterionValueObjectPredefined for
+        predefined user or role object placeholders.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the not-equal filter
+                criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the not-equal filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - not_equal
+          description: >-
+            Represents the not-equal comparison operator applied to the
+            criterion.
+
+            Possible values:
+
+            not_equal - Matches records where the field value does not equal the
+            specified filter value.
+        value:
+          anyOf:
+            - type: array
+              maxItems: 500
+              x-zs-$id: NotEqualFilterCriterionRequestValueArray
+              description: Contains an array of filter values for the not_equal comparator.
+              minItems: 1
+              items:
+                x-zs-$id: NotEqualFilterCriterionRequestValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+                  - x-zs-$id: NotEqualFilterCriterionRequestValueArrayItemsObject
+                    anyOf:
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectRequest
+                      - $ref: >-
+                          #/components/schemas/SimpleFilterCriterionValueObjectPredefined
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueBoolean'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectRequest'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueObjectPredefined'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the filter value used in the not_equal comparator.
+            Accepts a scalar or an array of values, depending on the field's
+            data_type.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    EqualityFilterCriterionRequest:
+      x-zs-$id: EqualityFilterCriterionRequest
+      description: >-
+        Represents an equality filter criterion that dispatches to either the
+        EqualFilterCriterionRequest or NotEqualFilterCriterionRequest schema
+        based on the comparator value.
+      oneOf:
+        - $ref: '#/components/schemas/EqualFilterCriterionRequest'
+        - $ref: '#/components/schemas/NotEqualFilterCriterionRequest'
+    TextFilterCriterionRequest:
+      type: object
+      x-zs-$id: TextFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the like, not_like, starts_with,
+        ends_with, contains, and not_contains comparators. The value must be a
+        string scalar or array; use SimpleFilterCriterionValueString for
+        text-based field types. Object and Boolean values are not supported.
+        Resolve the data_type from the field's FieldSchema.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the text filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the text filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - like
+            - not_like
+            - starts_with
+            - ends_with
+            - contains
+            - not_contains
+          description: >-
+            Represents the text comparison operator applied to the criterion.
+
+            Possible values:
+
+            like - Matches records where the field value contains the specified
+            pattern.
+
+            not_like - Matches records where the field value does not contain
+            the specified pattern.
+
+            starts_with - Matches records where the field value begins with the
+            specified string.
+
+            ends_with - Matches records where the field value ends with the
+            specified string.
+
+            contains - Matches records where the field value contains the
+            specified string.
+
+            not_contains - Matches records where the field value does not
+            contain the specified string.
+        value:
+          description: >-
+            Represents the string filter value used in the text comparator.
+            Accepts a scalar string or an array of string values.
+          oneOf:
+            - type: array
+              x-zs-$id: TextFilterCriterionRequestValueArray
+              description: >-
+                Contains an array of primitive string values for the text filter
+                comparator.
+              minItems: 1
+              maxItems: 500
+              items:
+                x-zs-$id: TextFilterCriterionRequestValueArrayItems
+                oneOf:
+                  - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    OrderingFilterCriterionRequest:
+      type: object
+      x-zs-$id: OrderingFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the less_than, less_equal,
+        greater_than, and greater_equal comparators. The value must be a scalar;
+        arrays and objects are not supported. The value type is determined by
+        the field's data_type: use SimpleFilterCriterionValueString for date or
+        datetime fields, and SimpleFilterCriterionValueNumber for integer,
+        currency, or double fields.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the ordering filter
+                criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the ordering filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - less_than
+            - less_equal
+            - greater_than
+            - greater_equal
+          description: >-
+            Represents the ordering comparison operator applied to the
+            criterion.
+
+            Possible values:
+
+            less_than - Matches records where the field value is less than the
+            specified filter value.
+
+            less_equal - Matches records where the field value is less than or
+            equal to the specified filter value.
+
+            greater_than - Matches records where the field value is greater than
+            the specified filter value.
+
+            greater_equal - Matches records where the field value is greater
+            than or equal to the specified filter value.
+        value:
+          anyOf:
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+            - $ref: '#/components/schemas/SimpleFilterCriterionValueAgeDuePredefined'
+          description: >-
+            Represents the scalar filter value used in the ordering comparator.
+            Arrays and objects are not supported for ordering comparators.
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    BetweenFilterCriterionRequest:
+      type: object
+      x-zs-$id: BetweenFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the between and not_between
+        comparators. The value must be an array of exactly two elements —
+        [lower_bound, upper_bound]. The value type is determined by the field's
+        data_type: use SimpleFilterCriterionValueString for date or datetime
+        fields, and SimpleFilterCriterionValueNumber for integer, currency, or
+        double fields. Resolve the data_type from the field's FieldSchema. For
+        formula fields, use formula.return_type as the effective data_type; for
+        rollup_summary fields, use rollup_summary.return_type.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the range filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the range filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - between
+            - not_between
+          description: >-
+            Represents the range comparison operator applied to the criterion,
+            indicating whether the field value falls within or outside the
+            specified bounds.
+
+            Possible values:
+
+            between - Matches records where the field value falls within the
+            specified range.
+
+            not_between - Matches records where the field value falls outside
+            the specified range.
+        value:
+          type: array
+          x-zs-$id: BetweenFilterCriterionRequestValueArray
+          description: >-
+            Contains the two boundary values — [lower_bound, upper_bound] —
+            against which the field is evaluated for the between or not_between
+            comparator.
+          minItems: 2
+          maxItems: 2
+          items:
+            x-zs-$id: BetweenFilterCriterionRequestValueArrayItems
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    SetFilterCriterionRequest:
+      type: object
+      x-zs-$id: SetFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the in and not_in comparators. The
+        value must be an array of primitive values. The value type is determined
+        by the field's data_type: use SimpleFilterCriterionValueString for
+        text-based types, and SimpleFilterCriterionValueNumber for integer,
+        currency, or double fields.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the set filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the set filter
+            criterion is applied, conforming to the base field structure.
+        comparator:
+          type: string
+          enum:
+            - in
+            - not_in
+          description: >-
+            Represents the set membership comparison operator applied to the
+            criterion.
+
+            Possible values:
+
+            in - Matches records where the field value is in the specified set
+            of values.
+
+            not_in - Matches records where the field value is not in the
+            specified set of values.
+        value:
+          type: array
+          x-zs-$id: SetFilterCriterionRequestValueArray
+          description: >-
+            Contains an array of primitive filter values used in the set
+            comparison.
+          minItems: 1
+          maxItems: 500
+          items:
+            x-zs-$id: SetFilterCriterionRequestValueArrayItems
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueString'
+              - $ref: '#/components/schemas/SimpleFilterCriterionValueNumber'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    MultiSelectLookupFilterCriterionRequest:
+      type: object
+      x-zs-$id: MultiSelectLookupFilterCriterionRequest
+      description: >-
+        Represents a filter criterion for the include_all, include_any,
+        exclude_all, and exclude_any comparators. Applicable only when the
+        field's data_type is multiuserlookup or multiselectlookup. The value
+        must be an array of SimpleFilterCriterionValueObjectRequest lookup
+        objects.
+      properties:
+        field:
+          allOf:
+            - $ref: '#/components/schemas/FilterFieldBase'
+            - type: object
+              additionalProperties: true
+              description: >-
+                Represents the field reference constraint that requires the
+                api_name property to be present for the multi-select lookup
+                filter criterion.
+              required:
+                - api_name
+          unevaluatedProperties: false
+          description: >-
+            Represents the target field definition to which the multi-select
+            lookup filter criterion is applied. The field must have a data_type
+            of multiuserlookup or multiselectlookup.
+        comparator:
+          type: string
+          enum:
+            - include_all
+            - include_any
+            - exclude_all
+            - exclude_any
+          description: >-
+            Represents the multi-select lookup comparison operator applied to
+            the criterion. Applicable only when the field's data_type is
+            multiuserlookup or multiselectlookup.
+
+            Possible values:
+
+            include_all - Matches records that include all specified lookup
+            values.
+
+            include_any - Matches records that include at least one of the
+            specified lookup values.
+
+            exclude_all - Matches records that exclude all specified lookup
+            values.
+
+            exclude_any - Matches records that exclude at least one of the
+            specified lookup values.
+        value:
+          maxItems: 5
+          type: array
+          x-zs-$id: MultiSelectLookupFilterCriterionRequestValueArray
+          description: >-
+            Contains an array of lookup object references used in the
+            multi-select comparison.
+          minItems: 1
+          items:
+            x-zs-$id: MultiSelectLookupFilterCriterionRequestValueArrayItems
+            $ref: '#/components/schemas/SimpleFilterCriterionValueObjectRequest'
+        type:
+          type: string
+          enum:
+            - merge_field
+            - pre_defined
+            - value
+            - field
+          default: value
+          description: >-
+            Indicates the value resolution mode of the criterion, distinguishing
+            whether the filter value is a literal value, a merge field
+            reference, a predefined system variable, or another field reference.
+
+            Possible values:
+
+            value - The value is a direct literal.
+
+            merge_field - The value is a merge field reference.
+
+            pre_defined - The value is a predefined system variable placeholder.
+
+            field - The value references another field.
+      required:
+        - field
+        - comparator
+        - value
+      additionalProperties: false
+    SimpleFilterCriterionRequest:
+      x-zs-$id: SimpleFilterCriterionRequest
+      description: >-
+        Represents a simple field-based filter criterion that dispatches to the
+        appropriate comparator-specific schema. The equal and not_equal
+        comparators support scalar or array values; text comparators support
+        scalar or array strings; ordering comparators require a scalar; between
+        and not_between comparators require a two-element array; in and not_in
+        comparators require an array of primitives; and include_all,
+        include_any, exclude_all, and exclude_any comparators require an array
+        of lookup objects and apply only when the field's data_type is
+        multiuserlookup or multiselectlookup.
+      oneOf:
+        - $ref: '#/components/schemas/EqualityFilterCriterionRequest'
+        - $ref: '#/components/schemas/TextFilterCriterionRequest'
+        - $ref: '#/components/schemas/OrderingFilterCriterionRequest'
+        - $ref: '#/components/schemas/BetweenFilterCriterionRequest'
+        - $ref: '#/components/schemas/SetFilterCriterionRequest'
+        - $ref: '#/components/schemas/MultiSelectLookupFilterCriterionRequest'
+    GroupedFilterCriterionRequest:
+      type: object
+      x-zs-$id: GroupedFilterCriterionRequest
+      description: >-
+        Represents a grouped filter criterion containing multiple filter
+        conditions evaluated with a logical operator. Supports recursive nesting
+        for complex filtering logic.
+      properties:
+        group:
+          type: array
+          description: >-
+            Contains an array of filter conditions grouped together and
+            evaluated with the specified logical operator.
+          minItems: 2
+          maxItems: 25
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/SimpleFilterCriterionRequest'
+              - $ref: '#/components/schemas/GroupedFilterCriterionRequest'
+        group_operator:
+          type: string
+          enum:
+            - AND
+            - OR
+            - and
+            - or
+          description: >-
+            Represents the logical operator applied between the filter
+            conditions in the group.
+
+            Possible values:
+
+            AND - All conditions in the group must be satisfied.
+
+            OR - At least one condition in the group must be satisfied.
+
+            and - Equivalent to AND; all conditions in the group must be
+            satisfied.
+
+            or - Equivalent to OR; at least one condition in the group must be
+            satisfied.
+      required:
+        - group
+        - group_operator
+      additionalProperties: false
+    FilterCriterionRequest:
+      x-zs-$id: FilterCriterionRequest
+      description: >-
+        Represents the top-level filter criterion for data selection, supporting
+        both simple field-based filters and complex grouped filters with logical
+        operators.
+      oneOf:
+        - $ref: '#/components/schemas/SimpleFilterCriterionRequest'
+        - $ref: '#/components/schemas/GroupedFilterCriterionRequest'
+  parameters:
+    ParamPathKioskid:
+      name: kioskId
+      in: path
+      description: >-
+        Unique identifier of the kiosk. Use the [Get Kiosks
+        API](kiosks.yaml#$.paths./settings/kiosks.get) to retrieve the Kiosk ID.
+      required: true
+      schema:
+        type: string
+        example: '{kioskId}'
+        maxLength: 255
+    ParamPathGetRecordid:
+      name: getRecordId
+      in: path
+      description: >-
+        Unique identifier of the
+        [GetRecord](kiosks_get_records.yaml#$.paths./settings/kiosks/{kioskId}/get_records/{getRecordId}.get)
+        component.
+      required: true
+      schema:
+        type: string
+        example: '{getRecordId}'
+        maxLength: 255
+    ParamQueryIncludeInnerDetails:
+      name: include_inner_details
+      in: query
+      description: Controls additional inner details to include in the response.
+      required: false
+      schema:
+        type: string
+        maxLength: 500
+    ParamQueryInclude:
+      name: include
+      in: query
+      description: Specifies additional properties to include in the response.
+      required: false
+      schema:
+        type: string
+        maxLength: 255
+    ParamQueryModule:
+      name: module
+      in: query
+      description: Filters associations by the specified module API name.
+      required: false
+      schema:
+        type: string
+        maxLength: 255
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.kiosks: Access to settings.kiosks
+            ZohoCRM.settings.kiosks.ALL: Access to settings.kiosks ALL
+            ZohoCRM.settings.kiosks.CREATE: Access to create settings.kiosks kiosks or states CREATE
+            ZohoCRM.settings.kiosks.READ: Access to read settings.kiosks kiosks or states
+            ZohoCRM.settings.kiosks.UPDATE: Access to update settings.kiosks kiosks or states
+            ZohoCRM.settings.kiosks.DELETE: Access to delete settings.kiosks kiosks or states

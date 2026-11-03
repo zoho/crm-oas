@@ -1,0 +1,21 @@
+# Kiosks Execute
+
+- [OpenAPI specification](kiosks_execute.yaml)
+- [Initiate a Test Run for a Kiosk](operations/testRunKiosk/operation.md)
+  - To initiate a test run for a kiosk before publishing it in your Zoho CRM organization. This operation executes all configured kiosk states and actions on live CRM data in real time. Actions such as creating, updating, or deleting records and sending email notifications are performed immediately and cannot be automatically reversed. The response returns the first state of the kiosk. To advance through the remaining states, use the [Update Kiosk Execution API](kiosk_execute.yaml#$.paths./settings/kiosks/{kioskId}/executions/{executionId}/actions/execute.put) with the execution details returned in the response. Retrieve the kiosk ID using the [Get Kiosks API](kiosks.yaml#$.paths./settings/kiosks.get) before calling this endpoint. Administrator profile, or a profile with the Module Customization or Manage Automation permission should be enabled.
+  - [Examples](operations/testRunKiosk/examples/)
+- [Retrieve the Preview of a Specified Kiosk](operations/previewKiosk/operation.md)
+  - Retrieves the configuration and details of the first screen state for a specified Kiosk in Zoho CRM. This API returns only the first screen data required to render the Kiosk and does not trigger any actions or require user interaction. Supported on Standard, Professional, Enterprise, and Ultimate editions.
+  - [Examples](operations/previewKiosk/examples/)
+- [List kiosk executions](operations/getKioskExecutions/operation.md)
+  - To retrieve all active executions for a specific kiosk in your Zoho CRM organization. For each execution, the response includes the user who ran the kiosk, the execution start and end times, the current or most recently visited state, and the transition available to execute next. Multiple concurrent executions, such as those initiated by different users, are also returned. The kiosk must be in published status and have at least one active execution for the request to return results. An execution is considered complete only when the user navigates through all screens and closes the kiosk on the final screen; completed executions are excluded from the response. Executions closed before reaching the final screen remain active and continue to appear in the response.
+  - [Examples](operations/getKioskExecutions/examples/)
+- [Retrieve a kiosk execution record](operations/getKioskExecution/operation.md)
+  - To retrieve the details of a specific kiosk execution in your Zoho CRM organization. The response includes all elements and metadata for the state currently being executed, along with the owner of the execution, the execution start and end times, the current or most recently executed state, and the transition that can be executed next. The kiosk must be in published status and have at least one active execution. Available in Standard, Professional, Enterprise, and Ultimate editions.
+  - [Examples](operations/getKioskExecution/examples/)
+- [Update a Kiosk Execution](operations/executeKioskState/operation.md)
+  - To execute a transition in an ongoing Kiosk execution by submitting the required transition and runtime data, and proceed to the next step of the Kiosk in your Zoho CRM. The Kiosk must be in the published status and have an active execution to update its execution state. To obtain the execution_ID, execute the Kiosk using the [Execute a Kiosk API](kiosks_execute.yaml#$.paths./settings/kiosks/{kioskId}/actions/execute.post). If an execution is already in progress, invoke the [Get Executions of a Kiosk API](kiosks_execute.yaml#$.paths./settings/kiosks/{kioskId}/executions.post) to retrieve the execution_ID.
+  - [Examples](operations/executeKioskState/examples/)
+- [Execute a Kiosk](operations/executeKiosk/operation.md)
+  - The execute Kiosk API is used to trigger the execution of a published Kiosk in Zoho CRM. This API returns only the first executable state of the Kiosk. To continue the execution through the remaining states, call the [Update a Kiosk Execution API](kiosks_execute.yaml#$.paths./settings/kiosks/{kiosk_id}/executions/{execution_id}/actions/execute.put) until the execution is complete.
+  - [Examples](operations/executeKiosk/examples/)

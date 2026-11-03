@@ -1,0 +1,4578 @@
+openapi: 3.1.0
+info:
+  title: Automation Functions
+  description: >-
+    Automation Functions are custom server-side scripts configured in Zoho CRM
+    to execute extended business logics. This API enables developers to create,
+    retrieve, update, and delete automation functions, as well as retrieve
+    associated modules and function failure records.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server for /crm
+    variables:
+      dc:
+        description: API Server URL TLD
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: API Version
+        default: v8
+paths:
+  /settings/automation/functions/{functionId}:
+    get:
+      summary: Get Automation Function
+      description: >-
+        To retrieve the details of a specific automation function in your Zoho
+        CRM organization.
+      x-zs-llm-description: >-
+        Retrieves a single automation function by ID. Returns the full
+        configuration including arguments, module context, and script reference.
+      operationId: getAutomationFunctions
+      parameters:
+        - $ref: '#/components/parameters/ParamPathFunctionid'
+      responses:
+        '200':
+          description: Returns the details of the requested automation function.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationFunctionQueryResponse'
+              examples:
+                Success200:
+                  summary: Successful Retrieval of an Automation Function
+                  value:
+                    functions:
+                      - created_time: '2026-03-04T18:42:24+05:30'
+                        lock_status:
+                          locked: false
+                        editable: true
+                        module:
+                          singular_label: Lead
+                          plural_label: Leads
+                          api_name: Leads
+                          moduleName: Leads
+                          id: '678446000000000125'
+                        related_module: null
+                        deletable: true
+                        description: null
+                        language: deluge
+                        source: crm
+                        created_by:
+                          name: Patricia Adams
+                          id: '678446000000280009'
+                        feature_type: workflow
+                        modified_time: '2026-03-04T18:42:24+05:30'
+                        associated: false
+                        function:
+                          api_name: apidocfn
+                          id: '120851000000875001'
+                        name: APIDocFn
+                        modified_by:
+                          name: Patricia Adams
+                          id: '678446000000280009'
+                        arguments:
+                          - name: mergeArg
+                            type: merge_field
+                            value: ${!Leads.id}
+                          - name: argument
+                            type: static
+                            value: testingarg
+                        id: '678446000051450070'
+                  description: >-
+                    Shows a successful response containing the automation
+                    function details, including its creation time, lock status,
+                    editability flag, and associated module information.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '204':
+          description: >-
+            Indicates that the automation function was retrieved successfully
+            and the response contains no body.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.automation_actions.READ
+    put:
+      summary: Update Automation Function
+      description: >-
+        To update an automation function configuration in your Zoho CRM
+        organization.
+      x-zs-llm-description: >-
+        Updates one or more automation function definitions. Provide the full
+        configuration for each function in the request body.
+      operationId: putAutomationFunctions
+      parameters:
+        - $ref: '#/components/parameters/ParamPathFunctionid'
+      requestBody:
+        description: The request body must contain a **functions** array with one object.
+        content:
+          application/json:
+            x-zs-llm-examples:
+              - SamplePutRequest
+            schema:
+              $ref: '#/components/schemas/AutomationFunctionModificationRequestV2'
+            examples:
+              SamplePutRequest:
+                summary: Update an Automation Function With Argument Values
+                value:
+                  functions:
+                    - arguments:
+                        - name: arg1
+                          type: merge_field
+                          value: ${!Leads.Last_Name}
+                        - name: arg2
+                          type: static
+                          value: cityupdated
+                      id: '678446000051490013'
+                      module:
+                        id: '678446000000000125'
+                        api_name: Leads
+                      feature_type: workflow
+                description: >-
+                  Shows a PUT request to update an existing custom function,
+                  providing two arguments. One references a merge field from the
+                  Leads module. The other one has a static value along with the
+                  function ID and associated module details.
+      responses:
+        '200':
+          description: >-
+            Returns a confirmation that the custom function was updated
+            successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationFunctionModificationResponse'
+              examples:
+                Success200:
+                  summary: Successful Update of a Custom Function
+                  value:
+                    functions:
+                      - code: SUCCESS
+                        details:
+                          id: '678446000051490013'
+                        message: custom function updated successfully
+                        status: success
+                  description: >-
+                    Shows the success response returned after a custom function
+                    is updated, including the function ID in the details object
+                    and a SUCCESS status code.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            The request cannot be processed due to invalid syntax.
+            **Resolution:** The request body must be reviewed to ensure it
+            contains valid syntax and all required fields are correctly
+            formatted.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response body returned when the request
+                  to update an automation function is invalid.
+                oneOf:
+                  - $ref: '#/components/schemas/UpdateInvalidFunctionIdErrorResponse'
+                  - type: object
+                    additionalProperties: false
+                    description: Wrapped error response with functions
+                    properties:
+                      functions:
+                        type: array
+                        description: Array of error objects
+                        items:
+                          oneOf:
+                            - $ref: >-
+                                #/components/schemas/ModuleAmbiguityErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidModuleNameErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidModuleIdErrorResponse
+                            - $ref: >-
+                                #/components/schemas/ArgumentMissingTypeErrorResponse
+                            - $ref: >-
+                                #/components/schemas/ArgumentTypeValueMismatchErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidDataTypeErrorResponse
+                            - $ref: '#/components/schemas/InvalidDataErrorResponse'
+                            - $ref: >-
+                                #/components/schemas/MandatoryFieldMissingErrorResponse
+                            - $ref: >-
+                                #/components/schemas/ScriptNotAllowedErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidFeatureNameErrorResponse
+                        maxItems: 25
+                    required:
+                      - functions
+                    x-zs-$id: PutAutomationFunctionsError400Wrapper
+                x-zs-$id: PutAutomationFunctionsError400
+              examples:
+                InvalidDataResponse1:
+                  summary: INVALID_DATA Error for an Invalid Function ID
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 3
+                    message: the id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows a 400 error response returned when the function ID
+                    provided in the request is invalid, indicated by the
+                    INVALID_DATA code and a resource_path_index detail.
+                AmbiguityDuringProcessingResponse1:
+                  summary: Error Due to Ambiguous Module Identifier
+                  value:
+                    functions:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.functions[0].module.id
+                            - api_name: api_name
+                              json_path: $.functions[0].module.api_name
+                        message: The given moduleid seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response returned when the module
+                    identifier in the request is ambiguous, with the
+                    AMBIGUITY_DURING_PROCESSING code indicating that both the id
+                    and api_name fields on the module object could not be
+                    resolved unambiguously.
+                InvalidDataResponse2:
+                  summary: INVALID_DATA Error for an Invalid Module API Name
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.functions[0].module.api_name
+                        message: the tabName given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module's **api_name**
+                    field at **$.functions[0].module.api_name** contains an
+                    invalid tab name, returning an **INVALID_DATA** code with an
+                    error status.
+                InvalidDataResponse3:
+                  summary: INVALID_DATA Error for Invalid Module ID
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.functions[0].module.id
+                        message: the tabId given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module's **id** field
+                    at **$.functions[0].module.id** contains an invalid tab ID,
+                    returning an **INVALID_DATA** code with an error status.
+                MandatoryNotFoundResponse1:
+                  summary: MANDATORY_NOT_FOUND Error for Missing Argument Type
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: type
+                          json_path: $.functions[0].arguments[1].type
+                        message: >-
+                          the given parameter is invalid, specify both name and
+                          value
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **type** field at
+                    **$.functions[0].arguments[1].type** is missing or invalid,
+                    returning a **MANDATORY_NOT_FOUND** code with the message
+                    that both name and value must be specified.
+                DependentMismatchResponse1:
+                  summary: >-
+                    DEPENDENT_MISMATCH Error for Mismatched Type and Value
+                    Fields
+                  value:
+                    functions:
+                      - code: DEPENDENT_MISMATCH
+                        details:
+                          dependee:
+                            api_name: type
+                            json_path: $.functions[0].arguments[0].type
+                          api_name: value
+                          json_path: $.functions[0].arguments[0].value
+                        message: Type and value is mismatched
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the **value** field's data
+                    does not match the type specified in the **type** field of
+                    the function argument, identified at
+                    **$.functions[0].arguments[0].value**.
+                InvalidDataResponse4:
+                  summary: INVALID_DATA Error for Invalid Data Type in Arguments Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: arguments
+                          expected_data_type: jsonarray
+                          json_path: $.functions[*].arguments
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the **arguments** field
+                    contains an invalid data type, where the expected type is a
+                    JSON array, as identified at **$.functions[*].arguments**.
+                InvalidDataResponse5:
+                  summary: Error for Arguments Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: arguments
+                          maximum_length: 2
+                          json_path: $.functions[*].arguments
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the **arguments** field
+                    contains invalid data, with the error code **INVALID_DATA**
+                    and a maximum length constraint violation at the path
+                    **$.functions[*].arguments**.
+                MandatoryNotFoundResponse2:
+                  summary: MANDATORY_NOT_FOUND Error for Missing Argument Name Field
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: name
+                          json_path: $.functions[*].arguments[*].name
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the required **name** field
+                    is missing within the **arguments** array, returning the
+                    error code **MANDATORY_NOT_FOUND** at the path
+                    **$.functions[*].arguments[*].name**.
+                InvalidDataResponse6:
+                  summary: >-
+                    INVALID_DATA Error for Incorrect Data Type on Argument Name
+                    Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.functions[*].arguments[*].name
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the **name** field within
+                    the **arguments** array contains an invalid data type,
+                    returning the error code **INVALID_DATA** with an expected
+                    data type of **text** at the path
+                    **$.functions[*].arguments[*].name**.
+                InvalidDataResponse7:
+                  summary: >-
+                    INVALID_DATA Error for Argument Name Exceeding Maximum
+                    Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 4
+                          json_path: $.functions[*].arguments[*].name
+                        status: error
+                  description: >-
+                    Shows the error response returned when the argument name
+                    field at $.functions[*].arguments[*].name exceeds the
+                    allowed maximum length, resulting in an INVALID_DATA status.
+                MandatoryNotFoundResponse3:
+                  summary: Error for Missing Required Argument Type Field
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: type
+                          json_path: $.functions[*].arguments[*].type
+                        status: error
+                  description: >-
+                    Shows the error response returned when the required argument
+                    type field at $.functions[*].arguments[*].type is absent
+                    from the request, resulting in a MANDATORY_NOT_FOUND status.
+                InvalidDataResponse8:
+                  summary: Error for Incorrect Data Type on Argument Type Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: type
+                          expected_data_type: text
+                          json_path: $.functions[*].arguments[*].type
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **type** field in the
+                    function arguments contains an invalid data type, with the
+                    expected data type indicated as **text**.
+                InvalidDataResponse9:
+                  summary: Error for Type Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: type
+                          maximum_length: 6
+                          json_path: $.functions[*].arguments[*].type
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **type** field in the
+                    function arguments exceeds the maximum allowed length of six
+                    characters, returning an INVALID_DATA code.
+                MandatoryNotFoundResponse4:
+                  summary: Error for Missing Value Field in Function Arguments
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: value
+                          json_path: $.functions[*].arguments[*].value
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the required **value**
+                    field in the function arguments is missing, returning a
+                    MANDATORY_NOT_FOUND code.
+                InvalidDataResponse10:
+                  summary: Error for Invalid Data Type in Argument Value Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: value
+                          expected_data_type: text
+                          json_path: $.functions[*].arguments[*].value
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **value** field
+                    at **$.functions[*].arguments[*].value** contains a value
+                    with an invalid data type; the expected data type is
+                    **text**.
+                InvalidDataResponse11:
+                  summary: Error for Argument Value Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: value
+                          maximum_length: 11
+                          json_path: $.functions[*].arguments[*].value
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **value** field
+                    at **$.functions[*].arguments[*].value** exceeds the maximum
+                    allowed length of 11 characters.
+                MandatoryNotFoundResponse5:
+                  summary: >-
+                    MANDATORY_NOT_FOUND Error for Required Id Field Missing in
+                    Functions Array
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: id
+                          json_path: $.functions[*].id
+                        status: error
+                  description: >-
+                    Shows a 400 error response when a required field is missing
+                    from the request, with the **MANDATORY_NOT_FOUND** code
+                    identifying **id** as the absent field at
+                    **$.functions[*].id**.
+                InvalidDataResponse12:
+                  summary: Error for Incorrect Data Type on the id Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.functions[*].id
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the **id** field at
+                    **$.functions[*].id** contains a value with an incorrect
+                    data type; the expected type is **bigint**.
+                InvalidDataResponse13:
+                  summary: Error for id Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 18
+                          json_path: $.functions[*].id
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the **id** field at
+                    **$.functions[*].id** exceeds the maximum allowed length of
+                    18 characters, returning an **INVALID_DATA** code.
+                InvalidDataResponse14:
+                  summary: Error—Invalid Data Type for module Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: module
+                          expected_data_type: jsonobject
+                          json_path: $.functions[*].module
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **module** field at
+                    **$.functions[*].module** contains a value of an incorrect
+                    data type; the expected data type is **jsonobject**.
+                InvalidDataResponse15:
+                  summary: Error—module Field Exceeds Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: module
+                          maximum_length: 1
+                          json_path: $.functions[*].module
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **module** field at
+                    **$.functions[*].module** exceeds the allowed maximum
+                    length, resulting in an INVALID_DATA error.
+                InvalidDataResponse16:
+                  summary: Error—Invalid Data Type for module.id Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.functions[*].module.id
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module **id** field at
+                    **$.functions[*].module.id** contains an invalid data type;
+                    the expected data type is **bigint**.
+                InvalidDataResponse17:
+                  summary: Error for Module ID Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 18
+                          json_path: $.functions[*].module.id
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module **id** field at
+                    **$.functions[*].module.id** exceeds the maximum allowed
+                    length of 18 characters.
+                InvalidDataResponse18:
+                  summary: Error for Module api_name Field With Wrong Data Type
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: api_name
+                          expected_data_type: text
+                          json_path: $.functions[*].module.api_name
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module **api_name**
+                    field at **$.functions[*].module.api_name** contains an
+                    invalid data type; the expected data type is **text**.
+                InvalidDataResponse19:
+                  summary: >-
+                    INVALID_DATA Error for Module api_name Exceeding Maximum
+                    Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          maximum_length: 5
+                          json_path: $.functions[*].module.api_name
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **api_name**
+                    field in **module** exceeds the allowed length, resulting in
+                    an INVALID_DATA error at the path
+                    **$.functions[*].module.api_name**.
+                InvalidDataResponse20:
+                  summary: Error for feature_type With Unexpected Data Type
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: feature_type
+                          expected_data_type: text
+                          json_path: $.functions[*].feature_type
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **feature_type**
+                    field contains an invalid data type; the response indicates
+                    that a **text** value is expected, and the error is reported
+                    at **$.functions[*].feature_type**.
+                InvalidDataResponse21:
+                  summary: Error for feature_type Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: feature_type
+                          maximum_length: 8
+                          json_path: $.functions[*].feature_type
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **feature_type** field
+                    value exceeds the allowed maximum length, returning an
+                    **INVALID_DATA** code with the offending field path.
+                NotAllowedResponse1:
+                  summary: NOT_ALLOWED Error for the Script Field
+                  value:
+                    functions:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: script
+                          json_path: $.functions[0].script
+                        message: permission denied
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **script** field is not
+                    permitted, returning a **NOT_ALLOWED** code with a
+                    permission denied message and the field's JSON path.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.automation_actions.UPDATE
+    delete:
+      summary: Delete Automation Function
+      description: To delete an automation function from your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Deletes a single automation function by ID path parameter. Associated
+        functions cannot be deleted.
+      operationId: deleteAutomationFunction
+      parameters:
+        - $ref: '#/components/parameters/ParamPathFunctionid'
+      responses:
+        '200':
+          description: >-
+            Returns a confirmation that the automation function was successfully
+            deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationFunctionDeletionResponse'
+              examples:
+                Success200:
+                  summary: Successful Deletion of an Automation Function
+                  value:
+                    functions:
+                      - code: SUCCESS
+                        details:
+                          id: '678446000051450070'
+                        message: Function is deleted
+                        status: success
+                  description: >-
+                    Shows a successful response confirming that the specified
+                    automation function was deleted, including the deleted
+                    function's ID in the details object.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            The request cannot be processed due to invalid syntax.
+            **Resolution:** The request must be corrected to use valid syntax
+            before resubmitting.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateInvalidFunctionIdErrorResponse'
+              examples:
+                InvalidDataResponse1:
+                  summary: Invalid Function ID in Delete Request
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 3
+                    message: the id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the error response returned when the function ID
+                    supplied in the request path is invalid, resulting in an
+                    INVALID_DATA code and an error status.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.automation_actions.DELETE
+  /settings/automation/functions:
+    get:
+      summary: Get Automation Functions
+      description: >-
+        To retrieve all automation functions configured in your Zoho CRM
+        organization.
+      x-zs-llm-description: >-
+        Fetches a paginated list of all automation function definitions. Filter
+        by module and feature_type. Check info.more_records for additional
+        pages.
+      operationId: getAllAutomationFunctions
+      parameters:
+        - name: module
+          in: query
+          description: >-
+            Specify the module API name to filter the automation functions
+            returned in the response.
+          required: false
+          schema:
+            type: string
+            maxLength: 200
+          example: Leads
+        - name: feature_type
+          in: query
+          description: >
+            Specify the automation feature type to filter the returned
+            functions. Possible values: 
+
+            * **workflow**  
+
+            * **approval_process**  
+
+            * **blueprint** 
+
+            * **blueprint_transition**  
+
+            * **blueprint_state**  
+
+            * **review_process** 
+
+            * **orchestration**  
+
+            * **assignment_rules** 
+
+            * **kiosk** 
+
+            * **pathfinder** 
+
+            * **connected_workflows** 
+
+            * **commandcenter_service**
+
+            * **cadences** 
+          required: false
+          schema:
+            type: string
+            enum:
+              - workflow
+              - approval_process
+              - blueprint
+              - blueprint_transition
+              - blueprint_state
+              - review_process
+              - orchestration
+              - assignment_rules
+              - kiosk
+              - pathfinder
+              - connected_workflows
+              - commandcenter_service
+              - cadences
+            maxLength: 22
+          example: workflow
+        - name: page
+          in: query
+          description: >-
+            Specify the page number to retrieve in the paginated list of
+            automation functions.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 1
+          example: 1
+        - name: per_page
+          in: query
+          description: >-
+            Specify the number of automation functions to return per page in the
+            paginated response.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 200
+            default: 200
+          example: 100
+      responses:
+        '200':
+          description: >-
+            Returns the list of automation functions configured in the Zoho CRM
+            organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationFunctionListResponse'
+              examples:
+                Success200:
+                  summary: Successful Retrieval of Automation Functions
+                  value:
+                    functions:
+                      - created_time: '2026-03-04T18:42:24+05:30'
+                        lock_status:
+                          locked: false
+                        editable: true
+                        module:
+                          singular_label: Leads
+                          plural_label: Leads
+                          api_name: Leads
+                          moduleName: Leads
+                          id: '678446000000000125'
+                        related_module: null
+                        deletable: true
+                        description: null
+                        language: deluge
+                        source: crm
+                        created_by:
+                          name: Jordan Lee
+                          id: '678446000000280009'
+                        feature_type: workflow
+                        modified_time: '2026-03-04T18:42:24+05:30'
+                        associated: false
+                        function:
+                          id: '120851000000875001'
+                        name: APIDocFn
+                        modified_by:
+                          name: Jordan Lee
+                          id: '678446000000280009'
+                        id: '678446000051450070'
+                    info:
+                      per_page: 200
+                      count: 63
+                      page: 1
+                      more_records: false
+                  description: >-
+                    Shows a successful response containing a list of automation
+                    functions, each with details such as creation time, lock
+                    status, editability, and the associated module information.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                description: >-
+                  Represents the error response body returned when the request
+                  contains invalid input for the automation functions retrieval
+                  operation.
+                oneOf:
+                  - $ref: '#/components/schemas/NotAllowedModuleErrorResponse'
+                  - $ref: '#/components/schemas/InvalidFeatureTypeErrorResponse'
+                x-zs-$id: GetAllAutomationFunctionsError400
+              examples:
+                NotAllowedModuleResponse:
+                  summary: Error for an Unsupported Module
+                  value:
+                    code: NOT_ALLOWED
+                    details:
+                      param_name: module
+                    message: The given module is not supported
+                    status: error
+                  description: >-
+                    Shows the error response returned when the specified module
+                    is not supported by the automation functions endpoint,
+                    including the NOT_ALLOWED code and the param_name detail
+                    identifying the invalid parameter.
+                InvalidFeatureTypeResponse:
+                  summary: Error for an Unrecognized Feature Type
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      param_name: feature_type
+                    message: the given feature name is invalid
+                    status: error
+                  description: >-
+                    Shows the error response returned when the **feature_type**
+                    parameter value supplied in the request is not recognized as
+                    a valid feature name.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.automation_actions.READ
+    put:
+      summary: Update Automation Function
+      description: To update an automation function in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Updates one or more automation function definitions. Provide the full
+        configuration for each function in the request body.
+      x-zs-llm-examples:
+        - SamplePutRequest
+      operationId: putAutomationFunctionsBodyId
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutomationFunctionModificationRequestV2'
+            examples:
+              SamplePutRequest:
+                summary: Update a Custom Function With Merge Field and Static Arguments
+                value:
+                  functions:
+                    - arguments:
+                        - name: arg1
+                          type: merge_field
+                          value: ${!Leads.Last_Name}
+                        - name: arg2
+                          type: static
+                          value: cityupdated
+                      id: '678446000051490013'
+                      module:
+                        id: '678446000000000125'
+                        api_name: Leads
+                      feature_type: workflow
+                description: >-
+                  Shows a PUT request body for updating a custom function, with
+                  two arguments. One references a merge field from the Leads
+                  module and the other one supplies a static value.
+      responses:
+        '200':
+          description: >-
+            Returns the update status of the custom function, including the
+            record ID of the updated function.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationFunctionModificationResponse'
+              examples:
+                Success200:
+                  summary: Successful Update of a Custom Function
+                  value:
+                    functions:
+                      - code: SUCCESS
+                        details:
+                          id: '678446000051490013'
+                        message: custom function updated successfully
+                        status: success
+                  description: >-
+                    Shows a successful response confirming the custom function
+                    was updated, with the updated function's record ID returned
+                    in the details object.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            The request contains invalid data. **Resolution:** The request body
+            must be corrected to include valid data before resubmitting.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents a 400 error response for the update automation
+                  functions operation, containing a **functions** array with one
+                  or more error objects.
+                properties:
+                  functions:
+                    type: array
+                    description: >-
+                      Represents the list of error objects returned for the
+                      **functions** array when the request contains invalid
+                      data.
+                    items:
+                      description: >-
+                        Represents an individual error object describing a
+                        validation failure for a specific function entry in the
+                        request.
+                      oneOf:
+                        - $ref: '#/components/schemas/ModuleAmbiguityErrorResponse'
+                        - $ref: '#/components/schemas/InvalidModuleNameErrorResponse'
+                        - $ref: '#/components/schemas/InvalidModuleIdErrorResponse'
+                        - $ref: >-
+                            #/components/schemas/ArgumentMissingTypeErrorResponse
+                        - $ref: >-
+                            #/components/schemas/ArgumentTypeValueMismatchErrorResponse
+                        - $ref: '#/components/schemas/InvalidDataTypeErrorResponse'
+                        - $ref: '#/components/schemas/InvalidDataErrorResponse'
+                        - $ref: >-
+                            #/components/schemas/MandatoryFieldMissingErrorResponse
+                        - $ref: '#/components/schemas/ScriptNotAllowedErrorResponse'
+                        - $ref: '#/components/schemas/InvalidFeatureNameErrorResponse'
+                    maxItems: 25
+                required:
+                  - functions
+                x-zs-$id: PutAutomationFunctionsBodyIdError400Wrapper
+              examples:
+                InvalidDataResponse1:
+                  summary: Error for an Invalid Function ID
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.functions[0].id
+                        message: the id given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the function ID provided in
+                    the request is invalid, with the INVALID_DATA code and the
+                    offending field path identified in the details.
+                AmbiguityDuringProcessingResponse1:
+                  summary: Error for an Ambiguous Module Identifier
+                  value:
+                    functions:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.functions[0].module.id
+                            - api_name: api_name
+                              json_path: $.functions[0].module.api_name
+                        message: The given moduleid seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where both the module ID and
+                    module API name are supplied, causing ambiguity during
+                    processing, with the AMBIGUITY_DURING_PROCESSING code and
+                    the conflicting field paths listed in the details.
+                InvalidDataResponse2:
+                  summary: Invalid Module API Name
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.functions[0].module.api_name
+                        message: the tabName given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module API name
+                    provided in the request is invalid, returning an
+                    INVALID_DATA code with the offending field path at
+                    $.functions[0].module.api_name.
+                InvalidDataResponse3:
+                  summary: Invalid Module ID
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.functions[0].module.id
+                        message: the tabId given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module ID provided in
+                    the request is invalid, returning an INVALID_DATA code with
+                    the offending field path at $.functions[0].module.id.
+                MandatoryNotFoundResponse1:
+                  summary: Missing Argument Type Field
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: type
+                          json_path: $.functions[0].arguments[1].type
+                        message: >-
+                          the given parameter is invalid, specify both name and
+                          value
+                        status: error
+                  description: >-
+                    Shows a 400 error response where a required parameter is
+                    missing or invalid, with the error code MANDATORY_NOT_FOUND
+                    and the json_path indicating the specific argument field at
+                    fault.
+                DependentMismatchResponse1:
+                  summary: Error When Argument Type and Value Are Mismatched
+                  value:
+                    functions:
+                      - code: DEPENDENT_MISMATCH
+                        details:
+                          dependee:
+                            api_name: type
+                            json_path: $.functions[0].arguments[0].type
+                          api_name: value
+                          json_path: $.functions[0].arguments[0].value
+                        message: Type and value is mismatched
+                        status: error
+                  description: >-
+                    Shows a 400 error response with the code DEPENDENT_MISMATCH,
+                    indicating that the value field depends on the type field
+                    and the two are mismatched in the submitted function
+                    arguments.
+                InvalidDataResponse4:
+                  summary: Error for Unsupported Data Type in Arguments Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: arguments
+                          expected_data_type: jsonarray
+                          json_path: $.functions[*].arguments
+                        status: error
+                  description: >-
+                    Shows a 400 error response with the code INVALID_DATA,
+                    indicating that the arguments field contains a value of an
+                    invalid data type where a JSON array is expected.
+                InvalidDataResponse5:
+                  summary: Error for the Arguments Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: arguments
+                          maximum_length: 2
+                          json_path: $.functions[*].arguments
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **arguments**
+                    field contains invalid data, including the maximum length
+                    constraint detail at the JSON path
+                    **$.functions[*].arguments**.
+                MandatoryNotFoundResponse2:
+                  summary: Error for the Name Field in Arguments
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: name
+                          json_path: $.functions[*].arguments[*].name
+                        status: error
+                  description: >-
+                    Shows the error response returned when the required **name**
+                    field is missing from an arguments entry, identified at the
+                    JSON path **$.functions[*].arguments[*].name**.
+                InvalidDataResponse6:
+                  summary: Error for Incorrect Data Type on the Name Field in Arguments
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.functions[*].arguments[*].name
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **name** field in the
+                    function arguments array contains an invalid data type, with
+                    the expected data type identified as **text**.
+                InvalidDataResponse7:
+                  summary: Error for Argument Name Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 4
+                          json_path: $.functions[*].arguments[*].name
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **name** field in the
+                    function arguments array contains data that exceeds the
+                    maximum permitted length of four characters.
+                MandatoryNotFoundResponse3:
+                  summary: Error for Missing Required Argument Type Field
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: type
+                          json_path: $.functions[*].arguments[*].type
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **type** field in the
+                    function arguments array is absent, triggering a
+                    MANDATORY_NOT_FOUND error with the offending JSON path
+                    indicated in the response details.
+                InvalidDataResponse8:
+                  summary: Error for Invalid Data Type on Argument Type Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: type
+                          expected_data_type: text
+                          json_path: $.functions[*].arguments[*].type
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **type** field
+                    within a function argument contains an invalid data type,
+                    where the expected data type is **text**.
+                InvalidDataResponse9:
+                  summary: Error for Argument Type Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: type
+                          maximum_length: 6
+                          json_path: $.functions[*].arguments[*].type
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **type** field
+                    within a function argument exceeds the maximum allowed
+                    length, resulting in an INVALID_DATA error with code
+                    **INVALID_DATA** for the path
+                    **$.functions[*].arguments[*].type**.
+                MandatoryNotFoundResponse4:
+                  summary: Error for Missing Required Argument Value Field
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: value
+                          json_path: $.functions[*].arguments[*].value
+                        status: error
+                  description: >-
+                    Shows a 400 error response for the automation functions
+                    update operation where a required field value is missing,
+                    identified at the argument value path within the functions
+                    array.
+                InvalidDataResponse10:
+                  summary: Error for Invalid Data Type on Argument Value Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: value
+                          expected_data_type: text
+                          json_path: $.functions[*].arguments[*].value
+                        status: error
+                  description: >-
+                    Shows a 400 error response for the automation functions
+                    update operation where the value field contains an invalid
+                    data type; the expected data type is text, as indicated by
+                    the error details at the argument value path.
+                InvalidDataResponse11:
+                  summary: Error for Argument Value Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: value
+                          maximum_length: 11
+                          json_path: $.functions[*].arguments[*].value
+                        status: error
+                  description: >-
+                    Shows a 400 error response for the automation functions
+                    update operation where the value field contains invalid data
+                    because it exceeds the maximum permitted length, as
+                    indicated by the error details at the argument value path.
+                MandatoryNotFoundResponse5:
+                  summary: Error for Missing Required Field ID
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: id
+                          json_path: $.functions[*].id
+                        status: error
+                  description: >-
+                    Shows a 400 error response returned when the required **id**
+                    field is missing from the **functions** array, with the
+                    error code **MANDATORY_NOT_FOUND** and the JSON path
+                    **$.functions[*].id** identifying the missing field.
+                InvalidDataResponse12:
+                  summary: Error for Incorrect Data Type on Field Id
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.functions[*].id
+                        status: error
+                  description: >-
+                    Shows a 400 error response returned when the **id** field in
+                    the **functions** array contains a value of the wrong data
+                    type; the response specifies the expected type as **bigint**
+                    and identifies the offending path as **$.functions[*].id**.
+                InvalidDataResponse13:
+                  summary: Error for Field Id Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 18
+                          json_path: $.functions[*].id
+                        status: error
+                  description: >-
+                    Shows an INVALID_DATA error response where the **id** field
+                    at **$.functions[*].id** exceeds the maximum allowed length
+                    of 18 characters.
+                InvalidDataResponse14:
+                  summary: Invalid Data Type error for the Module Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: module
+                          expected_data_type: jsonobject
+                          json_path: $.functions[*].module
+                        status: error
+                  description: >-
+                    Shows an INVALID_DATA error response where the **module**
+                    field at **$.functions[*].module** contains a value of an
+                    unexpected data type; the expected data type is
+                    **jsonobject**.
+                InvalidDataResponse15:
+                  summary: Error for ot Module Field Exceeds Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: module
+                          maximum_length: 1
+                          json_path: $.functions[*].module
+                        status: error
+                  description: >-
+                    Shows an INVALID_DATA error response where the **module**
+                    field at **$.functions[*].module** exceeds the maximum
+                    allowed length of one entry.
+                InvalidDataResponse16:
+                  summary: Error for Invalid Data Type for Module Id Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.functions[*].module.id
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **id** field at
+                    **$.functions[*].module.id** contains a value whose data
+                    type does not match the expected type **bigint**.
+                InvalidDataResponse17:
+                  summary: Error for Module ID Field Exceeds Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 18
+                          json_path: $.functions[*].module.id
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **id** field at
+                    **$.functions[*].module.id** contains a value that exceeds
+                    the maximum length of **18** characters.
+                InvalidDataResponse18:
+                  summary: Error for Invalid Data Type for Module API Name Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: api_name
+                          expected_data_type: text
+                          json_path: $.functions[*].module.api_name
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module **api_name**
+                    field fails validation due to an invalid data type, with the
+                    expected data type indicated as **text** in the error
+                    details.
+                InvalidDataResponse19:
+                  summary: Error for Exceeding Maximum Length on Module API Name
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          maximum_length: 5
+                          json_path: $.functions[*].module.api_name
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module **api_name**
+                    field fails validation because the value exceeds the maximum
+                    allowed length, as indicated by the **maximum_length**
+                    detail in the error response.
+                InvalidDataResponse20:
+                  summary: Error for Invalid Data Type on feature_type Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: feature_type
+                          expected_data_type: text
+                          json_path: $.functions[*].feature_type
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **feature_type** field
+                    fails validation due to an invalid data type, with the
+                    expected data type indicated as **text** in the error
+                    details.
+                InvalidDataResponse21:
+                  summary: Error for the feature_type Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: feature_type
+                          maximum_length: 8
+                          json_path: $.functions[*].feature_type
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **feature_type**
+                    field contains invalid data, including the field API name
+                    and the maximum length constraint in the details object.
+                NotAllowedResponse1:
+                  summary: Error for the Script Field
+                  value:
+                    functions:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: script
+                          json_path: $.functions[0].script
+                        message: permission denied
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **script** field
+                    is not permitted, with the field API name and JSON path
+                    included in the details object.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.automation_actions.UPDATE
+    post:
+      summary: Create Automation Function
+      description: To create a custom automation function in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Creates one or more automation function definitions. Before calling:
+        verify module and ensure the target function exists in the Functions
+        module. The response includes created function IDs.
+      operationId: postAutomationFunctions
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            x-zs-llm-examples:
+              - SamplePostRequest
+            schema:
+              $ref: '#/components/schemas/AutomationFunctionDefinitionsRequestV2'
+            examples:
+              SamplePostRequest:
+                summary: >-
+                  Create a Custom Function Linked to the Leads Module With
+                  Workflow Trigger
+                value:
+                  functions:
+                    - name: FnAPIPost2
+                      description: ''
+                      module:
+                        id: '678446000000000125'
+                        api_name: Leads
+                      feature_type: workflow
+                      language: deluge
+                      function:
+                        id: '120851000000875006'
+                      arguments:
+                        - name: arg1
+                          value: ${!Leads.Last_Name}
+                          type: merge_field
+                        - name: arg2
+                          value: city
+                          type: static
+                description: >-
+                  Shows a request to create a custom function, associated with
+                  the **Leads** module, configured with a workflow trigger type
+                  and written in Deluge.
+      responses:
+        '201':
+          description: >-
+            Returns a confirmation that the custom function was created
+            successfully, including the ID of the newly created function.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationFunctionCreationResponse'
+              examples:
+                Success201:
+                  summary: Successful Creation of a Custom Function
+                  value:
+                    functions:
+                      - code: SUCCESS
+                        details:
+                          id: '678446000051490013'
+                        message: custom function created successfully
+                        status: success
+                  description: >-
+                    Shows the success response returned after a custom function
+                    is created, containing the status code **SUCCESS** and the
+                    ID of the newly created function.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents the error response body returned when a function
+                  creation request fails validation.
+                properties:
+                  functions:
+                    type: array
+                    description: >-
+                      Represents the list of error objects, each indicating a
+                      validation failure for the corresponding function in the
+                      request.
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/InvalidModuleNameErrorResponse'
+                        - $ref: '#/components/schemas/InvalidModuleIdErrorResponse'
+                        - $ref: '#/components/schemas/ModuleAmbiguityErrorResponse'
+                        - $ref: '#/components/schemas/InvalidLanguageErrorResponse'
+                        - $ref: '#/components/schemas/InvalidFunctionIdErrorResponse'
+                        - $ref: >-
+                            #/components/schemas/ArgumentTypeValueMismatchErrorResponse
+                        - $ref: >-
+                            #/components/schemas/ArgumentMissingTypeErrorResponse
+                        - $ref: >-
+                            #/components/schemas/MandatoryFieldMissingErrorResponse
+                        - $ref: '#/components/schemas/InvalidDataTypeErrorResponse'
+                        - $ref: '#/components/schemas/InvalidDataErrorResponse'
+                        - $ref: '#/components/schemas/ScriptNotAllowedErrorResponse'
+                        - $ref: '#/components/schemas/InvalidValueErrorResponse'
+                        - $ref: '#/components/schemas/InvalidFeatureNameErrorResponse'
+                    maxItems: 25
+                required:
+                  - functions
+                x-zs-$id: PostAutomationFunctionsError400Wrapper
+              examples:
+                InvalidDataResponse1:
+                  summary: Error for Invalid Module API Name
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: api_name
+                          json_path: $.functions[0].module.api_name
+                        message: the tabName given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module API name
+                    supplied at **$.functions[0].module.api_name** is invalid,
+                    returning an **INVALID_DATA** code with the affected field
+                    identified as **api_name**.
+                InvalidDataResponse2:
+                  summary: Error for Invalid Module ID
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.functions[0].module.id
+                        message: the tabId given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module ID supplied at
+                    **$.functions[0].module.id** is invalid, returning an
+                    **INVALID_DATA** code with the affected field identified as
+                    **id**.
+                AmbiguityDuringProcessingResponse1:
+                  summary: Error Due to Ambiguous Module Identifier
+                  value:
+                    functions:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: id
+                              json_path: $.functions[0].module.id
+                            - api_name: api_name
+                              json_path: $.functions[0].module.api_name
+                        message: The given moduleid seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the module field in the
+                    function payload is ambiguous, with both **id** and
+                    **api_name** provided, triggering an
+                    AMBIGUITY_DURING_PROCESSING error code.
+                InvalidDataResponse3:
+                  summary: Error for Unsupported Language Value
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: language
+                          json_path: $.functions[0].language
+                          supported_values:
+                            - deluge
+                            - python
+                            - java
+                            - node_js
+                            - python_3_12
+                            - java17
+                            - nodejs_22
+                            - nodejs
+                            - GOlang
+                        message: The language given is invalid
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **language** field
+                    contains a value not in the list of supported language
+                    runtimes, resulting in an INVALID_DATA error code.
+                InvalidDataResponse4:
+                  summary: Error for an Invalid Function ID
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.functions[0].function.id
+                        message: Invalid function Id
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the function ID provided in
+                    the request is invalid, with the error located at
+                    **$.functions[0].function.id**.
+                DependentMismatchResponse1:
+                  summary: Error for Argument Type and Value Mismatch
+                  value:
+                    functions:
+                      - code: DEPENDENT_MISMATCH
+                        details:
+                          dependee:
+                            api_name: type
+                            json_path: $.functions[0].arguments[0].type
+                          api_name: value
+                          json_path: $.functions[0].arguments[0].value
+                        message: Type and value is mismatched
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **value** argument
+                    field does not match the dependent **type** field, with the
+                    mismatch details located at
+                    **$.functions[0].arguments[0].value** and
+                    **$.functions[0].arguments[0].type**.
+                MandatoryNotFoundResponse1:
+                  summary: Error for Required Argument Type Parameter Missing
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: type
+                          json_path: $.functions[0].arguments[0].type
+                        message: >-
+                          the given parameter is invalid, specify both name and
+                          value
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the required **type**
+                    argument parameter is missing from the function
+                    configuration, with the error located at
+                    **$.functions[0].arguments[0].type**.
+                MandatoryNotFoundResponse2:
+                  summary: Error for Missing Function Name
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Please specify name
+                        details:
+                          api_name: name
+                          json_path: $.functions[0].name
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the required **name** field
+                    is omitted from the functions array, returning a
+                    **MANDATORY_NOT_FOUND** code at **$.functions[0].name**.
+                InvalidDataResponse5:
+                  summary: Error for Incorrect Data Type on Function Name
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.functions[*].name
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the **name** field in the
+                    functions array contains a value of an incorrect data type,
+                    returning an **INVALID_DATA** code with an expected type of
+                    **text** at **$.functions[*].name**.
+                InvalidDataResponse6:
+                  summary: Error for Function Name Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 10
+                          json_path: $.functions[*].name
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **name** field
+                    value exceeds the maximum allowed length, with the
+                    **INVALID_DATA** code and the offending field path indicated
+                    in the details.
+                InvalidDataResponse7:
+                  summary: Error for Invalid Data Type on the Description Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: description
+                          expected_data_type: text
+                          json_path: $.functions[*].description
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **description**
+                    field contains a value of an incorrect data type, with the
+                    **INVALID_DATA** code and the expected data type indicated
+                    in the details.
+                MandatoryNotFoundResponse3:
+                  summary: Error for Missing Module Field
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: please specify tabId and module api name
+                        details:
+                          api_name: module
+                          json_path: $.functions[0].module
+                        status: error
+                  description: >-
+                    Shows the error response returned when the required
+                    **module** field is absent from the request, with the
+                    **MANDATORY_NOT_FOUND** code and the missing field path
+                    indicated in the details.
+                InvalidDataResponse8:
+                  summary: Error for Invalid Data Type on Module Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: module
+                          expected_data_type: jsonobject
+                          json_path: $.functions[*].module
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **module** field
+                    at **$.functions[*].module** contains a value of an
+                    incorrect data type; the expected data type is
+                    **jsonobject**.
+                InvalidDataResponse9:
+                  summary: Error for Module Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: module
+                          maximum_length: 1
+                          json_path: $.functions[*].module
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **module** field
+                    at **$.functions[*].module** exceeds the maximum allowed
+                    length of one.
+                InvalidDataResponse10:
+                  summary: Error for Invalid Data Type on Module ID Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.functions[*].module.id
+                        status: error
+                  description: >-
+                    Shows the 400 error response when the **id** field in
+                    **$.functions[*].module.id** receives a value of an
+                    incorrect data type; the expected data type is **bigint**.
+                InvalidDataResponse11:
+                  summary: Error for Module ID Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 18
+                          json_path: $.functions[*].module.id
+                        status: error
+                  description: >-
+                    Shows the 400 error response when the **id** field in
+                    **$.functions[*].module.id** exceeds the maximum allowed
+                    length of 18 characters.
+                InvalidDataResponse12:
+                  summary: Error for Incorrect Data Type on Module api_name Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: api_name
+                          expected_data_type: text
+                          json_path: $.functions[*].module.api_name
+                        status: error
+                  description: >-
+                    Shows the 400 error response when the **api_name** field in
+                    **$.functions[*].module.api_name** receives a value of an
+                    incorrect data type; the expected data type is **text**.
+                InvalidDataResponse13:
+                  summary: Error for Module api_name Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          maximum_length: 5
+                          json_path: $.functions[*].module.api_name
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **api_name**
+                    field under **module** exceeds the maximum allowed length,
+                    resulting in an **INVALID_DATA** error at
+                    **$.functions[*].module.api_name**.
+                InvalidDataResponse14:
+                  summary: Error for feature_type With Unexpected Data Type
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: feature_type
+                          expected_data_type: text
+                          json_path: $.functions[*].feature_type
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **feature_type**
+                    field contains a value of an unexpected data type; the
+                    expected type is **text**, resulting in an **INVALID_DATA**
+                    error at **$.functions[*].feature_type**.
+                InvalidDataResponse15:
+                  summary: Error for feature_type Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: feature_type
+                          maximum_length: 8
+                          json_path: $.functions[*].feature_type
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **feature_type** field
+                    value exceeds the maximum allowed length, returning an
+                    **INVALID_DATA** code with status **error**.
+                MandatoryNotFoundResponse4:
+                  summary: Error for Missing Language Field
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: please specify language
+                        details:
+                          api_name: language
+                          json_path: $.functions[0].language
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the required **language**
+                    field is absent from the request, returning a
+                    **MANDATORY_NOT_FOUND** code with status **error**.
+                InvalidDataResponse16:
+                  summary: Error for Incorrect Data Type on Language Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: language
+                          expected_data_type: text
+                          json_path: $.functions[*].language
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **language** field
+                    contains a value of an incorrect data type; the expected
+                    type is **text**, returning an **INVALID_DATA** code with
+                    status **error**.
+                InvalidDataResponse17:
+                  summary: Error for Language Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: language
+                          maximum_length: 6
+                          json_path: $.functions[*].language
+                        status: error
+                  description: >-
+                    Shows the 400 error response when the **language** field
+                    value exceeds the allowed maximum length, returning an
+                    **INVALID_DATA** code with the offending field path at
+                    **$.functions[*].language**.
+                MandatoryNotFoundResponse5:
+                  summary: Error When Function Field Is Missing
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: please specify function
+                        details:
+                          api_name: function
+                          json_path: $.functions[0].function
+                        status: error
+                  description: >-
+                    Shows the 400 error response when the required **function**
+                    field is absent from the request, returning a
+                    **MANDATORY_NOT_FOUND** code with the missing field path at
+                    **$.functions[0].function**.
+                InvalidDataResponse18:
+                  summary: Error for Function Field With Incorrect Data Type
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: function
+                          expected_data_type: jsonobject
+                          json_path: $.functions[*].function
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **function** field in
+                    the request contains an invalid data type, with the expected
+                    data type identified as **jsonobject**.
+                InvalidDataResponse19:
+                  summary: Error for Function Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: function
+                          maximum_length: 1
+                          json_path: $.functions[*].function
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **function** field
+                    contains invalid data that exceeds the permitted maximum
+                    length of one character.
+                MandatoryNotFoundResponse6:
+                  summary: Error for Missing Function ID in Arguments
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: please specify function
+                        details:
+                          api_name: function
+                          json_path: $.functions[0].arguments.function.id
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the required **function**
+                    ID is missing from the arguments, identified at the path
+                    **$.functions[0].arguments.function.id**.
+                InvalidDataResponse20:
+                  summary: 'INVALID_DATA Error: Invalid Data Type for Function ID Field'
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.functions[*].function.id
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **id** field at
+                    **$.functions[*].function.id** contains a value of an
+                    incorrect data type; the expected data type is **bigint**.
+                InvalidDataResponse21:
+                  summary: 'INVALID_DATA Error: ID Field Value Exceeds Maximum Length'
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 18
+                          json_path: $.functions[*].function.id
+                        status: error
+                  description: >-
+                    Shows the error response returned when the **id** field at
+                    **$.functions[*].function.id** contains a value that exceeds
+                    the maximum length of 18 characters.
+                InvalidDataResponse22:
+                  summary: Invalid Data Type error for Arguments Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: arguments
+                          expected_data_type: jsonarray
+                          json_path: $.functions[*].arguments
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **arguments** field
+                    fails validation due to an invalid data type; the expected
+                    data type is **jsonarray** as indicated by the error details
+                    at **$.functions[*].arguments**.
+                InvalidDataResponse23:
+                  summary: Error for Arguments Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: arguments
+                          maximum_length: 2
+                          json_path: $.functions[*].arguments
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **arguments** field
+                    fails validation because the number of items exceeds the
+                    allowed maximum length of two, as indicated by the error
+                    details at **$.functions[*].arguments**.
+                MandatoryNotFoundResponse7:
+                  summary: Error for Missing Required Name Field in Arguments
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: name
+                          json_path: $.functions[*].arguments[*].name
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the required **name** field
+                    is missing from the **arguments** array items, as indicated
+                    by the error details at
+                    **$.functions[*].arguments[*].name**.
+                InvalidDataResponse24:
+                  summary: Invalid Data Type error for Argument Name Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.functions[*].arguments[*].name
+                        status: error
+                  description: >-
+                    Shows the 400 error response when the **name** field inside
+                    **functions[*].arguments[*]** receives a value of an
+                    incorrect data type; the expected data type is **text**.
+                InvalidDataResponse25:
+                  summary: Error for Argument Name Field Exceeds Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 4
+                          json_path: $.functions[*].arguments[*].name
+                        status: error
+                  description: >-
+                    Shows the 400 error response when the **name** field inside
+                    **functions[*].arguments[*]** exceeds the allowed length;
+                    the **maximum_length** reported in the error details is four
+                    characters.
+                MandatoryNotFoundResponse8:
+                  summary: Error for Required Argument Value Field Is Missing
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: value
+                          json_path: $.functions[*].arguments[*].value
+                        status: error
+                  description: >-
+                    Shows a 400 error response when a required field is missing
+                    from the function argument, with the error targeting the
+                    **value** field at **$.functions[*].arguments[*].value**.
+                InvalidDataResponse26:
+                  summary: Error for Invalid Data Type on Argument Value Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: value
+                          expected_data_type: text
+                          json_path: $.functions[*].arguments[*].value
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the **value** argument field
+                    at **$.functions[*].arguments[*].value** contains an
+                    incorrect data type; the expected data type is **text**.
+                InvalidDataResponse27:
+                  summary: Error for Argument Value Field Exceeding Maximum Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: value
+                          maximum_length: 4
+                          json_path: $.functions[*].arguments[*].value
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the **value** argument field
+                    at **$.functions[*].arguments[*].value** exceeds the maximum
+                    allowed length of four characters.
+                MandatoryNotFoundResponse9:
+                  summary: Error for Missing Required Field Type in Function Arguments
+                  value:
+                    functions:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: type
+                          json_path: $.functions[*].arguments[*].type
+                        status: error
+                  description: >-
+                    Shows a 400 error response when the required field **type**
+                    is missing from the function arguments array, identified at
+                    **$.functions[*].arguments[*].type**.
+                InvalidDataResponse28:
+                  summary: >-
+                    Error for Incorrect Data Type on Function Argument Type
+                    Field
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: type
+                          expected_data_type: text
+                          json_path: $.functions[*].arguments[*].type
+                        status: error
+                  description: >-
+                    Shows a 400 error response returned when the **type** field
+                    in the function arguments array contains an incorrect data
+                    type; the expected data type is **text**, as identified at
+                    **$.functions[*].arguments[*].type**.
+                InvalidDataResponse29:
+                  summary: >-
+                    Error for Function Argument Type Field Exceeding Maximum
+                    Length
+                  value:
+                    functions:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: type
+                          maximum_length: 6
+                          json_path: $.functions[*].arguments[*].type
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **type** field at
+                    **$.functions[*].arguments[*].type** contains invalid data
+                    that exceeds the maximum allowed length.
+                NotAllowedResponse1:
+                  summary: Error for the Script Field
+                  value:
+                    functions:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: script
+                          json_path: $.functions[0].script
+                        message: permission denied
+                        status: error
+                  description: >-
+                    Shows a 400 error response where the **script** field at
+                    **$.functions[0].script** is not allowed, returning a
+                    NOT_ALLOWED code with a permission denied message.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.automation_actions.CREATE
+    delete:
+      summary: Delete Functions
+      description: >-
+        To delete one or more automation functions from your Zoho CRM
+        organization.
+      x-zs-llm-description: >-
+        Bulk-deletes automation functions by IDs (comma-separated ids query
+        param). Max 10 IDs per request.
+      operationId: deleteAutomationFunctions
+      parameters:
+        - $ref: '#/components/parameters/ParamQueryIds'
+      responses:
+        '200':
+          description: >-
+            Returns the deletion status for each automation function in the
+            request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationFunctionDeletionResponse'
+              examples:
+                Success200:
+                  summary: Successful Deletion of Multiple Automation Functions
+                  value:
+                    functions:
+                      - code: SUCCESS
+                        details:
+                          id: '678446000051490025'
+                        message: Function is deleted
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          id: '678446000051490026'
+                        message: Function is deleted
+                        status: success
+                  description: >-
+                    Shows a successful bulk delete response where all requested
+                    automation functions were removed, with each entry returning
+                    a **SUCCESS** code and the corresponding function ID in the
+                    details object.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '207':
+          description: >-
+            Returns a multi-status response. Each item in the **functions**
+            array independently indicates success or failure for the
+            corresponding automation function in the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationFunctionBulkRemovalResponse'
+              examples:
+                MultiStatus207:
+                  summary: >-
+                    Partial Delete where One Function Deleted, One Invalid ID
+                    Returns an Error
+                  value:
+                    functions:
+                      - code: SUCCESS
+                        details:
+                          id: '678446000051490025'
+                        message: Function is deleted
+                        status: success
+                      - code: INVALID_DATA
+                        details:
+                          id: '678446030057490025'
+                        message: the id given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a mixed-result delete response where one automation
+                    function is successfully deleted with a **SUCCESS** code and
+                    another fails with an **INVALID_DATA** code because the
+                    provided ID is not found.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+        '400':
+          description: >-
+            The request cannot be processed due to invalid syntax.
+            **Resolution:** The request body must be corrected to use valid
+            syntax before resubmitting.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingIdParameterErrorResponse'
+              examples:
+                RequiredParamMissingResponse1:
+                  summary: Missing Required Parameter IDs Error
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: ids
+                    message: One of the expected parameter is missing
+                    status: error
+                  description: >-
+                    Shows the 400 error response returned when the required
+                    **ids** parameter is missing from the delete automation
+                    functions request.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.automation_actions.DELETE
+  /settings/automation/functions/actions/associated_modules:
+    get:
+      summary: Get Associated Modules for Automation Functions
+      description: >-
+        To retrieve the list of modules associated with automation functions in
+        your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Returns the list of CRM modules that have at least one automation
+        function configured.
+      operationId: getAssociatedModules
+      responses:
+        '200':
+          description: Returns the list of modules associated with automation functions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssociatedModulesListResponse'
+              examples:
+                Success200:
+                  summary: Successful Retrieval of Associated Modules
+                  value:
+                    associated_modules:
+                      - api_name: ContactsXContacts
+                        id: '678446000017147068'
+                      - api_name: Untitled
+                        id: '678446000001053003'
+                      - api_name: Leads
+                        id: '678446000000000125'
+                      - api_name: Purchase_Orders
+                        id: '678446000000000173'
+                      - api_name: Accounts
+                        id: '678446000000000127'
+                      - api_name: Tasks
+                        id: '678446000000000143'
+                      - api_name: Invoices
+                        id: '678446000000000175'
+                      - api_name: Contacts
+                        id: '678446000000000129'
+                      - api_name: Events
+                        id: '678446000000000145'
+                      - api_name: Deals
+                        id: '678446000000000131'
+                      - api_name: Emails
+                        id: '678446000000000179'
+                      - api_name: CFModule
+                        id: '678446000011520117'
+                  description: >-
+                    Shows a successful response containing a list of modules
+                    associated with an automation function action, each
+                    identified by its API name and unique ID.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.automation_actions.READ
+components:
+  schemas:
+    MandatoryFieldMissingErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when one or more required fields
+        are missing from the request.
+      x-zs-llm-description: >-
+        A required field is missing from the request body. Check details for the
+        missing field name.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of error. Possible
+            values: **MANDATORY_NOT_FOUND** - Indicates that one or more
+            required fields are missing from the request.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details containing validation information about
+            the missing field, including its API name and JSON path.
+          properties:
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >
+            The error message describing which required field is missing.
+            Possible values: 
+
+            * **Required field is missing** - A required field is absent from
+            the request. 
+
+            * **Please specify name** - The name field is required but was not
+            provided. 
+
+            * **please specify tabId and module api name** - The tab ID and
+            module API name are required but were not provided. 
+
+            * **please specify language** - The language field is required but
+            was not provided. 
+
+            * **please specify function** - The function field is required but
+            was not provided.
+          enum:
+            - Required field is missing
+            - Please specify name
+            - please specify tabId and module api name
+            - please specify language
+            - please specify function
+        status:
+          type: string
+          description: >-
+            The status of the API response, indicating the request resulted in
+            an error. Possible values: **error** - The request failed due to a
+            missing required field.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Mandatory Field Missing Error Response
+      x-zs-$id: MandatoryFieldMissingErrorResponse
+    AutomationFunctionBulkRemovalResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        The response returned after removing one or more automation functions in
+        bulk, containing per-item results for each function in the request.
+      x-zs-llm-description: Per-item results after bulk removal. Check each item's status/code.
+      properties:
+        functions:
+          type: array
+          description: >-
+            The list of individual removal results, one entry per automation
+            function included in the bulk request.
+          items:
+            description: >-
+              The removal result for a single automation function, indicating
+              whether the function was successfully removed.
+            oneOf:
+              - $ref: '#/components/schemas/AutomationFunctionActionResult'
+              - $ref: '#/components/schemas/AutomationFunctionDeleteInvalidDataError'
+            x-zs-$id: AutomationFunctionBulkRemovalItem
+          minItems: 2
+          maxItems: 200
+          allOf:
+            - description: Ensures at least one success result is present in the response.
+              contains:
+                $ref: '#/components/schemas/AutomationFunctionActionResult'
+              minContains: 1
+            - description: >-
+                Ensures at least one invalid data error result is present in the
+                response.
+              contains:
+                $ref: '#/components/schemas/AutomationFunctionDeleteInvalidDataError'
+              minContains: 1
+      required:
+        - functions
+      title: Automation Function Bulk Removal Response
+      x-zs-$id: AutomationFunctionBulkRemovalResponse
+    AutomationFunctionDeletionResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        The response returned after deleting a single automation function,
+        containing the result of the deletion operation.
+      x-zs-llm-description: Single function deletion result wrapper.
+      properties:
+        functions:
+          type: array
+          description: The list of deletion results for the specified automation functions.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionActionResult'
+          maxItems: 200
+      required:
+        - functions
+      title: Automation Function Deletion Response
+      x-zs-$id: AutomationFunctionDeletionResponse
+    AutomationFunctionLockStatus:
+      type: object
+      additionalProperties: false
+      description: >-
+        The lock status of an automation function, indicating whether editing is
+        currently restricted.
+      x-zs-llm-description: Lock status flag. Locked functions cannot be edited.
+      properties:
+        locked:
+          type: boolean
+          description: >
+            Indicates whether the automation function is currently locked from
+            editing. Possible values: 
+
+            * **true** - The automation function is locked and cannot be
+            edited. 
+
+            * **false** - The automation function is unlocked and available for
+            editing.
+      required:
+        - locked
+      title: Automation Function Lock Status
+    AutomationFunctionLinkInputV2:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an automation function link input, containing the identifier
+        of a custom function to associate within an automation definition.
+      x-zs-llm-description: >-
+        Function or workflow link identifier for connecting to an existing
+        Deluge function.
+      properties:
+        id:
+          type: string
+          format: int64
+          description: >-
+            The unique identifier of the custom function to associate with the
+            automation definition.
+          maxLength: 18
+          x-zs-$ref:
+            resource: functions
+            origins:
+              - operationId: getFunctions
+                propertyId: FunctionsId
+      required:
+        - id
+      title: Automation Function Link Input
+    AutomationFunctionActionResult:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the result of processing an automation function action,
+        including a status code, message, and associated details.
+      x-zs-llm-description: >-
+        Success result for a processed function item. Contains status, code, and
+        resource details.
+      properties:
+        code:
+          type: string
+          description: >-
+            The status code indicating the outcome of the automation function
+            action. Possible values: **SUCCESS** - The automation function
+            action was processed successfully.
+          enum:
+            - SUCCESS
+        details:
+          $ref: '#/components/schemas/AutomationFunctionOperationDetails'
+        message:
+          type: string
+          description: The message describing the result of the operation.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            The overall status of the operation. Possible values: **success** -
+            The operation completed successfully.
+          enum:
+            - success
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Automation Function Action Result
+      x-zs-$id: AutomationFunctionActionResult
+    AutomationFunctionDeleteInvalidDataError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Error result returned when an invalid function ID is specified during
+        bulk deletion.
+      x-zs-llm-description: The function ID specified for bulk deletion is invalid.
+      properties:
+        code:
+          type: string
+          description: >-
+            The error code identifying the type of error. Possible values:
+            **INVALID_DATA** - The request contains an invalid function ID.
+          enum:
+            - INVALID_DATA
+        details:
+          $ref: '#/components/schemas/AutomationFunctionOperationDetails'
+        message:
+          type: string
+          description: The error message describing the issue.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Represents the status of the response. Possible values: **error** -
+            Indicates that the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Automation Function Delete Invalid Data Error
+      x-zs-$id: AutomationFunctionDeleteInvalidDataError
+    InvalidDataTypeErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when a request field contains an
+        unsupported data type.
+      x-zs-llm-description: >-
+        A field value has an unsupported data type. Verify expected types via
+        field metadata.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of validation error.
+            Possible values: **INVALID_DATA** - Indicates that the request
+            contains a field with an unsupported data type.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details containing validation information,
+            including the expected data type, the API name of the affected
+            field, and its JSON path.
+          properties:
+            expected_data_type:
+              type: string
+              description: Represents the data type that the field is expected to receive.
+              maxLength: 255
+            api_name:
+              type: string
+              description: The API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: The JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: >
+            Represents the error message describing the invalid data type issue.
+            Possible values: 
+
+            * **Invalid data type** - The value provided does not match the
+            expected data type for the field. 
+
+            * **data type not supported** - The data type used in the request is
+            not supported. 
+
+            * **the tabId given seems to be invalid** - The tab ID provided in
+            the request is not recognized.
+          enum:
+            - Invalid data type
+            - data type not supported
+            - the tabId given seems to be invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the API response. Possible values:
+            **error** - Indicates the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Data Type Error Response
+      x-zs-$id: InvalidDataTypeErrorResponse
+    InvalidDataErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when input data fails validation,
+        containing the error code, status, message, and details of the failing
+        field.
+      x-zs-llm-description: Input data failed validation. Check error details for specifics.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of invalid data
+            error. Possible values: **INVALID_DATA** - The request contains data
+            that failed validation.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the field that caused the
+            error, including the field's API name, JSON path, and maximum
+            allowed length.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum allowed length for the value of the field
+                that failed validation.
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the field that caused the validation
+                error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >
+            Represents the error message describing the invalid data condition.
+            Possible values: 
+
+            * **Invalid data** - Indicates the submitted data is not valid. 
+
+            * **the id given seems to be invalid** - Indicates the provided ID
+            does not match a valid record.
+          enum:
+            - Invalid data
+            - the id given seems to be invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the API response. Possible values:
+            **error** - Indicates the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Data Error Response
+      x-zs-$id: InvalidDataErrorResponse
+    AssociatedModulesListResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response containing the list of modules associated with
+        automation functions.
+      x-zs-llm-description: List of modules associated with automation functions.
+      properties:
+        associated_modules:
+          type: array
+          description: >-
+            Represents the list of CRM modules associated with the automation
+            functions.
+          items:
+            $ref: '#/components/schemas/AssociatedModuleReference'
+          maxItems: 12
+      required:
+        - associated_modules
+      title: Associated Modules List Response
+      x-zs-$id: AssociatedModulesListResponse
+    ArgumentTypeValueMismatchErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when an argument's declared type
+        does not match its supplied value.
+      x-zs-llm-description: >-
+        An argument's declared type does not match its actual value. Ensure type
+        and value are consistent.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of argument type
+            mismatch error. Possible values: **DEPENDENT_MISMATCH** - Indicates
+            that the declared type of a dependent field does not match its
+            supplied value.
+          enum:
+            - DEPENDENT_MISMATCH
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details for the argument type mismatch,
+            including the dependent field's API name and JSON path.
+          properties:
+            dependee:
+              type: object
+              additionalProperties: false
+              description: >-
+                Represents the dependent field for which the declared type does
+                not match the supplied value, identified by its API name and
+                JSON path.
+              properties:
+                api_name:
+                  type: string
+                  description: >-
+                    Represents the API name of the dependent field involved in
+                    the argument type mismatch error.
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: >-
+                    Represents the JSON path to the dependent field involved in
+                    the argument type mismatch error.
+                  maxLength: 1000
+              required:
+                - api_name
+                - json_path
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - dependee
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the type-value mismatch that
+            occurred.
+          enum:
+            - Type and value is mismatched
+        status:
+          type: string
+          description: Represents the status indicating the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Argument Type-Value Mismatch Error Response
+      x-zs-$id: ArgumentTypeValueMismatchErrorResponse
+    AutomationFunctionCreationResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates the response returned after submitting automation function
+        definitions, containing per-item results in a **functions** array.
+      x-zs-llm-description: Per-item results after POST creation. Contains created function IDs.
+      properties:
+        functions:
+          type: array
+          description: >-
+            The list of per-item results from the automation function creation
+            operation.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionActionResult'
+          maxItems: 1
+      required:
+        - functions
+      title: Automation Function Creation Response
+      x-zs-$id: AutomationFunctionCreationResponse
+    InvalidModuleIdErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        The error response returned when the specified module identifier is
+        invalid.
+      x-zs-llm-description: The module identifier is invalid. Verify via GET /settings/modules.
+      properties:
+        code:
+          type: string
+          description: >-
+            The error code identifying the type of validation error. Possible
+            values: **INVALID_DATA** - Indicates that the submitted data
+            contains an invalid module identifier.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            An object containing additional validation details about the error,
+            including the **api_name** and **json_path** of the invalid field.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the validation
+                error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the issue. Possible values:
+            the tabId given seems to be invalid - Indicates that the module ID
+            (tab ID) provided in the request is not recognized.
+          enum:
+            - the tabId given seems to be invalid
+        status:
+          type: string
+          description: >-
+            Indicates the status of the API request. Possible values: error -
+            Indicates that the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Module ID Error Response
+      x-zs-$id: InvalidModuleIdErrorResponse
+    InvalidFunctionIdErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Validation error returned when the referenced function identifier is
+        invalid.
+      x-zs-llm-description: >-
+        The function identifier is invalid or does not exist. Verify via GET
+        list.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of error. Possible
+            values: INVALID_DATA - Indicates that the data provided in the
+            request is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details associated with the invalid function
+            ID, containing the API name and JSON path of the field that caused
+            the error.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the issue. Possible values:
+            **Invalid function Id** - Indicates that the function ID provided in
+            the request is not valid.
+          enum:
+            - Invalid function Id
+        status:
+          type: string
+          description: >-
+            Represents the status of the API response. Possible values:
+            **error** - Indicates that the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Function ID Error Response
+      x-zs-$id: InvalidFunctionIdErrorResponse
+    InvalidValueErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when a request value fails
+        validation.
+      x-zs-llm-description: The provided value is invalid. Check the supported values or format.
+      properties:
+        code:
+          type: string
+          description: >-
+            The error code identifying the type of validation error. Possible
+            values: **INVALID_DATA** - Indicates that the provided value is
+            invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Indicates the additional details about the validation error,
+            including the API name and JSON path of the field that caused the
+            error.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the field that caused the validation
+                error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the invalid value. Possible
+            values: **the given value seems to be invalid** - The submitted
+            value does not meet the expected format or constraints.
+          enum:
+            - the given value seems to be invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the API response. Possible values:
+            **error** - Indicates the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Value Error Response
+      x-zs-$id: InvalidValueErrorResponse
+    InvalidFeatureNameErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when the supplied feature name is
+        invalid.
+      x-zs-llm-description: The feature name is not recognized. Use a valid automation feature name.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of error. Possible
+            values: **INVALID_DATA** - Indicates the request contains an invalid
+            feature name.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details for the error, including the API
+            name and JSON path of the invalid field.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message describing the issue.
+          enum:
+            - the given feature name is invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the API response. Possible values:
+            **error** - Indicates the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Feature Name Error Response
+      x-zs-$id: InvalidFeatureNameErrorResponse
+    CreatedByUserReference:
+      type: object
+      additionalProperties: false
+      description: >-
+        A minimal reference to the user who created the automation function,
+        including the user ID and display name.
+      x-zs-llm-description: Read-only audit field showing who created this function.
+      properties:
+        name:
+          type: string
+          description: >-
+            Represents the display name of the user who created the automation
+            function.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            Represents the unique identifier of the user who created the
+            automation function.
+          format: int64
+      required:
+        - id
+        - name
+      title: Created By User Reference
+    AssociatedModuleReference:
+      type: object
+      additionalProperties: false
+      description: >-
+        A reference to a CRM module associated with an automation function,
+        identified by its API name and unique ID.
+      x-zs-llm-description: Reference to a module associated with automation functions.
+      properties:
+        api_name:
+          type: string
+          description: Represents the API name of the associated CRM module.
+          maxLength: 255
+        id:
+          type: string
+          description: Represents the unique ID of the associated CRM module.
+          format: int64
+      required:
+        - api_name
+        - id
+      title: Associated Module Reference
+    AutomationFunctionArgument:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents name, type and value that defines a single argument passed to
+        an automation function.
+      x-zs-llm-description: A function argument with name, type, and value.
+      properties:
+        name:
+          type: string
+          description: Represents the name of the automation function argument.
+          maxLength: 100
+        type:
+          type: string
+          description: >
+            The type of the automation function argument. Possible values: 
+
+            * **static** - The argument uses a fixed, literal value.
+
+            * **merge_field** - The argument uses a dynamic value merged from a
+            CRM field.
+          enum:
+            - static
+            - merge_field
+          maxLength: 255
+        value:
+          type: string
+          description: Represents the value assigned to the automation function argument.
+          maxLength: 1000
+      required:
+        - name
+        - type
+        - value
+      title: Automation Function Argument
+    AutomationFunctionModuleChangeInputV2:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the module selector used to identify a CRM module by its API
+        name or ID when modifying an automation function.
+      x-zs-llm-description: >-
+        Module selector for modifying the function's target module. Use api_name
+        or id.
+      properties:
+        api_name:
+          type: string
+          description: Represents the API name of the module.
+          maxLength: 5
+          x-zs-$ref:
+            resource: modules
+            origins:
+              - operationId: getModules
+                propertyId: ModulesApiName
+        id:
+          type: string
+          format: int64
+          description: Represents the unique ID of the module.
+          maxLength: 18
+          x-zs-$ref:
+            resource: modules
+            origins:
+              - operationId: getModules
+                propertyId: ModulesId
+      title: Automation Function Module Change Input
+    ModuleAmbiguityErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Error returned when the provided module name and ID cause ambiguity
+        during processing.
+      x-zs-llm-description: >-
+        Module name and ID cause ambiguity - they resolve to different modules.
+        Supply only one identifier.
+      properties:
+        code:
+          type: string
+          description: >-
+            The error code identifying the type of error. Possible values:
+            **AMBIGUITY_DURING_PROCESSING** - Returned when the provided module
+            name and ID cause ambiguity during processing.
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            The error details associated with the ambiguity, including the
+            **ambiguity_due_to** field that identifies the source of the
+            conflict.
+          properties:
+            ambiguity_due_to:
+              type: array
+              description: >-
+                Indicates the list of fields that caused the ambiguity during
+                module resolution.
+              items:
+                type: object
+                additionalProperties: false
+                description: >-
+                  An object identifying a field that contributed to the module
+                  resolution ambiguity, including its API name and JSON path.
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the dependent field involved in
+                      the module resolution error.
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path to the dependent field involved
+                      in the module resolution error.
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - ambiguity_due_to
+        message:
+          type: string
+          description: >-
+            The error message describing the module resolution issue. Possible
+            values: **The given moduleid seems to be invalid** - Indicates that
+            the provided module identifier could not be resolved.
+          enum:
+            - The given moduleid seems to be invalid
+        status:
+          type: string
+          description: >-
+            The status of the response. Possible values: **error** - Indicates
+            the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Module Ambiguity Error Response
+      x-zs-$id: ModuleAmbiguityErrorResponse
+    ArgumentMissingTypeErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Mandatory field error returned when required argument attributes (name
+        and value) are not provided.
+      x-zs-llm-description: Required argument attributes (name and value) are missing. Supply both.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of error. Possible
+            values: **MANDATORY_NOT_FOUND** - Indicates a required argument
+            attribute is missing from the request.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Additional error details, including the API name and JSON path of
+            the field that caused the validation failure.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the issue with the request.
+            Possible values: the given parameter is invalid, specify both name
+            and value - Indicates that the request parameter is missing either a
+            name or a value.
+          enum:
+            - the given parameter is invalid, specify both name and value
+        status:
+          type: string
+          description: >-
+            Represents the status of the API response. Possible values: error -
+            Indicates that the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Argument Missing Type Error Response
+      x-zs-$id: ArgumentMissingTypeErrorResponse
+    InvalidModuleNameErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates the validation error returned when the specified module API
+        name is not recognized.
+      x-zs-llm-description: The module api_name is not recognized. Verify via GET /settings/modules.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of validation
+            failure. Possible values: INVALID_DATA - Indicates that the data
+            provided in the request is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the error details associated with the invalid module
+            name, including the API name and JSON path of the field that caused
+            the error.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Represents the error message describing the issue with the request.
+          enum:
+            - the tabName given seems to be invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the API response. Possible values:
+            **error** - Indicates that the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Module Name Error Response
+      x-zs-$id: InvalidModuleNameErrorResponse
+    AutomationFunctionModificationItemV2:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an automation function modification request, including the
+        feature type, target module, arguments, and the function ID to update.
+      x-zs-llm-description: >-
+        Single function modification item including feature_type, module,
+        arguments, and target function ID.
+      properties:
+        feature_type:
+          type: string
+          description: >
+            The automation feature type associated with the function. Possible
+            values: 
+
+            * **workflow** 
+
+            * **approval_process**  
+
+            * **blueprint**  
+
+            * **blueprint_transition** 
+
+            *  **blueprint_state** 
+
+            * **review_process** 
+
+            * **orchestration** 
+
+            * **assignment_rules** 
+
+            * **kiosk** 
+
+            * **pathfinder** 
+
+            * **connected_workflows** 
+
+            * **commandcenter_service** 
+
+            * **cadences** 
+          enum:
+            - workflow
+            - approval_process
+            - blueprint
+            - blueprint_transition
+            - blueprint_state
+            - review_process
+            - orchestration
+            - assignment_rules
+            - kiosk
+            - pathfinder
+            - connected_workflows
+            - commandcenter_service
+            - cadences
+          maxLength: 22
+        arguments:
+          type: array
+          description: >-
+            Represents the list of arguments configured for the automation
+            function.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionArgument'
+          maxItems: 50
+        id:
+          type: string
+          format: int64
+          description: >-
+            Represents the unique identifier of the automation function to
+            update.
+          maxLength: 18
+          x-zs-$ref:
+            resource: functions
+            origins:
+              - operationId: getFunctions
+                propertyId: FunctionsId
+        module:
+          $ref: '#/components/schemas/AutomationFunctionModuleChangeInputV2'
+          description: Module Datas
+        related_module:
+          $ref: '#/components/schemas/AutomationFunctionModuleChangeInputV2'
+          description: Related module information if applicable
+      required:
+        - id
+      title: Automation Function Modification Item
+    AutomationFunctionQueryResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response containing automation function records returned
+        for the requested query.
+      x-zs-llm-description: >-
+        Response containing one or more automation function records for the
+        requested ID.
+      properties:
+        functions:
+          type: array
+          description: The list of automation function detail records matching the query.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionDetail'
+          maxItems: 1
+      required:
+        - functions
+      title: Automation Function Query Response
+      x-zs-$id: AutomationFunctionQueryResponse
+    AutomationFunctionOperationDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Operation details for a processed automation function, including the
+        resulting resource identifier.
+      x-zs-llm-description: Operation details including the resulting resource identifier (id).
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the automation function that was processed.
+          format: int64
+      required:
+        - id
+      title: Automation Function Operation Details
+    AutomationFunctionDetail:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the details of an automation function, including its
+        metadata, module context, script reference, language, lock status,
+        ownership, and configured arguments.
+      x-zs-llm-description: >-
+        Full automation function object including metadata, module, script
+        reference, language, lock status, and arguments.
+      properties:
+        created_time:
+          type: string
+          description: The timestamp when the automation function was created.
+          maxLength: 255
+        lock_status:
+          $ref: '#/components/schemas/AutomationFunctionLockStatus'
+        editable:
+          type: boolean
+          description: >
+            Indicates whether the automation function can be edited. Possible
+            values: 
+
+            * **true** - The automation function can be edited. 
+
+            * **false** - The automation function cannot be edited.
+        module:
+          $ref: '#/components/schemas/AutomationFunctionModuleInfo'
+        related_module:
+          description: >-
+            The CRM module associated with the automation function, if
+            applicable.
+          x-zs-$id: RelatedModuleOneOf
+          oneOf:
+            - type: 'null'
+              description: >-
+                Indicates no related module is associated with this automation
+                function.
+              x-zs-$id: RelatedModuleNull
+            - $ref: '#/components/schemas/AutomationFunctionModuleInfo'
+        deletable:
+          type: boolean
+          description: >
+            Indicates whether the automation function can be deleted. Possible
+            values: 
+
+            * **true** - The automation function can be deleted. 
+
+            * **false** - The automation function cannot be deleted."
+        description:
+          type:
+            - string
+            - 'null'
+          description: A brief description of the automation function's purpose.
+          maxLength: 5000
+        language:
+          type: string
+          description: >
+            The programming language used in the automation function script.
+            Possible values: 
+
+            * **deluge** - Deluge scripting language. 
+
+            * **python** - Python language. 
+
+            * **java** - Java language. **node_js** - Node.js runtime.
+
+            * **python_3_12** - Python 3.12 runtime. 
+
+            * **java17** - Java 17 runtime. 
+
+            * **nodejs_22** - Node.js 22 runtime. 
+
+            * **nodejs** - Node.js runtime. 
+
+            * **GOlang** - Go programming language.
+          enum:
+            - deluge
+            - python
+            - java
+            - node_js
+            - python_3_12
+            - java17
+            - nodejs_22
+            - nodejs
+            - GOlang
+          maxLength: 255
+        source:
+          type: string
+          description: The source or origin from which the automation function was created.
+          maxLength: 255
+        created_by:
+          $ref: '#/components/schemas/CreatedByUserReference'
+        feature_type:
+          type: string
+          description: >
+            The feature type classification of the automation function. Possible
+            values: 
+
+            * **workflow**  
+
+            * **approval_process**
+
+            * **blueprint** 
+
+            * **blueprint_transition** 
+
+            * **blueprint_state** 
+
+            * **review_process**  
+
+            * **orchestration** 
+
+            * **assignment_rules** 
+
+            * **kiosk** 
+
+            * **pathfinder** 
+
+            * **connected_workflows** 
+
+            * **commandcenter_service** 
+
+            * **cadences** 
+          enum:
+            - workflow
+            - approval_process
+            - blueprint
+            - blueprint_transition
+            - blueprint_state
+            - review_process
+            - orchestration
+            - assignment_rules
+            - kiosk
+            - pathfinder
+            - connected_workflows
+            - commandcenter_service
+            - cadences
+          maxLength: 22
+        modified_time:
+          type: string
+          description: The timestamp when the automation function was last modified.
+          maxLength: 255
+        associated:
+          type: boolean
+          description: >
+            Indicates whether the automation function is currently associated
+            with a workflow or action. Possible values: 
+
+            * **true** - The automation function is associated with a workflow
+            or action. 
+
+            * **false** - The automation function is not associated with any
+            workflow or action.
+        function:
+          $ref: '#/components/schemas/AutomationFunctionReference'
+        name:
+          type: string
+          description: Represents the display name of the automation function.
+          maxLength: 250
+        modified_by:
+          $ref: '#/components/schemas/ModifiedByUserReference'
+        arguments:
+          type: array
+          description: >-
+            Represents the list of arguments configured for the automation
+            function.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionArgument'
+          maxItems: 50
+        id:
+          type: string
+          description: Represents the unique identifier of the automation function.
+          format: int64
+          x-zs-$id: AutomationFunctionsId
+      required:
+        - associated
+        - created_by
+        - created_time
+        - deletable
+        - editable
+        - feature_type
+        - function
+        - id
+        - language
+        - lock_status
+        - modified_by
+        - modified_time
+        - module
+        - name
+        - source
+      title: Automation Function Detail
+    AutomationFunctionModificationRequestV2:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request payload for modifying one or more automation
+        functions in a batch operation.
+      x-zs-llm-description: >-
+        Batch request payload for PUT modification. Contains an array of change
+        sets.
+      properties:
+        functions:
+          type: array
+          description: >-
+            Represents the list of automation function change sets included in
+            the modification request.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionModificationItemV2'
+          maxItems: 1
+      required:
+        - functions
+      title: Automation Function Modification Request
+    AutomationFunctionReference:
+      type: object
+      additionalProperties: false
+      description: Reference to the underlying function by API name and identifier.
+      x-zs-llm-description: Reference to the underlying function by api_name and id.
+      properties:
+        api_name:
+          type: string
+          description: Represents the API name of the automation function.
+          maxLength: 255
+        id:
+          type: string
+          description: Represents the unique identifier of the automation function.
+          format: int64
+          x-zs-$ref:
+            resource: functions
+            origins:
+              - operationId: getFunctions
+                propertyId: FunctionsId
+      required:
+        - id
+      title: Automation Function Reference
+    ModifiedByUserReference:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a reference to the user who last modified a record, including
+        the user's display name and unique ID.
+      x-zs-llm-description: Read-only audit field showing who last modified this function.
+      properties:
+        name:
+          type: string
+          description: >-
+            Represents the display name of the user who last modified the
+            record.
+          maxLength: 255
+        id:
+          type: string
+          description: Represents the unique ID of the user who last modified the record.
+          format: int64
+      required:
+        - id
+        - name
+      title: Modified By User Reference
+    ListPaginationInfo:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the pagination metadata returned with list responses,
+        including the number of records per page, total record count, current
+        page number, and whether additional records are available.
+      x-zs-llm-description: Pagination metadata. Use more_records to fetch additional pages.
+      properties:
+        per_page:
+          type: integer
+          format: int32
+          description: Represents the number of records returned per page in the response.
+        count:
+          type: integer
+          format: int32
+          description: Represents the total number of records in the current page.
+        page:
+          type: integer
+          format: int32
+          description: Represents the current page number in the paginated response.
+        more_records:
+          type: boolean
+          description: >-
+            Indicates whether additional records are available beyond the
+            current page. Possible values: **true** - Additional records exist
+            beyond the current page. **false** - No additional records exist
+            beyond the current page.
+      required:
+        - count
+        - more_records
+        - page
+        - per_page
+      title: List Pagination Info
+    AutomationFunctionModificationResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response returned after submitting automation function
+        modifications, containing per-item results for each submitted function.
+      x-zs-llm-description: Per-item results after PUT modification.
+      properties:
+        functions:
+          type: array
+          description: >-
+            Represents the list of per-item results for each automation function
+            modification submitted in the request.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionActionResult'
+          maxItems: 1
+      required:
+        - functions
+      title: Automation Function Modification Response
+      x-zs-$id: AutomationFunctionModificationResponse
+    AutomationFunctionModuleInfo:
+      type: object
+      additionalProperties: false
+      description: >-
+        Module metadata associated with the automation function, including
+        singular and plural labels, API name, internal name, and identifier.
+      x-zs-llm-description: >-
+        Module metadata for the automation function including labels, api_name,
+        and identifiers.
+      properties:
+        singular_label:
+          type: string
+          description: Represents the singular display label of the module.
+          maxLength: 255
+        plural_label:
+          type: string
+          description: Represents the plural display label of the module.
+          maxLength: 255
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the module associated with the automation
+            function.
+          maxLength: 255
+        moduleName:
+          type: string
+          description: Represents the internal name of the module.
+          maxLength: 255
+        id:
+          type: string
+          description: >-
+            The unique identifier of the module associated with the automation
+            function.
+          format: int64
+      required:
+        - api_name
+        - id
+      title: Automation Function Module Info
+      x-zs-$id: AutomationFunctionModuleInfo
+    AutomationFunctionDefinitionInputV2:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an automation function definition, including its feature
+        type, associated module, linked function, name, language, description,
+        and arguments.
+      x-zs-llm-description: >-
+        Single function definition for creation. Contains feature_type, module,
+        function_link, name, language, description, and arguments.
+      properties:
+        feature_type:
+          type: string
+          description: >-
+            The CRM automation feature type with which the function is
+            associated. Possible values: **workflow** - A Workflow Rule
+            automation feature. **approval_process** - An Approval Process
+            automation feature. **blueprint** - A Blueprint automation feature.
+            **blueprint_transition** - A Blueprint transition automation
+            feature. **blueprint_state** - A Blueprint state automation feature.
+            **review_process** - A review process automation feature.
+            **orchestration** - An orchestration automation feature.
+            **assignment_rules** - An Assignment Rule automation feature.
+            **kiosk** - A kiosk automation feature. **pathfinder** - A
+            pathfinder automation feature. **connected_workflows** - A connected
+            workflows automation feature. **commandcenter_service** - A Command
+            Center service automation feature. **cadences** - A Cadences
+            automation feature.
+          enum:
+            - workflow
+            - approval_process
+            - blueprint
+            - blueprint_transition
+            - blueprint_state
+            - review_process
+            - orchestration
+            - assignment_rules
+            - kiosk
+            - pathfinder
+            - connected_workflows
+            - commandcenter_service
+            - cadences
+          maxLength: 22
+        module:
+          $ref: '#/components/schemas/AutomationFunctionModuleChangeInputV2'
+          description: Module of the function (Required)
+        related_module:
+          $ref: '#/components/schemas/AutomationFunctionModuleChangeInputV2'
+          description: Related module information if applicable
+        function:
+          $ref: '#/components/schemas/AutomationFunctionLinkInputV2'
+          description: function details (Required)
+        name:
+          type: string
+          description: The name of the automation function.
+          maxLength: 250
+        description:
+          type: string
+          description: The description of the automation function.
+          maxLength: 5000
+        language:
+          type: string
+          description: >-
+            Represents the programming language of the automation function.
+            Possible values: **deluge** - Deluge scripting language. **python**
+            - Python (legacy). **java** - Java (legacy). **node_js** - Node.js
+            (legacy). **python_3_12** - Python 3.12. **java17** - Java 17.
+            **nodejs_22** - Node.js 22. **nodejs** - Node.js. **golang** - Go
+            programming language.
+          enum:
+            - deluge
+            - python
+            - java
+            - node_js
+            - python_3_12
+            - java17
+            - nodejs_22
+            - nodejs
+            - GOlang
+          maxLength: 11
+        arguments:
+          type: array
+          description: >-
+            Represents the list of arguments configured for the automation
+            function.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionArgument'
+          maxItems: 50
+      required:
+        - function
+        - language
+        - module
+        - name
+      title: Automation Function Definition Input
+    UpdateInvalidFunctionIdErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Validation error returned when the ID used to modify an automation
+        function is invalid.
+      x-zs-llm-description: The function ID used for modification is invalid or does not exist.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of validation error.
+            Possible values: **INVALID_DATA** - The function ID provided in the
+            request is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional error details providing validation
+            information, including the **resource_path_index** of the invalid
+            function ID.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                The index in the resource path that contains the invalid
+                identifier.
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the issue with the request.
+            Possible values: the id given seems to be invalid - The function
+            identifier provided in the request is not recognized.
+          enum:
+            - the id given seems to be invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the API response. Possible values: error -
+            Indicates the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Function ID Error Response (Modification)
+      x-zs-$id: UpdateInvalidFunctionIdErrorResponse
+    MissingIdParameterErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when a required identifier
+        parameter is missing from the request.
+      x-zs-llm-description: >-
+        The required identifier parameter is missing for the removal/update
+        request.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of error. Possible
+            values: REQUIRED_PARAM_MISSING - Indicates that a required
+            identifier parameter was not supplied in the request.
+          enum:
+            - REQUIRED_PARAM_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            The error details for the missing parameter. Contains the
+            **param_name** property identifying the required parameter that was
+            not provided.
+          properties:
+            param_name:
+              type: string
+              description: The name of the required parameter that is missing.
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: >-
+            The error message describing the issue. Possible values: **One of
+            the expected parameter is missing** - Indicates that a required
+            parameter was not included in the request.
+          enum:
+            - One of the expected parameter is missing
+        status:
+          type: string
+          description: >-
+            The status of the API response. Possible values: **error** -
+            Indicates that the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Missing ID Parameter Error Response
+      x-zs-$id: MissingIdParameterErrorResponse
+    InvalidLanguageErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Validation error returned when the specified programming language is not
+        supported.
+      x-zs-llm-description: >-
+        The specified programming language is not supported. Use 'deluge' or
+        other supported languages.
+      properties:
+        code:
+          type: string
+          description: Represents the error code identifying the type of error.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Additional error details for the invalid language data, including
+            the API name of the field, its JSON path, and the list of supported
+            values.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path to the field that caused the error.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: >-
+                Represents the list of supported values for the field that
+                caused the error.
+              items:
+                type: string
+                description: Represents a supported language value accepted by the API.
+                maxLength: 255
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the invalid language
+            condition. Possible values: **The language given is invalid** -
+            Indicates that the language value supplied in the request is not
+            recognized.
+          enum:
+            - The language given is invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the API response. Possible values:
+            **error** - Indicates that the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Language Error Response
+      x-zs-$id: InvalidLanguageErrorResponse
+    AutomationFunctionDefinitionsRequestV2:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a request payload containing an array of automation function
+        definitions.
+      x-zs-llm-description: >-
+        Batch request payload for POST creation. Contains an array of function
+        definitions.
+      properties:
+        functions:
+          type: array
+          description: >-
+            Represents the array of automation function definitions included in
+            the request.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionDefinitionInputV2'
+          maxItems: 1
+      required:
+        - functions
+      title: Automation Function Definitions Request
+    AutomationFunctionListResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response for an automation functions list request,
+        including the list of functions and pagination information.
+      x-zs-llm-description: Paginated list of automation functions with pagination info.
+      properties:
+        functions:
+          type: array
+          description: >-
+            Represents the list of automation functions returned in the
+            response.
+          items:
+            $ref: '#/components/schemas/AutomationFunctionDetail'
+          maxItems: 200
+        info:
+          $ref: '#/components/schemas/ListPaginationInfo'
+      required:
+        - functions
+        - info
+      title: Automation Function List Response
+      x-zs-$id: AutomationFunctionListResponse
+    NotAllowedModuleErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when the specified module is not
+        supported for automation functions.
+      x-zs-llm-description: The specified module is not supported for automation functions.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of error. Possible
+            values: **NOT_ALLOWED** - The specified module is not supported for
+            this operation.
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error, including the name of
+            the parameter that caused the issue.
+          properties:
+            param_name:
+              type: string
+              description: >-
+                Represents the name of the parameter that caused the error.
+                Possible values: **module** - The module parameter is not
+                allowed for this operation.
+              enum:
+                - module
+          required:
+            - param_name
+        message:
+          type: string
+          description: >-
+            Represents the error message describing why the request was
+            rejected. Possible values: **The given module is not supported** -
+            Indicates that the specified module is not permitted for this
+            operation.
+          enum:
+            - The given module is not supported
+        status:
+          type: string
+          description: >-
+            Represents the outcome status of the request. Possible values:
+            **error** - Indicates the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Not Allowed Module Error Response
+      x-zs-$id: NotAllowedModuleErrorResponse
+    InvalidFeatureTypeErrorResponse:
+      type: object
+      additionalProperties: false
+      description: Error response returned when the specified feature type is invalid.
+      x-zs-llm-description: >-
+        The feature_type value is not recognized. Use a valid automation feature
+        type.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code identifying the type of error. Possible
+            values: **INVALID_DATA** - Indicates that the supplied feature type
+            data is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error. Contains the
+            **param_name** property that identifies the parameter responsible
+            for the error.
+          properties:
+            param_name:
+              type: string
+              description: >-
+                Represents the name of the parameter that caused the error.
+                Possible values: **feature_type** - Indicates that the
+                **feature_type** parameter value is invalid.
+              enum:
+                - feature_type
+          required:
+            - param_name
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the issue. Possible values:
+            **the given feature name is invalid** - Indicates that the provided
+            feature type value is not recognized.
+          enum:
+            - the given feature name is invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the API request. Possible values: **error**
+            - Indicates that the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Feature Type Error Response
+      x-zs-$id: InvalidFeatureTypeErrorResponse
+    ScriptNotAllowedErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when the request body contains
+        the **script** key, which is not permitted.
+      x-zs-llm-description: >-
+        The script key is not allowed in the request body. Function script
+        content is managed separately in the Functions module, not via
+        automation API.
+      properties:
+        code:
+          type: string
+          description: Represents the error code identifying the type of error.
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Additional details about the error, including the **api_name** and
+            **json_path** of the field that caused the issue.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that caused the error.
+                Possible values: **script** - The script field that triggered
+                the not-allowed error.
+              enum:
+                - script
+            json_path:
+              type: string
+              description: Represents the JSON path to the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the nature of the permission
+            denial.
+          enum:
+            - permission denied
+        status:
+          type: string
+          description: >-
+            Represents the status of the response. Possible values: **error** -
+            Indicates the request resulted in an error.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Script Not Allowed Error Response
+      x-zs-$id: ScriptNotAllowedErrorResponse
+  parameters:
+    ParamQueryIds:
+      name: ids
+      in: query
+      description: >-
+        Specify the unique IDs of the records for which you want to perform the
+        operation. Accepts comma-separated values.
+      required: true
+      schema:
+        type: string
+        format: int64
+      example: 678446000051490025,678446030057490025
+    ParamPathFunctionid:
+      name: functionId
+      in: path
+      description: >-
+        Specify the unique ID of the function for which you want to perform the
+        operation.
+      required: true
+      schema:
+        type: string
+        format: int64
+        example: '{functionId}'
+        maxLength: 255
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: >-
+        Secures API requests using the OAuth 2.0 authorization framework,
+        requiring a valid access token obtained through the OAuth 2.0 flow.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.automation_actions.DELETE: >-
+              Grants permission to delete automation actions in Zoho CRM
+              settings.
+            ZohoCRM.settings.automation_actions.UPDATE: >-
+              Grants permission to update automation actions in Zoho CRM
+              settings.
+            ZohoCRM.settings.automation_actions.CREATE: >-
+              Grants permission to create automation actions in Zoho CRM
+              settings.
+            ZohoCRM.settings.automation_actions.READ: Grants permission to read automation actions in Zoho CRM settings.
