@@ -1,0 +1,18 @@
+INVALID_DATA error when the name field exceeds its length limit
+
+```json
+{
+  "approval_process": [
+    {
+      "code": "INVALID_DATA",
+      "details": {
+        "maximum_length": 100,
+        "api_name": "name",
+        "json_path": "$.approval_process[0].name"
+      },
+      "message": "The lenght of name has exceeded the limit",
+      "status": "error"
+    }
+  ]
+}
+```

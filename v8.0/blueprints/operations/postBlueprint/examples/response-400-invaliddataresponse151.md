@@ -1,0 +1,18 @@
+INVALID_DATA error for an invalid data type in the name field
+
+```json
+{
+  "blueprints": [
+    {
+      "code": "INVALID_DATA",
+      "message": "Invalid data type",
+      "details": {
+        "api_name": "name",
+        "expected_data_type": "text",
+        "json_path": "$.blueprints[*].transitions[*].include_states[*].state.name"
+      },
+      "status": "error"
+    }
+  ]
+}
+```

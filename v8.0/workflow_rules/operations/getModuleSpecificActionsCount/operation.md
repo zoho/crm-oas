@@ -20,6 +20,8 @@
         - `api_name` (string) **REQ** [maxLen=100] — Represents the API name of the module or field, such as **Leads**, **Contacts**, or a custom field API name.
         - `id` (string) **REQ** [maxLen=20] — Represents the unique numeric ID of the module or field.
       - `total_rules_configured` (integer/int32) **REQ** — Represents total number of workflow rules configured (active + inactive).
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **400**: The response returned when the deletion request is invalid, such as a malformed or missing rule ID. Resolution: verify the rule IDs in the request and resubmit. — Schema: `InvalidDataNoApiNameAndPathSchema` [application/json]
     > Represents the error response returned when a required parameter such as the module API name or field path is missing from the request.
@@ -33,6 +35,8 @@
       - `id` (string) [maxLen=20] — Represents the **ID** value from the error detail object.
       - `expected_data_type` (string) [maxLen=255] — Represents the **expected_data_type** value from the error detail object.
       - `api_name` (string) [maxLen=255] — Represents the API name of the field or parameter that caused the validation error.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **403**: Forbidden. The authenticated user does not have permission to perform this operation, or the workflow rules feature is not available in the current CRM edition. Resolution: verify the user's permissions and the organization's edition capabilities.
  — Schema: `NoPermissionSchema` [application/json]
@@ -44,5 +48,7 @@
     - `details` (object) **REQ** — Represents error details. For NO_PERMISSION, contains the list of permissions needed. For FEATURE_NOT_SUPPORTED, empty object.
       - `permissions` (array of string) [maxItems=10] — Represents the list of CRM profile permissions required to perform the requested action.
         items: [maxLen=255]
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 **Scopes:** ZohoCRM.settings.workflow_rules.READ

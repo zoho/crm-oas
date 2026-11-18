@@ -1,0 +1,2225 @@
+openapi: 3.1.0
+info:
+  title: Blueprint Clone
+  description: >-
+    Blueprint is a Zoho CRM feature that maps out a business process and guides
+    users through it, stage by stage and transition by transition. This API
+    enables developers to create a copy of an existing blueprint configuration,
+    either as a standalone copy or as a dependent draft that replaces the source
+    blueprint when activated.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        description: API Server URL TLD
+        default: com
+        enum:
+          - eu
+          - com
+          - au
+          - in
+          - jp
+          - cn
+          - ca
+      version:
+        description: API Version
+        default: v8
+security:
+  - OAuth2:
+      - ZohoCRM.settings.blueprint.CREATE
+paths:
+  /settings/blueprints/{blueprintId}/actions/clone:
+    post:
+      summary: Clone Blueprint
+      description: To clone a Blueprint in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Clone a blueprint by blueprintId. 'dependent' type: do NOT include
+        map_states at clone time; source must be active with chart_data; provide
+        map_states + move_records at activation.  After activation, all IDs
+        change to clone IDs.
+      operationId: cloneBlueprint
+      parameters:
+        - name: blueprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: bigint
+            pattern: ^[0-9]+
+          description: >-
+            Specify the ID of the Blueprint you want to clone. Refer to the
+            [Blueprints](blueprints.yaml#$.paths./settings/blueprints.get)
+            resource for valid values.
+        - $ref: '#/components/parameters/ParamHeaderXZohoService'
+      requestBody:
+        description: The request body must contain a blueprints array with a single object.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlueprintCloneBatchRequest'
+            examples:
+              SamplePostRequest:
+                summary: Standalone clone of a Blueprint with state remapping
+                value:
+                  blueprints:
+                    - name: Autonum_Cloned
+                      type: standalone
+                      layout:
+                        id: '5226917000000091023'
+                        name: Standard
+                      field:
+                        id: '5226917000000002565'
+                        api_name: Stage
+                      pipeline:
+                        id: '5226917000004004001'
+                        name: Standard (Standard)
+                      map_states:
+                        - existing_state:
+                            actual_value: '-None-'
+                          clone_state:
+                            actual_value: Qualification
+                        - existing_state:
+                            actual_value: Option 1
+                          clone_state:
+                            actual_value: Needs Analysis
+                        - existing_state:
+                            actual_value: Option 2
+                          clone_state:
+                            actual_value: Value Proposition
+                      module: Potentials
+                description: >-
+                  Shows a standalone clone request for a Blueprint with the
+                  target layout, field, and pipeline, and a map_states array
+                  remapping the source states to the cloned Blueprint.
+            x-zs-llm-examples:
+              - SamplePostRequest
+      responses:
+        '201':
+          description: >-
+            Returns the clone result for the requested Blueprint, including its
+            status, message, and the ID of the newly created Blueprint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintCloneResponse'
+              examples:
+                Success201:
+                  summary: Successful clone of a Blueprint
+                  value:
+                    blueprints:
+                      - code: SUCCESS
+                        details:
+                          uncopied_before_criteria_fields: null
+                          id: '5226917000005131001'
+                          uncopied_entry_criteria_fields: null
+                          uncopied_during_transition_fields: null
+                        message: Blueprint successfully cloned
+                        status: success
+                  description: >-
+                    Returns the success result for the cloned Blueprint,
+                    including the ID of the newly created Blueprint.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '400':
+          description: |-
+            The request cannot be processed due to invalid syntax.
+            **Resolution:** The request body and the Blueprint ID must be valid.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: BlueprintCloneErrorResponse
+                oneOf:
+                  - type: object
+                    x-zs-$id: BlueprintCloneErrorResponseWithBlueprints
+                    additionalProperties: false
+                    description: >-
+                      Represents the wrapped error response for the requested
+                      Blueprint clone, carrying the error entries in the
+                      **blueprints** array.
+                    properties:
+                      blueprints:
+                        type: array
+                        description: >-
+                          Represents the list of error entries for the requested
+                          Blueprint clone. Each entry reports one validation or
+                          processing error, including its code, message, status,
+                          and details.
+                        items:
+                          oneOf:
+                            - $ref: '#/components/schemas/ErrorResponseCore24'
+                            - $ref: '#/components/schemas/BlueprintNameConflictError'
+                            - $ref: '#/components/schemas/InvalidLayoutReuseError'
+                            - $ref: '#/components/schemas/CloneRequestAmbiguityError'
+                            - $ref: '#/components/schemas/ErrorResponseCore4'
+                            - $ref: '#/components/schemas/ErrorResponseCore2'
+                            - $ref: '#/components/schemas/ErrorResponseCore6'
+                            - $ref: '#/components/schemas/RequiredFieldNotFoundError'
+                            - $ref: '#/components/schemas/CannotProcessMapStatesError'
+                            - $ref: >-
+                                #/components/schemas/BlueprintNameSpecialCharError
+                            - $ref: '#/components/schemas/InvalidValueError'
+                            - $ref: '#/components/schemas/PipelineNotProvidedError'
+                            - $ref: '#/components/schemas/CannotCloneBlueprintError'
+                          description: >-
+                            Represents one error entry for the requested
+                            Blueprint clone, including its code, message,
+                            status, and validation details.
+                        maxItems: 25
+                    required:
+                      - blueprints
+                  - $ref: '#/components/schemas/ErrorResponseCore19'
+                description: >-
+                  Represents the error response returned when the Blueprint
+                  clone request cannot be processed, with the error entries for
+                  the requested clone carried in the **blueprints** array.
+              examples:
+                LimitExceededResponse1:
+                  summary: LIMIT_EXCEEDED error when the Blueprint limit is reached
+                  value:
+                    blueprints:
+                      - code: LIMIT_EXCEEDED
+                        details:
+                          limit: 50
+                        message: Blueprint limit exceed
+                        status: error
+                  description: >-
+                    Demonstrates the response when the maximum number of
+                    Blueprints allowed in the Zoho CRM organization is already
+                    reached.
+                DuplicateDataResponse1:
+                  summary: DUPLICATE_DATA error for a reused Blueprint name
+                  value:
+                    blueprints:
+                      - code: DUPLICATE_DATA
+                        details:
+                          api_name: name
+                          json_path: $.blueprints.name
+                        message: There is already a blueprint with this name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone request uses a
+                    Blueprint name that already exists.
+                InvalidDataResponse1:
+                  summary: INVALID_DATA error for an invalid Blueprint ID
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: the id given seems to be invalid
+                    status: error
+                  description: >-
+                    Demonstrates the response when the Blueprint ID in the
+                    request URL is invalid.
+                InvalidDataResponse2:
+                  summary: INVALID_DATA error for reusing the source layout
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          json_path: $.blueprints[0].layout.id
+                          api_name: id
+                        message: >-
+                          The given layout should be different from source
+                          blueprint layout
+                        status: error
+                  description: >-
+                    Demonstrates the response when the provided layout is the
+                    same as the source Blueprint layout.
+                AmbiguityDuringProcessingResponse1:
+                  summary: >-
+                    AMBIGUITY_DURING_PROCESSING error when map_states is given
+                    for a draft clone
+                  value:
+                    blueprints:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: type
+                              json_path: $.blueprints[0].type
+                            - api_name: map_states
+                              json_path: $.blueprints[0].map_states
+                        message: Ambiguity while processing the request
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone type is draft and
+                    map_states is also provided.
+                AmbiguityDuringProcessingResponse2:
+                  summary: >-
+                    AMBIGUITY_DURING_PROCESSING error for a different layout ID
+                    in a draft clone
+                  value:
+                    blueprints:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: type
+                              json_path: $.blueprints[0].type
+                            - api_name: id
+                              json_path: $.blueprints[0].layout.id
+                        message: Ambiguity while processing the request
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone type is draft and a
+                    different layout ID is provided.
+                AmbiguityDuringProcessingResponse3:
+                  summary: >-
+                    AMBIGUITY_DURING_PROCESSING error for a different field ID
+                    in a draft clone
+                  value:
+                    blueprints:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: type
+                              json_path: $.blueprints[0].type
+                            - api_name: id
+                              json_path: $.blueprints[0].field.id
+                        message: Ambiguity while processing the request
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone type is draft and a
+                    different field ID is provided.
+                AmbiguityDuringProcessingResponse4:
+                  summary: >-
+                    AMBIGUITY_DURING_PROCESSING error for a different pipeline
+                    ID in a draft clone
+                  value:
+                    blueprints:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: type
+                              json_path: $.blueprints[0].type
+                            - api_name: id
+                              json_path: $.blueprints[0].pipeline.id
+                        message: Ambiguity while processing the request
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone type is draft and a
+                    different pipeline ID is provided.
+                AmbiguityDuringProcessingResponse5:
+                  summary: >-
+                    AMBIGUITY_DURING_PROCESSING error for a different module in
+                    a draft clone
+                  value:
+                    blueprints:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: type
+                              json_path: $.blueprints[0].type
+                            - api_name: module
+                              json_path: $.blueprints[0].module
+                        message: Ambiguity while processing the request
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone type is draft and a
+                    different module is provided.
+                MandatoryNotFoundResponse1:
+                  summary: MANDATORY_NOT_FOUND error when the Blueprint name is missing
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: name
+                          json_path: $.blueprints[*].name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the required name key is
+                    missing from the request.
+                InvalidDataResponse3:
+                  summary: INVALID_DATA error for an invalid Blueprint name data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.blueprints[*].name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the Blueprint name has an
+                    invalid data type.
+                InvalidDataResponse4:
+                  summary: INVALID_DATA error for an invalid Blueprint name value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 14
+                          json_path: $.blueprints[*].name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the Blueprint name has
+                    invalid data.
+                MandatoryNotFoundResponse2:
+                  summary: MANDATORY_NOT_FOUND error when the clone type is missing
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: type
+                          json_path: $.blueprints[*].type
+                        status: error
+                  description: >-
+                    Demonstrates the response when the required type key is
+                    missing from the request.
+                InvalidDataResponse5:
+                  summary: INVALID_DATA error for an invalid type data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: type
+                          expected_data_type: text
+                          json_path: $.blueprints[*].type
+                        status: error
+                  description: >-
+                    Demonstrates the response when the type has an invalid data
+                    type.
+                InvalidDataResponse6:
+                  summary: INVALID_DATA error for an invalid type value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: type
+                          maximum_length: 10
+                          json_path: $.blueprints[*].type
+                        status: error
+                  description: Demonstrates the response when the type has invalid data.
+                MandatoryNotFoundResponse3:
+                  summary: MANDATORY_NOT_FOUND error when the layout is missing
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: layout
+                          json_path: $.blueprints[*].layout
+                        status: error
+                  description: >-
+                    Demonstrates the response when the required layout object is
+                    missing from the request.
+                InvalidDataResponse7:
+                  summary: INVALID_DATA error for an invalid layout object data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: layout
+                          expected_data_type: jsonobject
+                          json_path: $.blueprints[*].layout
+                        status: error
+                  description: >-
+                    Demonstrates the response when the layout object has an
+                    invalid data type.
+                InvalidDataResponse8:
+                  summary: INVALID_DATA error for an invalid layout object value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: layout
+                          maximum_length: 1
+                          json_path: $.blueprints[*].layout
+                        status: error
+                  description: >-
+                    Demonstrates the response when the layout object has invalid
+                    data.
+                InvalidDataResponse9:
+                  summary: INVALID_DATA error for an invalid layout ID data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.blueprints[*].layout.id
+                        status: error
+                  description: >-
+                    Demonstrates the response when the layout ID has an invalid
+                    data type.
+                InvalidDataResponse10:
+                  summary: INVALID_DATA error for an invalid layout ID value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 50
+                          json_path: $.blueprints[*].layout.id
+                        status: error
+                  description: >-
+                    Demonstrates the response when the layout ID has invalid
+                    data.
+                InvalidDataResponse11:
+                  summary: INVALID_DATA error for an invalid layout name data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.blueprints[*].layout.name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the layout name has an
+                    invalid data type.
+                InvalidDataResponse12:
+                  summary: INVALID_DATA error for an invalid layout name value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 100
+                          json_path: $.blueprints[*].layout.name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the layout name has invalid
+                    data.
+                MandatoryNotFoundResponse4:
+                  summary: MANDATORY_NOT_FOUND error when the field is missing
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: field
+                          json_path: $.blueprints[*].field
+                        status: error
+                  description: >-
+                    Demonstrates the response when the required field object is
+                    missing from the request.
+                InvalidDataResponse13:
+                  summary: INVALID_DATA error for an invalid field object data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: field
+                          expected_data_type: jsonobject
+                          json_path: $.blueprints[*].field
+                        status: error
+                  description: >-
+                    Demonstrates the response when the field object has an
+                    invalid data type.
+                InvalidDataResponse14:
+                  summary: INVALID_DATA error for an invalid field object value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: field
+                          maximum_length: 1
+                          json_path: $.blueprints[*].field
+                        status: error
+                  description: >-
+                    Demonstrates the response when the field object has invalid
+                    data.
+                InvalidDataResponse15:
+                  summary: INVALID_DATA error for an invalid field ID data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.blueprints[*].field.id
+                        status: error
+                  description: >-
+                    Demonstrates the response when the field ID has an invalid
+                    data type.
+                InvalidDataResponse16:
+                  summary: INVALID_DATA error for an invalid field ID value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 50
+                          json_path: $.blueprints[*].field.id
+                        status: error
+                  description: >-
+                    Demonstrates the response when the field ID has invalid
+                    data.
+                InvalidDataResponse17:
+                  summary: INVALID_DATA error for an invalid field API name data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: api_name
+                          expected_data_type: text
+                          json_path: $.blueprints[*].field.api_name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the field API name has an
+                    invalid data type.
+                InvalidDataResponse18:
+                  summary: INVALID_DATA error for an invalid field API name value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: api_name
+                          maximum_length: 100
+                          json_path: $.blueprints[*].field.api_name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the field API name has
+                    invalid data.
+                InvalidDataResponse19:
+                  summary: INVALID_DATA error for an invalid pipeline object data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: pipeline
+                          expected_data_type: jsonobject
+                          json_path: $.blueprints[*].pipeline
+                        status: error
+                  description: >-
+                    Demonstrates the response when the pipeline object has an
+                    invalid data type.
+                InvalidDataResponse20:
+                  summary: INVALID_DATA error for an invalid pipeline object value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: pipeline
+                          maximum_length: 1
+                          json_path: $.blueprints[*].pipeline
+                        status: error
+                  description: >-
+                    Demonstrates the response when the pipeline object has
+                    invalid data.
+                InvalidDataResponse21:
+                  summary: INVALID_DATA error for an invalid pipeline ID data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.blueprints[*].pipeline.id
+                        status: error
+                  description: >-
+                    Demonstrates the response when the pipeline ID has an
+                    invalid data type.
+                InvalidDataResponse22:
+                  summary: INVALID_DATA error for an invalid pipeline ID value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 50
+                          json_path: $.blueprints[*].pipeline.id
+                        status: error
+                  description: >-
+                    Demonstrates the response when the pipeline ID has invalid
+                    data.
+                InvalidDataResponse23:
+                  summary: INVALID_DATA error for an invalid pipeline name data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: name
+                          expected_data_type: text
+                          json_path: $.blueprints[*].pipeline.name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the pipeline name has an
+                    invalid data type.
+                InvalidDataResponse24:
+                  summary: INVALID_DATA error for an invalid pipeline name value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: name
+                          maximum_length: 100
+                          json_path: $.blueprints[*].pipeline.name
+                        status: error
+                  description: >-
+                    Demonstrates the response when the pipeline name has invalid
+                    data.
+                InvalidDataResponse25:
+                  summary: INVALID_DATA error for an invalid map_states array data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: map_states
+                          expected_data_type: jsonarray
+                          json_path: $.blueprints[*].map_states
+                        status: error
+                  description: >-
+                    Demonstrates the response when the map_states array has an
+                    invalid data type.
+                InvalidDataResponse26:
+                  summary: INVALID_DATA error for an invalid map_states array value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: map_states
+                          maximum_length: 100
+                          json_path: $.blueprints[*].map_states
+                        status: error
+                  description: >-
+                    Demonstrates the response when the map_states array has
+                    invalid data.
+                InvalidDataResponse27:
+                  summary: >-
+                    INVALID_DATA error for an invalid existing_state object data
+                    type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: existing_state
+                          expected_data_type: jsonobject
+                          json_path: $.blueprints[*].map_states[*].existing_state
+                        status: error
+                  description: >-
+                    Demonstrates the response when the existing_state object has
+                    an invalid data type.
+                InvalidDataResponse28:
+                  summary: >-
+                    INVALID_DATA error for an invalid existing_state object
+                    value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: existing_state
+                          maximum_length: 1
+                          json_path: $.blueprints[*].map_states[*].existing_state
+                        status: error
+                  description: >-
+                    Demonstrates the response when the existing_state object has
+                    invalid data.
+                InvalidDataResponse29:
+                  summary: >-
+                    INVALID_DATA error for an invalid existing_state value data
+                    type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: actual_value
+                          expected_data_type: text
+                          json_path: >-
+                            $.blueprints[*].map_states[*].existing_state.actual_value
+                        status: error
+                  description: >-
+                    Demonstrates the response when the existing_state actual
+                    value has an invalid data type.
+                InvalidDataResponse30:
+                  summary: INVALID_DATA error for an invalid existing_state value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: actual_value
+                          maximum_length: 100
+                          json_path: >-
+                            $.blueprints[*].map_states[*].existing_state.actual_value
+                        status: error
+                  description: >-
+                    Demonstrates the response when the existing_state actual
+                    value has invalid data.
+                InvalidDataResponse31:
+                  summary: >-
+                    INVALID_DATA error for an invalid clone_state object data
+                    type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: clone_state
+                          expected_data_type: jsonobject
+                          json_path: $.blueprints[*].map_states[*].clone_state
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone_state object has an
+                    invalid data type.
+                InvalidDataResponse32:
+                  summary: INVALID_DATA error for an invalid clone_state object value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: clone_state
+                          maximum_length: 1
+                          json_path: $.blueprints[*].map_states[*].clone_state
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone_state object has
+                    invalid data.
+                InvalidDataResponse33:
+                  summary: >-
+                    INVALID_DATA error for an invalid clone_state value data
+                    type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: actual_value
+                          expected_data_type: text
+                          json_path: >-
+                            $.blueprints[*].map_states[*].clone_state.actual_value
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone_state actual value
+                    has an invalid data type.
+                InvalidDataResponse34:
+                  summary: INVALID_DATA error for an invalid clone_state value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: actual_value
+                          maximum_length: 100
+                          json_path: >-
+                            $.blueprints[*].map_states[*].clone_state.actual_value
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone_state actual value
+                    has invalid data.
+                MandatoryNotFoundResponse5:
+                  summary: MANDATORY_NOT_FOUND error when the module is missing
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: module
+                          json_path: $.blueprints[*].module
+                        status: error
+                  description: >-
+                    Demonstrates the response when the required module key is
+                    missing from the request.
+                InvalidDataResponse35:
+                  summary: INVALID_DATA error for an invalid module data type
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: module
+                          expected_data_type: text
+                          json_path: $.blueprints[*].module
+                        status: error
+                  description: >-
+                    Demonstrates the response when the module has an invalid
+                    data type.
+                InvalidDataResponse36:
+                  summary: INVALID_DATA error for an invalid module value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: module
+                          maximum_length: 100
+                          json_path: $.blueprints[*].module
+                        status: error
+                  description: Demonstrates the response when the module has invalid data.
+                MandatoryNotFoundResponse6:
+                  summary: MANDATORY_NOT_FOUND error when the module is not provided
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: module
+                          json_path: $.blueprints[0].module
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Demonstrates the response when the required module key is
+                    not provided in the request.
+                InvalidDataResponse37:
+                  summary: INVALID_DATA error for an unrecognized module value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: module
+                          json_path: $.blueprints[0].module
+                        message: the value given is invalid
+                        status: error
+                  description: >-
+                    Demonstrates the response when the module value is not among
+                    the accepted values.
+                CannotProcessResponse1:
+                  summary: CANNOT_PROCESS error when map_states is required but missing
+                  value:
+                    blueprints:
+                      - code: CANNOT_PROCESS
+                        details:
+                          api_name: map_states
+                          json_path: $.blueprint[0].map_states
+                        message: >-
+                          The mapping states is mandatory for clone blueprint as
+                          given layout field different from source blueprint
+                          field
+                        status: error
+                  description: >-
+                    Demonstrates the response when the clone layout uses a
+                    different field from the source Blueprint but map_states is
+                    not provided.
+                InvalidDataResponse38:
+                  summary: >-
+                    INVALID_DATA error for special characters in the Blueprint
+                    name
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: name
+                          json_path: $.blueprints[0].name
+                        message: Blueprint name should not allow special characters
+                        status: error
+                  description: >-
+                    Demonstrates the response when the Blueprint name contains
+                    special characters that are not allowed.
+                MandatoryNotFoundResponse7:
+                  summary: >-
+                    MANDATORY_NOT_FOUND error when the clone type is not
+                    provided
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: type
+                          json_path: $.blueprints[0].type
+                        message: required field not found
+                        status: error
+                  description: >-
+                    Demonstrates the response when the required type key is not
+                    provided in the request.
+                InvalidDataResponse39:
+                  summary: INVALID_DATA error for an invalid type value
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: type
+                          json_path: $.blueprints[0].type
+                          supported_values:
+                            - standalone
+                            - dependent
+                        message: the value given is invalid
+                        status: error
+                  description: >-
+                    Demonstrates the response when the type value is not among
+                    the accepted values.
+                InvalidDataResponse40:
+                  summary: INVALID_DATA error when the pipeline is not provided
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.blueprints[0].pipeline.id
+                        message: Pipeline is not provided
+                        status: error
+                  description: >-
+                    Demonstrates the response when the pipeline is not provided
+                    in the request.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.blueprint.CREATE
+components:
+  schemas:
+    InvalidLayoutReuseError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the layout provided in the request is
+        the same as the layout of the source Blueprint.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code that identifies the type of failure.
+
+            Possible values:
+
+            INVALID_DATA - The given layout is the same as the source Blueprint
+            layout.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the details of the error, including the API name and JSON
+            path of the field that caused the error.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the field that caused the error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message.
+
+            Possible values:
+
+            The given layout should be different from source blueprint layout -
+            Returned when the layout given for the clone is the same as the
+            source Blueprint layout.
+          enum:
+            - The given layout should be different from source blueprint layout
+        status:
+          type: string
+          description: |-
+            Represents the status of the response.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Layout Reuse Error
+      x-zs-$id: ErrorResponseCore1960761446
+    BlueprintNameConflictError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the Blueprint name in the clone
+        request already exists.
+      properties:
+        code:
+          type: string
+          description: |-
+            Represents the error code for the Blueprint name conflict.
+            Possible values:
+            DUPLICATE_DATA - A Blueprint with the same name already exists.
+          enum:
+            - DUPLICATE_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the details of the name conflict error, including
+            validation information.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the Blueprint involved in the name
+                conflict.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the name conflict.
+
+            Possible values:
+
+            There is already a blueprint with this name - A Blueprint with the
+            specified name already exists in the Zoho CRM organization.
+          enum:
+            - There is already a blueprint with this name
+        status:
+          type: string
+          description: |-
+            Represents the status of the Blueprint clone request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Blueprint Name Conflict Error
+      x-zs-$id: ErrorResponseCore496331950
+    BlueprintCloneResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response of a Blueprint clone request, containing the
+        clone result for each requested Blueprint.
+      properties:
+        blueprints:
+          type: array
+          description: >-
+            Represents the list of clone results. Each object reports the
+            outcome of the clone request for one Blueprint.
+          items:
+            $ref: '#/components/schemas/BlueprintCloneResultEntry'
+          maxItems: 1
+      title: Blueprint Clone Response
+      x-zs-$id: CloneblueprintResponse200
+    BlueprintCloneResultEntry:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the result of a single Blueprint clone operation, including
+        the status, code, message, and details of the outcome.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the code that indicates the outcome of the clone request
+            for the Blueprint.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/BlueprintCloneResultDetails'
+        message:
+          type: string
+          description: >-
+            Represents the message that describes the outcome of the clone
+            request for the Blueprint.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Indicates whether the clone request for the Blueprint was
+            successful.
+          maxLength: 255
+      title: Blueprint Clone Result Entry
+    CloneRequestAmbiguityError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the clone request is ambiguous, such
+        as when the clone type is dependent while map_states is also provided.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code that identifies the cause of the failure.
+
+            Possible values:
+
+            AMBIGUITY_DURING_PROCESSING - Returned when the clone request cannot
+            be processed because of ambiguous input.
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details that identify the ambiguous fields
+            in the clone request.
+          properties:
+            ambiguity_due_to:
+              type: array
+              description: >-
+                Represents the list of request fields that caused ambiguity
+                while processing the clone request.
+              items:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents a single request field that caused ambiguity,
+                  including its API name and JSON path.
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the request field that caused
+                      ambiguity in the clone request.
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: >-
+                      Represents the JSON path of the request field that caused
+                      ambiguity in the clone request.
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - ambiguity_due_to
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the failure.
+
+            Possible values:
+
+            Ambiguity while processing the request - Returned when the clone
+            request contains ambiguous input that prevents processing.
+          enum:
+            - Ambiguity while processing the request
+        status:
+          type: string
+          description: |-
+            Represents the status of the Blueprint clone request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Clone Request Ambiguity Error
+      x-zs-$id: ErrorResponseCore345826694
+    BlueprintCloneResultDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents additional details about the clone outcome, including the ID
+        of the cloned Blueprint and the fields that were not copied in the entry
+        criteria, before-transition criteria, or during-transition criteria.
+      properties:
+        uncopied_before_criteria_fields:
+          type: 'null'
+          description: >-
+            Represents the fields in the before-transition criteria that were
+            not copied to the cloned Blueprint.
+        id:
+          type: string
+          description: Represents the ID of the cloned Blueprint.
+          maxLength: 255
+        uncopied_entry_criteria_fields:
+          type: 'null'
+          description: >-
+            Represents the fields in the Blueprint entry criteria that were not
+            copied to the cloned Blueprint.
+        uncopied_during_transition_fields:
+          type: 'null'
+          description: >-
+            Represents the fields in the during-transition criteria that were
+            not copied to the cloned Blueprint.
+      title: Blueprint Clone Result Details
+    BlueprintCloneBatchRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a batch request that contains the clone settings for a single
+        Blueprint in the blueprints array.
+      properties:
+        blueprints:
+          type: array
+          description: >-
+            Represents the list of clone settings for the Blueprint to clone.
+            The object specifies the clone settings for one Blueprint, including
+            the module, name, clone type, and state mappings.
+          items:
+            $ref: '#/components/schemas/BlueprintCloneSettings'
+          maxItems: 1
+      required:
+        - blueprints
+      title: Blueprint Clone Batch Request
+    BlueprintCloneSettings:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the settings for cloning a Blueprint, including the module,
+        name, clone type, layout and pipeline references, selected field, and
+        state mappings.
+      properties:
+        layout:
+          $ref: '#/components/schemas/BlueprintLayoutSelector'
+          description: Specify the layout data of the cloned blueprint (Required)
+        pipeline:
+          $ref: '#/components/schemas/BlueprintPipelineSelector'
+          description: Specify the pipeline data of the cloned blueprint
+        map_states:
+          type:
+            - array
+            - 'null'
+          description: >-
+            Specify the mapping of states from the existing Blueprint to the
+            cloned Blueprint.
+          items:
+            $ref: '#/components/schemas/StateValueMappingPair'
+          maxItems: 100
+        field:
+          $ref: '#/components/schemas/BlueprintFieldSelector'
+          description: Specify the field data of the cloned blueprint (Required)
+        module:
+          type: string
+          description: >-
+            Represents the API name of the module to which the cloned Blueprint
+            belongs.
+          maxLength: 100
+          x-zs-$ref:
+            resource: blueprints
+            origins:
+              - operationId: getBlueprintId
+                propertyId: BlueprintByIdModuleApiName
+        name:
+          type: string
+          description: Represents the name of the cloned Blueprint.
+          maxLength: 14
+        type:
+          type: string
+          description: >-
+            Represents the type of clone to create for the Blueprint, such as a
+            standalone or dependent clone.
+          maxLength: 10
+      required:
+        - field
+        - layout
+        - module
+        - name
+        - type
+      title: Blueprint Clone Settings
+    StateValueMappingPair:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a mapping that pairs a source state token with a target state
+        token to transform state values from the source Blueprint to the cloned
+        Blueprint.
+      properties:
+        clone_state:
+          $ref: '#/components/schemas/TargetStateToken'
+          description: Map states data of new value to cloned blueprint
+        existing_state:
+          $ref: '#/components/schemas/SourceStateToken'
+          description: Map states data of existing  blueprint
+      title: State Value Mapping Pair
+    BlueprintLayoutSelector:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a layout selector that identifies the target layout for the
+        cloned Blueprint by its ID or name.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the name of the layout associated with the cloned
+            Blueprint.
+          maxLength: 100
+        id:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the ID of the layout associated with the cloned
+            Blueprint.
+          maxLength: 50
+          x-zs-$ref:
+            resource: blueprints
+            origins:
+              - operationId: getBlueprintId
+                propertyId: BlueprintByIdLayoutId
+      title: Blueprint Layout Selector
+    BlueprintFieldSelector:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a field selector that identifies a field by its ID or API
+        name in a Blueprint clone request.
+      properties:
+        api_name:
+          type:
+            - string
+            - 'null'
+          description: Represents the API name of the field in the cloned Blueprint.
+          maxLength: 100
+        id:
+          type:
+            - string
+            - 'null'
+          description: Represents the ID of the field in the cloned Blueprint.
+          maxLength: 50
+          x-zs-$ref:
+            resource: blueprints
+            origins:
+              - operationId: getBlueprintId
+                propertyId: BlueprintByIdFieldId
+      title: Blueprint Field Selector
+    TargetStateToken:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the token generated from the actual_value of the target state
+        to which source state values are remapped in the cloned Blueprint.
+      properties:
+        actual_value:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the actual value of the new picklist state in the cloned
+            Blueprint, to which an existing state is remapped through
+            map_states.
+          maxLength: 100
+      title: Target State Token
+    BlueprintPipelineSelector:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a pipeline selector that identifies the target pipeline for
+        the cloned Blueprint by its ID or name.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the name of the pipeline associated with the cloned
+            Blueprint.
+          maxLength: 100
+        id:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the ID of the pipeline associated with the cloned
+            Blueprint.
+          maxLength: 50
+          x-zs-$ref:
+            resource: blueprints
+            origins:
+              - operationId: getBlueprintId
+                propertyId: BlueprintByIdPipelineId
+          pattern: '[0-9]+'
+      title: Blueprint Pipeline Selector
+    SourceStateToken:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the token generated from the actual_value of the source state
+        that is remapped during Blueprint cloning.
+      properties:
+        actual_value:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the actual value of an existing picklist state in the
+            source Blueprint, which is remapped to a new state in the cloned
+            Blueprint through map_states.
+          maxLength: 100
+      title: Source State Token
+    ErrorResponseCore24:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the maximum number of Blueprints
+        allowed in the Zoho CRM organization has already been reached.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code for the failed operation.
+
+            Possible values:
+
+            LIMIT_EXCEEDED - The number of Blueprints in the Zoho CRM
+            organization has exceeded the allowed limit.
+          enum:
+            - LIMIT_EXCEEDED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error, including the
+            Blueprint limit that was exceeded.
+          properties:
+            limit:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum number of Blueprints allowed in the Zoho
+                CRM organization, which the request exceeded.
+          required:
+            - limit
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the failure.
+
+            Possible values:
+
+            Blueprint limit exceed - The number of Blueprints in the Zoho CRM
+            organization has exceeded the allowed limit.
+          enum:
+            - Blueprint limit exceed
+        status:
+          type: string
+          description: |-
+            Represents the status of the response.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1330861358
+    ErrorResponseCore2:
+      type: object
+      additionalProperties: false
+      description: Represents the error returned when the request data is invalid.
+      properties:
+        code:
+          type: string
+          description: |-
+            Represents the error code.
+            Possible values:
+            INVALID_DATA - The request data has an invalid data type.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the details of the error, including the API name of the
+            field, the expected data type, and the JSON path of the invalid
+            value.
+          properties:
+            expected_data_type:
+              type: string
+              description: Represents the data type expected for the field in the request.
+              maxLength: 255
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field for which the data type is
+                invalid.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field for which the data type is
+                invalid.
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message.
+
+            Possible values:
+
+            Invalid data type - The data type of a value in the request does not
+            match the expected data type.
+          enum:
+            - Invalid data type
+        status:
+          type: string
+          description: |-
+            Represents the status of the response.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore9634759
+    ErrorResponseCore4:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when a required field is missing from the
+        request.
+      properties:
+        code:
+          type: string
+          description: |-
+            Represents the error code for the failed operation.
+            Possible values:
+            MANDATORY_NOT_FOUND - A required field is missing in the request.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error, including the API
+            name and JSON path of the missing required field.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the required field that is missing in
+                the request.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the required field that is missing
+                in the request.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the cause of the
+            failure.
+
+            Possible values:
+
+            Required field is missing - A required field is missing from the
+            request.
+          enum:
+            - Required field is missing
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1678556694
+    ErrorResponseCore6:
+      type: object
+      additionalProperties: false
+      description: Represents the error returned when the request data is invalid.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code that identifies the type of failure.
+
+            Possible values:
+
+            INVALID_DATA - The request data is invalid, such as when a value
+            exceeds the maximum allowed length.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details of the error, including the API
+            name of the invalid field, its JSON path, and the maximum allowed
+            length.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum length allowed for the field that failed
+                validation.
+            api_name:
+              type: string
+              description: Represents the API name of the field that failed validation.
+              maxLength: 255
+            json_path:
+              type: string
+              description: Represents the JSON path of the field that failed validation.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the cause of the
+            failure.
+
+            Possible values:
+
+            Invalid data - The request data is invalid.
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore769482510
+    ErrorResponseCore19:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the Blueprint ID in the request is
+        invalid.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code that identifies the reason for the
+            failure.
+
+            Possible values:
+
+            INVALID_DATA - The data in the request is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details of the error, including the index
+            of the invalid entry in the resource path.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: Represents the index of the invalid entry in the resource path.
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: >-
+            Represents the error message.
+
+            Possible values:
+
+            the id given seems to be invalid - The Blueprint ID in the request
+            path is invalid.
+          enum:
+            - the id given seems to be invalid
+        status:
+          type: string
+          description: |-
+            Represents the status of the response.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1944579470
+    RequiredFieldNotFoundError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when a required field is missing from the
+        request. The response identifies the missing field through its api_name
+        and json_path.
+      properties:
+        code:
+          type: string
+          description: |-
+            Represents the code that identifies the error.
+            Possible values:
+            MANDATORY_NOT_FOUND - A required field is missing from the request.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the details of the validation error, including the API
+            name and JSON path of the required field that is missing from the
+            request.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the required field that is missing
+                from the request.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the required field that is missing
+                from the request.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when a required field is
+            missing from the request.
+
+            Possible values:
+
+            required field not found - A required field is missing from the
+            request.
+          enum:
+            - required field not found
+        status:
+          type: string
+          description: |-
+            Represents the status of the response.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Required Field Not Found Error
+      x-zs-$id: RequiredFieldNotFoundError
+    CannotProcessMapStatesError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when map_states is required but not
+        provided because the clone layout uses a different field from the source
+        Blueprint field.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when the state mappings for the
+            Blueprint clone cannot be processed.
+
+            Possible values:
+
+            CANNOT_PROCESS - The state mappings cannot be processed.
+          enum:
+            - CANNOT_PROCESS
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the details of the error, including validation
+            information for the state mappings.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field for which the
+                state-mappings validation failed.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field for which the
+                state-mappings validation failed.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes why the state mappings
+            could not be processed for the Blueprint clone.
+
+            Possible values:
+
+            The mapping states is mandatory for clone blueprint as given layout
+            field different from source blueprint field - Returned when the
+            state mappings are mandatory for the clone because the given layout
+            field differs from the source Blueprint field.
+          enum:
+            - >-
+              The mapping states is mandatory for clone blueprint as given
+              layout field different from source blueprint field
+        status:
+          type: string
+          description: |-
+            Represents the status of the Blueprint clone request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Cannot Process Map States Error
+      x-zs-$id: CannotProcessMapStatesError
+    BlueprintNameSpecialCharError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the Blueprint name contains special
+        characters that are not allowed.
+      properties:
+        code:
+          type: string
+          description: |-
+            Represents the error code for the validation failure.
+            Possible values:
+            INVALID_DATA - The request data failed validation.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details of the error, including the API
+            name and JSON path of the invalid field.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that failed validation.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the validation
+                error.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the validation failure.
+
+            Possible values:
+
+            Blueprint name should not allow special characters - The Blueprint
+            name in the request contains special characters, which are not
+            allowed.
+          enum:
+            - Blueprint name should not allow special characters
+        status:
+          type: string
+          description: |-
+            Represents the status of the Blueprint clone request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Blueprint Name Special Char Error
+      x-zs-$id: BlueprintNameSpecialCharError
+    InvalidValueError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when a value provided for a field is not
+        among the accepted values, such as an unrecognized clone type.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code.
+
+            Possible values:
+
+            INVALID_DATA - Indicates that a field value in the request is not
+            among the accepted values.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the details of the error, including the API name and JSON
+            path of the field with the invalid value and the list of accepted
+            values.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains the invalid
+                value.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that contains the invalid
+                value.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: Represents the values accepted for the field.
+              items:
+                type: string
+                description: Represents one of the values accepted for the field.
+                maxLength: 255
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the message that describes the validation error.
+
+            Possible values:
+
+            the value given is invalid - The value supplied for the field is not
+            among its accepted values.
+          enum:
+            - the value given is invalid
+        status:
+          type: string
+          description: |-
+            Represents the status of the request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Value Error
+      x-zs-$id: InvalidValueError
+    PipelineNotProvidedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the request does not include the
+        pipeline.
+      properties:
+        code:
+          type: string
+          description: |-
+            Represents the code that identifies the error.
+            Possible values:
+            INVALID_DATA - The request contains invalid data.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error, including the API
+            name and JSON path of the field that was not provided.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that was not provided in
+                the request.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that was not provided in
+                the request.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the message that describes the validation error.
+
+            Possible values:
+
+            Pipeline is not provided - The request does not include the
+            pipeline.
+          enum:
+            - Pipeline is not provided
+        status:
+          type: string
+          description: |-
+            Represents the status of the request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Pipeline Not Provided Error
+      x-zs-$id: PipelineNotProvidedError
+    CannotCloneBlueprintError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the Blueprint cannot be cloned, with
+        error code CANNOT_PROCESS.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when the Blueprint cannot be
+            cloned.
+
+            Possible values:
+
+            CANNOT_PROCESS - The Blueprint cannot be cloned.
+          enum:
+            - CANNOT_PROCESS
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the details of the error, including the ID of the
+            Blueprint that cannot be cloned.
+          properties:
+            id:
+              type: string
+              description: Represents the ID of the Blueprint that cannot be cloned.
+              maxLength: 18
+          required:
+            - id
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the Blueprint cannot be
+            cloned.
+
+            Possible values:
+
+            Cannot allow to clone this blueprint - The Blueprint cannot be
+            cloned.
+          enum:
+            - Cannot allow to clone this blueprint
+        status:
+          type: string
+          description: |-
+            Represents the status of the Blueprint clone request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Cannot Clone Blueprint Error
+      x-zs-$id: CannotCloneBlueprintError
+  parameters:
+    ParamHeaderXZohoService:
+      name: X-ZOHO-SERVICE
+      in: header
+      description: |-
+        Specify the service to which the request is routed.
+        Possible values:
+        automation - Routes the request through the automation service.
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+        enum:
+          - automation
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.blueprint.CREATE: Grants permission to create Blueprint configurations in Zoho CRM.

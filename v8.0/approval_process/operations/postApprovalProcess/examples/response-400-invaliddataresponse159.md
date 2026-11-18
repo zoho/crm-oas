@@ -1,0 +1,18 @@
+INVALID_DATA error for invalid data in the type field
+
+```json
+{
+  "approval_process": [
+    {
+      "code": "INVALID_DATA",
+      "message": "Invalid data",
+      "details": {
+        "api_name": "type",
+        "maximum_length": 50,
+        "json_path": "$.approval_process[*].rules[*].approver_stages[*].actions.on_approve[*].type"
+      },
+      "status": "error"
+    }
+  ]
+}
+```

@@ -20,6 +20,8 @@
       - `active_rules_limit` (integer/int32) **REQ** — Represents the maximum number of active workflow rules allowed in the organization.
       - `total_rules_configured` (integer/int32) **REQ** — Represents the total number of workflow rules configured in the organization, including both active and inactive rules.
       - `active_rules_limit_per_module` (integer/int32) **REQ** — Represents the maximum number of active workflow rules allowed per CRM module.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **403**: The caller does not have permission to retrieve workflow rule counts, or the feature is not available in the current Zoho CRM edition.
 **Resolution:** The CRM administrator must grant the `Crm_Implied_Manage_Workflow` permission to the user's profile in Zoho CRM.
@@ -32,5 +34,7 @@
     - `details` (object) **REQ** — Represents error details. For NO_PERMISSION, contains the list of permissions needed. For FEATURE_NOT_SUPPORTED, empty object.
       - `permissions` (array of string) [maxItems=10] — Represents the list of CRM profile permissions required to perform the requested action.
         items: [maxLen=255]
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 **Scopes:** ZohoCRM.settings.workflow_rules.READ

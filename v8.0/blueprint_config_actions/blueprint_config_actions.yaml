@@ -1,0 +1,1369 @@
+openapi: 3.1.0
+info:
+  title: Blueprint Config Actions
+  description: >-
+    Blueprint config actions are administrative configuration operations within
+    Zoho CRM's Blueprint process management feature, covering the sequencing and
+    statistical inspection of Blueprints defined for a module. This API enables
+    developers to manage the execution order of Blueprints within a module and
+    to retrieve record count statistics associated with each stage of a
+    Blueprint.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        description: API Server URL TLD
+        default: com
+        enum:
+          - eu
+          - com
+          - au
+          - in
+          - jp
+          - cn
+          - ca
+      version:
+        description: API Version
+        default: v8
+security:
+  - OAuth2:
+      - ZohoCRM.settings.blueprint.CREATE
+      - ZohoCRM.settings.blueprint.READ
+paths:
+  /settings/blueprints/actions/reorder:
+    post:
+      summary: |
+        Reorder Blueprints within a module
+      description: >
+        To update the display order of Blueprints within a Zoho CRM module,
+        submit a list of Blueprint entries each specifying an ID and the desired
+        sequence_number. The operation accepts up to 100 entries per request and
+        returns the outcome for each Blueprint, indicating whether its position
+        update succeeded.
+      x-zs-llm-description: >-
+        Reorder the execution sequence of blueprints within a module by
+        providing blueprint IDs and sequence numbers
+      operationId: reorderBlueprints
+      parameters:
+        - $ref: '#/components/parameters/ParamHeaderXZohoService'
+        - $ref: '#/components/parameters/ParamQueryModule1'
+      requestBody:
+        description: >
+          The request body must contain a blueprints array of Blueprint reorder
+          entry objects. Each entry must include the Blueprint ID and the
+          sequence_number representing its new position in the module.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlueprintOrderUpdateRequest'
+            examples:
+              SamplePostRequest:
+                summary: >
+                  Request body with two blueprints each assigned a sequence
+                  number
+                value:
+                  blueprints:
+                    - id: '111111000000054386'
+                      sequence_number: 1
+                    - id: '111111000000069617'
+                      sequence_number: 2
+                description: >-
+                  Shows a reorderBlueprints request body with two Blueprint
+                  entries, each specifying an ID and a target sequence_number to
+                  establish the new display order.
+            x-zs-llm-examples:
+              - SamplePostRequest
+      responses:
+        '200':
+          description: >
+            Returns the results of the Blueprint reorder operation. Each entry
+            in the blueprints array indicates the reorder outcome for the
+            corresponding Blueprint, including its ID, status, code, and
+            message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintReorderSuccessResponse'
+              examples:
+                Success200:
+                  summary: >
+                    Single Blueprint reordered successfully with HTTP 200 full
+                    success
+                  value:
+                    blueprints:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000291069'
+                        message: process reordered successfully
+                        status: success
+                  description: >-
+                    Shows a successful 200 response for the reorderBlueprints
+                    operation. Each entry in the blueprints array confirms the
+                    reorder with code SUCCESS, the Blueprint ID in details, and
+                    status success.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '207':
+          description: >
+            Returns a mixed-status response when Blueprint reorder entries are
+            processed with varying outcomes. Each entry in the blueprints array
+            independently indicates success or failure for the corresponding
+            Blueprint in the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintReorderMultiStatusResponse'
+              examples:
+                Success207:
+                  summary: >
+                    Two blueprints reordered successfully with code HTTP 207
+                    Multi-Status
+                  value:
+                    blueprints:
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000054386'
+                        message: process reorder successfully
+                        status: success
+                      - code: SUCCESS
+                        details:
+                          id: '111111000000054386'
+                        message: process reorder successfully
+                        status: success
+                  description: >-
+                    Shows a 207 Multi-Status response for the reorderBlueprints
+                    operation with multiple Blueprint entries. Each item in the
+                    blueprints array includes an individual outcome code,
+                    details with the Blueprint ID, message, and status.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '400':
+          description: >
+            Bad Request — The request could not be processed.
+
+            **Resolution:** The caller should verify that the required `module`
+            query parameter is present, that the `blueprints` array does not
+            exceed 100 entries, that each entry includes both a valid `id` and a
+            `sequence_number`, and that the specified module name is valid.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PostsettingsblueprintactionsreorderResponse400
+                oneOf:
+                  - $ref: '#/components/schemas/MissingModuleParameterError'
+                  - $ref: '#/components/schemas/ErrorResponseCore27'
+                  - $ref: '#/components/schemas/InvalidModuleNameErrorResponse'
+                  - type: object
+                    x-zs-$id: PostsettingsblueprintactionsreorderResponse400Blueprints
+                    additionalProperties: false
+                    description: >
+                      Represents an error response returned when one or more
+                      Blueprint reorder entries fail validation. Contains a
+                      blueprints array of per-Blueprint error objects, each
+                      identifying the specific validation failure for the
+                      corresponding entry.
+                    properties:
+                      blueprints:
+                        type: array
+                        description: >
+                          Represents the list of per-Blueprint error objects
+                          returned when one or more Blueprint reorder entries
+                          fail validation.
+                        items:
+                          oneOf:
+                            - $ref: '#/components/schemas/ErrorResponseCore5'
+                            - $ref: >-
+                                #/components/schemas/BlueprintReorderInvalidProcessIDErrorResponse
+                            - $ref: >-
+                                #/components/schemas/MissingSequenceNumberErrorResponse
+                            - $ref: >-
+                                #/components/schemas/InvalidProcessSequenceErrorResponse
+                            - $ref: '#/components/schemas/ErrorResponseCore4'
+                            - $ref: '#/components/schemas/ErrorResponseCore2'
+                            - $ref: '#/components/schemas/ErrorResponseCore6'
+                          description: >
+                            Represents a per-Blueprint error object returned
+                            when reordering fails for an individual Blueprint
+                            entry. Each item contains a code, details (including
+                            api_name and json_path), message, and status
+                            indicating the specific validation failure.
+                        maxItems: 25
+                    required:
+                      - blueprints
+                description: >
+                  Represents a 400 Bad Request error response for the
+                  reorderBlueprints operation. Contains one of four error
+                  variants: a missing module query parameter error, a
+                  data-exceeds-maximum-length error, an invalid module name
+                  error, or an array of per-Blueprint validation errors.
+              examples:
+                RequiredParamMissingResponse1:
+                  summary: >
+                    Missing module query parameter triggers
+                    REQUIRED_PARAM_MISSING at top level
+                  value:
+                    code: REQUIRED_PARAM_MISSING
+                    details:
+                      param_name: module
+                    message: One of the expected parameter is missing
+                    status: error
+                  description: >
+                    Shows a REQUIRED_PARAM_MISSING error response returned when
+                    the required module query parameter is omitted from the
+                    request. Includes the param_name in the error details to
+                    identify the missing parameter.
+                InvalidDataResponse2:
+                  summary: >
+                    INVALID_MODULE error when an unrecognized module name is
+                    supplied
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      param_name: module
+                    message: the module name given seems to be invalid
+                    status: error
+                  description: >
+                    Shows a 400 error response when the module query parameter
+                    value is not a valid module API name. The response returns
+                    code INVALID_MODULE with param_name in details identifying
+                    the invalid parameter.
+                InvalidDataResponse3:
+                  summary: >
+                    INVALID_DATA error when the supplied Blueprint ID is
+                    unrecognized
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: id
+                          json_path: $.blueprints[1].id
+                        message: the id given seems to be invalid
+                        status: error
+                  description: >-
+                    Shows a 400 per-Blueprint error response when the provided
+                    Blueprint ID value is invalid. The blueprints array entry
+                    returns code INVALID_DATA with api_name and json_path in
+                    details identifying the offending field.
+                MandatoryNotFoundResponse1:
+                  summary: |
+                    MANDATORY_NOT_FOUND error when Blueprint ID is absent.
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: id
+                          json_path: $.blueprints[1].id
+                        message: blueprint reorder failed
+                        status: error
+                  description: >-
+                    Shows a MANDATORY_NOT_FOUND error response returned when the
+                    Blueprint reorder request is missing the required ID field.
+                    Includes the api_name and json_path referencing the ID field
+                    of the second Blueprint entry.
+                MandatoryNotFoundResponse2:
+                  summary: >
+                    Missing sequence_number field triggers MANDATORY_NOT_FOUND
+                    for a Blueprint entry
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: sequence_number
+                          json_path: $.blueprints[0].sequence_number
+                        message: mandatory field is not given
+                        status: error
+                  description: >
+                    Shows a MANDATORY_NOT_FOUND error response returned when the
+                    sequence_number field is absent from a Blueprint entry in
+                    the request. Includes the api_name and json_path identifying
+                    the missing field on the first Blueprint object.
+                InvalidDataResponse4:
+                  summary: >
+                    INVALID_DATA error when an invalid process sequence_number
+                    value is given
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: sequence_number
+                          json_path: $.blueprints[0].sequence_number
+                        message: Invalid process sequence is given
+                        status: error
+                  description: >-
+                    Shows a 400 per-Blueprint error response when the
+                    sequence_number field value is not a valid sequence number.
+                    The blueprints array entry returns code INVALID_DATA with
+                    api_name and json_path in details identifying the offending
+                    field.
+                MandatoryNotFoundResponse3:
+                  summary: >
+                    Missing ID field triggers MANDATORY_NOT_FOUND for a
+                    Blueprint entry
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: id
+                          json_path: $.blueprints[*].id
+                        status: error
+                  description: >-
+                    Shows a MANDATORY_NOT_FOUND error response returned when the
+                    ID field is absent from one or more Blueprint entries in the
+                    request. Includes the api_name and a wildcard json_path
+                    targeting the ID field across all Blueprint objects.
+                InvalidDataResponse5:
+                  summary: |
+                    INVALID_DATA error when ID is not a bigint.
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.blueprints[*].id
+                        status: error
+                  description: >-
+                    Shows a 400 per-Blueprint error response when the ID field
+                    value does not match the expected bigint data type. The
+                    blueprints array entry returns code INVALID_DATA with
+                    api_name, expected_data_type, and json_path in details.
+                InvalidDataResponse6:
+                  summary: >
+                    INVALID_DATA error when ID value exceeds the maximum allowed
+                    length
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 50
+                          json_path: $.blueprints[*].id
+                        status: error
+                  description: >-
+                    Shows a 400 per-Blueprint error response when the ID field
+                    value exceeds the maximum allowed length. The blueprints
+                    array entry returns code INVALID_DATA with api_name,
+                    maximum_length, and json_path in details.
+                MandatoryNotFoundResponse4:
+                  summary: >
+                    Missing sequence_number field triggers MANDATORY_NOT_FOUND
+                    with json_path reference
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: sequence_number
+                          json_path: $.blueprints[*].sequence_number
+                        status: error
+                  description: >
+                    Shows a MANDATORY_NOT_FOUND error response returned when the
+                    sequence_number field is absent from one or more Blueprint
+                    entries in the request. Includes the api_name and a wildcard
+                    json_path targeting the sequence_number field across all
+                    Blueprint objects.
+                InvalidDataResponse7:
+                  summary: |
+                    INVALID_DATA error when sequence_number is not an integer.
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: sequence_number
+                          expected_data_type: integer
+                          json_path: $.blueprints[*].sequence_number
+                        status: error
+                  description: >-
+                    Shows a 400 per-Blueprint error response when the
+                    sequence_number field value does not match the expected
+                    integer data type. The blueprints array entry returns code
+                    INVALID_DATA with api_name, expected_data_type, and
+                    json_path in details.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.blueprint.UPDATE
+  /settings/blueprints/{blueprintId}/actions/records_count:
+    get:
+      summary: |
+        Retrieve Blueprint stage record counts
+      description: >
+        To retrieve the number of records at each Blueprint stage for a specific
+        Blueprint in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Get the count of records currently inside a specific blueprint by
+        blueprintId
+      operationId: getBlueprintRecordsCount
+      parameters:
+        - $ref: '#/components/parameters/ParamHeaderXZohoService'
+        - name: blueprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: bigint
+            pattern: ^[0-9]+
+          description: >
+            Specify the unique ID of the Blueprint whose stage-level record
+            counts are to be retrieved.
+      responses:
+        '200':
+          description: |
+            Returns the record count at each stage of the specified Blueprint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintRecordsCountListResponse'
+              examples:
+                Success200:
+                  summary: |
+                    Success response for status 200
+                  value:
+                    blueprints:
+                      - records_count: 24
+                  description: |
+                    Shows a successful response containing a blueprints array.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '400':
+          description: >
+            The Blueprint ID supplied in the request path is invalid.
+
+            **Resolution:** Verify that the Blueprint ID is a valid numeric
+            identifier and resubmit the request.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: GetblueprintblueprintidactionsrecordscountResponse400
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidProcessIDErrorResponse'
+                description: >
+                  Represents the error response returned when the Blueprint ID
+                  supplied in the request path is invalid. Contains an error
+                  code of INVALID_DATA, a message indicating that the ID is
+                  invalid, and details identifying the offending path segment
+                  index.
+              examples:
+                InvalidDataResponse1:
+                  summary: |
+                    Invalid Blueprint ID error response
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: id seems to be invalid
+                    status: error
+                  description: >
+                    Shows an error response returned when the Blueprint ID
+                    provided in the request path is invalid. The response
+                    includes error code INVALID_DATA, a descriptive message, and
+                    a resource_path_index of 2 identifying the offending path
+                    segment.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.blueprint.READ
+components:
+  schemas:
+    BlueprintReorderInvalidProcessIDErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when a Blueprint reorder operation
+        fails due to an invalid or missing process ID.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            MANDATORY_NOT_FOUND - Indicates that a required field was not
+            provided in the request.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the
+            affected field name and its JSON path in the request.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the error in
+                the request payload.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the Blueprint reorder
+            operation fails.
+          enum:
+            - blueprint reorder failed
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Blueprint Reorder Invalid Process ID Error Response
+      x-zs-$id: ErrorResponseCore38729573
+    InvalidProcessIDErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the process identifier in the
+        request URL is invalid. Includes error code INVALID_DATA and the invalid
+        path segment index in the details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            INVALID_DATA - Indicates that the provided data is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the index
+            of the invalid resource path segment.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                Represents the index of the invalid resource path segment in the
+                request URL.
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the provided process ID
+            is invalid.
+          enum:
+            - id seems to be invalid
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Process ID Error Response
+      x-zs-$id: ErrorResponseCore1455039717
+    BlueprintReorderSuccessResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the success response returned for a Blueprint reorder
+        request, containing an array of per-Blueprint reorder results.
+      properties:
+        blueprints:
+          type: array
+          description: >-
+            Contains the list of Blueprint entries reflecting the updated order
+            after a successful reorder operation.
+          items:
+            $ref: '#/components/schemas/BlueprintReorderResult'
+          maxItems: 50
+      required:
+        - blueprints
+      title: Blueprint Reorder Success Response
+      x-zs-$id: PostsettingsblueprintsactionsreorderResponse200
+    BlueprintReorderMultiStatusResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the multi-status response returned for a Blueprint reorder
+        request, containing an array of per-Blueprint reorder results.
+      properties:
+        blueprints:
+          type: array
+          description: >-
+            Contains the list of Blueprint reorder results, each indicating the
+            outcome of the reorder operation for an individual Blueprint.
+          items:
+            $ref: '#/components/schemas/BlueprintReorderResult'
+          maxItems: 2
+      title: Blueprint Reorder Multi-Status Response
+      x-zs-$id: PostsettingsblueprintsactionsreorderResponse207
+    InvalidProcessSequenceErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when an invalid process sequence
+        is provided in the reorder request. Includes error code INVALID_DATA.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            INVALID_DATA - Indicates that the provided data is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the
+            affected field name and its JSON path in the request.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the error in
+                the request payload.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when an invalid process
+            sequence is provided.
+          enum:
+            - Invalid process sequence is given
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Process Sequence Error Response
+      x-zs-$id: ErrorResponseCore540560427
+    InvalidModuleNameErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the provided module name is
+        invalid. Includes error code INVALID_MODULE and the invalid parameter
+        name in the details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            INVALID_MODULE - Indicates that the provided module name is invalid.
+          enum:
+            - INVALID_MODULE
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the name
+            of the invalid parameter.
+          properties:
+            param_name:
+              type: string
+              description: Represents the name of the invalid or missing parameter.
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the provided module name
+            is invalid.
+          enum:
+            - the module name given seems to be invalid
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Module Name Error Response
+      x-zs-$id: ErrorResponseCore1774897711
+    BlueprintRecordsCountListResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response returned for the records count action. Contains
+        an array of Blueprint entries, each with the current record count.
+      properties:
+        blueprints:
+          type: array
+          description: >-
+            Contains the list of Blueprint items with their respective record
+            counts returned in the response.
+          items:
+            $ref: '#/components/schemas/BlueprintRecordsCountItem'
+          maxItems: 1
+      required:
+        - blueprints
+      title: Blueprint Records Count List Response
+      x-zs-$id: GetblueprintblueprintidactionsrecordscountResponse200
+    MissingModuleParameterError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when a required query parameter is
+        missing from the request. Includes error code REQUIRED_PARAM_MISSING and
+        the missing parameter name in the details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            REQUIRED_PARAM_MISSING - Indicates that a required query parameter
+            was not provided.
+          enum:
+            - REQUIRED_PARAM_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the name
+            of the missing parameter.
+          properties:
+            param_name:
+              type: string
+              description: Represents the name of the missing parameter.
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when a required parameter is
+            missing from the request.
+          enum:
+            - One of the expected parameter is missing
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Missing Module Parameter Error
+      x-zs-$id: ErrorResponseCore94581445
+    BlueprintRecordsCountItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a single entry in the records count response, containing the
+        total number of records currently associated with a Blueprint.
+      properties:
+        records_count:
+          type: integer
+          format: int32
+          description: >-
+            Represents the total number of records currently associated with the
+            Blueprint.
+      required:
+        - records_count
+      title: Blueprint Records Count Item
+    BlueprintOrderUpdateRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request body for updating the display order of multiple
+        Blueprints. Contains an array of Blueprint reorder entries, each
+        specifying a Blueprint ID and the target sequence number.
+      properties:
+        blueprints:
+          type: array
+          description: >-
+            Contains the list of Blueprint entries whose display order is to be
+            updated.
+          items:
+            $ref: '#/components/schemas/BlueprintReorderEntry'
+          maxItems: 100
+      required:
+        - blueprints
+      title: Blueprint Order Update Request
+    MissingSequenceNumberErrorResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the mandatory sequence_number
+        field is missing from the reorder request. Includes error code
+        MANDATORY_NOT_FOUND.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            MANDATORY_NOT_FOUND - Indicates that a required field was not
+            provided in the request.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the
+            affected field name and its JSON path in the request.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the error in
+                the request payload.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when a mandatory field is
+            missing from the request.
+          enum:
+            - mandatory field is not given
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Missing Sequence Number Error Response
+      x-zs-$id: ErrorResponseCore577375134
+    BlueprintReorderEntry:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a single Blueprint reorder entry, specifying the Blueprint ID
+        and the target position in the display order. Both are required.
+      properties:
+        sequence_number:
+          type: integer
+          format: int32
+          description: Represents the new order for the blueprint
+        id:
+          type: string
+          description: Represents the unique identifier of the Blueprint to be reordered.
+          maxLength: 50
+          x-zs-$ref:
+            resource: blueprints
+            origins:
+              - operationId: getBlueprint
+                propertyId: BlueprintIdFromList
+              - operationId: getBlueprintId
+                propertyId: BlueprintId
+      required:
+        - id
+        - sequence_number
+      title: Blueprint Reorder Entry
+    BlueprintReorderResult:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the result of a single Blueprint reorder operation, including
+        the result code, status, message, and associated details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the result code indicating the outcome of the reorder
+            operation for this Blueprint.
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/BlueprintReorderResultDetails'
+        message:
+          type: string
+          description: >-
+            Represents the message describing the outcome of the reorder
+            operation for this Blueprint.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Represents the status of the reorder operation for this Blueprint,
+            indicating whether it succeeded or failed.
+          maxLength: 255
+      title: Blueprint Reorder Result
+    BlueprintReorderResultDetails:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the details associated with a single Blueprint reorder
+        result, including the unique identifier of the affected Blueprint.
+      properties:
+        id:
+          type: string
+          description: Represents the unique identifier of the Blueprint entry.
+          maxLength: 255
+      title: Blueprint Reorder Result Details
+    ErrorResponseCore27:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the provided data is invalid
+        and exceeds the allowed length. Includes error code INVALID_DATA and the
+        maximum allowed length in the details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            INVALID_DATA - Indicates that the provided data is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the
+            affected field name and its JSON path in the request.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum allowed length for the field that
+                exceeded the limit.
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the error in
+                the request payload.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the provided data is
+            invalid.
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1031606856
+    ErrorResponseCore4:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when a required field is missing
+        from the request. Includes error code MANDATORY_NOT_FOUND.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            MANDATORY_NOT_FOUND - Indicates that a required field was not
+            provided in the request.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the
+            affected field name and its JSON path in the request.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the error in
+                the request payload.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when a required field is
+            missing from the request.
+          enum:
+            - Required field is missing
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1678556694
+    ErrorResponseCore5:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the provided Blueprint ID is
+        invalid. Includes error code INVALID_DATA.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            INVALID_DATA - Indicates that the provided data is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the
+            affected field name and its JSON path in the request.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the error in
+                the request payload.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the provided Blueprint ID
+            is invalid.
+          enum:
+            - the id given seems to be invalid
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1427689646
+    ErrorResponseCore2:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the provided field value does
+        not match the expected data type. Includes error code INVALID_DATA and
+        the expected data type in the details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            INVALID_DATA - Indicates that the provided data is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the
+            affected field name and its JSON path in the request.
+          properties:
+            expected_data_type:
+              type: string
+              description: >-
+                Represents the expected data type for the field that contains
+                invalid data.
+              maxLength: 255
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the error in
+                the request payload.
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the provided value does
+            not match the expected data type for the field.
+          enum:
+            - Invalid data type
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore9634759
+    ErrorResponseCore6:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents an error response returned when the provided data exceeds the
+        allowed length. Includes error code INVALID_DATA and the maximum allowed
+        length in the details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this response. Possible
+            values:
+
+            INVALID_DATA - Indicates that the provided data is invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional information about the error, including the
+            affected field name and its JSON path in the request.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum allowed length for the field that
+                exceeded the limit.
+            api_name:
+              type: string
+              description: Represents the API name of the field that caused the error.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that caused the error in
+                the request payload.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the provided data exceeds
+            the allowed length.
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: |-
+            Represents the status of the response. Possible values:
+            error - Indicates that the request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore769482510
+  parameters:
+    ParamHeaderXZohoService:
+      name: X-ZOHO-SERVICE
+      in: header
+      description: |-
+        Specify the name of the service making the API call. Possible values:
+        automation - Identifies the automation service as the caller.
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+        enum:
+          - automation
+    ParamQueryModule1:
+      name: module
+      in: query
+      description: >-
+        Specify the API name of the module for which the Blueprint action is to
+        be performed.
+      required: true
+      style: form
+      explode: true
+      schema:
+        type: string
+        maxLength: 255
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.blueprint.CREATE: >-
+              Grants permission to create and update Blueprint configuration
+              settings in Zoho CRM.
+            ZohoCRM.settings.blueprint.READ: >-
+              Grants permission to read and retrieve Blueprint configuration
+              settings in Zoho CRM.
+            ZohoCRM.settings.blueprint.UPDATE: Update access to settings.blueprint

@@ -1,0 +1,24 @@
+# Blueprint Transitions
+
+- [OpenAPI specification](blueprint_transitions.yaml)
+- [Get Blueprint transition](operations/getBlueprintTransitionById/operation.md)
+  - To retrieve the configuration details of a single Blueprint transition by its transition ID in your Zoho CRM organization. The response contains a transitions array with one Blueprint Transition Record, including its process ID, during inputs, owners, criteria, and actions.
+  - [Examples](operations/getBlueprintTransitionById/examples/)
+- [Update a Blueprint transition](operations/updateBlueprintTransitionById/operation.md)
+  - To update a single Blueprint transition in Zoho CRM. Prerequisite: Call this API for every transition after Blueprint creation to set the modified_time, which the UI requires to render transitions correctly. Critical behaviors: (1) The **layout** key is required in the request body whenever **during_inputs** are included; omitting it causes INVALID_DATA: Invalid field details with a misleading reference to during_inputs[0]. (2) The **during_inputs** are additive; each PUT call appends new entries rather than replacing them. Remove entries by sending an object with **_delete** set to null, the entry **ID**, and **type** set to "field". (3) The **optional** key must be a Boolean (true/false), not a string; strings return INVALID_DATA: expected Boolean.
+  - [Examples](operations/updateBlueprintTransitionById/examples/)
+- [Blueprint Transition](operations/deleteBlueprintTransitionById/operation.md)
+  - This is a new API to delete single transitions in a single API
+  - [Examples](operations/deleteBlueprintTransitionById/examples/)
+- [Retrieve Blueprint transitions by their IDs](operations/getBlueprintTransitions/operation.md)
+  - To retrieve the details of the Blueprint transitions that match the specified transition IDs in your Zoho CRM organization.
+  - [Examples](operations/getBlueprintTransitions/examples/)
+- [Blueprint Transitions](operations/updateBlueprintTransitions/operation.md)
+  - Update multiple blueprint transitions in bulk. CRITICAL BEHAVIORS: (1) 'layout' is REQUIRED in each transition entry whenever 'during_inputs' are included. omitting it causes INVALID_DATA: Invalid field details with a misleading reference to during_inputs[0]. (2) 'during_inputs' are ADDITIVE. each PUT call appends new entries rather than replacing them. Remove entries by sending {"_delete": null, "id": "<entry_id>", "type": "field"}. (3) 'optional' must be a boolean (true/false), NOT a string. strings return INVALID_DATA: expected boolean.
+  - [Examples](operations/updateBlueprintTransitions/examples/)
+- [Create Blueprint transitions](operations/createBlueprintTransitions/operation.md)
+  - To create one or more Blueprint transitions for an existing Blueprint in your Zoho CRM organization.
+  - [Examples](operations/createBlueprintTransitions/examples/)
+- [Blueprint Transitions](operations/deleteBlueprintTransitions/operation.md)
+  - Delete multiple blueprint transitions by IDs in the request body
+  - [Examples](operations/deleteBlueprintTransitions/examples/)

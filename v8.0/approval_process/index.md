@@ -1,0 +1,42 @@
+# Approval Processes
+
+- [OpenAPI specification](approval_process.yaml)
+- [Get Approval Processes](operations/getApprovalProcess/operation.md)
+  - To get the list of Approval Processes configured in your Zoho CRM organization, including each process's details such as name, module, execution trigger, approval type, active status, and rules with stages and approver configuration, along with pagination info.
+  - [Examples](operations/getApprovalProcess/examples/)
+- [Update Approval Process](operations/putApprovalProcess/operation.md)
+  - To update the configuration of an existing approval process in your Zoho CRM organization.
+  - [Examples](operations/putApprovalProcess/examples/)
+- [Create Approval Process](operations/postApprovalProcess/operation.md)
+  - To create an Approval Process in your Zoho CRM organization.
+  - [Examples](operations/postApprovalProcess/examples/)
+- [Clone Approval Process](operations/cloneApprovalProcess/operation.md)
+  - To clone an existing Approval Process in your Zoho CRM organization, use this endpoint to create a new Approval Process that inherits the same configuration as the original.
+  - [Examples](operations/cloneApprovalProcess/examples/)
+- [Get a single Approval Process](operations/getSingleApprovalProcess/operation.md)
+  - To retrieve the full configuration details of a single Approval Process in your Zoho CRM organization by its unique identifier. The response includes the process name, associated module, active status, execution trigger, and the complete list of approval rules defined for the Approval Process.
+  - [Examples](operations/getSingleApprovalProcess/examples/)
+- [Update Approval Process](operations/putSingleApprovalProcess/operation.md)
+  - To update the configuration of a single Approval Process in your Zoho CRM organization.
+  - [Examples](operations/putSingleApprovalProcess/examples/)
+- [Delete an Approval Process](operations/deleteApprovalProcess/operation.md)
+  - To delete a single Approval Process from your Zoho CRM organization using its unique ID.
+  - [Examples](operations/deleteApprovalProcess/examples/)
+- [Get rules for an Approval Process](operations/getApprovalProcessRules/operation.md)
+  - To retrieve the rules associated with a specific Approval Process in your Zoho CRM organization. The response returns an array of rule objects, each containing the sequence number, name, overall approval type, entry criteria, approver stages, process admin configuration, record modification settings, and the actions triggered upon final approval or rejection. Use the optional ids query parameter to filter results to a specific subset of rules.
+  - [Examples](operations/getApprovalProcessRules/examples/)
+- [Retrieve an Approval Process Rule](operations/getApprovalProcessRule/operation.md)
+  - To retrieve the configuration of a specific rule within an Approval Process. The response includes the rule name, sequence number, overall approval type, entry criteria, approver stages, process admin configuration, and the actions defined for final approval and rejection.
+  - [Examples](operations/getApprovalProcessRule/examples/)
+- [Reorder the execution sequence of approval processes](operations/postReorder/operation.md)
+  - To reorder the execution sequence of approval processes for a specific module in Zoho CRM. Specify the approval process IDs in the desired sequence. The system updates the execution order of the approval processes for that module.
+  - [Examples](operations/postReorder/examples/)
+- [Reorder the rules of an Approval Process](operations/postReorderRules/operation.md)
+  - To update the sequence of rules within one Approval Process, reorder the rules by assigning new sequence numbers to each rule ID in your Zoho CRM organization.
+  - [Examples](operations/postReorderRules/examples/)
+- [Retrieve the Approval Process configuration limits](operations/getProcessConfigurations/operation.md)
+  - To retrieve the configuration limits for approval processes in your Zoho CRM organization. The response provides the maximum allowed numbers of approval processes, rules, stages, fields, and levels, along with the number of levels currently available, helping you understand the constraints that apply when you create or update approval processes.
+  - [Examples](operations/getProcessConfigurations/examples/)
+- [Retrieve the count of approval processes for a module](operations/getApprovalProcessCount/operation.md)
+  - To retrieve the total, active, and inactive counts of approval processes configured for a specific module in your Zoho CRM organization.
+  - [Examples](operations/getApprovalProcessCount/examples/)

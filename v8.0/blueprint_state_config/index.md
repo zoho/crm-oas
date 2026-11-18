@@ -1,0 +1,24 @@
+# Blueprint States
+
+- [OpenAPI specification](blueprint_state_config.yaml)
+- [Get Blueprint States](operations/getBlueprintStates/operation.md)
+  - To retrieve the states associated with a specific Blueprint in your Zoho CRM organization.
+  - [Examples](operations/getBlueprintStates/examples/)
+- [Update Blueprint States](operations/updateBlueprintStates/operation.md)
+  - To update Blueprint states within a specified Blueprint in your Zoho CRM organization. Actions used in state escalations must be created with **feature_type** set to **blueprint_state**; actions created with **feature_type** set to **blueprint_transition** cannot be used in state escalation contexts.
+  - [Examples](operations/updateBlueprintStates/examples/)
+- [Create Blueprint States](operations/createBlueprintStates/operation.md)
+  - To create one or more states for a Blueprint in your Zoho CRM organization.
+  - [Examples](operations/createBlueprintStates/examples/)
+- [Delete Blueprint States](operations/deleteBlueprintStates/operation.md)
+  - To delete one or more states from a Blueprint in your Zoho CRM organization.
+  - [Examples](operations/deleteBlueprintStates/examples/)
+- [Get a Blueprint state by ID](operations/getBlueprintStateById/operation.md)
+  - To retrieve the details of a single Blueprint state in your Zoho CRM organization.
+  - [Examples](operations/getBlueprintStateById/examples/)
+- [Update a Blueprint state by ID](operations/updateBlueprintStateById/operation.md)
+  - To update a single state within a Blueprint in your Zoho CRM organization.
+  - [Examples](operations/updateBlueprintStateById/examples/)
+- [Delete a Blueprint state](operations/deleteBlueprintStateById/operation.md)
+  - To delete a single state from a Blueprint in your Zoho CRM organization.
+  - [Examples](operations/deleteBlueprintStateById/examples/)
