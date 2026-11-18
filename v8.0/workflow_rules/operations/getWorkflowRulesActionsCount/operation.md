@@ -29,8 +29,12 @@
               type: null — Represents a null value indicating no instant actions are configured for this condition.
         - `scheduled_actions` (array of object `ActionsCountSummarySchema`) [maxItems=5, nullable] **REQ** — Represents the array of scheduled action groups configured for this condition.
         - `id` (string) **REQ** [maxLen=20] — Represents the unique ID of the WorkflowConditionActionCountSummary within the workflow rule.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **204**: No Content - Successful response with no body
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **400**: The response returned when the deletion request is invalid, such as a malformed or missing rule ID. Resolution: verify the rule IDs in the request and resubmit.
  — Schema: `InvalidDataNoApiNameAndPathSchema` [application/json]
@@ -45,6 +49,8 @@
       - `id` (string) [maxLen=20] — Represents the **ID** value from the error detail object.
       - `expected_data_type` (string) [maxLen=255] — Represents the **expected_data_type** value from the error detail object.
       - `api_name` (string) [maxLen=255] — Represents the API name of the field or parameter that caused the validation error.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **403**: Forbidden. The authenticated user does not have permission to perform this operation, or the workflow rules feature is not available in the current CRM edition. Resolution: verify the user's permissions and the organization's edition capabilities.
  — Schema: `NoPermissionSchema` [application/json]
@@ -56,5 +62,7 @@
     - `details` (object) **REQ** — Represents error details. For NO_PERMISSION, contains the list of permissions needed. For FEATURE_NOT_SUPPORTED, empty object.
       - `permissions` (array of string) [maxItems=10] — Represents the list of CRM profile permissions required to perform the requested action.
         items: [maxLen=255]
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 **Scopes:** ZohoCRM.settings.workflow_rules.READ

@@ -1,0 +1,18 @@
+INVALID_DATA error when **title** exceeds 30 characters
+
+```json
+{
+  "transitions": [
+    {
+      "code": "INVALID_DATA",
+      "details": {
+        "maximum_length": 30,
+        "json_path": "$.transitions[0].during_inputs[0].title",
+        "api_name": "title"
+      },
+      "message": "You can provide upto 30 characters.",
+      "status": "error"
+    }
+  ]
+}
+```

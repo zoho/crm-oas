@@ -1,0 +1,2661 @@
+openapi: 3.1.0
+info:
+  title: Blueprint Actions API
+  description: >-
+    Blueprint is a Zoho CRM process-automation feature that maps out a business
+    process and guides users through it, stage by stage and transition by
+    transition. This API enables developers to retrieve the transitions and
+    fields available for a specific record, execute a transition on that record,
+    and fetch lookup-field details needed to complete a transition.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server for /crm
+    variables:
+      dc:
+        description: API Server URL TLD
+        default: com
+        enum:
+          - com
+          - eu
+          - in
+          - cn
+          - au
+          - ca
+          - jp
+      version:
+        description: API Version
+        default: v8
+paths:
+  /{moduleApiName}/{recordId}/actions/blueprint:
+    get:
+      summary: Get Blueprint transitions of a record
+      description: >-
+        To get the next available Blueprint transitions for a record in Zoho
+        CRM, along with the fields available for each transition, the current
+        value of each field, and their validations, if any.
+      x-zs-llm-description: >-
+        Get next available blueprint transitions for a record including fields,
+        current values, and validations
+      operationId: getRecordBlueprintTransition
+      parameters:
+        - $ref: '#/components/parameters/ParamPathModuleApiName'
+        - $ref: '#/components/parameters/ParamPathRecordId'
+        - $ref: '#/components/parameters/ParamQueryIncludeInnerDetails'
+      responses:
+        '200':
+          description: >-
+            Returns the next available Blueprint transitions for the record,
+            including the fields available for each transition, the current
+            value of each field, and their validations, if any.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetblueprintResponse200'
+              examples:
+                Success200:
+                  summary: >-
+                    Available Blueprint transitions with fields and validations
+                    for the record
+                  value:
+                    blueprint:
+                      process_info:
+                        field_id: '4554588000000000379'
+                        api_name: Rating
+                        field_name: Rating
+                        field_label: Rating
+                        column_name: RATING
+                        field_value: '-None-'
+                        escalation:
+                          days: '1'
+                          status: due
+                        continuous: false
+                        name: Accounts BP 1
+                        current_picklist:
+                          colour_code: null
+                          id: '4554588000000002203'
+                          value: '-None-'
+                        id: '4554588000001194020'
+                      transitions:
+                        - next_transitions: []
+                          data: {}
+                          type: manual
+                          criteria_message: null
+                          execution_time: null
+                          sequence: 1
+                          next_field_value: Acquired
+                          text_color_code: '#FFFFFF'
+                          name: tr1
+                          criteria_matched: true
+                          id: '4554588000001194015'
+                          parent_transition:
+                            id: '4554588000001194014'
+                            name: Parent Transition 1
+                          fields: []
+                          color_code: '#2385ef'
+                          percent_partial_save: 0
+                          is_accessible: true
+                        - next_transitions: []
+                          type: manual
+                          criteria_message: >-
+                            ( ( City is Chennai AND Country isn't India ) AND
+                            State isn't TN )
+                          criteria_details:
+                            group_operator: AND
+                            group:
+                              - group_operator: AND
+                                group:
+                                  - comparator: equal
+                                    field:
+                                      api_name: City
+                                      id: '4554588000000004419'
+                                    value: Chennai
+                                  - comparator: not_equal
+                                    field:
+                                      api_name: Country
+                                      id: '4554588000000004425'
+                                    value: India
+                              - comparator: not_equal
+                                field:
+                                  api_name: State
+                                  id: '4554588000000004421'
+                                value: TN
+                          execution_time: null
+                          sequence: 2
+                          next_field_value: Junk
+                          text_color_code: '#FFFFFF'
+                          name: tr2
+                          criteria_matched: false
+                          id: '4554588000001194016'
+                          parent_transition:
+                            id: '4554588000001194014'
+                            name: Parent Transition 1
+                          fields: []
+                          color_code: '#2385ef'
+                          percent_partial_save: 0
+                          is_accessible: true
+                  description: >-
+                    Shows a successful response in which the record's available
+                    Blueprint transitions are returned with their fields,
+                    current field values, and validations.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '400':
+          description: >-
+            Bad Request - The request cannot be processed due to invalid syntax.
+
+            **Resolution:** The record ID in the request URL must be valid and
+            the record must be in process.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorRecordNotInProcess'
+                  - $ref: '#/components/schemas/ErrorInvalidRecordId'
+                  - $ref: '#/components/schemas/ErrorInvalidModule'
+                  - $ref: '#/components/schemas/ErrorRecordLocked'
+                  - $ref: '#/components/schemas/ErrorInvalidRequest'
+                x-zs-$id: GetblueprintError400
+                description: >-
+                  Represents the error returned when the Blueprint transitions
+                  of a record cannot be retrieved. The response is one of the
+                  following error schemas: ErrorRecordNotInProcess, returned
+                  when Blueprint transitions are requested for a record that is
+                  not in process; ErrorInvalidRecordId, returned when the record
+                  ID given in the URL is invalid; ErrorInvalidModule, returned
+                  when the module API name given is invalid; or
+                  ErrorRecordLocked, returned when the record is locked.
+              examples:
+                RecordNotInProcessResponse1:
+                  summary: >-
+                    Record is not part of any Blueprint process
+                    (RECORD_NOT_IN_PROCESS)
+                  value:
+                    code: RECORD_NOT_IN_PROCESS
+                    details: {}
+                    message: record not in process
+                    status: error
+                  description: >-
+                    The requested record is not part of any Blueprint process,
+                    so Zoho CRM has no Blueprint transitions to return for it.
+                    Verify that the record has entered the process before
+                    calling this endpoint.
+                InvalidDataResponse1:
+                  summary: Invalid record ID in the request URL
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: the id given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the error returned when the record ID given in the
+                    request URL is invalid. The response carries the
+                    INVALID_DATA error code with details about the failure.
+                InvalidModuleResponse1:
+                  summary: Invalid module API name in the request path (INVALID_MODULE)
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      resource_path_index: 0
+                    message: the module name given seems to be invalid
+                    status: error
+                  description: >-
+                    Shows the error returned when the request is made with an
+                    invalid module API name. The response reports the failure
+                    with an error code, message, and status.
+                RecordLockedResponse1:
+                  summary: >-
+                    Operation denied because the record is locked
+                    (RECORD_LOCKED)
+                  value:
+                    code: RECORD_LOCKED
+                    details:
+                      action: record_locking
+                      id: '4554588000001189103'
+                    message: >-
+                      Sorry, you cannot perform this operation as the record is
+                      locked.
+                    status: error
+                  description: >-
+                    The record is locked, so Zoho CRM cannot retrieve the
+                    available Blueprint transitions for it. The caller must wait
+                    until the record is unlocked before retrying the request.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '403':
+          description: >-
+            Forbidden - The client does not have access rights to the content.
+
+            **Resolution:** The user must be granted the necessary access rights
+            for the record and its Blueprint process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorModuleNotSupported'
+                x-zs-$id: GetblueprintError403
+              examples:
+                NotSupportedResponse1:
+                  summary: Module is not supported by the Zoho CRM API (NOT_SUPPORTED)
+                  value:
+                    code: NOT_SUPPORTED
+                    details:
+                      resource_path_index: 0
+                    message: the given module is not supported in api
+                    status: error
+                  description: >-
+                    The module specified in the request path is not supported by
+                    the Zoho CRM API, so the Blueprint transitions cannot be
+                    retrieved. Use the API name of a supported module and send
+                    the request again.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.READ
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.READ
+        - OAuth2:
+            - ZohoCRM.modules.Deals.READ
+        - OAuth2:
+            - ZohoCRM.modules.Campaigns.READ
+        - OAuth2:
+            - ZohoCRM.modules.Tasks.READ
+        - OAuth2:
+            - ZohoCRM.modules.Cases.READ
+        - OAuth2:
+            - ZohoCRM.modules.Events.READ
+        - OAuth2:
+            - ZohoCRM.modules.Solutions.READ
+        - OAuth2:
+            - ZohoCRM.modules.Products.READ
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.READ
+        - OAuth2:
+            - ZohoCRM.modules.Pricebooks.READ
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.READ
+        - OAuth2:
+            - ZohoCRM.modules.Salesorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.Purchaseorders.READ
+        - OAuth2:
+            - ZohoCRM.modules.Invoices.READ
+        - OAuth2:
+            - ZohoCRM.modules.Notes.READ
+        - OAuth2:
+            - ZohoCRM.modules.Custom.READ
+    put:
+      summary: Update a single Blueprint transition for a record
+      description: >-
+        To update a single Blueprint transition for a record in your Zoho CRM
+        organization.
+      x-zs-llm-description: >-
+        Update a single blueprint transition for a record with field values and
+        transition_id
+      operationId: putRecordBlueprintTransition
+      parameters:
+        - $ref: '#/components/parameters/ParamPathModuleApiName'
+        - $ref: '#/components/parameters/ParamPathRecordId'
+      requestBody:
+        description: >-
+          Specify the details required to update the Blueprint transition for
+          the record. The payload carries the record's field values in the data
+          object and can include related Notes and Attachments.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutblueprintRequest'
+            examples:
+              SamplePutRequest:
+                summary: Sample request to update a Blueprint transition
+                value:
+                  blueprint:
+                    - transition_id: '4554588000001189006'
+                      data:
+                        CheckLists:
+                          - questionone: true
+                          - questiontwo: false
+                        Subform_1:
+                          - Name: Row 1
+                            Amount: 100
+                          - Name: Row 2
+                            Amount: 200
+                      state: draft
+                description: >-
+                  This example shows a sample request body for updating a
+                  Blueprint transition on a record. The payload carries the
+                  record's field values in the data object.
+              SamplePutRequestWithAssociatedModule:
+                summary: >-
+                  Request with a tag, an associated module subform, and a link
+                  attachment
+                value:
+                  blueprint:
+                    - transition_id: '4554588000001189006'
+                      data:
+                        Tag:
+                          - name: Important
+                            id: '4554588000000123001'
+                            color_code: '#FFB300'
+                        Sales_Order:
+                          Subject: Test
+                          Ordered_Items:
+                            - Product_Name: Item A
+                              Quantity: 2
+                              List_Price: 150
+                      state: completed
+                description: >-
+                  The request payload demonstrates executing a Blueprint
+                  transition while supplying a tag, an associated module field
+                  containing a nested subform, and a link attachment. It shows
+                  how related records and files can accompany the record's field
+                  data in a single transition update.
+            x-zs-llm-examples:
+              - SamplePutRequest
+              - SamplePutRequestWithAssociatedModule
+      responses:
+        '200':
+          description: >-
+            Zoho CRM updates the Blueprint transition successfully. If the
+            number of fields in the input does not meet the required number,
+            Zoho CRM saves the transition partially.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutblueprintResponse200'
+                x-zs-$id: PutblueprintResponse200
+              examples:
+                Success200:
+                  summary: Response when the transition updates successfully
+                  value:
+                    code: SUCCESS
+                    details: {}
+                    message: transition updated successfully
+                    status: success
+                  description: >-
+                    The response confirms that the Blueprint transition executed
+                    successfully for the record. It returns a success code, a
+                    message stating that the transition updated successfully,
+                    and a success status.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '400':
+          description: >-
+            The request cannot be processed due to invalid syntax or an invalid
+            value in the Blueprint request-body object.
+
+            **Resolution:** The client verifies the request structure and the
+            transition_id field inside the Blueprint request-body object, then
+            resends the request.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    additionalProperties: false
+                    description: >-
+                      Represents the error response in which Zoho CRM returns
+                      the transition update errors under the Blueprint key.
+                    properties:
+                      blueprint:
+                        type: array
+                        description: >-
+                          Contains the errors that occur when the Blueprint
+                          transition update fails, such as when field validation
+                          fails or a field value's data type mismatches.
+                        items:
+                          oneOf:
+                            - $ref: '#/components/schemas/ErrorInvalidDataValidation'
+                            - $ref: '#/components/schemas/ErrorInvalidTransition'
+                            - $ref: >-
+                                #/components/schemas/ErrorNotAllowedParallelTransition
+                            - $ref: >-
+                                #/components/schemas/ErrorNotAllowedAutomaticTransition
+                            - $ref: >-
+                                #/components/schemas/ErrorTransitionCriteriaFailed
+                            - $ref: '#/components/schemas/ErrorNoPermission'
+                            - $ref: '#/components/schemas/ErrorMandatoryNotFound'
+                            - $ref: '#/components/schemas/ErrorInvalidDataType'
+                            - $ref: '#/components/schemas/ErrorInvalidDataMaxLength'
+                            - $ref: >-
+                                #/components/schemas/ErrorInvalidDataWithSupportedValues
+                            - $ref: '#/components/schemas/ManadatoryParamError'
+                            - $ref: '#/components/schemas/ErrorRecordNotInProcess'
+                          description: >-
+                            Represents an error that occurred while updating the
+                            Blueprint transition, such as a mandatory field
+                            validation error for the record's field data.
+                        maxItems: 25
+                    required:
+                      - blueprint
+                    x-zs-$id: PutblueprintError400Wrapper
+                  - $ref: '#/components/schemas/ErrorInvalidDataType'
+                  - $ref: '#/components/schemas/ErrorInvalidRecordId'
+                  - $ref: '#/components/schemas/ErrorInvalidModule'
+                  - $ref: '#/components/schemas/ErrorInvalidRequest'
+                  - $ref: '#/components/schemas/ErrorRecordNotInProcess'
+                  - $ref: '#/components/schemas/ErrorMandatoryNotFound2'
+                  - $ref: '#/components/schemas/ErrorTransitionCriteriaFailed'
+                  - $ref: '#/components/schemas/ErrorMandatoryNotFound'
+                  - $ref: '#/components/schemas/ErrorInvalidDataMaxLength'
+                x-zs-$id: PutblueprintError400
+                description: >-
+                  Represents the error response for a Blueprint transition
+                  update request that fails due to invalid syntax.
+              examples:
+                InvalidDataValidationResponse1:
+                  summary: Error response for validation errors in the transition data
+                  value:
+                    blueprint:
+                      - code: INVALID_DATA
+                        details:
+                          validation_error:
+                            - api_name: Notes
+                              message: mandatory param missing
+                              info_message: Notes cannot be empty.
+                        message: invalid data
+                        status: error
+                  description: >-
+                    The response returns the INVALID_DATA error code when
+                    validation fails for the field values supplied in the
+                    transition data. The payload identifies the field whose
+                    value did not pass validation, so the request must be
+                    corrected and resent.
+                InvalidTransitionResponse1:
+                  summary: Error response for an invalid transition on the record
+                  value:
+                    blueprint:
+                      - code: INVALID_DATA
+                        details: {}
+                        message: invalid transition
+                        status: error
+                  description: >-
+                    The response returns the INVALID_DATA error code when the
+                    transition cannot be executed, such as when the record is
+                    not in transition or the specified transition_id is wrong.
+                    The client verifies the record state and the transition_id
+                    field inside the Blueprint request-body object before
+                    retrying.
+                NotAllowedParallelTransitionResponse1:
+                  summary: >-
+                    Error response when a parallel transition cannot be
+                    performed directly
+                  value:
+                    blueprint:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: transition_id
+                        message: cannot perform the parallel transition directly
+                        status: error
+                  description: >-
+                    This response demonstrates the NOT_ALLOWED error returned
+                    when a parallel transition cannot be performed directly on
+                    the record.
+                NotAllowedAutomaticTransitionResponse1:
+                  summary: >-
+                    Error response when an automatic transition cannot be
+                    performed directly
+                  value:
+                    blueprint:
+                      - code: NOT_ALLOWED
+                        details:
+                          api_name: transition_id
+                        message: cannot perform automatic transition
+                        status: error
+                  description: >-
+                    This response demonstrates the NOT_ALLOWED error returned
+                    when the requested transition is an automatic transition
+                    that cannot be performed directly on the record.
+                TransitionCriteriaFailedResponse1:
+                  summary: >-
+                    INVALID_DATA response when the record fails the transition
+                    criteria
+                  value:
+                    blueprint:
+                      - code: INVALID_DATA
+                        details: {}
+                        message: transition criteria failed
+                        status: error
+                  description: >-
+                    This response occurs when the record does not satisfy the
+                    criteria required to execute the Blueprint transition. The
+                    error code is INVALID_DATA.
+                NoPermissionResponse1:
+                  summary: >-
+                    Error response when the user's Zoho CRM profile lacks update
+                    permission
+                  value:
+                    blueprint:
+                      - code: NO_PERMISSION
+                        details: {}
+                        message: permission denied
+                        status: error
+                  description: >-
+                    This response demonstrates the NO_PERMISSION error returned
+                    when the user's Zoho CRM profile does not grant permission
+                    to update Blueprint data. The system administrator must
+                    assign the required permission before the record's
+                    transition can update.
+                MandatoryNotFoundResponse1:
+                  summary: Error response when one or more mandatory fields are missing
+                  value:
+                    blueprint:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: transition_id
+                          json_path: $.blueprint[*].transition_id
+                        message: Required field is missing
+                        status: error
+                  description: >-
+                    This response demonstrates the MANDATORY_NOT_FOUND error
+                    returned when one or more mandatory fields are not specified
+                    in the input. The request must include all required fields
+                    for the transition to be updated.
+                InvalidDataTypeResponse1:
+                  summary: Error response when a field value has an invalid data type
+                  value:
+                    blueprint:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: transition_id
+                          expected_data_type: text
+                          json_path: $.blueprint[*].transition_id
+                        message: invalid data
+                        status: error
+                  description: >-
+                    The response indicates that the transition could not be
+                    executed because the value supplied for a field does not
+                    match the data type the field expects. It returns the
+                    INVALID_DATA error code to signal the mismatch.
+                InvalidDataMaxLengthResponse1:
+                  summary: Error response when a field value exceeds the allowed length
+                  value:
+                    blueprint:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: state
+                          maximum_length: 50
+                          json_path: $.blueprint[*].state
+                        message: Invalid data
+                        status: error
+                  description: >-
+                    The response indicates that the transition could not be
+                    executed because a field value exceeded its permitted
+                    length. It returns the INVALID_DATA error code to signal the
+                    failed field validation.
+                InvalidDataSupportedValuesResponse1:
+                  summary: >-
+                    Error response when a field value is not among the supported
+                    values
+                  value:
+                    blueprint:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: state
+                          json_path: $.blueprint[*].state
+                          supported_values:
+                            - draft
+                            - completed
+                        message: Invalid data
+                        status: error
+                  description: >-
+                    The response indicates that the transition could not be
+                    executed because a field value is not among the values the
+                    field supports. It returns the INVALID_DATA error code along
+                    with the values accepted for the field.
+                RecordNotInProcessResponse1:
+                  summary: Error response when the record is not in a Blueprint process
+                  value:
+                    code: RECORD_NOT_IN_PROCESS
+                    details: {}
+                    message: record not in process
+                    status: error
+                  description: >-
+                    This response demonstrates the RECORD_NOT_IN_PROCESS error
+                    returned when the specified record is not part of a
+                    Blueprint process. The request must target a record that is
+                    in a Blueprint process for the transition to update.
+                InvalidRecordIdResponse1:
+                  summary: Error response for an invalid record ID
+                  value:
+                    code: INVALID_DATA
+                    details: {}
+                    message: the id given seems to be invalid
+                    status: error
+                  description: >-
+                    The response returns the INVALID_DATA error code when the
+                    record ID in the request path is incorrect or invalid. A
+                    valid record ID must be specified for the transition update
+                    to proceed.
+                InvalidModuleResponse1:
+                  summary: Error response for an invalid module API name
+                  value:
+                    code: INVALID_MODULE
+                    details:
+                      resource_path_index: 0
+                    message: the module name given seems to be invalid
+                    status: error
+                  description: >-
+                    The response returns the INVALID_MODULE error code when the
+                    module API name in the request path is invalid. A valid
+                    module API name must be specified for the transition update
+                    to proceed.
+                InvalidRequestResponse1:
+                  summary: Error response for an invalid HTTP request method
+                  value:
+                    code: INVALID_REQUEST
+                    details: {}
+                    message: >-
+                      unable to process your request. please verify whether you
+                      have entered proper method name, parameter and parameter
+                      values.
+                    status: error
+                  description: >-
+                    The response returns the INVALID_REQUEST error code when the
+                    HTTP method used for the request is not valid. The client
+                    uses a valid request method to update the transition.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '403':
+          description: >-
+            The client does not have access rights to update Blueprint data on
+            the record.
+
+            **Resolution:** The system administrator grants the required
+            Blueprint permission to the user's Zoho CRM profile before the
+            client retries the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorModuleNotSupported'
+                x-zs-$id: PutblueprintError403
+              examples:
+                NotSupportedResponse1:
+                  summary: >-
+                    NOT_SUPPORTED response when the module is not supported in
+                    the API
+                  value:
+                    code: NOT_SUPPORTED
+                    details:
+                      resource_path_index: 0
+                    message: the given module is not supported in api
+                    status: error
+                  description: |-
+                    The given module is not supported in the API.
+                    **Resolution:** Specify a valid, supported module API name.
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.modules.Leads.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Accounts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Contacts.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Deals.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Campaigns.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Tasks.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Cases.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Events.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Solutions.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Products.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Vendors.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Pricebooks.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Quotes.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Salesorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Purchaseorders.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Invoices.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Notes.UPDATE
+        - OAuth2:
+            - ZohoCRM.modules.Custom.UPDATE
+components:
+  schemas:
+    GETDataNested:
+      type: object
+      additionalProperties: true
+      description: >-
+        Represents the values of the during fields for a transition. Keys are
+        field API names and values are the field values. For subform during
+        fields, the key is the subform API name and the value is either an array
+        of subform records or an associated module object containing the subform
+        array, such as data.Sales_Order.Ordered_Items.
+      x-zs-$id: GETDataNested
+    ErrorModuleNotSupported:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when the module specified in the
+        request URL is not supported by this API.
+      properties:
+        code:
+          type: string
+          description: |-
+            Represents the error code that identifies the cause of the failure.
+
+            Possible values:
+            NOT_SUPPORTED - The given module is not supported in the API.
+          enum:
+            - NOT_SUPPORTED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error, including the index
+            of the request path segment that caused the failure.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                Represents the zero-based index of the request path segment that
+                caused the failure.
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the failure.
+
+            Possible values:
+
+            the given module is not supported in API - The module in the request
+            URL is not supported by this API.
+          enum:
+            - the given module is not supported in api
+        status:
+          type: string
+          description: >-
+            Represents the status of the failed request.
+
+
+            Possible values:
+
+            error - The request failed because the given module is not supported
+            in the API.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorModuleNotSupported
+    GETCurrentPicklistNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the current state of the Blueprint picklist field for the
+        record, including the value, its ID, and its color code.
+      properties:
+        colour_code:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the color code of the Blueprint picklist state. Null when
+            no color code is configured for the picklist value.
+          maxLength: 10
+        id:
+          type: string
+          description: Represents the ID of the picklist value.
+          maxLength: 25
+          x-zs-$id: BlueprintCurrentPicklistId
+        value:
+          type: string
+          description: Represents the current value of the Blueprint picklist field.
+          maxLength: 255
+      required:
+        - colour_code
+        - id
+        - value
+      x-zs-$id: GETCurrentPicklistNested
+    ErrorInvalidModule:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the module API name specified in the
+        request URL does not correspond to a valid module.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for this failure, fixed to
+            **INVALID_MODULE** when the module API name given in the request is
+            invalid.
+          enum:
+            - INVALID_MODULE
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains additional details about the validation failure, including
+            the index of the request path segment that holds the invalid module
+            name.
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: >-
+                Indicates the zero-based index of the request path segment that
+                contains the invalid module name.
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the module API name in
+            the request URL is invalid.
+
+            Possible values:
+
+            the module name given seems to be invalid - The module API name
+            specified in the request URL does not correspond to a valid module.
+          enum:
+            - the module name given seems to be invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the failed request.
+
+            Possible values:
+
+            error - The request failed because the module API name in the
+            request URL is invalid.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorInvalidModule
+    ErrorNotAllowedAutomaticTransition:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when an automatic Blueprint
+        transition is performed directly. Automatic transitions run as part of
+        the Blueprint process and cannot be executed directly.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when an automatic Blueprint
+            transition is performed directly.
+
+            Possible values:
+
+            NOT_ALLOWED - Automatic transitions cannot be performed directly.
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the additional details of the error, including the API
+            name of the automatic transition that cannot be performed directly.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the automatic Blueprint transition
+                that cannot be performed directly.
+              maxLength: 255
+          required:
+            - api_name
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when an automatic Blueprint
+            transition is performed directly.
+
+            Possible values:
+
+            cannot perform automatic transition - Automatic transitions run as
+            part of the Blueprint process and cannot be executed directly.
+          enum:
+            - cannot perform automatic transition
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+            Possible values:
+            error - The transition request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorNotAllowedAutomaticTransition
+    ErrorInvalidTransition:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the transition ID provided in the
+        transition data is invalid.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code that identifies the cause of the failure.
+
+
+            Possible values:
+
+            INVALID_DATA - The transition ID provided in the transition data is
+            invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error. This object is empty
+            for this error.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the failure.
+
+
+            Possible values:
+
+            invalid transition - The transition ID provided in the transition
+            data is invalid.
+          enum:
+            - invalid transition
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorInvalidTransition
+    ErrorRecordLocked:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the requested operation cannot be
+        performed because the record is locked.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when the record is locked.
+
+            Possible values:
+
+            RECORD_LOCKED - The operation cannot be performed because the record
+            is locked.
+          enum:
+            - RECORD_LOCKED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the record-locking error,
+            including the attempted action and the ID of the locked record.
+          properties:
+            action:
+              type: string
+              description: Represents the action that was attempted on the locked record.
+              maxLength: 255
+            id:
+              type: string
+              description: >-
+                Represents the ID of the locked record on which the operation
+                was attempted.
+              maxLength: 255
+          required:
+            - action
+            - id
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the record is locked.
+
+            Possible values:
+
+            Sorry, you cannot perform this operation as the record is locked. -
+            The requested operation cannot be completed because the record is
+            locked.
+          enum:
+            - Sorry, you cannot perform this operation as the record is locked.
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorRecordLocked
+    ErrorInvalidDataWithSupportedValues:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when a field in the transition data
+        contains an invalid value. The **details** object identifies the field
+        by its API name and JSON path and lists the values it supports.
+      properties:
+        code:
+          type: string
+          description: |-
+            Represents the error code that identifies the failure.
+
+            Possible values:
+            INVALID_DATA - The transition data contains an invalid value.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the invalid value in the
+            transition data, including the API name of the field, its path in
+            the request JSON, and the values it supports.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field that contains the invalid
+                value.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field that contains the invalid
+                value.
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: >-
+                Represents the list of values that the field identified by
+                **api_name** supports.
+              items:
+                type: string
+                description: |-
+                  Represents a value supported by the field.
+
+                  Possible values:
+                  draft - The record is in the draft state.
+                  completed - The record is in the completed state.
+                maxLength: 255
+                enum:
+                  - draft
+                  - completed
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: >-
+            Represents the error message returned for the invalid value in the
+            transition data.
+
+
+            Possible values:
+
+            Invalid data - The transition data contains an invalid value.
+
+            invalid data - The transition data contains an invalid value.
+          enum:
+            - Invalid data
+            - invalid data
+        status:
+          type: string
+          description: Represents the status of the failed request, fixed to **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorInvalidDataWithSupportedValues
+    GETParentTransitionNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the ID and display name of the parent parallel transition.
+        The value is null when the transition has no parent parallel transition.
+      properties:
+        name:
+          type: string
+          description: Represents the display name of the parent parallel transition.
+          maxLength: 255
+        id:
+          type: string
+          description: Represents the ID of the parent parallel transition.
+          maxLength: 25
+          x-zs-$id: BlueprintParentTransitionId
+      required:
+        - id
+        - name
+      x-zs-$id: GETParentTransitionNested
+    GETCriteriaDetailsNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a criteria group node in the recursive criteria structure of
+        a transition. A group node contains a logical operator and a list of
+        child nodes, where each child is either another nested group or a leaf
+        criterion.
+      properties:
+        group_operator:
+          type: string
+          description: >-
+            Represents the logical operator that joins the child nodes of this
+            criteria group.
+
+            Possible values:
+
+            AND - All child nodes must be satisfied for the group to match.
+
+            OR - At least one child node must be satisfied for the group to
+            match.
+          enum:
+            - AND
+            - OR
+        group:
+          type: array
+          description: >-
+            List of child nodes in the criteria group. Each child node is either
+            a nested criteria group or a leaf criterion that compares the value
+            of a field.
+          items:
+            $ref: '#/components/schemas/GETCriteriaGroupOrCriterionNested'
+          maxItems: 200
+      required:
+        - group
+        - group_operator
+      x-zs-$id: GETCriteriaDetailsNested
+    GETCriteriaGroupOrCriterionNested:
+      description: >-
+        Represents a child node of a criteria group. The node is either a nested
+        criteria group or a leaf criterion that compares the value of a field.
+      oneOf:
+        - $ref: '#/components/schemas/GETCriteriaDetailsNested'
+        - $ref: '#/components/schemas/GETCriterionNested'
+    GETCriterionNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a leaf criterion that compares the value of a field against a
+        target value using a comparator.
+      properties:
+        comparator:
+          type: string
+          description: >-
+            Represents the comparison operator applied between the field and the
+            target value, such as equal, not_equal, contains, starts_with, in,
+            or between.
+          maxLength: 50
+        field:
+          $ref: '#/components/schemas/GETCriterionFieldNested'
+        value:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the target value against which the field is compared.
+            Null for unary comparators such as is_empty.
+          maxLength: 4000
+      required:
+        - comparator
+        - field
+        - value
+      x-zs-$id: GETCriterionNested
+    GETCriterionFieldNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the field reference within a criterion node, identifying the
+        field compared in the criterion by its API name and ID.
+      properties:
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the field being compared in the
+            criterion.
+          maxLength: 255
+        id:
+          type: string
+          description: Represents the ID of the field being compared in the criterion.
+          maxLength: 25
+      required:
+        - api_name
+        - id
+    GetblueprintResponse200:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the success response returned for a record's available
+        Blueprint transitions when none of the transitions include during
+        fields.
+      properties:
+        blueprint:
+          $ref: '#/components/schemas/GETBlueprintNested'
+      required:
+        - blueprint
+      x-zs-$id: GetblueprintResponse200
+    GETProcessInfoNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the process information of the Blueprint the record is
+        currently in, including its ID, name, continuity, escalation details,
+        the primary field on which the Blueprint is based, and the field's
+        current value.
+      properties:
+        field_id:
+          type: string
+          description: Primary field ID of which the blueprint is based on.
+          maxLength: 25
+        escalation:
+          oneOf:
+            - $ref: '#/components/schemas/GETEscalationNested'
+            - type: 'null'
+              x-zs-$id: GETCriteriaDetailsNestedOrNull1
+              description: >-
+                Indicates that no escalation is configured for the Blueprint.
+                The value is always null.
+          description: >-
+            Represents the escalation details configured for the Blueprint; null
+            when no escalation is configured.
+        is_continuous:
+          type: boolean
+          description: |-
+            Indicates whether the Blueprint is a continuous Blueprint.
+            Possible values:
+            true - The Blueprint is continuous.
+            false - The Blueprint is not continuous.
+        api_name:
+          type: string
+          description: >-
+            Represents the API name of the primary field on which the Blueprint
+            is based.
+          maxLength: 255
+        continuous:
+          type: boolean
+          description: |-
+            Indicates whether the Blueprint is a continuous Blueprint.
+            Possible values:
+            true - The Blueprint is continuous.
+            false - The Blueprint is not continuous.
+        field_label:
+          type: string
+          description: Denotes the display name of the primary field
+          maxLength: 255
+        name:
+          type: string
+          description: Represents the display name of the Blueprint configuration.
+          maxLength: 255
+        column_name:
+          type: string
+          description: Column name for the primary field
+          maxLength: 255
+        field_value:
+          type: string
+          description: >-
+            Represents the current value of the Blueprint's primary picklist
+            field.
+          maxLength: 255
+        current_picklist:
+          $ref: '#/components/schemas/GETCurrentPicklistNested'
+        id:
+          type: string
+          description: Represents the ID of the Blueprint the record is currently in.
+          maxLength: 25
+          x-zs-$id: BlueprintProcessId
+        field_name:
+          type: string
+          description: 'Field: field_name'
+          maxLength: 255
+      required:
+        - continuous
+        - current_picklist
+        - escalation
+        - field_id
+        - field_label
+        - field_name
+        - field_value
+        - id
+        - name
+      x-zs-$id: GETProcessInfoNested
+    ErrorMandatoryNotFound:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when a mandatory field is missing in the
+        transition data.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code that identifies the cause of the failure.
+
+
+            Possible values:
+
+            MANDATORY_NOT_FOUND - A mandatory field is missing in the transition
+            data.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error, including the API
+            name and JSON path of the missing mandatory field.
+          properties:
+            api_name:
+              type: string
+              description: Represents the API name of the missing mandatory field.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the missing mandatory field in the
+                request payload.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the failure.
+
+
+            Possible values:
+
+            Required field is missing - A mandatory field is missing in the
+            transition data.
+
+            required field not found - A mandatory field is missing in the
+            transition data.
+          enum:
+            - Required field is missing
+            - required field not found
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorMandatoryNotFound
+    ErrorMandatoryNotFound2:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when a mandatory field is missing
+        in the transition data.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code that identifies the cause of the failure.
+
+
+            Possible values:
+
+            MANDATORY_NOT_FOUND - A mandatory field is missing in the transition
+            data.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Represents additional details about the error.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the failure.
+
+
+            Possible values:
+
+            Required field is missing - A mandatory field is missing in the
+            transition data.
+          enum:
+            - Required field is missing
+        status:
+          type: string
+          description: >-
+            Represents the status of the failed request.
+
+
+            Possible values:
+
+            error - The request failed because a mandatory field is missing in
+            the transition data.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorMandatoryNotFound2
+    ManadatoryParamError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when a mandatory parameter is
+        missing from the request, with the error code, message, status, and
+        details identifying the missing parameter.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when a mandatory parameter is
+            missing from the request.
+
+            Possible values:
+
+            **MANDATORY_NOT_FOUND** - A mandatory parameter is missing from the
+            request.
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Contains the error details with validation information, including
+            the name of the missing mandatory parameter.
+          properties:
+            param_name:
+              type: string
+              description: >-
+                Represents the name of the mandatory parameter that is missing
+                from the request.
+              maxLength: 255
+          required:
+            - param_name
+        message:
+          type: string
+          description: >-
+            Represents the error message describing the issue.
+
+            Possible values:
+
+            **mandatory param missing** - A mandatory parameter is missing from
+            the request.
+          enum:
+            - mandatory param missing
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+            Possible values:
+            **error** - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ManadatoryParamError
+    ErrorInvalidDataValidation:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the transition data fails validation,
+        such as a missing mandatory field value. The **details** object lists
+        every validation error identified in the request.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when the transition data fails
+            validation.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the details of the validation errors in the transition
+            data.
+          properties:
+            validation_error:
+              type: array
+              description: >-
+                Contains the list of validation errors identified in the
+                transition data.
+              items:
+                type: object
+                additionalProperties: false
+                description: >-
+                  Represents a single validation error identified in the
+                  transition data.
+                properties:
+                  api_name:
+                    type: string
+                    description: >-
+                      Represents the API name of the field or related list for
+                      which the validation failed.
+                    maxLength: 255
+                  message:
+                    type: string
+                    description: >-
+                      Represents the validation failure message for the field
+                      identified by **api_name**, such as a missing mandatory
+                      value.
+                    maxLength: 255
+                  info_message:
+                    type: string
+                    description: >-
+                      Represents additional information about the validation
+                      failure.
+                    maxLength: 255
+                required:
+                  - api_name
+                  - message
+                  - info_message
+              maxItems: 25
+          required:
+            - validation_error
+        message:
+          type: string
+          description: >-
+            Represents the error message returned for the invalid transition
+            data.
+
+
+            Possible values:
+
+            invalid data - The transition data failed validation.
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorInvalidDataValidation
+    ErrorNoPermission:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when the user's CRM profile does
+        not have permission to perform the Blueprint transition.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code that identifies the cause of the failure.
+
+
+            Possible values:
+
+            NO_PERMISSION - The user's CRM profile does not have permission to
+            perform the transition.
+          enum:
+            - NO_PERMISSION
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the additional details of the error. This object is empty
+            for this error.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the transition cannot be
+            performed because the user lacks the required permission.
+
+            Possible values:
+
+            permission denied - The user's CRM profile does not have permission
+            to perform the Blueprint transition.
+          enum:
+            - permission denied
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+            Possible values:
+            error - The transition request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorNoPermission
+    BlueprintNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a Blueprint transition to be processed for the record,
+        including the transition ID, the state in which the transition is saved,
+        the field values required for the transition, and the related Notes and
+        Attachments.
+      properties:
+        state:
+          type: string
+          description: |-
+            Represents the state in which the transition is saved.
+            Possible values:
+            **draft** - The transition is saved as a draft.
+            **completed** - The transition is saved as completed.
+          enum:
+            - draft
+            - completed
+          maxLength: 50
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/DataNested'
+            - type: 'null'
+              description: >-
+                Represents a null value, used when the transition payload
+                supplies no during fields.
+              x-zs-$id: DataNestedOrNull
+          description: >-
+            Represents the object that contains the field values required for
+            the transition. Supports CheckLists and subform during fields, where
+            the subform API name is the dynamic key and its value is an array of
+            subform records. This value can be null when the transition payload
+            supplies no during fields.
+        transition_id:
+          type: string
+          description: Represents the unique ID of the Blueprint transition to execute.
+          maxLength: 25
+          x-zs-$ref:
+            resource: blueprint_actions
+            origins:
+              - operationId: getRecordBlueprintTransition
+                propertyId: RecordCurrentBPTransitionId
+      required:
+        - state
+        - transition_id
+    PutblueprintResponse200:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the response returned when a Blueprint transition is executed
+        on a record, indicating the outcome of the transition execution with its
+        status, code, message, and details.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the status code of the Blueprint transition execution,
+            such as **SUCCESS**.
+          maxLength: 255
+        details:
+          type: object
+          additionalProperties: true
+          description: >-
+            Contains additional details about the outcome of the Blueprint
+            transition execution.
+        message:
+          type: string
+          description: >-
+            Represents the response message describing the outcome of the
+            Blueprint transition execution.
+          maxLength: 255
+        status:
+          type: string
+          description: >-
+            Indicates the status of the Blueprint transition execution, such as
+            **SUCCESS**.
+          maxLength: 255
+      required:
+        - code
+        - details
+        - message
+        - status
+      x-zs-$id: PutblueprintResponse200
+    ErrorNotAllowedParallelTransition:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error response returned when a parallel Blueprint
+        transition is performed directly. A parallel transition cannot be
+        executed directly.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when a parallel Blueprint
+            transition is performed directly.
+
+            Possible values:
+
+            NOT_ALLOWED - Parallel transitions cannot be performed directly.
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the additional details of the error, including the API
+            name of the parallel transition that cannot be performed directly.
+          properties:
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the parallel transition that cannot
+                be performed directly.
+              maxLength: 255
+          required:
+            - api_name
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when a parallel transition
+            cannot be performed directly.
+
+            Possible values:
+
+            cannot perform the parallel transition directly - The requested
+            parallel transition cannot be executed directly.
+          enum:
+            - cannot perform the parallel transition directly
+        status:
+          type: string
+          description: |-
+            Represents the status of the failed request.
+            Possible values:
+            error - The request failed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorNotAllowedParallelTransition
+    ErrorTransitionCriteriaFailed:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when a transition is executed without its
+        criteria being met.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when a transition is executed
+            without its criteria being met.
+
+            Possible values:
+
+            INVALID_DATA - The record data does not satisfy the criteria
+            configured for the transition.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details of the error that occurred when the
+            transition criteria are not met.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that the transition criteria
+            were not met.
+
+            Possible values:
+
+            transition criteria failed - The record data does not satisfy the
+            criteria configured for the transition.
+          enum:
+            - transition criteria failed
+        status:
+          type: string
+          description: >-
+            Represents the status of the failed request.
+
+            Possible values:
+
+            error - The operation failed because the transition criteria are not
+            met.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorTransitionCriteriaFailed
+    GETBlueprintNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the Blueprint details of a record, including the transitions
+        currently available in its active Blueprint process.
+      properties:
+        process_info:
+          $ref: '#/components/schemas/GETProcessInfoNested'
+        transitions:
+          type: array
+          description: >-
+            List of transitions currently available for the record in its active
+            Blueprint process. Each transition includes its ID, name, criteria
+            match details, and the fields required to execute it.
+          items:
+            $ref: '#/components/schemas/GETTransitionsNested'
+          maxItems: 200
+      required:
+        - process_info
+        - transitions
+      x-zs-$id: GETBlueprintNested
+    ErrorInvalidDataType:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the value of a field in the
+        transition data is not of the expected data type. The **details** object
+        identifies the field by its API name and JSON path and states the
+        expected data type.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for the failed request. Possible
+            value: **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details that identify the field that
+            failed and the expected data type.
+          properties:
+            expected_data_type:
+              type: string
+              description: >-
+                Represents the data type expected for the field identified by
+                **api_name**.
+              maxLength: 255
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field for which the value is not
+                of the expected data type.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path to the request element that contains
+                the invalid value.
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the cause of the
+            failure.
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: Represents the status of the failed transition request.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorInvalidDataType
+    PutblueprintRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the request body for executing a Blueprint transition on a
+        record, carrying the Blueprint transition data to process.
+      properties:
+        blueprint:
+          type: array
+          description: >-
+            Contains the Blueprint transition object to be processed for the
+            record.
+          items:
+            $ref: '#/components/schemas/BlueprintNested'
+          maxItems: 1
+      required:
+        - blueprint
+    ChecklistsNested:
+      type: object
+      description: >-
+        Represents a checklist item for the transition. Each key is dynamic and
+        takes a checklist question configured for the transition, and its
+        Boolean value stores the answer to that question.
+      additionalProperties: true
+      x-zs-$id: ChecklistsNested
+    ErrorInvalidDataMaxLength:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the value of a field in the
+        transition data exceeds the maximum allowed length. The **details**
+        object identifies the field by its API name and JSON path and states the
+        maximum length allowed.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned for the failed request. Possible
+            value: **INVALID_DATA**.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents the validation details that identify the field that
+            failed and the reason for the failure.
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: >-
+                Represents the maximum number of characters allowed for the
+                field identified by **api_name**.
+            api_name:
+              type: string
+              description: >-
+                Represents the API name of the field for which the value exceeds
+                the maximum allowed length.
+              maxLength: 255
+            json_path:
+              type: string
+              description: >-
+                Represents the JSON path of the field for which the value
+                exceeds the maximum allowed length.
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: >-
+            Represents the error message that describes the failure. Possible
+            values: **Invalid data**, **invalid data**.
+          enum:
+            - Invalid data
+            - invalid data
+        status:
+          type: string
+          description: >-
+            Represents the status of the failed request. Possible value:
+            **error**.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorInvalidDataMaxLength
+    DataNested:
+      type: object
+      description: >-
+        Represents the object that contains the field values required for the
+        transition. Keys are field API names. Values can be: (a) primitive field
+        values (string, number, Boolean, or null), (b) arrays for subform during
+        fields or multi-record fields (for example, **Tag**, **Subform_1**)
+        where each element is a key-value map, or (c) an associated module
+        object whose properties include the associated module's field values and
+        nested subform arrays (for example, **data.Sales_Order** with nested
+        **Ordered_Items**).
+      properties:
+        CheckLists:
+          type:
+            - array
+            - 'null'
+          description: >-
+            Represents the array of checklist items for the transition. Each
+            item contains question-answer pairs.
+          items:
+            $ref: '#/components/schemas/ChecklistsNested'
+          maxItems: 100
+      additionalProperties:
+        oneOf:
+          - type: array
+            description: >-
+              Sub-form during field or multi-record field - dynamic key is the
+              sub-form/field API name; value is an array of records, each being
+              a key-value map of field API names to their values.
+            items:
+              $ref: '#/components/schemas/SubformRecordNested'
+            maxItems: 100
+            x-zs-$id: DataNestedSubformArray
+          - type: object
+            description: >-
+              Associated module object used inside data when a blueprint during
+              field references an associated module record. Keys are field API
+              names of the associated module (primitive values) and/or sub-form
+              API names mapped to arrays of sub-form records (e.g.
+              Sales_Order.Ordered_Items).
+            additionalProperties: true
+            unevaluatedProperties: false
+            x-zs-$id: DataNestedAssociatedModule
+          - type: string
+            description: String field value for a regular blueprint during field.
+            maxLength: 4000
+            x-zs-$id: DataNestedPrimitiveString
+          - type: number
+            description: Numeric field value for a regular blueprint during field.
+            x-zs-$id: DataNestedPrimitiveNumber
+          - type: boolean
+            description: Boolean field value for a regular blueprint during field.
+            x-zs-$id: DataNestedPrimitiveBoolean
+          - type: 'null'
+            description: Null field value for a regular blueprint during field.
+            x-zs-$id: DataNestedPrimitiveNull
+      x-zs-$id: DataNested
+    SubformRecordNested:
+      type: object
+      additionalProperties: true
+      description: >-
+        Represents a single subform record as a key-value map of subform field
+        API names to their values. The keys are dynamic and depend on the
+        subform field configuration.
+    ErrorInvalidRecordId:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the record ID specified in the
+        request URL is invalid.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when the record ID in the request
+            URL is invalid.
+
+            Possible values:
+
+            INVALID_DATA - The record ID specified in the request URL is
+            invalid.
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error, including validation
+            information. This object is empty for this error.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the record ID in the
+            request URL is invalid.
+
+            Possible values:
+
+            the ID given seems to be invalid - The record ID specified in the
+            request URL is invalid.
+          enum:
+            - the id given seems to be invalid
+        status:
+          type: string
+          description: >-
+            Represents the status of the failed request.
+
+            Possible values:
+
+            error - The request failed because the record ID in the request URL
+            is invalid.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorInvalidRecordId
+    ErrorRecordNotInProcess:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the record is not part of an active
+        Blueprint process.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when the record is not part of an
+            active Blueprint process.
+
+            Possible values:
+
+            RECORD_NOT_IN_PROCESS - The record is not associated with an active
+            Blueprint process.
+          enum:
+            - RECORD_NOT_IN_PROCESS
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details of the error that occurred when the
+            record is not part of an active Blueprint process.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message indicating that the record is not part
+            of an active Blueprint process.
+
+            Possible values:
+
+            record not in process - The specified record is not associated with
+            an active Blueprint process.
+          enum:
+            - record not in process
+        status:
+          type: string
+          description: >-
+            Represents the status of the failed request.
+
+            Possible values:
+
+            error - The request failed because the record is not part of an
+            active Blueprint process.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorRecordNotInProcess
+    ErrorInvalidRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the error returned when the request body or request
+        parameters are invalid or malformed.
+      properties:
+        code:
+          type: string
+          description: >-
+            Represents the error code returned when the request body or request
+            parameters are invalid or malformed.
+
+            Possible values:
+
+            INVALID_REQUEST - The request body or request parameters are invalid
+            or malformed.
+          enum:
+            - INVALID_REQUEST
+        details:
+          type: object
+          additionalProperties: false
+          description: >-
+            Represents additional details about the error, including validation
+            information. This object is empty for this error.
+          properties: {}
+        message:
+          type: string
+          description: >-
+            Represents the error message returned when the request body or
+            request parameters are invalid or malformed.
+
+            Possible values:
+
+            unable to process your request. please verify whether you have
+            entered proper method name, parameter and parameter values. - The
+            request cannot be processed because the method name, parameter, or
+            parameter values are invalid or malformed.
+          enum:
+            - >-
+              unable to process your request. please verify whether you have
+              entered proper method name, parameter and parameter values.
+        status:
+          type: string
+          description: >-
+            Represents the status of the failed request.
+
+            Possible values:
+
+            error - The request failed because the request body or request
+            parameters are invalid or malformed.
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorInvalidRequest
+    GETTransitionsNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents a Blueprint transition for the record, including its
+        criteria, during-field metadata and values, next transitions,
+        accessibility, and related data. For non-accessible transitions
+        (**is_accessible** is false), the response omits **next_transitions**,
+        **data**, and **fields**.
+      properties:
+        next_transitions:
+          type:
+            - array
+            - 'null'
+          description: >-
+            Lists the transitions available to the current user for the record.
+            This key is not present for transitions that are not accessible.
+          items:
+            description: >-
+              Represents a transition available to the current user for the
+              record.
+          maxItems: 200
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/GETDataNested'
+            - type: 'null'
+              x-zs-$id: GETDataNestedOrNull
+              description: >-
+                Indicates that the values of the Blueprint's during fields are
+                not included in the response for non-accessible transitions.
+          description: >-
+            Represents the values of the Blueprint's during fields, including
+            values for fields inside subforms. Not present for non-accessible
+            transitions.
+        type:
+          type: string
+          description: Represents the type of the Blueprint transition.
+          maxLength: 50
+        criteria_message:
+          type:
+            - string
+            - 'null'
+          description: >-
+            Represents the message text for the transition criteria. This value
+            is null when no criteria is configured.
+          maxLength: 4000
+        criteria_details:
+          oneOf:
+            - $ref: '#/components/schemas/GETCriteriaDetailsNested'
+            - type: 'null'
+              x-zs-$id: GETCriteriaDetailsNestedOrNull
+              description: >-
+                Indicates that no criteria is configured for the transition. The
+                value is always null.
+          description: >-
+            Represents the criteria structure configured for the transition.
+            This value is null when no criteria is configured.
+        execution_time:
+          type: 'null'
+          description: Represents the scheduled execution time of an automatic transition.
+        sequence:
+          type: integer
+          format: int32
+          description: >-
+            Represents the position of the transition in the Blueprint's
+            transition order.
+        next_field_value:
+          type: string
+          description: >-
+            Represents the name of the state the record moves to when the
+            transition is executed.
+          maxLength: 255
+        text_color_code:
+          type: string
+          description: >-
+            Represents the color code used to render the transition's text in
+            the Blueprint.
+          maxLength: 10
+        name:
+          type: string
+          description: Represents the display name of the transition.
+          maxLength: 255
+        criteria_matched:
+          type: boolean
+          description: >-
+            Indicates whether the record satisfies the criteria configured for
+            the transition.
+
+            Possible values:
+
+            true - The record satisfies the transition criteria.
+
+            false - The record does not satisfy the transition criteria.
+        id:
+          type: string
+          description: Represents the unique ID of the Blueprint transition.
+          maxLength: 25
+          x-zs-$id: RecordCurrentBPTransitionId
+        parent_transition:
+          oneOf:
+            - $ref: '#/components/schemas/GETParentTransitionNested'
+            - type: 'null'
+              x-zs-$id: GETParentTransitionNestedOrNull
+              description: >-
+                Indicates that the transition has no parent parallel transition.
+                The value is always null.
+          description: >-
+            Represents the parent transition details for parallel transitions.
+            This value is null when the transition has no parent parallel
+            transition.
+        state:
+          type: string
+          description: |-
+            Indicates whether the transition is completed for the record.
+            Possible values:
+            **draft** - The transition is in draft state.
+            **open** - The transition is open and not yet completed.
+            **completed** - The transition is completed.
+          enum:
+            - draft
+            - open
+            - completed
+        fields:
+          type:
+            - array
+            - 'null'
+          description: >-
+            Represents the metadata of the configured during fields, including
+            details of fields inside subforms used as during fields. Not present
+            for non-accessible transitions.
+          items:
+            description: >-
+              Represents the metadata of a single during field, including fields
+              inside subforms.
+          maxItems: 200
+        color_code:
+          type: string
+          description: Represents the color code of the transition.
+          maxLength: 10
+        percent_partial_save:
+          type: integer
+          format: int32
+          description: >-
+            Represents the percentage of the transition completed for the
+            record.
+        is_accessible:
+          type: boolean
+          description: >-
+            Indicates whether the transition is accessible to the current user.
+
+            Possible values:
+
+            true - The transition is accessible to the current user.
+
+            false - The transition is not accessible. The response still
+            includes the transition, but omits **next_transitions**, **data**,
+            and **fields**; this supports preview features such as early
+            access.        
+      required:
+        - color_code
+        - criteria_matched
+        - criteria_message
+        - execution_time
+        - id
+        - name
+        - next_field_value
+        - parent_transition
+        - percent_partial_save
+        - sequence
+        - text_color_code
+        - type
+      x-zs-$id: GETTransitionsNested
+    GETEscalationNested:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the escalation details for the current Blueprint state,
+        including the number of days configured for the escalation and its
+        status. The value is null when no escalation is configured.
+      properties:
+        days:
+          type: string
+          description: Represents the number of days configured for the escalation.
+          maxLength: 25
+        status:
+          type: string
+          description: Represents the escalation status of the current Blueprint state.
+          maxLength: 25
+      required:
+        - days
+        - status
+      x-zs-$id: GETEscalationNested
+  parameters:
+    ParamPathRecordId:
+      name: recordId
+      in: path
+      description: >-
+        Specify the unique ID of the record for which you want to retrieve or
+        execute Blueprint transitions.
+      required: true
+      schema:
+        type: string
+        example: '{recordId}'
+        maxLength: 255
+    ParamPathModuleApiName:
+      name: moduleApiName
+      in: path
+      description: >-
+        Specify the API name of the module that contains the record. Refer to
+        the [Get Modules](modules.yaml#$.paths./settings/modules.get) resource
+        for valid values.
+      required: true
+      schema:
+        type: string
+        example: '{moduleApiName}'
+        maxLength: 255
+    ParamQueryIncludeInnerDetails:
+      name: include_inner_details
+      in: query
+      description: >-
+        Specify whether to include inner details, such as the column name of the
+        primary field on which the Blueprint is based, inside the **field**
+        object of **process_info**.
+
+        Possible values:
+
+        true - Includes the inner details in the response.
+
+        false - Excludes the inner details from the response.
+      required: false
+      schema:
+        type: boolean
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.modules.ALL: >-
+              Grants permission to perform all available operations on the
+              modules in the Zoho CRM organization.
+            ZohoCRM.modules.READ: >-
+              Grants permission to retrieve the details of the modules in the
+              Zoho CRM organization.
+            ZohoCRM.modules.UPDATE: >-
+              Grants permission to update the details of the modules in the Zoho
+              CRM organization.
+            ZohoCRM.modules.Leads.READ: Read access to modules.Leads
+            ZohoCRM.modules.Accounts.READ: Read access to modules.Accounts
+            ZohoCRM.modules.Contacts.READ: Read access to modules.Contacts
+            ZohoCRM.modules.Deals.READ: Read access to modules.Deals
+            ZohoCRM.modules.Campaigns.READ: Read access to modules.Campaigns
+            ZohoCRM.modules.Tasks.READ: Read access to modules.Tasks
+            ZohoCRM.modules.Cases.READ: Read access to modules.Cases
+            ZohoCRM.modules.Events.READ: Read access to modules.Events
+            ZohoCRM.modules.Solutions.READ: Read access to modules.Solutions
+            ZohoCRM.modules.Products.READ: Read access to modules.Products
+            ZohoCRM.modules.Vendors.READ: Read access to modules.Vendors
+            ZohoCRM.modules.Pricebooks.READ: Read access to modules.Pricebooks
+            ZohoCRM.modules.Quotes.READ: Read access to modules.Quotes
+            ZohoCRM.modules.Salesorders.READ: Read access to modules.Salesorders
+            ZohoCRM.modules.Purchaseorders.READ: Read access to modules.Purchaseorders
+            ZohoCRM.modules.Invoices.READ: Read access to modules.Invoices
+            ZohoCRM.modules.Notes.READ: Read access to modules.Notes
+            ZohoCRM.modules.Custom.READ: Read access to modules.Custom
+            ZohoCRM.modules.Leads.UPDATE: Update access to modules.Leads
+            ZohoCRM.modules.Accounts.UPDATE: Update access to modules.Accounts
+            ZohoCRM.modules.Contacts.UPDATE: Update access to modules.Contacts
+            ZohoCRM.modules.Deals.UPDATE: Update access to modules.Deals
+            ZohoCRM.modules.Campaigns.UPDATE: Update access to modules.Campaigns
+            ZohoCRM.modules.Tasks.UPDATE: Update access to modules.Tasks
+            ZohoCRM.modules.Cases.UPDATE: Update access to modules.Cases
+            ZohoCRM.modules.Events.UPDATE: Update access to modules.Events
+            ZohoCRM.modules.Solutions.UPDATE: Update access to modules.Solutions
+            ZohoCRM.modules.Products.UPDATE: Update access to modules.Products
+            ZohoCRM.modules.Vendors.UPDATE: Update access to modules.Vendors
+            ZohoCRM.modules.Pricebooks.UPDATE: Update access to modules.Pricebooks
+            ZohoCRM.modules.Quotes.UPDATE: Update access to modules.Quotes
+            ZohoCRM.modules.Salesorders.UPDATE: Update access to modules.Salesorders
+            ZohoCRM.modules.Purchaseorders.UPDATE: Update access to modules.Purchaseorders
+            ZohoCRM.modules.Invoices.UPDATE: Update access to modules.Invoices
+            ZohoCRM.modules.Notes.UPDATE: Update access to modules.Notes
+            ZohoCRM.modules.Custom.UPDATE: Update access to modules.Custom

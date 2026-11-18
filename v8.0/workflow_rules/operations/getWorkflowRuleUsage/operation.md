@@ -97,14 +97,20 @@
             - `usage_count` (integer/int32) **REQ** — Represents the total number of times the actions in this condition were executed.
             - `id` (string) **REQ** [maxLen=20] — Represents the unique ID of the WorkflowConditionUsageWithTaggedInstantActions within the workflow rule.
       - `reset_time` (string) **REQ** [maxLen=255, nullable] — Represents the ISO 8601 timestamp when the usage counters were last reset.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **400**: The request could not be processed due to invalid or missing parameters.
 **Resolution:** The caller must ensure all required parameters are present, date ranges are within allowed limits, and values use the correct data types and formats. — Schema: `InvalidDataNoApiNameAndPathSchema` [application/json]
     > Represents the error response returned when a required parameter such as the module API name or field path is missing from the request.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **401**: Authentication failed.
 **Resolution:** Verify that a valid OAuth access token with the ZohoCRM.settings.workflow_rules.READ scope is included in the Authorization header and has not expired. — Schema: `InvalidDataNoApiNameAndPathSchema` [application/json]
     > Represents the error response returned when a required parameter such as the module API name or field path is missing from the request.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **403**: Feature not available in this edition.
 **Resolution:** The Zoho CRM subscription must include an edition that supports workflow rules. — Schema: `NoPermissionSchema` [application/json]
@@ -116,5 +122,7 @@
     - `details` (object) **REQ** — Represents error details. For NO_PERMISSION, contains the list of permissions needed. For FEATURE_NOT_SUPPORTED, empty object.
       - `permissions` (array of string) [maxItems=10] — Represents the list of CRM profile permissions required to perform the requested action.
         items: [maxLen=255]
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 **Scopes:** ZohoCRM.settings.workflow_rules.READ

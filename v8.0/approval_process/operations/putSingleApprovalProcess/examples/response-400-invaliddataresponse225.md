@@ -1,0 +1,18 @@
+INVALID_DATA error when the field ID exceeds its maximum length
+
+```json
+{
+  "approval_process": [
+    {
+      "code": "INVALID_DATA",
+      "message": "Invalid data",
+      "details": {
+        "api_name": "id",
+        "maximum_length": 25,
+        "json_path": "$.approval_process[*].rules[*].actions_upon_final_approval.actions[*].details.field_mappings[*].field.id"
+      },
+      "status": "error"
+    }
+  ]
+}
+```

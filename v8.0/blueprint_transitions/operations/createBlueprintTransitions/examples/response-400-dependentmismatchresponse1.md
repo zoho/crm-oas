@@ -1,0 +1,23 @@
+DEPENDENT_MISMATCH error when checklist **items** exceed the maximum of 10
+
+```json
+{
+  "transitions": [
+    {
+      "code": "DEPENDENT_MISMATCH",
+      "details": {
+        "json_path": "$.transitions[0].during_inputs[0].items",
+        "api_name": "items",
+        "maximum_length": 10,
+        "dependee": {
+          "dependee_value": "checklist",
+          "json_path": "$.transitions[0].during_inputs[0].type",
+          "api_name": "type"
+        }
+      },
+      "message": "You can provide upto 10 checklist items",
+      "status": "error"
+    }
+  ]
+}
+```

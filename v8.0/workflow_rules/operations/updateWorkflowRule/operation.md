@@ -42,7 +42,7 @@
 
   - `module` (object `AutomationModuleRef`) **REQ** — Target module for the meeting. Must be the Events module. Provide either api_name ("Events") or the Events module id.
   - `layout` (object `AutomationLayoutRef`) **REQ** — Layout to use when creating the Event record. Determines which fields are available and their validation rules. Fetch valid layouts from GET /settings/layouts?module=Events. The layout.id is required.
-  - `field_mappings` (array of object `AutomationFieldMappings`) [minItems=1, maxItems=25] **REQ** — Field mappings for the new Event. Each entry: {"field": {"api_name": "Event_Title"}, "type": "static", "value": "Meeting"}. Must include all mandatory fields from GET /settings/layouts?module=Events. Common fields: Event_Title, Start_DateTime, All_Day, Participants (composite type), Remind_At. End_DateTime is auto-computed from Start_DateTime + meeting_duration - do NOT provide it. Mapping types: static - literal values for text, picklist fields; NOT for DateTime/ALARM (DEPENDENT_MISMATCH). merge_field - runtime tokens like ${!Leads.Company} for text-based fields; NOT for lookup/owner (DEPENDENT_MISMATCH). execution_time - REQUIRED for Start_DateTime and Remind_At; sign required for datetime; periods: days, business_days, hours, minutes. When All_Day=true, period must be "days" and omit meeting_duration.
+  - `field_mappings` (array of object `AutomationFieldMappings`) [minItems=1, maxItems=25] **REQ** — Maps values to Event fields. Include all layout-mandatory fields; common fields include Event_Title, Start_DateTime, All_Day, Participants, and Remind_At. End_DateTime is computed from Start_DateTime and meeting_duration; omit it. Types: static for literal text/picklists (not DateTime/ALARM); merge_field for text tokens (not lookups/owners); execution_time for Start_DateTime and Remind_At, with a sign for datetimes and periods days, business_days, hours, or minutes. If All_Day=true, use period days and omit meeting_duration.
   - `meeting_duration` (object `AutomationMeetingDuration`) **REQ** — Duration of the meeting. Specifies a numeric value and time period (e.g., 1 hour, 30 minutes). Required when All_Day is not set to true in field_mappings. If All_Day is true, meeting_duration must not be provided  - the API returns INVALID_DATA with field1/field2 conflict details.
   - `host_unavailable` (object `AutomationHostUnavailable`) — Fallback behavior when the designated meeting host is unavailable. Either assign the record owner as host (assign_record_owner_as_host=true) or create a follow-up task (assign_task with a pre-configured task ID). Exactly one option must be specified; providing both returns INVALID_DATA with field1/field2 conflict, providing neither returns EXPECTED_FIELD_MISSING.
   - `apply_restriction` (boolean) [default=False, nullable] — Whether to enforce assignment-threshold rules (record count limits per user) on the record owner when creating the Event record. When true, the system checks whether the owner has reached their record limit before creating the record. Only effective when the org has assignment thresholds configured.
@@ -102,14 +102,14 @@
     - `id` (string) [maxLen=255] — Required for user/channel types. The integration-specific user or channel ID.
     - `name` (string) [maxLen=255] — Required for user/channel types. Display name of the user or channel (e.g., '#sales-alerts').
     - `module` (object) — Required for type='fields'. The CRM module to resolve field values from. Use GET /settings/modules to discover api_name and id.
-      - `id` (string/int64) — Module ID.
+      - `id` (string/int64) [maxLen=19, minLen=1, pattern=^[0-9]+$] — Module ID.
       - `api_name` (string) [maxLen=255] — Module API name.
     - `notify_fields` (object) — Required for type='fields'. Field references to resolve notification recipients.
       - `fields` (array of object) [maxItems=10] — Array of field references. Each must have api_name and optionally id. If both given, cross-validated for consistency (AMBIGUITY_DUE_TO if mismatch).
-        - `id` (string/int64) — Field ID.
+        - `id` (string/int64) [maxLen=19, minLen=1, pattern=^[0-9]+$] — Field ID.
         - `api_name` (string) [maxLen=255] — Field API name. Use GET /settings/fields?module={api_name} to discover.
       - `static_fields` (array of object) [maxItems=10] — Array of static field references.
-        - `id` (string/int64) — Static field ID.
+        - `id` (string/int64) [maxLen=19, minLen=1, pattern=^[0-9]+$] — Static field ID.
         - `api_name` (string) [maxLen=255] — Static field API name.
   - `id` (string) [maxLen=20] — Read-only. Unique identifier for the action, returned in GET responses.
 `AutomationCircuitsDetails`:
@@ -145,7 +145,7 @@
 
   - `module` (object) **REQ** — REQUIRED. Target child module for connected record creation. Must be a valid connected-record child module of the rule's module. Use GET /settings/modules to discover api_name and id.
     - `api_name` (string) **REQ** [maxLen=255] — Module API name.
-    - `id` (string/int64) — Module ID.
+    - `id` (string/int64) [maxLen=19, minLen=1, pattern=^[0-9]+$] — Module ID.
   - `layout` (object `AutomationLayoutRef`) **REQ** — Represents a layout reference, conforming to the AutomationLayoutRef schema, that determines which layout is applied when creating the connected record. The id field is mandatory and governs which fields are available and required for the target module; valid layout identifiers are obtainable from GET /settings/layouts?module={api_name}.
   - `field_mappings` (array of object `AutomationFieldMappings`) [maxItems=25] **REQ** — REQUIRED. Field mapping array (1-25 entries). Use GET /settings/fields?module={api_name} to discover field api_name and id. All mandatory fields for the target module/layout must be included.
   - `apply_restriction` (boolean) — Apply assignment/workflow restrictions. Default true.
@@ -155,7 +155,8 @@
 
   - `module` (object `AutomationModuleRef`) **REQ** — Target module in which the new record will be created. Supported modules: Leads, Contacts, Potentials (Deals), Accounts, Products, Cases, custom modules, and team modules. NOT supported: Tasks, Events, Calls - use add_meeting for Events and schedule_call for Calls. Fetch available modules from GET /settings/modules. At least api_name or id must be provided; always use the full 19-digit module ID as returned by the modules API.
   - `layout` (object `AutomationLayoutRef`) **REQ** — Layout to use when creating the record. Determines which fields are available and their validation rules. Fetch valid layouts from GET /settings/layouts?module={module_api_name}. The layout.id is required.
-  - `field_mappings` (array of object `AutomationFieldMappings`) [minItems=1, maxItems=25] **REQ** — Field mappings for the new record. Each entry: {"field": {"api_name": "Last_Name"}, "type": "static", "value": "Test"}. Must include all mandatory fields (system_mandatory=true or api_mandatory=true from GET /settings/layouts?module={module}) - missing ones cause REQUIRED_DATA_NOT_FOUND. Mapping types: static - literal values for text, picklist, phone, number fields; NOT for Date/DateTime/ALARM (DEPENDENT_MISMATCH) or unique fields (INVALID_DATA, check unique=true in GET /settings/fields). merge_field - runtime tokens like ${!Leads.Company} for text-based fields; NOT for lookup/owner fields (DEPENDENT_MISMATCH). execution_time - REQUIRED for Date/DateTime/ALARM fields; periods: days, business_days, hours, minutes; sign required for datetime fields.
+  - `field_mappings` (array of object `AutomationFieldMappings`) [minItems=1, maxItems=25] **REQ** — Field mappings for the new record. Each entry uses {"field":{"api_name":"Last_Name"},"type":"static","value":"Test"}. Include all mandatory fields (system_mandatory=true or api_mandatory=true from GET /settings/layouts?module={module}); otherwise, REQUIRED_DATA_NOT_FOUND. Types: static (not Date/DateTime/ALARM or unique fields), merge_field (not lookup/owner fields), execution_time (required for Date/DateTime/ALARM; supports days, business_days, hours, minutes; datetime requires a sign).
+
   - `apply_restriction` (boolean) [default=False, nullable] — Whether to enforce assignment-threshold rules (record count limits per user) on the record owner when creating the record. When true, the system checks whether the owner has reached their record limit before creating the record. Only effective when the org has assignment thresholds configured.
   - `id` (string) [maxLen=20] — Server-generated unique identifier for this create record action. Present only in GET responses; not required in POST requests.
 `AutomationEmailCreateRecordDetails`:
@@ -166,11 +167,11 @@
   - `field_mappings` (array of object) [minItems=1, maxItems=1] **REQ** — REQUIRED. Exactly 1 field mapping entry. More than 1 returns too_many_records, none returns no_data.
     - `field` (object) **REQ** — Field reference. Use GET /settings/fields?module={api_name} to discover.
       - `api_name` (string) [maxLen=255] — Field API name.
-      - `id` (string/int64) — Field ID.
+      - `id` (string/int64) [maxLen=19, minLen=1, pattern=^[0-9]+$] — Field ID.
     - `value` (object) **REQ** — Owner assignment details.
       - `type` (string) **REQ** [enum=['user', 'role', 'group', 'country']] — Owner assignment type.
       - `resource` (object) — Assignment target reference.
-        - `id` (string/int64) — Resource ID.
+        - `id` (string/int64) [maxLen=19, minLen=1, pattern=^[0-9]+$] — Resource ID.
   - `id` (string) [maxLen=20] — Read-only. Unique identifier for the action.
 `AutomationFieldAttributes`:
   > Target field to populate when the automation executes. api_name is required. If id is also provided, both must refer to the same field; otherwise the API returns AMBIGUITY_DURING_PROCESSING.
@@ -230,7 +231,7 @@ Example configuration: {"tags": [{"id": "111111000000050001", "name": "Hot Lead"
 
   - `module` (object `AutomationModuleRef`) **REQ** — Target module for the call. Must be the Calls module. Provide either api_name ("Calls") or the Calls module id.
   - `layout` (object `AutomationLayoutRef`) **REQ** — Layout to use when creating the Call record. Determines which fields are available and their validation rules. Fetch valid layouts from GET /settings/layouts?module=Calls. The layout.id is required.
-  - `field_mappings` (array of object `AutomationFieldMappings`) [minItems=1, maxItems=25] **REQ** — Field mappings for the new Call. Each entry: {"field": {"api_name": "Subject"}, "type": "static", "value": "Follow-up"}. Must include all mandatory fields from GET /settings/layouts?module=Calls. Call_Type is system-mandatory (values: "Outbound", "Inbound", "Missed") - omitting returns REQUIRED_DATA_NOT_FOUND. Common fields: Subject, Call_Type, Call_Purpose, Call_Start_Time, Remind_At. Mapping types: static - literal values for text, picklist fields; NOT for DateTime/ALARM (DEPENDENT_MISMATCH). merge_field - runtime tokens like ${!Leads.Phone} for text-based fields; NOT for lookup/owner (DEPENDENT_MISMATCH). execution_time - REQUIRED for Call_Start_Time and Remind_At; sign required for datetime; periods: days, business_days, hours, minutes.
+  - `field_mappings` (array of object `AutomationFieldMappings`) [minItems=1, maxItems=25] **REQ** — Maps values to Call fields. Include all layout-mandatory fields; Call_Type is system-mandatory (Outbound, Inbound, or Missed), and omitting it returns REQUIRED_DATA_NOT_FOUND. Common fields: Subject, Call_Type, Call_Purpose, Call_Start_Time, Remind_At. Types: static for literal text/picklists (not DateTime/ALARM); merge_field for text tokens (not lookups/owners); execution_time for Call_Start_Time and Remind_At, with a sign for datetimes and periods days, business_days, hours, or minutes.
   - `apply_restriction` (boolean) [default=False, nullable] — Whether to enforce assignment-threshold rules (record count limits per user) on the record owner when creating the Call record. When true, the system checks whether the owner has reached their record limit before creating the record. Only effective when the org has assignment thresholds configured.
   - `id` (string) [maxLen=20] — Server-generated unique identifier for this schedule call action. Present only in GET responses; not required in POST requests.
 `AutomationSocialDetails`:
@@ -246,7 +247,7 @@ Example configuration: {"tags": [{"id": "111111000000050001", "name": "Hot Lead"
 `AutomationZohoFlowDetails`:
   > Configuration for the Zoho Flow action. Requires the ID and name of the custom action to trigger in Zoho Flow.
 
-  - `custom_action_id` (string/int64) **REQ** — REQUIRED. Zoho Flow custom action ID. Value = `id` from `getCustomActions` response.
+  - `custom_action_id` (string/int64) **REQ** [maxLen=19, minLen=1, pattern=^[0-9]+$] — REQUIRED. Zoho Flow custom action ID. Value = `id` from `getCustomActions` response.
   - `custom_action_name` (string) **REQ** [maxLen=255] — REQUIRED. Display name of the Zoho Flow action. Value = `action_name` from `getCustomActions` response.
   - `id` (string) [maxLen=20] — Read-only. Unique identifier for the action.
 `BetweenFilterCriterionRequest`:
@@ -414,7 +415,7 @@ For datetime fields (data_type=datetime) a value is expected; omitting it return
     - `GroupedFilterCriterionRequest` — Represents a grouped filter criterion containing multiple filter conditions evaluated with a logical operator. Supports recursive nesting for complex filtering logic.
 `FilterFieldBase`:
   > Represents the base field reference used in filter operations, containing minimal required properties. The field's data_type is not part of this object; resolve it from the corresponding FieldSchema. For formula fields, use formula.return_type as the effective data_type; for rollup_summary fields, use rollup_summary.return_type.
-  - `id` (string/int64) — Represents the unique ID of the field used for filter operations.
+  - `id` (string/int64) [maxLen=19, minLen=1, pattern=^[0-9]+$] — Represents the unique ID of the field used for filter operations.
   - `api_name` (string) **REQ** — Represents the API name of the field used for filter application. Supports relationship notation, for example, Deals__r.Stage.
   additionalProperties: any
 `GroupedFilterCriterionRequest`:
@@ -593,7 +594,7 @@ tasks - Task creation action.
     - `MultiSelectLookupFilterCriterionRequest` — Represents a filter criterion for the include_all, include_any, exclude_all, and exclude_any comparators. Applicable only when the field's data_type is multiuserlookup or multiselectlookup. The value must be an array of SimpleFilterCriterionValueObjectRequest lookup objects.
 `SimpleFilterCriterionValueObjectBase`:
   > Represents the base minified record structure of a lookup module, containing the record's unique identifier and display name.
-  - `id` (string/int64) — Represents the unique ID of the lookup module record.
+  - `id` (string/int64) [maxLen=19, minLen=1, pattern=^[0-9]+$] — Represents the unique ID of the lookup module record.
   - `name` (string) [maxLen=255] — Represents the display name of the lookup module record.
   additionalProperties: any
 `SimpleFilterCriterionValueObjectPredefined`:
@@ -804,6 +805,7 @@ false - Any one criteria group is sufficient (OR logic).
           - `type` (string) **REQ** [enum=[4 values]] — Represents the trigger type for section update rules. Use getWorkflowConfigurations to verify the trigger is available for the target module.
           - `details` (object) **REQ** — Represents the section update trigger details, including the layout section IDs to monitor.
             - `section_ids` (array of string/int64) [minItems=1, maxItems=10] **REQ** — Represents the array of layout section IDs to monitor for updates. Each ID must correspond to a valid section ID for the target module.
+              items: [maxLen=19, minLen=1, pattern=^[0-9]+$]
             - `repeat` (boolean) — Indicates whether the rule fires every time a section update
 condition is met. When false, the rule fires only on the first
 occurrence.
@@ -906,7 +908,7 @@ hours - Window measured in hours.
             oneOf:
               - `ModuleOrFieldNestedSchema` — Represents a CRM module or field reference using its API name and unique numeric ID.
                 type: null — Represents a null variant indicating no criteria or module filter is applied.
-      - `id` (string/int64) — Represents the unique ID of the condition. Auto-generated on creation. Required on PUT to identify which condition to update.
+      - `id` (string/int64) [maxLen=19, minLen=1, pattern=^[0-9]+$] — Represents the unique ID of the condition. Auto-generated on creation. Required on PUT to identify which condition to update.
       - `_delete` (null) — Indicates that this condition should be removed from the workflow rule when set in a PUT request. Provide a null value to signal deletion.
     - `lock` (object) — Specify whether the workflow rule should be locked to prevent editing by other users.
       - `message` (string/string) — Specify a note or label indicating the reason or context for locking the rule.
@@ -929,6 +931,8 @@ false - Unlocks the rule.
         - `id` (string) [maxLen=255] — Represents the unique ID of the SuccessResponseDetails within the workflow rule.
       - `message` (string) [enum=[6 values]] — Represents the message describing the operation result or error.
       - `status` (string) [maxLen=7] — Represents the response status indicator, such as **success** or **error**.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **400**: The response returned when the request contains invalid, missing, or unsupported data. Resolution: review the error details to identify the field or value that failed validation, correct it, and resubmit the request.
  [application/json]
@@ -1002,6 +1006,8 @@ false - Unlocks the rule.
               - `status` (string) **REQ** [enum=['error']] — Represents the response status for the error, typically **error**.
               - `details` (object) **REQ** — Represents the error details providing additional context about the failure.
                 - `message` (string) [maxLen=1000] — Represents the internal error message describing the failure.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **403**: Forbidden. The authenticated user does not have permission to perform this operation, or the workflow rules feature is not available in the current CRM edition. Resolution: verify the user's permissions and the organization's edition capabilities.
  — Schema: `NoPermissionSchema` [application/json]
@@ -1013,5 +1019,7 @@ false - Unlocks the rule.
     - `details` (object) **REQ** — Represents error details. For NO_PERMISSION, contains the list of permissions needed. For FEATURE_NOT_SUPPORTED, empty object.
       - `permissions` (array of string) [maxItems=10] — Represents the list of CRM profile permissions required to perform the requested action.
         items: [maxLen=255]
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 **Scopes:** ZohoCRM.settings.workflow_rules.UPDATE

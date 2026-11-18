@@ -1,0 +1,36 @@
+# Webforms
+
+- [OpenAPI specification](webforms.yaml)
+- [Get webforms](operations/getWebforms/operation.md)
+  - To retrieve all webforms from your Zoho CRM organization.
+  - [Examples](operations/getWebforms/examples/)
+- [Update webforms in Zoho CRM](operations/updateWebforms/operation.md)
+  - To update the settings of a webform in Zoho CRM, including its name, module, layout, form fields, double opt-in configuration, analytics settings, visitor tracking, spam control, and action on submit.
+  - [Examples](operations/updateWebforms/examples/)
+- [Create a new webform in Zoho CRM](operations/createWebforms/operation.md)
+  - To create a new webform in Zoho CRM with full configuration, including module assignment, layout, form fields, button attributes, analytics settings, double opt-in, spam control, visitor tracking, and portal form support. A single webform may be submitted per request. **Notes:** To assign the owner of the records submitted via Webforms you should either choose to mention specific user details in the **owner** key or mention an assignment rule to assign ownership.
+  - [Examples](operations/createWebforms/examples/)
+- [Delete webforms by IDs](operations/deleteWebforms/operation.md)
+  - To delete multiple webforms from Zoho CRM, specify the IDs of the webforms to be removed. **Note:** - When multiple Webform IDs are passed, if some deletions succeed and others fail, the API responds with **207 Multi-Status**. Check the **status** key in each response item to see the result of each deletion. - If an invalid or non-existent Webform ID is provided, the deletion fails for that entry. The API returns an error code and message for the specific entry in the response.
+  - [Examples](operations/deleteWebforms/examples/)
+- [Get webform diff](operations/getDiff/operation.md)
+  - Retrieves the field-level differences between two webforms in the CRM organization. The base_form and variant_form query parameters identify the two forms to compare. The response lists all fields that differ between the two forms, including added, removed, and modified fields. **Notes:** - The base and variant forms must belong to the same module. - The base and variant forms must not be the same Webform. - If there are no differences between the base and variant forms, the response returns an empty array.
+  - [Examples](operations/getDiff/examples/)
+- [Retrieve webform source code and embed options ](operations/getWebformPreview/operation.md)
+  - To retrieve the HTML source code and embed options for a specific webform configured in your Zoho CRM organization.
+  - [Examples](operations/getWebformPreview/examples/)
+- [Get webform associations ](operations/getAssociated/operation.md)
+  - To retrieve association details for a specific webform in Zoho CRM, including linked records, orchestration entries, and transition rules tied to the webform.
+  - [Examples](operations/getAssociated/examples/)
+- [Retrieve a webform by ID](operations/getWebform/operation.md)
+  - To retrieve a specific webform by its ID, use this endpoint in Zoho CRM. The operation returns the configuration and details of a single webform record identified by the required path parameter.
+  - [Examples](operations/getWebform/examples/)
+- [Update a specific webform by ID](operations/updateWebform/operation.md)
+  - To update a specific webform in Zoho CRM by its ID, send a PUT request with a webforms array containing one webform object and the required module query parameter (for example, Leads).
+  - [Examples](operations/updateWebform/examples/)
+- [Delete a webform by ID ](operations/deleteWebform/operation.md)
+  - To delete a specific webform from your Zoho CRM organization, send a DELETE request with the webform ID. The webform is permanently removed and the operation cannot be undone.
+  - [Examples](operations/deleteWebform/examples/)
+- [Get optimization suggestions for a webform](operations/getWebformSuggestions/operation.md)
+  - To retrieve AI-powered optimization suggestions for a specific webform in Zoho CRM, including recommended fields, format improvements, and variant configurations based on the webform performance data.
+  - [Examples](operations/getWebformSuggestions/examples/)

@@ -1,0 +1,24 @@
+# Blueprints
+
+- [OpenAPI specification](blueprints.yaml)
+- [Get blueprints](operations/getBlueprint/operation.md)
+  - To retrieve the list of blueprints configured in your Zoho CRM organization.
+  - [Examples](operations/getBlueprint/examples/)
+- [Update Blueprints](operations/putBlueprint/operation.md)
+  - To update bulk Blueprint configurations. Each Blueprint in the `blueprints` array is replaced with the submitted definition. Use the [Get Blueprint by ID API](blueprints.yaml#$.paths./settings/blueprints.get) to retrieve the Blueprint ID. If the ID is not included in the URL, then it is mandatory to specify the ID in the request body. **Restriction:** Blueprints that have ever been published (activated) cannot be updated directly — even after deactivation. To modify a published Blueprint, clone it as a dependent draft (the source must be active and include `chart_data`), edit the draft, then activate it with `move_records` and `map_states`.
+  - [Examples](operations/putBlueprint/examples/)
+- [Create a Blueprint](operations/postBlueprint/operation.md)
+  - To create a Blueprint with states and transitions for a module in your Zoho CRM organization. After creating the Blueprint, you must update each transition to set its modified time, which the user interface requires. Although **chart_data** is optional in the schema, provide it before you activate the Blueprint for the first time, including the canvas size, one node for each state, and one connection for each transition. Each state must include a module object, and each transition must include a layout object, both required at runtime.
+  - [Examples](operations/postBlueprint/examples/)
+- [Delete one or more Blueprints](operations/deleteBlueprint/operation.md)
+  - To delete one or more Blueprints from your Zoho CRM organization. When multiple Blueprint IDs are passed, if some deletions succeed and others fail, the API responds with **207 Multi-Status**. Check the status key in each response item to see the result of each deletion.
+  - [Examples](operations/deleteBlueprint/examples/)
+- [Get details of a Blueprint by ID](operations/getBlueprintId/operation.md)
+  - To get the details of a single Blueprint by its unique identifier in your Zoho CRM organization, send a GET request with the target Blueprint ID. The response includes the full Blueprint record with chart data, states, transitions, connections, layout, tracked field, associated module, and ownership information.
+  - [Examples](operations/getBlueprintId/examples/)
+- [Update a single Blueprint by ID](operations/putBlueprintId/operation.md)
+  - Updates a specific Blueprint configuration in your Zoho CRM organization by specifying its unique Blueprint ID in the request URL. This operation applies only to blueprints that have never been activated. If the Blueprint has been activated, the operation returns a NOT_ALLOWED error.
+  - [Examples](operations/putBlueprintId/examples/)
+- [Blueprint](operations/deleteBlueprintWithId/operation.md)
+  - Delete a specific blueprint by its blueprintId
+  - [Examples](operations/deleteBlueprintWithId/examples/)

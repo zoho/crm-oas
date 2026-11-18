@@ -1,0 +1,25 @@
+EXPECTED_FIELD_MISSING for api_name/id in during_approval_waiting.fields[*]
+
+```json
+{
+  "approval_process": [
+    {
+      "code": "EXPECTED_FIELD_MISSING",
+      "message": "One of the required fields is missing",
+      "details": {
+        "expected_fields": [
+          {
+            "api_name": "api_name",
+            "json_path": "$.approval_process[*].rules[*].overall_stages_record_modification.during_approval_waiting.fields[*].api_name"
+          },
+          {
+            "api_name": "id",
+            "json_path": "$.approval_process[*].rules[*].overall_stages_record_modification.during_approval_waiting.fields[*].approval_process.rules.overall_stages_record_modification.during_approval_waiting.fields.id"
+          }
+        ]
+      },
+      "status": "error"
+    }
+  ]
+}
+```

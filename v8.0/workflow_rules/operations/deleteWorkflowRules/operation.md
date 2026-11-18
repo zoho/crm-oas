@@ -34,6 +34,8 @@
     > Represents the success response returned after creating a workflow rule, containing the result details of the created rule.
     schema: `WorkflowSuccessSchema`
     - `workflow_rules` (array of object `SuccessResponseNestedSchema`) [maxItems=200] — Represents the array of workflow rule objects returned in the success response.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **207**: Multi-status response returned when a bulk deletion request contains a mix of successful and failed deletions. Each entry indicates whether the corresponding workflow rule was deleted successfully or returned an error
  [application/json]
@@ -42,11 +44,15 @@
       oneOf:
         - `InvalidDataNoApiNameAndPathSchema` — Represents the error response returned when a required parameter such as the module API name or field path is missing from the request.
         - `SuccessResponseNestedSchema` — Represents a single item in a multi-status response array, including a response code, status indicator, message, and optionally the resource details.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **400**: The response returned when the deletion request is invalid, such as a malformed or missing rule ID. Resolution: verify the rule IDs in the request and resubmit. [application/json]
     oneOf:
       - `InvalidDataNoApiNameAndPathSchema` — Represents the error response returned when a required parameter such as the module API name or field path is missing from the request.
         - `workflow_rules` (array of object `InvalidDataNoApiNameAndPathSchema`) [maxItems=10] **REQ** — Array of error objects
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **403**: Forbidden. The authenticated user does not have permission to perform this operation, or the workflow rules feature is not available in the current CRM edition. Resolution: verify the user's permissions and the organization's edition capabilities.
  — Schema: `NoPermissionSchema` [application/json]
@@ -58,5 +64,7 @@
     - `details` (object) **REQ** — Represents error details. For NO_PERMISSION, contains the list of permissions needed. For FEATURE_NOT_SUPPORTED, empty object.
       - `permissions` (array of string) [maxItems=10] — Represents the list of CRM profile permissions required to perform the requested action.
         items: [maxLen=255]
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 **Scopes:** ZohoCRM.settings.workflow_rules.DELETE

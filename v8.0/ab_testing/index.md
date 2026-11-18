@@ -1,0 +1,33 @@
+# AB Testing
+
+- [OpenAPI specification](ab_testing.yaml)
+- [List Webform A/B Testing configurations ](operations/getAbTesting/operation.md)
+  - To retrieve all Webform A/B Testing configurations created in your Zoho CRM organization. You can optionally filter the results by module or by the ID of a base webform.
+  - [Examples](operations/getAbTesting/examples/)
+- [Create AB testing configuration](operations/postAbTesting/operation.md)
+  - To create a Webform A/B Test in your Zoho CRM organization. Webform A/B testing lets you run an experiment where two or more variations of a webform are shown to different segments of your website visitors, so you can compare their performance and identify the version that delivers the best results. This API creates the A/B test — you specify the base (original) webform, one or more variant webforms, the target traffic split, and how long the test should run. - **Key terminology:** - **Original form:** The existing webform you want to run the A/B test on. Referenced by base_form in the request. - **Variant:** A modified version of the original webform used for comparison. Configured under variant_form. - **Conversion rate:** The percentage of visitors who submitted the webform. - **Winner:** The webform with the highest conversion rate at the end of the test.
+  - [Examples](operations/postAbTesting/examples/)
+- [Get AB Testing configuration by ID ](operations/getABTestingById/operation.md)
+  - To retrieve the details of a specific AB Testing configuration by ID in your Zoho CRM organization. The following keys are returned only by this endpoint (retrieving a specific A/B Testing) and are not returned when listing all Webform A/B Testing configurations: - form_fields, form_attributes, button_attributes, encrypted_form_id, and tracking_code inside each variant_form object. - winner_confidence inside base_form and each variant_form object. - pause_resume_info at the root level.
+  - [Examples](operations/getABTestingById/examples/)
+- [Delete an A/B Testing configuration by ID ](operations/deleteABTestingById/operation.md)
+  - To delete a Webform A/B Testing configuration by its unique ID from your Zoho CRM organization. **Notes:** - Deleting an A/B test is permanent. The test configuration and all metrics collected for it are removed and cannot be recovered. - The variant webforms that were created as part of this A/B test are deleted along with the test. Variants are configured and owned by the A/B test; they are not stand-alone webforms. - The base (original) webform referenced by base_form.id is not deleted. Only the A/B test and its variants are removed. - An A/B test can be deleted from any lifecycle state: drafted, scheduled, running, paused, completed, or launched. If the test is currently running or paused, the deletion stops serving variants immediately, and all visitors are directed to the base webform.
+  - [Examples](operations/deleteABTestingById/examples/)
+- [Update AB testing configuration by ID](operations/putABTestingById/operation.md)
+  - To update the configuration of an existing Webform A/B testing in your Zoho CRM organization. Use this API to modify an A/B test that has already been created — for example, to rename the test, change the traffic split, revise the end criteria, update variant form design or fields, adjust the winner configuration, or transition the test to a different lifecycle state (such as pausing a running test or resuming a paused one). Key terminology: - Original form: The existing webform on which the A/B test is running. Referenced by base_form in the request. - Variant: A modified version of the original webform used for comparison. Configured under variant_form. - Conversion rate: The percentage of visitors who submitted the webform. - Winner: The webform with the highest conversion rate at the end of the test.
+  - [Examples](operations/putABTestingById/examples/)
+- [Get A/B testing visitor counts ](operations/getVisitors/operation.md)
+  - To retrieve the visitor count of Webform A/B Testing configurations in your Zoho CRM organization, including all tests that are currently running as well as completed ones.
+  - [Examples](operations/getVisitors/examples/)
+- [Get visitor metrics for a specific Webform A/B Testing](operations/getVisitorsById/operation.md)
+  - To retrieve the visitor metrics of a specific Webform A/B Testing configuration in your Zoho CRM organization, including the total visitor count, test start time, and number of days elapsed.
+  - [Examples](operations/getVisitorsById/examples/)
+- [Get AB Testing form preview](operations/getAbTestingPreview/operation.md)
+  - To retrieve the HTML preview details of the base form and variant forms configured for a specific Webform A/B Testing in your Zoho CRM organization.
+  - [Examples](operations/getAbTestingPreview/examples/)
+- [Retrieve launch suggestions for an AB Testing configuration ](operations/getCheckLaunchSuggestions/operation.md)
+  - To retrieve Zia AI launch suggestions for a Webform A/B Testing configuration in your Zoho CRM organization, indicating whether the test is ready to launch based on conversion rate analysis.
+  - [Examples](operations/getCheckLaunchSuggestions/examples/)
+- [Get AB testing optimization suggestions](operations/getAbTestingSuggestions/operation.md)
+  - To retrieve optimization suggestions for a specific AB test configuration in your Zoho CRM organization, based on the current performance of the base form and variant forms. Two types of suggestions are provided: - **split_suggestion**: Recommends adjusting traffic allocation when a variant form is underperforming relative to other forms. - **extend_test**: Recommends extending the test duration when results are inconclusive after the test completes.
+  - [Examples](operations/getAbTestingSuggestions/examples/)

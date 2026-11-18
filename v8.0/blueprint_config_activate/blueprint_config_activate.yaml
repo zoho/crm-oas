@@ -1,0 +1,2114 @@
+openapi: 3.1.0
+info:
+  title: Blueprint Config Activate
+  description: >-
+    Use this API to activate the specified Blueprint configuration in your Zoho
+    CRM account. Once activated, the Blueprint starts enforcing the defined
+    process for records that meet its entry criteria.
+  version: '8'
+servers:
+  - url: https://zohoapis.{dc}/crm/{version}
+    description: API Server URL
+    variables:
+      dc:
+        description: API Server URL TLD
+        default: com
+        enum:
+          - eu
+          - com
+          - au
+          - in
+          - jp
+          - cn
+          - ca
+      version:
+        description: API Version
+        default: v8
+security:
+  - OAuth2:
+      - ZohoCRM.settings.blueprint.CREATE
+paths:
+  /settings/blueprints/{blueprintId}/actions/activate:
+    post:
+      summary: Activate Blueprint
+      description: >-
+        To publish a blueprint draft, republish a blueprint draft, or activate a
+        previously deactivated blueprint in your Zoho CRM organization.
+      x-zs-llm-description: >-
+        Activate a blueprint by blueprintId with optional map_states and
+        move_records settings
+      operationId: activateBlueprint
+      parameters:
+        - name: blueprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: int64
+            pattern: ^[0-9]+
+            minLength: 1
+            maxLength: 19
+          description: >-
+            The ID of the blueprint to activate. Use the [Get Blueprint by
+            ID](blueprints.yaml#$.paths./settings/blueprints/{blueprintId}.get)
+            to retrieve the Blueprint ID.
+        - $ref: '#/components/parameters/ParamHeaderXZohoService'
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlueprintActivationPayload'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  blueprints:
+                    - move_records: true
+                      map_states:
+                        - existing_state:
+                            id: '111112000000000084'
+                          replacing_state:
+                            id: '111112000000000034'
+            x-zs-llm-examples:
+              - SamplePostRequest
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintActivationSuccessResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    blueprints:
+                      - code: SUCCESS
+                        details:
+                          id: '5226917000005130001'
+                        message: Blueprint successfully published
+                        status: success
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '204':
+          description: No Content - Successful response with no body content
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PostsettingsblueprintblueprintidactionsactivateResponse400
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidResourcePathError'
+                  - type: object
+                    x-zs-$id: >-
+                      PostsettingsblueprintblueprintidactionsactivateResponse400Blueprints
+                    additionalProperties: false
+                    description: Wrapped error response with blueprints
+                    properties:
+                      blueprints:
+                        type: array
+                        description: Array of error objects
+                        items:
+                          oneOf:
+                            - $ref: '#/components/schemas/ErrorResponseCore27'
+                            - $ref: >-
+                                #/components/schemas/ActivationRecordActionsMissingError
+                            - $ref: >-
+                                #/components/schemas/ActivationStateTargetsMissingError
+                            - $ref: '#/components/schemas/ErrorResponseCore25'
+                            - $ref: '#/components/schemas/MapStatesAmbiguityError'
+                            - $ref: '#/components/schemas/ErrorResponseCore9'
+                            - $ref: '#/components/schemas/ErrorResponseCore4'
+                            - $ref: '#/components/schemas/ErrorResponseCore2'
+                            - $ref: '#/components/schemas/ErrorResponseCore6'
+                            - $ref: '#/components/schemas/InvalidValueResponse'
+                            - $ref: >-
+                                #/components/schemas/MapStateMandatoryMissingError
+                            - $ref: >-
+                                #/components/schemas/NoTransitionsInBlueprintError
+                            - $ref: '#/components/schemas/MoveRecordsMandatoryError'
+                        maxItems: 25
+                    required:
+                      - blueprints
+                  - $ref: '#/components/schemas/InvalidProcessIDError'
+                  - $ref: '#/components/schemas/BlueprintLimitExceededError'
+                  - $ref: '#/components/schemas/DuplicateBlueprintNameError'
+                  - $ref: '#/components/schemas/DisconnectedStatesError'
+                  - $ref: '#/components/schemas/MissingStateTransitionsError'
+                  - $ref: '#/components/schemas/BlueprintAlreadyPublishedError'
+                  - $ref: '#/components/schemas/InvalidBlueprintConnectionsError'
+                  - $ref: '#/components/schemas/BlueprintAlreadyActiveError'
+              examples:
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: the process id given
+                    seems to be invalid
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: the process id given seems to be invalid
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: invalid data (Field:
+                    blueprints)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          maximum_length: 1
+                          api_name: blueprints
+                          json_path: $
+                        message: invalid data
+                        status: error
+                InvalidDataResponse3:
+                  summary: >-
+                    Error response with code INVALID_DATA: the process id given
+                    seems to be invalid
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      message: the process id given seems to be invalid
+                    message: the process id given seems to be invalid
+                    status: error
+                LimitExceededResponse1:
+                  summary: >-
+                    Error response with code LIMIT_EXCEEDED: Blueprint limit
+                    exceeded
+                  value:
+                    code: LIMIT_EXCEEDED
+                    details:
+                      limit: 50
+                    message: Blueprint limit exceeded
+                    status: error
+                DependentFieldMissingResponse1:
+                  summary: >-
+                    Error response with code DEPENDENT_FIELD_MISSING: Specify
+                    record actions to be done while publishing this blueprint.
+                    (Field: record_actions)
+                  value:
+                    blueprints:
+                      - code: DEPENDENT_FIELD_MISSING
+                        details:
+                          dependee:
+                            api_name: type
+                            json_path: $.blueprints[0].type
+                          api_name: record_actions
+                          json_path: $.blueprints[0].record_actions
+                        message: >-
+                          Specify record actions to be done while publishing
+                          this blueprint.
+                        status: error
+                DependentFieldMissingResponse2:
+                  summary: >-
+                    Error response with code DEPENDENT_FIELD_MISSING: Provide
+                    states to move the current records to current version of
+                    blueprint (Field: map_states)
+                  value:
+                    blueprints:
+                      - code: DEPENDENT_FIELD_MISSING
+                        details:
+                          dependee:
+                            api_name: action
+                            json_path: $.blueprints[0].record_actions.action
+                            dependee_value: move_current_records
+                          api_name: map_states
+                          json_path: $.blueprints[0].map_states
+                        message: >-
+                          Provide states to move the current records to current
+                          version of blueprint
+                        status: error
+                MandatoryNotFoundResponse1:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: required field
+                    not found (Field: action)
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: action
+                          json_path: $.blueprints[0].record_actions.action
+                        message: required field not found
+                        status: error
+                MandatoryNotFoundResponse2:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: required field
+                    not found (Field: check_existing_records)
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: check_existing_records
+                          json_path: >-
+                            $.blueprints[0].record_actions.check_existing_records
+                        message: required field not found
+                        status: error
+                AmbiguityDuringProcessingResponse1:
+                  summary: >-
+                    Error response with code AMBIGUITY_DURING_PROCESSING:
+                    Provide proper values
+                  value:
+                    blueprints:
+                      - code: AMBIGUITY_DURING_PROCESSING
+                        details:
+                          ambiguity_due_to:
+                            - api_name: type
+                              json_path: $.blueprints[0].type
+                            - api_name: map_states
+                              json_path: $.blueprints[0].map_states
+                        message: Provide proper values
+                        status: error
+                InvalidDataResponse4:
+                  summary: >-
+                    Error response with code INVALID_DATA: the value given is
+                    invalid (Field: replacing_state)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: replacing_state
+                          json_path: $.blueprints[0].map_states.replacing_state
+                        message: the value given is invalid
+                        status: error
+                InvalidDataResponse5:
+                  summary: >-
+                    Error response with code INVALID_DATA: the value given is
+                    invalid (Field: existing_state)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          api_name: existing_state
+                          json_path: $.blueprints[0].map_states.existing_state
+                        message: the value given is invalid
+                        status: error
+                NotAllowedResponse1:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: Already a blueprint
+                    with same name exists
+                  value:
+                    code: NOT_ALLOWED
+                    details: {}
+                    message: Already a blueprint with same name exists
+                    status: error
+                NotAllowedResponse2:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: There exists states
+                    which are not connected to any other states
+                  value:
+                    code: NOT_ALLOWED
+                    details: {}
+                    message: >-
+                      There exists states which are not connected to any other
+                      states
+                    status: error
+                NotAllowedResponse3:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: Transitions are
+                    missing between few states
+                  value:
+                    code: NOT_ALLOWED
+                    details: {}
+                    message: Transitions are missing between few states
+                    status: error
+                NotAllowedResponse4:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: Blueprint is already
+                    published, cannot republish over already published version.
+                    Create a draft version and publish.
+                  value:
+                    code: NOT_ALLOWED
+                    details: {}
+                    message: >-
+                      Blueprint is already published, cannot republish over
+                      already published version. Create a draft version and
+                      publish.
+                    status: error
+                NotAllowedResponse5:
+                  summary: >-
+                    Error response with code NOT_ALLOWED: The connections in
+                    chart data are not valid, due to which blueprint cannot be
+                    published.
+                  value:
+                    code: NOT_ALLOWED
+                    details: {}
+                    message: >-
+                      The connections in chart data are not valid, due to which
+                      blueprint cannot be published.
+                    status: error
+                MandatoryNotFoundResponse3:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: Required field
+                    is missing (Field: move_records)
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        message: Required field is missing
+                        details:
+                          api_name: move_records
+                          json_path: $.blueprints[*].move_records
+                        status: error
+                InvalidDataResponse6:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: move_records)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: move_records
+                          expected_data_type: boolean
+                          json_path: $.blueprints[*].move_records
+                        status: error
+                InvalidDataResponse7:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: map_states)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: map_states
+                          expected_data_type: jsonarray
+                          json_path: $.blueprints[*].map_states
+                        status: error
+                InvalidDataResponse8:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    map_states)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: map_states
+                          maximum_length: 1
+                          json_path: $.blueprints[*].map_states
+                        status: error
+                InvalidDataResponse9:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: existing_state)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: existing_state
+                          expected_data_type: jsonobject
+                          json_path: $.blueprints[*].map_states[*].existing_state
+                        status: error
+                InvalidDataResponse10:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    existing_state)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: existing_state
+                          maximum_length: 1
+                          json_path: $.blueprints[*].map_states[*].existing_state
+                        status: error
+                InvalidDataResponse11:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: id)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.blueprints[*].map_states[*].existing_state.id
+                        status: error
+                InvalidDataResponse12:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    id)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 50
+                          json_path: $.blueprints[*].map_states[*].existing_state.id
+                        status: error
+                InvalidDataResponse13:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: replacing_state)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: replacing_state
+                          expected_data_type: jsonobject
+                          json_path: $.blueprints[*].map_states[*].replacing_state
+                        status: error
+                InvalidDataResponse14:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    replacing_state)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: replacing_state
+                          maximum_length: 1
+                          json_path: $.blueprints[*].map_states[*].replacing_state
+                        status: error
+                InvalidDataResponse15:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: id)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: id
+                          expected_data_type: bigint
+                          json_path: $.blueprints[*].map_states[*].replacing_state.id
+                        status: error
+                InvalidDataResponse16:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data (Field:
+                    id)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data
+                        details:
+                          api_name: id
+                          maximum_length: 50
+                          json_path: $.blueprints[*].map_states[*].replacing_state.id
+                        status: error
+                BlueprintAlreadyActiveResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: Blueprint is already
+                    active
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      id: '111111000000360528'
+                    message: Blueprint is already active
+                    status: error
+                MapStateMandatoryMissingResponse1:
+                  summary: >-
+                    Error response with code DEPENDENT_FIELD_MISSING: mandatory
+                    param missing (Field: map_states)
+                  value:
+                    blueprints:
+                      - code: DEPENDENT_FIELD_MISSING
+                        details:
+                          dependee:
+                            api_name: move_records
+                            json_path: $.bluperints[0].move_records
+                          api_name: map_states
+                          json_path: $.blueprints[0].map_states
+                        message: mandatory param missing
+                        status: error
+                NoTransitionsInBlueprintResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: No transitions found
+                    in blueprint
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        details:
+                          message: No transitions found in blueprint
+                        message: invalid data
+                        status: error
+                MoveRecordsMandatoryResponse1:
+                  summary: >-
+                    Error response with code MANDATORY_NOT_FOUND: When blueprint
+                    has records, move_records is mandatory
+                  value:
+                    blueprints:
+                      - code: MANDATORY_NOT_FOUND
+                        details:
+                          api_name: move_records
+                          json_path: $.blueprints[0].move_records
+                        message: When blueprint has records, move_records is mandatory
+                        status: error
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.blueprint.CREATE
+  /settings/blueprints/{blueprintId}/actions/deactivate:
+    post:
+      summary: Deactivate Blueprint
+      description: To deactivate a published blueprint in your Zoho CRM organization.
+      x-zs-llm-description: Deactivate a blueprint by blueprintId
+      operationId: deactivateBlueprint
+      parameters:
+        - name: blueprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: int64
+            pattern: ^[0-9]+
+            minLength: 1
+            maxLength: 19
+          description: >-
+            The ID of the blueprint to deactivate. Use the [Get Blueprint by
+            ID](blueprints.yaml#$.paths./settings/blueprints/{blueprintId}.get)
+            to retrieve the Blueprint ID.
+        - $ref: '#/components/parameters/ParamHeaderXZohoService'
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlueprintDeactivationRequest'
+            examples:
+              SamplePostRequest:
+                summary: Sample request body
+                value:
+                  blueprints:
+                    - exit_records: true
+            x-zs-llm-examples:
+              - SamplePostRequest
+      responses:
+        '200':
+          description: OK - Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintDeactivationResponse'
+              examples:
+                Success200:
+                  summary: Success response for status 200
+                  value:
+                    blueprints:
+                      - status: success
+                        code: SUCCESS
+                        details:
+                          id: '111111000000124001'
+                        message: Blueprint successfully deactivated
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+        '400':
+          description: Bad Request - The request cannot be processed due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                x-zs-$id: PostsettingsblueprintblueprintidactionsdeactivateResponse400
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorResponseCore15'
+                  - $ref: '#/components/schemas/InvalidResourcePathError'
+                  - $ref: '#/components/schemas/BlueprintCannotBeDeactivatedError'
+                  - $ref: '#/components/schemas/BlueprintAlreadyInactiveError'
+                  - type: object
+                    x-zs-$id: >-
+                      PostsettingsblueprintblueprintidactionsdeactivateResponse400Blueprints
+                    additionalProperties: false
+                    description: Wrapped error response with blueprints
+                    properties:
+                      blueprints:
+                        type: array
+                        description: Array of error objects
+                        items:
+                          $ref: '#/components/schemas/ErrorResponseCore2'
+                        maxItems: 25
+                    required:
+                      - blueprints
+              examples:
+                RequiredHeaderMissingResponse1:
+                  summary: >-
+                    Error response with code REQUIRED_HEADER_MISSING: One of the
+                    expected headers is missing
+                  value:
+                    code: REQUIRED_HEADER_MISSING
+                    details:
+                      header_name: X-CRM-ORG
+                    message: One of the expected headers is missing
+                    status: error
+                InvalidDataResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: the process id given
+                    seems to be invalid
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      resource_path_index: 2
+                    message: the process id given seems to be invalid
+                    status: error
+                InvalidDataResponse2:
+                  summary: >-
+                    Error response with code INVALID_DATA: Invalid data type
+                    (Field: exit_records)
+                  value:
+                    blueprints:
+                      - code: INVALID_DATA
+                        message: Invalid data type
+                        details:
+                          api_name: exit_records
+                          expected_data_type: boolean
+                          json_path: $.blueprints[*].exit_records
+                        status: error
+                BlueprintCannotBeDeactivatedResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: Blueprint cannot be
+                    deactivated
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      id: '111111000000352870'
+                    message: Blueprint cannot be deactivated
+                    status: error
+                BlueprintAlreadyInactiveResponse1:
+                  summary: >-
+                    Error response with code INVALID_DATA: Blueprint is already
+                    inactive
+                  value:
+                    code: INVALID_DATA
+                    details:
+                      id: '111111000000352844'
+                    message: Blueprint is already inactive
+                    status: error
+          headers:
+            X-API-CREDITS-REMAINING:
+              schema:
+                type: string
+                format: int64
+                description: >
+                  Present when >=50% of base daily credits (excluding add-on
+                  credits) are consumed. Value is total remaining credits
+                  including add-on credits for the rolling 24-hour window.
+                pattern: ^[0-9]+$
+                minLength: 1
+                maxLength: 19
+              required: false
+      security:
+        - OAuth2:
+            - ZohoCRM.settings.blueprint.CREATE
+components:
+  schemas:
+    BlueprintActivationPayload:
+      type: object
+      additionalProperties: false
+      description: >-
+        Request body wrapper that provides a list of blueprints with their
+        activation settings and required state mappings for transitioning from
+        draft to active.
+      properties:
+        blueprints:
+          type: array
+          description: This is the root key of the request body (Required)
+          items:
+            $ref: '#/components/schemas/BlueprintActivationSettings'
+          maxItems: 1
+      required:
+        - blueprints
+      title: Blueprint Activation Payload
+    InvalidResourcePathError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Indicates the resource path is invalid (e.g., invalid path index),
+        typically due to a malformed or incorrect identifier provided for
+        activation.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            resource_path_index:
+              type: integer
+              format: int32
+              description: 'Detail field: resource_path_index'
+          required:
+            - resource_path_index
+        message:
+          type: string
+          description: Error message
+          enum:
+            - the process id given seems to be invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Resource Path Error
+      x-zs-$id: ErrorResponseCore1241434594
+    ActivationRecordActionsMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Dependent field missing: specify the record actions to perform while
+        publishing/activating the blueprint.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - DEPENDENT_FIELD_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            dependee:
+              type: object
+              additionalProperties: false
+              description: 'Detail field: dependee'
+              properties:
+                api_name:
+                  type: string
+                  description: 'Nested detail field: api_name'
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: 'Nested detail field: json_path'
+                  maxLength: 1000
+              required:
+                - api_name
+                - json_path
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - dependee
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Specify record actions to be done while publishing this blueprint.
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Activation Record Actions Missing Error
+      x-zs-$id: ErrorResponseCore711870005
+    DisconnectedStatesError:
+      type: object
+      additionalProperties: false
+      description: >-
+        The blueprint contains states that are not connected to any other
+        states, which is not allowed.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Error message
+          enum:
+            - There exists states which are not connected to any other states
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Disconnected States Error
+      x-zs-$id: ErrorResponseCore2111124991
+    InvalidProcessIDError:
+      type: object
+      additionalProperties: false
+      description: >-
+        The provided process ID is invalid, preventing the blueprint from being
+        activated.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            message:
+              type: string
+              description: 'Detail field: message'
+              maxLength: 255
+          required:
+            - message
+        message:
+          type: string
+          description: Error message
+          enum:
+            - the process id given seems to be invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Process ID Error
+      x-zs-$id: ErrorResponseCore841239644
+    BlueprintDeactivationRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Request payload that lists the blueprints to process for deactivation.
+        The blueprints array (required) contains one or more Blueprint
+        Deactivation Item objects specifying deactivation behavior for each
+        blueprint.
+      properties:
+        blueprints:
+          type: array
+          description: Root element within which data is specified (Required)
+          items:
+            $ref: '#/components/schemas/BlueprintDeactivationItem'
+          maxItems: 1
+      required:
+        - blueprints
+      title: Blueprint Deactivation Request
+    BlueprintActivationSettings:
+      type: object
+      additionalProperties: false
+      description: >-
+        Activation settings for a blueprint, including an array of state remaps
+        (map_states) and a flag indicating whether to move existing records
+        (move_records).
+      properties:
+        map_states:
+          type:
+            - array
+            - 'null'
+          description: >-
+            The current version will have active records associated with it, so
+            when the draft is set to be activated, remap data is required, which
+            contains the mapping of the picklist ID of the existing state and
+            the replacing state.
+          items:
+            $ref: '#/components/schemas/StateRemapPair'
+          maxItems: 1
+        move_records:
+          type: boolean
+          description: >-
+            The current version will have active records associated with it, so
+            when the draft is set to be activated, remap data is required
+            (Required).
+      required:
+        - move_records
+      title: Blueprint Activation Settings
+    MapStatesAmbiguityError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Ambiguity detected while processing state remapping. Provide valid and
+        consistent values for map_states.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - AMBIGUITY_DURING_PROCESSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            ambiguity_due_to:
+              type: array
+              description: 'Detail field: ambiguity_due_to'
+              items:
+                type: object
+                additionalProperties: false
+                description: 'Detail field: ambiguity_due_to'
+                properties:
+                  api_name:
+                    type: string
+                    description: 'Nested detail field: api_name'
+                    maxLength: 255
+                  json_path:
+                    type: string
+                    description: 'Nested detail field: json_path'
+                    maxLength: 1000
+                required:
+                  - api_name
+                  - json_path
+              maxItems: 25
+          required:
+            - ambiguity_due_to
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Provide proper values
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Map States Ambiguity Error
+      x-zs-$id: ErrorResponseCore5201564
+    InvalidBlueprintConnectionsError:
+      type: object
+      additionalProperties: false
+      description: >-
+        The connections defined in the chart data are invalid, preventing the
+        blueprint from being published or activated.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Error message
+          enum:
+            - >-
+              The connections in chart data are not valid, due to which
+              blueprint cannot be published.
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Blueprint Connections Error
+      x-zs-$id: ErrorResponseCore695137520
+    BlueprintDeactivationResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Successful response for a blueprint deactivation request. Returns a
+        blueprints array containing one Blueprint Deactivation Result Item per
+        processed blueprint.
+      properties:
+        blueprints:
+          type: array
+          description: 'Field: blueprints'
+          items:
+            $ref: '#/components/schemas/BlueprintDeactivationResultItem'
+          maxItems: 1
+      title: Blueprint Deactivation Response
+      x-zs-$id: DeactivateblueprintResponse200
+    BlueprintActivationSuccessResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Response returned upon successful activation of a blueprint. Includes a
+        blueprints array with per-blueprint result details.
+      properties:
+        blueprints:
+          type: array
+          description: 'Field: blueprints'
+          items:
+            $ref: '#/components/schemas/GeneratedSchema54'
+          maxItems: 1
+      title: Blueprint Activation Success Response
+      x-zs-$id: PostblueprintblueprintidactionsactivateResponse200
+    BlueprintLimitExceededError:
+      type: object
+      additionalProperties: false
+      description: Activation cannot proceed because the blueprint limit has been exceeded.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - LIMIT_EXCEEDED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            limit:
+              type: integer
+              format: int32
+              description: 'Detail field: limit'
+          required:
+            - limit
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Blueprint limit exceeded
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Blueprint Limit Exceeded Error
+      x-zs-$id: ErrorResponseCore1988727299
+    ActivationStateTargetsMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Dependent field missing: provide the states needed to move current
+        records to the active version of the blueprint.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - DEPENDENT_FIELD_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            dependee:
+              type: object
+              additionalProperties: false
+              description: 'Detail field: dependee'
+              properties:
+                api_name:
+                  type: string
+                  description: 'Nested detail field: api_name'
+                  maxLength: 255
+                dependee_value:
+                  type: string
+                  description: 'Nested detail field: dependee_value'
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: 'Nested detail field: json_path'
+                  maxLength: 1000
+              required:
+                - api_name
+                - dependee_value
+                - json_path
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - dependee
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - >-
+              Provide states to move the current records to current version of
+              blueprint
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Activation State Targets Missing Error
+      x-zs-$id: ErrorResponseCore1450562837
+    MissingStateTransitionsError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Required transitions are missing between some states in the blueprint,
+        preventing activation.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Transitions are missing between few states
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Missing State Transitions Error
+      x-zs-$id: ErrorResponseCore657632203
+    BlueprintDeactivationItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Defines per-blueprint options used during the deactivation operation.
+        The exit_records flag indicates whether any record currently in the
+        blueprint should be exited when the blueprint is deactivated.
+      properties:
+        exit_records:
+          type:
+            - boolean
+            - 'null'
+          description: >-
+            Indicates whether the record in the particular blueprint should be
+            exited after the blueprint is deactivated.
+      title: Blueprint Deactivation Item
+    DuplicateBlueprintNameError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Activation or publication is not allowed because another blueprint with
+        the same name already exists.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Already a blueprint with same name exists
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Duplicate Blueprint Name Error
+      x-zs-$id: ErrorResponseCore933450362
+    BlueprintDeactivationResultItem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Represents the outcome for a single blueprint deactivation. Includes
+        status, code, and message, with details providing structured information
+        about the result.
+      properties:
+        status:
+          type: string
+          description: 'Field: status'
+          maxLength: 255
+        code:
+          type: string
+          description: 'Field: code'
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/GeneratedSchema154'
+        message:
+          type: string
+          description: 'Field: message'
+          maxLength: 255
+      title: Blueprint Deactivation Result Item
+    StateRemapPair:
+      type: object
+      additionalProperties: false
+      description: >-
+        Associates an existing (current) state with a replacing (target) state
+        by their picklist IDs. Each pair directs how active records should be
+        moved during activation.
+      properties:
+        existing_state:
+          $ref: '#/components/schemas/ExistingStateReference'
+          description: Contains data about the existing state
+        replacing_state:
+          $ref: '#/components/schemas/ReplacingStateReference'
+          description: Contains data about the replacing state
+      title: State Remap Pair
+    ExistingStateReference:
+      type: object
+      additionalProperties: false
+      description: >-
+        Reference object for the existing blueprint state, identified by
+        picklist ID. Used as the source state in remapping during activation.
+      properties:
+        id:
+          type:
+            - string
+            - 'null'
+          description: Contains data about the existing state picklist ID
+          maxLength: 50
+      title: Existing State Reference
+    BlueprintAlreadyPublishedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        The blueprint is already published. Republish is not allowed; create a
+        draft version and publish that instead.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - NOT_ALLOWED
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties: {}
+        message:
+          type: string
+          description: Error message
+          enum:
+            - >-
+              Blueprint is already published, cannot republish over already
+              published version. Create a draft version and publish.
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Blueprint Already Published Error
+      x-zs-$id: ErrorResponseCore1904968233
+    ReplacingStateReference:
+      type: object
+      additionalProperties: false
+      description: >-
+        Reference object for the replacing blueprint state, identified by
+        picklist ID. Used as the target state in remapping during activation.
+      properties:
+        id:
+          type:
+            - string
+            - 'null'
+          description: Contains data about the replacing state picklist ID
+          maxLength: 50
+          x-zs-$ref:
+            resource: fields
+            origins:
+              - operationId: getFields
+                propertyId: FieldsPickListValuesId
+          format: int64
+          example: '1385208000000973001'
+          pattern: ^[0-9]+$
+          minLength: 1
+      title: Replacing State Reference
+    GeneratedSchema154:
+      type: object
+      additionalProperties: false
+      description: Nested schema for details
+      properties:
+        id:
+          type: string
+          description: 'Field: id'
+          maxLength: 255
+      title: Generated Schema
+    GeneratedSchema54:
+      type: object
+      additionalProperties: false
+      description: Nested schema for blueprints
+      properties:
+        code:
+          type: string
+          description: 'Field: code'
+          maxLength: 255
+        details:
+          $ref: '#/components/schemas/GeneratedSchema39'
+        message:
+          type: string
+          description: 'Field: message'
+          maxLength: 255
+        status:
+          type: string
+          description: 'Field: status'
+          maxLength: 255
+      title: Generated Schema
+    GeneratedSchema39:
+      type: object
+      additionalProperties: true
+      description: Nested schema for details
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: Action name
+          maxLength: 50
+        id:
+          type: string
+          description: 'Field: id'
+          maxLength: 255
+      title: Generated Schema
+    ErrorResponseCore27:
+      type: object
+      additionalProperties: false
+      description: When we try to update more than one blueprint
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: 'Detail field: maximum_length'
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: Error message
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1031606856
+    ErrorResponseCore2:
+      type: object
+      additionalProperties: false
+      description: Auto-generated from ApiDefinition for INVALID_DATA
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            expected_data_type:
+              type: string
+              description: 'Detail field: expected_data_type'
+              maxLength: 255
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - expected_data_type
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Invalid data type
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore9634759
+    ErrorResponseCore4:
+      type: object
+      additionalProperties: false
+      description: Auto-generated from ApiDefinition for MANDATORY_NOT_FOUND
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Required field is missing
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1678556694
+    ErrorResponseCore6:
+      type: object
+      additionalProperties: false
+      description: Auto-generated from ApiDefinition for INVALID_DATA
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            maximum_length:
+              type: integer
+              format: int32
+              description: 'Detail field: maximum_length'
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+            - maximum_length
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Invalid data
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore769482510
+    ErrorResponseCore9:
+      type: object
+      additionalProperties: false
+      description: When transition type provided is invalid
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+            supported_values:
+              type: array
+              description: 'Detail field: supported_values'
+              items:
+                type: string
+                description: 'Detail field: supported_values'
+                maxLength: 255
+              maxItems: 25
+          required:
+            - api_name
+            - json_path
+            - supported_values
+        message:
+          type: string
+          description: Error message
+          enum:
+            - the value given is invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1005161811
+    ErrorResponseCore25:
+      type: object
+      additionalProperties: false
+      description: Blueprint name not provided in the request
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - required field not found
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore1772726651
+    InvalidValueResponse:
+      type: object
+      additionalProperties: false
+      description: >-
+        Returned when invalid module data is provided during a reorder request.
+        Includes the code (INVALID_DATA), a descriptive message, status, and
+        validation details.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - the value given is invalid
+            - invalid data
+            - Invalid data
+            - the id given seems to be invalid
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Invalid Module Name Error Response
+      x-zs-$id: ErrorResponseCore1774897711
+    ErrorResponseCore15:
+      type: object
+      additionalProperties: false
+      description: 'Missing required header: X-CRM-ORG'
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - REQUIRED_HEADER_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            header_name:
+              type: string
+              description: 'Detail field: header_name'
+              maxLength: 255
+          required:
+            - header_name
+        message:
+          type: string
+          description: Error message
+          enum:
+            - One of the expected headers is missing
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Error Response Core
+      x-zs-$id: ErrorResponseCore30677666
+    BlueprintCannotBeDeactivatedError:
+      type: object
+      additionalProperties: false
+      description: >-
+        The blueprint cannot be deactivated, typically because it is in a state
+        that does not allow deactivation.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with the blueprint ID
+          properties:
+            id:
+              type: string
+              description: 'Detail field: id'
+              maxLength: 255
+          required:
+            - id
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Blueprint cannot be deactivated
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Blueprint Cannot Be Deactivated Error
+      x-zs-$id: BlueprintCannotBeDeactivatedError
+    BlueprintAlreadyInactiveError:
+      type: object
+      additionalProperties: false
+      description: The blueprint is already inactive and cannot be deactivated again.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with the blueprint ID
+          properties:
+            id:
+              type: string
+              description: 'Detail field: id'
+              maxLength: 255
+          required:
+            - id
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Blueprint is already inactive
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Blueprint Already Inactive Error
+      x-zs-$id: BlueprintAlreadyInactiveError
+    BlueprintAlreadyActiveError:
+      type: object
+      additionalProperties: false
+      description: The blueprint is already active and cannot be activated again.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with the blueprint ID
+          properties:
+            id:
+              type: string
+              description: 'Detail field: id'
+              maxLength: 255
+          required:
+            - id
+        message:
+          type: string
+          description: Error message
+          enum:
+            - Blueprint is already active
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Blueprint Already Active Error
+      x-zs-$id: BlueprintAlreadyActiveError
+    MapStateMandatoryMissingError:
+      type: object
+      additionalProperties: false
+      description: >-
+        A required field (map_states) is missing during blueprint activation.
+        Returned inside the blueprints array.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - DEPENDENT_FIELD_MISSING
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            dependee:
+              type: object
+              additionalProperties: false
+              description: 'Detail field: dependee'
+              properties:
+                api_name:
+                  type: string
+                  description: 'Detail field: api_name'
+                  maxLength: 255
+                json_path:
+                  type: string
+                  description: 'Detail field: json_path'
+                  maxLength: 1000
+              required:
+                - api_name
+                - json_path
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - dependee
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - mandatory param missing
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Map State Mandatory Missing Error
+      x-zs-$id: MapStateMandatoryMissingError
+    NoTransitionsInBlueprintError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Error returned when a blueprint has no transitions defined, preventing
+        it from being activated (code: INVALID_DATA).
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_DATA
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details containing the descriptive message
+          properties:
+            message:
+              type: string
+              description: 'Detail field: message'
+              maxLength: 255
+          required:
+            - message
+        message:
+          type: string
+          description: Error message
+          enum:
+            - invalid data
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: No Transitions In Blueprint Error
+      x-zs-$id: NoTransitionsInBlueprintError
+    MoveRecordsMandatoryError:
+      type: object
+      additionalProperties: false
+      description: >-
+        Mandatory field missing: when the blueprint has active records,
+        move_records must be provided to indicate how those records should be
+        handled during activation.
+      properties:
+        code:
+          type: string
+          description: Error code
+          enum:
+            - MANDATORY_NOT_FOUND
+        details:
+          type: object
+          additionalProperties: false
+          description: Error details with validation information
+          properties:
+            api_name:
+              type: string
+              description: 'Detail field: api_name'
+              maxLength: 255
+            json_path:
+              type: string
+              description: 'Detail field: json_path'
+              maxLength: 1000
+          required:
+            - api_name
+            - json_path
+        message:
+          type: string
+          description: Error message
+          enum:
+            - When blueprint has records, move_records is mandatory
+        status:
+          type: string
+          description: Error status
+          enum:
+            - error
+      required:
+        - code
+        - details
+        - message
+        - status
+      title: Move Records Mandatory Error
+      x-zs-$id: MoveRecordsMandatoryError
+  parameters:
+    ParamHeaderXZohoService:
+      name: X-ZOHO-SERVICE
+      in: header
+      description: Custom header
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+        enum:
+          - automation
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication for API access
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.zoho.com/oauth/v2/auth
+          tokenUrl: https://accounts.zoho.com/oauth/v2/token
+          refreshUrl: https://accounts.zoho.com/oauth/v2/token
+          scopes:
+            ZohoCRM.settings.blueprint.CREATE: Access to settings.blueprint scope

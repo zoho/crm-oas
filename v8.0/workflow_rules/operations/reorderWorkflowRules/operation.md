@@ -26,6 +26,8 @@
         - `id` (string) [maxLen=255] — Represents the unique ID of the SuccessResponseDetails within the workflow rule.
       - `message` (string) [enum=[6 values]] — Represents the message describing the operation result or error.
       - `status` (string) [maxLen=7] — Represents the response status indicator, such as **success** or **error**.
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **400**: The response returned when the deletion request is invalid, such as a malformed or missing rule ID.
  [application/json]
@@ -41,6 +43,8 @@
           - `expected_data_type` (string) [maxLen=255] — Represents the **expected_data_type** value from the error detail object.
           - `api_name` (string) [maxLen=255] — Represents the API name of the field or parameter that caused the validation error.
         - `reorder` (array of object) [maxItems=10] — Array of error objects
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 - **403**: Forbidden. The authenticated user does not have permission to perform this operation, or the workflow rules feature is not available in the current CRM edition. Resolution: verify the user's permissions and the organization's edition capabilities.
  — Schema: `NoPermissionSchema` [application/json]
@@ -52,5 +56,7 @@
     - `details` (object) **REQ** — Represents error details. For NO_PERMISSION, contains the list of permissions needed. For FEATURE_NOT_SUPPORTED, empty object.
       - `permissions` (array of string) [maxItems=10] — Represents the list of CRM profile permissions required to perform the requested action.
         items: [maxLen=255]
+  Headers:
+    - `X-API-CREDITS-REMAINING` (string)
 
 **Scopes:** ZohoCRM.settings.workflow_rules.UPDATE

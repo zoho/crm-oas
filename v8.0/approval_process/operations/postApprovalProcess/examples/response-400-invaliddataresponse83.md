@@ -1,0 +1,18 @@
+Invalid data error identifying the **name** field
+
+```json
+{
+  "approval_process": [
+    {
+      "code": "INVALID_DATA",
+      "message": "Invalid data",
+      "details": {
+        "api_name": "name",
+        "maximum_length": 200,
+        "json_path": "$.approval_process[*].rules[*].actions_per_approval[*].actions[*].name"
+      },
+      "status": "error"
+    }
+  ]
+}
+```

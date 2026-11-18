@@ -1,0 +1,17 @@
+MANDATORY_NOT_FOUND error: approver missing from an approval stage
+
+```json
+{
+  "approval_process": [
+    {
+      "code": "MANDATORY_NOT_FOUND",
+      "message": "Required field is missing",
+      "details": {
+        "api_name": "approver",
+        "json_path": "$.approval_process[*].rules[*].approver_stages[*].approver"
+      },
+      "status": "error"
+    }
+  ]
+}
+```
